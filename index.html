@@ -1136,7 +1136,6 @@
       stroke: var(--long);
       stroke-width: 10;
       stroke-linecap: round;
-      stroke-dashoffset: 326.7;
       transition: stroke-dashoffset 1s ease;
     }
 
@@ -1368,6 +1367,7 @@
       border: 1px solid var(--line-2);
       border-radius: 5px;
       padding: 2px 7px;
+      font-weight: 500;
     }
 
     .news-impact {
@@ -4376,7 +4376,7 @@
                   style="display:none;"></span><span class="material-symbols-outlined"
                   style="font-size:15px;">expand_more</span></button>
               <button class="ct-action-btn" id="replayToggle"><span class="material-symbols-outlined"
-                  style="font-size:15px;">restart_alt</span>Replay</button>
+                  style="font-size:15px;">fast_rewind</span>Replay</button>
             </div>
             <div class="ct-right">
               <button class="ct-icon"><span class="material-symbols-outlined">edit</span></button>
@@ -4885,18 +4885,18 @@
           <div class="wsp-body scanner-body">
 
             <div class="jc-strip" id="jcStrip">
-              <div class="mc-stat"><span class="l">Month P&amp;L</span><span class="v up"
-                  id="jcMonthPnl">+$0.00</span></div>
+              <div class="mc-stat"><span class="l">Month P&amp;L</span><span class="v up" id="jcMonthPnl">+$0.00</span>
+              </div>
               <div class="mc-stat"><span class="l">Trading Days</span><span class="v" id="jcMonthDays">0</span>
               </div>
               <div class="mc-stat"><span class="l">Win Days</span><span class="v up" id="jcMonthWinDays">0</span>
               </div>
-              <div class="mc-stat"><span class="l">Loss Days</span><span class="v down"
-                  id="jcMonthLossDays">0</span></div>
+              <div class="mc-stat"><span class="l">Loss Days</span><span class="v down" id="jcMonthLossDays">0</span>
+              </div>
               <div class="mc-stat"><span class="l">Best Day</span><span class="v up" id="jcMonthBest">+$0.00</span>
               </div>
-              <div class="mc-stat"><span class="l">Worst Day</span><span class="v down"
-                  id="jcMonthWorst">$0.00</span></div>
+              <div class="mc-stat"><span class="l">Worst Day</span><span class="v down" id="jcMonthWorst">$0.00</span>
+              </div>
             </div>
 
             <div class="jc-nav">
@@ -6135,7 +6135,13 @@
         activeClosePosSym = null;
       });
       document.getElementById('ctxAlert').addEventListener('click', () => { addAlert(pendingClickPrice); closeAllPopovers(); });
-      document.getElementById('ctxReset').addEventListener('click', () => { showToast('Chart view reset', 'restart_alt'); closeAllPopovers(); });
+      document.getElementById('ctxReset').addEventListener('click', () => {
+        panX = 0; panY = 0; panXInitialized = false;
+        crosshair = null;
+        scheduleDrawPriceChart();
+        showToast('Chart view reset', 'restart_alt');
+        closeAllPopovers();
+      });
       document.getElementById('ctxSettings').addEventListener('click', () => { showToast('Opening chart settings…', 'settings'); closeAllPopovers(); });
 
       /* ---------- order lifecycle ---------- */
