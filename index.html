@@ -1088,14 +1088,6 @@
       gap: 16px;
     }
 
-    .wsp-updated {
-      font-size: 11px;
-      color: var(--paper-500);
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
     .wsp-body {
       flex: 1;
       overflow-y: auto;
@@ -1104,225 +1096,6 @@
       flex-direction: column;
       gap: 16px;
       background: var(--ink-900);
-    }
-
-    .ai-hl {
-      color: var(--accent);
-      font-family: var(--sans);
-      font-weight: 700;
-    }
-
-    .ai-verdict-card {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      background: var(--ink-850);
-      border: 1px solid var(--line-2);
-      border-radius: var(--r-lg);
-      padding: 20px 24px;
-    }
-
-    .ai-gauge-wrap {
-      position: relative;
-      width: 120px;
-      height: 120px;
-      flex-shrink: 0;
-    }
-
-    .ai-gauge {
-      width: 120px;
-      height: 120px;
-      transform: rotate(-90deg);
-    }
-
-    .ai-gauge-track {
-      fill: none;
-      stroke: var(--line-2);
-      stroke-width: 10;
-    }
-
-    .ai-gauge-fill {
-      fill: none;
-      stroke: var(--long);
-      stroke-width: 10;
-      stroke-linecap: round;
-      transition: stroke-dashoffset 1s ease;
-    }
-
-    .ai-gauge-center {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .ai-gauge-pct {
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--long);
-      line-height: 1;
-    }
-
-    .ai-gauge-lbl {
-      font-size: 10px;
-      color: var(--paper-500);
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      margin-top: 3px;
-    }
-
-    .ai-verdict-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .ai-model-tag {
-      font-size: 10px;
-      color: var(--intel);
-      letter-spacing: .04em;
-      display: block;
-      margin-bottom: 10px;
-    }
-
-    .ai-bias-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .ai-bias-chip {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 5px 12px;
-      border-radius: 999px;
-    }
-
-    .ai-bias-chip.bullish {
-      background: var(--long-dim);
-      color: var(--long);
-    }
-
-    .ai-bias-chip .material-symbols-outlined {
-      font-size: 16px;
-    }
-
-    .ai-strength-meter {
-      display: flex;
-      gap: 3px;
-    }
-
-    .ai-strength-bar {
-      width: 14px;
-      height: 7px;
-      border-radius: 2px;
-      background: var(--line-2);
-    }
-
-    .ai-strength-bar.filled {
-      background: var(--long);
-    }
-
-    .ai-strength-lbl {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--long);
-    }
-
-    .ai-summary {
-      font-size: 12.5px;
-      color: var(--paper-300);
-      line-height: 1.55;
-      max-width: 560px;
-    }
-
-    .ai-reasons-card {
-      background: var(--ink-850);
-      border: 1px solid var(--line-2);
-      border-radius: var(--r-lg);
-      padding: 16px 20px;
-    }
-
-    .ai-reasons-head {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      color: var(--paper-300);
-      margin-bottom: 12px;
-    }
-
-    .ai-reasons-head .material-symbols-outlined {
-      font-size: 16px;
-      color: var(--long);
-    }
-
-    .ai-reason-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding: 0;
-      margin: 0;
-      list-style: none;
-    }
-
-    .ai-reason {
-      display: flex;
-      align-items: flex-start;
-      gap: 9px;
-      font-size: 12.5px;
-      color: var(--paper-100);
-      line-height: 1.5;
-    }
-
-    .ai-reason-ic {
-      font-size: 16px;
-      color: var(--long);
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    .ai-foot-row {
-      display: flex;
-      gap: 12px;
-    }
-
-    .ai-foot-stat {
-      flex: 1;
-      background: var(--ink-850);
-      border: 1px solid var(--line-2);
-      border-radius: var(--r-md);
-      padding: 10px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .ai-foot-stat .l {
-      font-size: 10px;
-      color: var(--paper-500);
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-
-    .ai-foot-stat .v {
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .ai-disclaimer {
-      font-size: 10.5px;
-      color: var(--paper-500);
-      line-height: 1.5;
-      max-width: 700px;
     }
 
     /* ---- News Intel ---- */
@@ -3048,6 +2821,227 @@
       pointer-events: none;
     }
 
+    .ai-assist-popup {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      width: 280px;
+      background: var(--ink-850);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-lg);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, .55);
+      display: none;
+      flex-direction: column;
+      z-index: 7;
+      pointer-events: auto;
+      overflow: hidden;
+    }
+
+    .ai-assist-popup.show {
+      display: flex;
+    }
+
+    .aip-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line-1);
+    }
+
+    .aip-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--paper-100);
+    }
+
+    .aip-title .material-symbols-outlined {
+      font-size: 15px;
+      color: var(--purple);
+    }
+
+    .aip-close {
+      display: flex;
+      color: var(--paper-500);
+      padding: 2px;
+      border-radius: 5px;
+    }
+
+    .aip-close:hover {
+      color: var(--paper-100);
+      background: var(--ink-800);
+    }
+
+    .aip-close .material-symbols-outlined {
+      font-size: 16px;
+    }
+
+    .aip-body {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .aip-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .aip-gauge-wrap {
+      position: relative;
+      width: 56px;
+      height: 56px;
+      flex-shrink: 0;
+    }
+
+    .aip-gauge {
+      width: 56px;
+      height: 56px;
+      transform: rotate(-90deg);
+    }
+
+    .aip-gauge-track {
+      fill: none;
+      stroke: var(--line-2);
+      stroke-width: 7;
+    }
+
+    .aip-gauge-fill {
+      fill: none;
+      stroke: var(--long);
+      stroke-width: 7;
+      stroke-linecap: round;
+    }
+
+    .aip-gauge-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .aip-gauge-pct {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--long);
+    }
+
+    .aip-top-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .aip-bias-chip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      width: fit-content;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+
+    .aip-bias-chip.bullish {
+      background: var(--long-dim);
+      color: var(--long);
+    }
+
+    .aip-bias-chip .material-symbols-outlined {
+      font-size: 13px;
+    }
+
+    .aip-model-tag {
+      font-size: 9.5px;
+      color: var(--intel);
+    }
+
+    .aip-summary {
+      font-size: 11.5px;
+      color: var(--paper-300);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .aip-reason-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .aip-reason-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--paper-100);
+      line-height: 1.4;
+    }
+
+    .aip-reason-list .material-symbols-outlined {
+      font-size: 13px;
+      color: var(--long);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .aip-foot-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .aip-foot-stat {
+      flex: 1;
+      background: var(--ink-800);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-sm);
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .aip-foot-stat .l {
+      font-size: 8.5px;
+      color: var(--paper-500);
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    .aip-foot-stat .v {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--paper-100);
+      white-space: nowrap;
+    }
+
+    .aip-foot-stat .v.up {
+      color: var(--long);
+    }
+
+    .aip-foot-stat .v.down {
+      color: var(--short);
+    }
+
+    .aip-disclaimer {
+      font-size: 9.5px;
+      color: var(--paper-500);
+      line-height: 1.4;
+      margin: 0;
+    }
+
     .news-marker {
       position: absolute;
       top: 0;
@@ -4316,8 +4310,6 @@
       <button class="ws-tab active" data-ws="chart"><span
           class="material-symbols-outlined">show_chart</span>Chart</button>
       <button class="ws-tab" data-ws="news"><span class="material-symbols-outlined">article</span>News Intel</button>
-      <button class="ws-tab" data-ws="ai"><span class="material-symbols-outlined">smart_toy</span>AI Market
-        Assistant</button>
       <button class="ws-tab" data-ws="scanner"><span class="material-symbols-outlined">radar</span>Market
         Scanner</button>
       <button class="ws-tab" data-ws="journal"><span class="material-symbols-outlined">calendar_month</span>Trading
@@ -4540,6 +4532,8 @@
                   style="font-size:15px;">expand_more</span></button>
               <button class="ct-action-btn" id="replayToggle"><span class="material-symbols-outlined"
                   style="font-size:15px;">fast_rewind</span>Replay</button>
+              <button class="ct-action-btn" id="aiAssistTrigger"><span class="material-symbols-outlined"
+                  style="font-size:15px;">smart_toy</span>AI Assistance</button>
             </div>
             <div class="ct-right">
               <button class="ct-icon"><span class="material-symbols-outlined">edit</span></button>
@@ -4563,6 +4557,46 @@
             <canvas id="priceChartCanvas"></canvas>
             <div id="orderLineLayer"></div>
             <div id="newsMarkerLayer"></div>
+
+            <div class="ai-assist-popup" id="aiAssistPopup">
+              <div class="aip-head">
+                <span class="aip-title"><span class="material-symbols-outlined">smart_toy</span>AI Assistance</span>
+                <button class="aip-close" id="aiAssistClose"><span
+                    class="material-symbols-outlined">close</span></button>
+              </div>
+              <div class="aip-body">
+                <div class="aip-top">
+                  <div class="aip-gauge-wrap">
+                    <svg class="aip-gauge" viewBox="0 0 72 72">
+                      <circle class="aip-gauge-track" cx="36" cy="36" r="30" />
+                      <circle class="aip-gauge-fill" cx="36" cy="36" r="30" stroke-dasharray="188.5"
+                        stroke-dashoffset="41.5" />
+                    </svg>
+                    <div class="aip-gauge-center"><span class="aip-gauge-pct">78%</span></div>
+                  </div>
+                  <div class="aip-top-info">
+                    <span class="aip-bias-chip bullish"><span
+                        class="material-symbols-outlined">trending_up</span>Bullish</span>
+                    <span class="aip-model-tag">SMC Model · v2.3</span>
+                  </div>
+                </div>
+                <p class="aip-summary">ETH is showing a constructive bias into the close, with structure and order flow
+                  aligned to the upside.</p>
+                <ul class="aip-reason-list">
+                  <li><span class="material-symbols-outlined">check_circle</span>Holding above key support</li>
+                  <li><span class="material-symbols-outlined">check_circle</span>Bullish order flow intact</li>
+                  <li><span class="material-symbols-outlined">check_circle</span>Liquidity above 5,325 acting as magnet
+                  </li>
+                </ul>
+                <div class="aip-foot-row">
+                  <div class="aip-foot-stat"><span class="l">Invalidation</span><span class="v down">Below 5,288</span>
+                  </div>
+                  <div class="aip-foot-stat"><span class="l">Target</span><span class="v up">5,318–5,325</span></div>
+                  <div class="aip-foot-stat"><span class="l">R:R</span><span class="v">1:2.4</span></div>
+                </div>
+                <p class="aip-disclaimer">AI-generated read of price action. Not investment advice.</p>
+              </div>
+            </div>
           </div>
 
           <div class="range-bar">
@@ -4582,96 +4616,6 @@
               <button class="toggle-pill">log</button>
               <button class="toggle-pill active">auto</button>
             </div>
-          </div>
-        </div>
-
-        <!-- ===================== AI MARKET ASSISTANT WORKSPACE ===================== -->
-        <div class="ws-pane" id="wsPane-ai">
-          <div class="wsp-header">
-            <div class="ct-left">
-              <div>
-                <div class="ct-sym">ETHUSD</div>
-                <div class="ct-name">AI MARKET ASSISTANT</div>
-              </div>
-            </div>
-            <div class="ct-right">
-              <span class="wsp-updated"><span class="material-symbols-outlined"
-                  style="font-size:14px;">schedule</span>Updated 14s ago</span>
-              <button class="ct-icon"><span class="material-symbols-outlined">refresh</span></button>
-            </div>
-          </div>
-
-          <div class="wsp-body ai-body">
-
-            <div class="ai-verdict-card">
-              <div class="ai-gauge-wrap">
-                <svg class="ai-gauge" viewBox="0 0 120 120">
-                  <circle class="ai-gauge-track" cx="60" cy="60" r="52" />
-                  <circle class="ai-gauge-fill" cx="60" cy="60" r="52" stroke-dasharray="326.7"
-                    stroke-dashoffset="71.9" />
-                </svg>
-                <div class="ai-gauge-center">
-                  <span class="ai-gauge-pct">78%</span>
-                  <span class="ai-gauge-lbl">Confidence</span>
-                </div>
-              </div>
-
-              <div class="ai-verdict-info">
-                <span class="ai-model-tag">ChartPrime SMC Model · v2.3</span>
-                <div class="ai-bias-row">
-                  <span class="ai-bias-chip bullish"><span
-                      class="material-symbols-outlined">trending_up</span>Bullish</span>
-                  <span class="ai-strength-meter" title="Strength: Strong">
-                    <span class="ai-strength-bar filled"></span>
-                    <span class="ai-strength-bar filled"></span>
-                    <span class="ai-strength-bar filled"></span>
-                  </span>
-                  <span class="ai-strength-lbl">Strong</span>
-                </div>
-                <p class="ai-summary">ETH is showing a constructive bias into the close. Structure, order flow and
-                  positioning are aligned to the upside while price respects a defended support shelf.</p>
-              </div>
-            </div>
-
-            <div class="ai-reasons-card">
-              <div class="ai-reasons-head">
-                <span class="material-symbols-outlined">checklist</span>
-                <span>Why the model is bullish</span>
-              </div>
-              <ul class="ai-reason-list">
-                <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Price is
-                  holding above a key support zone.</li>
-                <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Bullish
-                  order flow remains intact.</li>
-                <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Smart
-                  Money accumulation detected on pullbacks.</li>
-                <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Liquidity
-                  above <b class="ai-hl">5,325</b> is acting as a magnet.</li>
-                <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Market
-                  structure is shifting higher (<b class="ai-hl">HH / HL</b>).</li>
-                <li class="ai-reason"><span
-                    class="material-symbols-outlined ai-reason-ic">check_circle</span>Risk-to-reward
-                  remains favorable for long setups.</li>
-              </ul>
-            </div>
-
-            <div class="ai-foot-row">
-              <div class="ai-foot-stat">
-                <span class="l">Invalidation</span>
-                <span class="v down">Below 5,288</span>
-              </div>
-              <div class="ai-foot-stat">
-                <span class="l">Target Zone</span>
-                <span class="v up">5,318 – 5,325</span>
-              </div>
-              <div class="ai-foot-stat">
-                <span class="l">Suggested R:R</span>
-                <span class="v">1 : 2.4</span>
-              </div>
-            </div>
-
-            <p class="ai-disclaimer">AI-generated read of current price action, order flow and positioning data. Not
-              investment advice — always confirm with your own risk plan.</p>
           </div>
         </div>
 
@@ -6039,6 +5983,25 @@
     const replayToggle = document.getElementById('replayToggle');
     if (replayToggle) replayToggle.addEventListener('click', () => replayToggle.classList.toggle('active'));
 
+    /* ---------- AI Assistance popup ---------- */
+    const aiAssistTrigger = document.getElementById('aiAssistTrigger');
+    const aiAssistPopup = document.getElementById('aiAssistPopup');
+    const aiAssistClose = document.getElementById('aiAssistClose');
+    function closeAiAssistPopup() {
+      aiAssistPopup.classList.remove('show');
+      aiAssistTrigger.classList.remove('active');
+    }
+    if (aiAssistTrigger) aiAssistTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willShow = !aiAssistPopup.classList.contains('show');
+      aiAssistPopup.classList.toggle('show', willShow);
+      aiAssistTrigger.classList.toggle('active', willShow);
+    });
+    if (aiAssistClose) aiAssistClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAiAssistPopup();
+    });
+
     /* ---------- editable order-entry price fields ---------- */
     function formatPriceVal(n) {
       const neg = n < 0; n = Math.abs(n);
@@ -6385,6 +6348,12 @@
         if (!order) return;
         const dir = order.side === 'buy' ? 1 : -1;
         order.sl = { price: roundTick(order.entry - dir * 2.5), trailing: false, atr: false };
+        render();
+      }
+      function addDefaultTP() {
+        if (!order) return;
+        const dir = order.side === 'buy' ? 1 : -1;
+        order.tps.push({ id: 'tp' + (tpCounter++), price: roundTick(order.entry + dir * 2.5), pct: 100, trailing: false });
         render();
       }
 
@@ -7090,6 +7059,16 @@
             openTpGearMenu(e.currentTarget.getBoundingClientRect());
           });
         });
+
+        if (order.tps.length === 0) {
+          const y = clamp(priceToY(order.entry + (order.side === 'buy' ? 1 : -1) * 5, H), 10, H - 10);
+          const row = document.createElement('div');
+          row.className = 'ol-side-row ghost-row';
+          row.style.top = y + 'px';
+          row.innerHTML = '<span class="ol-chip ghost"><span class="material-symbols-outlined" style="font-size:13px;">add</span>Set Take Profit</span>';
+          row.addEventListener('click', addDefaultTP);
+          layer.appendChild(row);
+        }
 
         // ---- SL line ----
         if (order.sl) {
