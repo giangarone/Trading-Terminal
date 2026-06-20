@@ -285,7 +285,18 @@
   .bp-tab.active{color:var(--text-0);border-bottom-color:var(--blue);}
   .bp-tab .count{color:var(--text-2);margin-left:3px;}
 
-  .bp-table-wrap{flex:1;overflow:auto;}
+  .bp-table-wrap{display:none;overflow:auto;}
+  .bp-table-wrap.active{display:block;flex:1;}
+  .bp-empty-row td{text-align:center;color:var(--text-2);padding:22px 16px;}
+  .bp-action-icon{width:26px;height:26px;border-radius:6px;background:var(--bg-3);border:1px solid var(--border-1);display:inline-flex;align-items:center;justify-content:center;color:var(--text-1);cursor:pointer;}
+  .bp-action-icon:hover{color:var(--red);border-color:rgba(255,84,112,.4);background:var(--red-dim);}
+  .bp-status{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.02em;}
+  .bp-status.working{color:var(--blue);background:var(--blue-dim);}
+  .bp-status.placed{color:var(--blue);background:var(--blue-dim);}
+  .bp-status.filled{color:var(--green);background:var(--green-dim);}
+  .bp-status.cancelled{color:var(--text-2);background:var(--bg-3);}
+  .bp-status.active-status{color:var(--blue);background:var(--blue-dim);}
+  .bp-status.triggered{color:var(--green);background:var(--green-dim);}
   table.bp-table{width:100%;border-collapse:collapse;font-size:12.5px;}
   table.bp-table th{
     text-align:right;font-size:9.5px;letter-spacing:.06em;color:var(--text-2);text-transform:uppercase;
@@ -836,13 +847,13 @@
 
       <div class="bottom-panel">
         <div class="bp-tabs" id="bpTabs">
-          <button class="bp-tab active">Positions</button>
-          <button class="bp-tab">Orders <span class="count">(2)</span></button>
-          <button class="bp-tab">Fills</button>
-          <button class="bp-tab">Alerts</button>
-          <button class="bp-tab">Notes</button>
+          <button class="bp-tab active" data-panel="positions">Positions</button>
+          <button class="bp-tab" data-panel="orders">Open Orders <span class="count" id="bpCountOrders"></span></button>
+          <button class="bp-tab" data-panel="history">Order History</button>
+          <button class="bp-tab" data-panel="alerts">Alerts <span class="count" id="bpCountAlerts"></span></button>
         </div>
-        <div class="bp-table-wrap">
+
+        <div class="bp-table-wrap active" id="bpPanel-positions">
           <table class="bp-table">
             <thead>
               <tr>
@@ -882,6 +893,39 @@
                 <td></td>
               </tr>
             </tbody>
+          </table>
+        </div>
+
+        <div class="bp-table-wrap" id="bpPanel-orders">
+          <table class="bp-table">
+            <thead>
+              <tr>
+                <th>Symbol</th><th>Side</th><th>Type</th><th>Qty</th><th>Price</th><th>Status</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="bpBody-orders"></tbody>
+          </table>
+        </div>
+
+        <div class="bp-table-wrap" id="bpPanel-history">
+          <table class="bp-table">
+            <thead>
+              <tr>
+                <th>Symbol</th><th>Side</th><th>Qty</th><th>Price</th><th>Status</th><th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="bpBody-history"></tbody>
+          </table>
+        </div>
+
+        <div class="bp-table-wrap" id="bpPanel-alerts">
+          <table class="bp-table">
+            <thead>
+              <tr>
+                <th>Symbol</th><th>Condition</th><th>Price</th><th>Created</th><th>Status</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="bpBody-alerts"></tbody>
           </table>
         </div>
       </div>
@@ -1211,7 +1255,15 @@
 
   setupGroup('#wsTabs', '.ws-tab');
   setupGroup('#tfGroup', '.tf-btn');
-  setupGroup('#bpTabs', '.bp-tab');
+  document.querySelectorAll('#bpTabs .bp-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#bpTabs .bp-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.bottom-panel .bp-table-wrap').forEach(p=>p.classList.remove('active'));
+      const panel = document.getElementById('bpPanel-'+btn.dataset.panel);
+      if(panel) panel.classList.add('active');
+    });
+  });
   setupGroup('.range-bar .range-group', '.range-btn');
   setupGroup('.seg-3', '.seg-btn');
   setupGroup('.oe-tabs', '.oe-tab');
@@ -1266,6 +1318,16 @@
     let pendingClickPrice = BASE_PRICE;
     let activeGearTpId = null;          // which TP a gear-menu / modal call refers to
     let exitModal = null;                // {tpId, mode, pct}
+
+    /* ---------- order history & alerts state ---------- */
+    let alertCounter = 1;
+    let alerts = [];
+    function nowTimeStr(){ return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}); }
+    let orderHistory = [
+      { symbol:'ESU5', side:'buy', qty:2, price:5298.50, status:'filled', time:'09:15:32 AM' },
+      { symbol:'NQU5', side:'buy', qty:1, price:18480.00, status:'filled', time:'09:18:47 AM' },
+      { symbol:'RTYU5', side:'buy', qty:3, price:2070.00, status:'cancelled', time:'08:55:10 AM' },
+    ];
 
     /* ---------- helpers ---------- */
     function fmt(n, dec){ dec = dec===undefined?2:dec;
@@ -1336,7 +1398,7 @@
     });
     document.getElementById('ctxLong').addEventListener('click', ()=>{ createOrder('buy', pendingClickPrice); closeAllPopovers(); });
     document.getElementById('ctxShort').addEventListener('click', ()=>{ createOrder('sell', pendingClickPrice); closeAllPopovers(); });
-    document.getElementById('ctxAlert').addEventListener('click', ()=>{ showToast('Alert set at '+fmt(pendingClickPrice), 'notifications'); closeAllPopovers(); });
+    document.getElementById('ctxAlert').addEventListener('click', ()=>{ addAlert(pendingClickPrice); closeAllPopovers(); });
     document.getElementById('ctxReset').addEventListener('click', ()=>{ showToast('Chart view reset', 'restart_alt'); closeAllPopovers(); });
     document.getElementById('ctxSettings').addEventListener('click', ()=>{ showToast('Opening chart settings…', 'settings'); closeAllPopovers(); });
 
@@ -1350,15 +1412,138 @@
         tps: [{ id: 'tp'+(tpCounter++), price: roundTick(entryPrice + dir*10), pct: 100, trailing:false }],
         sl: { price: roundTick(entryPrice - dir*5), trailing:false, atr:false }
       };
+      orderHistory.unshift({ symbol:'ESU5', side, qty:order.qty, price:order.entry, status:'placed', time:nowTimeStr() });
       render();
       showToast((side==='buy'?'Long':'Short')+' order placed at '+fmt(order.entry), side==='buy'?'north_east':'south_east');
     }
-    function cancelOrder(){ order = null; render(); closeAllPopovers(); }
+    function cancelOrder(){
+      if(order) orderHistory.unshift({ symbol:'ESU5', side:order.side, qty:order.qty, price:order.entry, status:'cancelled', time:nowTimeStr() });
+      order = null; render(); closeAllPopovers();
+    }
+    function removeTp(id){
+      if(!order) return;
+      order.tps = order.tps.filter(t=>t.id!==id);
+      render();
+    }
+    function removeSl(){
+      if(!order) return;
+      order.sl = null;
+      render();
+    }
     function addDefaultSL(){
       if(!order) return;
       const dir = order.side==='buy'?1:-1;
       order.sl = { price: roundTick(order.entry - dir*5), trailing:false, atr:false };
       render();
+    }
+
+    /* ---------- alerts ---------- */
+    function addAlert(price){
+      const lastEl = document.getElementById('hdrLast');
+      const last = lastEl ? parseFloat(lastEl.textContent.replace(/,/g,'')) : BASE_PRICE;
+      const condition = price >= last ? 'Crosses Above' : 'Crosses Below';
+      alerts.unshift({ id:'al'+(alertCounter++), symbol:'ESU5', price:roundTick(price), condition, status:'active', created:nowTimeStr() });
+      renderAlerts();
+      showToast('Alert set: ESU5 '+condition.toLowerCase()+' '+fmt(roundTick(price)), 'notifications');
+    }
+    function removeAlert(id){
+      alerts = alerts.filter(a=>a.id!==id);
+      renderAlerts();
+    }
+    function renderAlerts(){
+      const body = document.getElementById('bpBody-alerts');
+      if(!body) return;
+      if(alerts.length===0){
+        body.innerHTML = '<tr class="bp-empty-row"><td colspan="6">No alerts yet — right-click the chart and choose "Add Alert Here".</td></tr>';
+      } else {
+        body.innerHTML = alerts.map(a=>
+          '<tr>'+
+            '<td><span class="sym-cell"><span class="sym-dot"></span>'+a.symbol+'</span></td>'+
+            '<td>'+a.condition+'</td>'+
+            '<td class="mono">'+fmt(a.price)+'</td>'+
+            '<td class="mono">'+a.created+'</td>'+
+            '<td><span class="bp-status '+(a.status==='triggered'?'triggered':'active-status')+'">'+(a.status==='triggered'?'Triggered':'Active')+'</span></td>'+
+            '<td><span class="bp-action-icon" data-remove-alert="'+a.id+'"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>'+
+          '</tr>'
+        ).join('');
+      }
+      body.querySelectorAll('[data-remove-alert]').forEach(el=>{
+        el.addEventListener('click', ()=>removeAlert(el.dataset.removeAlert));
+      });
+      const activeCount = alerts.filter(a=>a.status==='active').length;
+      const countEl = document.getElementById('bpCountAlerts');
+      if(countEl) countEl.textContent = activeCount>0 ? '('+activeCount+')' : '';
+    }
+    function renderOpenOrders(){
+      const body = document.getElementById('bpBody-orders');
+      if(!body) return;
+      const rows = [];
+      if(order){
+        const dir = order.side==='buy'?1:-1;
+        const closingSide = order.side==='buy' ? 'Sell' : 'Buy';
+        rows.push(
+          '<tr>'+
+            '<td><span class="sym-cell"><span class="sym-dot"></span>ESU5</span></td>'+
+            '<td class="'+(order.side==='buy'?'up':'down')+'">'+(order.side==='buy'?'Buy':'Sell')+'</td>'+
+            '<td>'+order.orderType+'</td>'+
+            '<td class="mono">'+order.qty+'</td>'+
+            '<td class="mono">'+fmt(order.entry)+'</td>'+
+            '<td><span class="bp-status working">Working</span></td>'+
+            '<td><span class="bp-action-icon" data-cancel-entry="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>'+
+          '</tr>'
+        );
+        order.tps.forEach(tp=>{
+          const tpQty = Math.max(1, Math.round(order.qty*tp.pct/100));
+          rows.push(
+            '<tr>'+
+              '<td><span class="sym-cell"><span class="sym-dot"></span>ESU5</span></td>'+
+              '<td class="'+(closingSide==='Buy'?'up':'down')+'">'+closingSide+'</td>'+
+              '<td>Limit (TP)</td>'+
+              '<td class="mono">'+tpQty+'</td>'+
+              '<td class="mono">'+fmt(tp.price)+'</td>'+
+              '<td><span class="bp-status working">Working</span></td>'+
+              '<td><span class="bp-action-icon" data-cancel-tp="'+tp.id+'"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>'+
+            '</tr>'
+          );
+        });
+        if(order.sl){
+          rows.push(
+            '<tr>'+
+              '<td><span class="sym-cell"><span class="sym-dot"></span>ESU5</span></td>'+
+              '<td class="'+(closingSide==='Buy'?'up':'down')+'">'+closingSide+'</td>'+
+              '<td>Stop (SL)</td>'+
+              '<td class="mono">'+order.qty+'</td>'+
+              '<td class="mono">'+fmt(order.sl.price)+'</td>'+
+              '<td><span class="bp-status working">Working</span></td>'+
+              '<td><span class="bp-action-icon" data-cancel-sl="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>'+
+            '</tr>'
+          );
+        }
+      }
+      body.innerHTML = rows.length ? rows.join('') : '<tr class="bp-empty-row"><td colspan="7">No open orders — right-click the chart to trade.</td></tr>';
+      body.querySelectorAll('[data-cancel-entry]').forEach(el=>el.addEventListener('click', cancelOrder));
+      body.querySelectorAll('[data-cancel-tp]').forEach(el=>el.addEventListener('click', ()=>removeTp(el.dataset.cancelTp)));
+      body.querySelectorAll('[data-cancel-sl]').forEach(el=>el.addEventListener('click', removeSl));
+      const countEl = document.getElementById('bpCountOrders');
+      if(countEl) countEl.textContent = rows.length>0 ? '('+rows.length+')' : '';
+    }
+    function renderOrderHistory(){
+      const body = document.getElementById('bpBody-history');
+      if(!body) return;
+      if(orderHistory.length===0){
+        body.innerHTML = '<tr class="bp-empty-row"><td colspan="6">No order history yet.</td></tr>';
+        return;
+      }
+      body.innerHTML = orderHistory.map(h=>
+        '<tr>'+
+          '<td><span class="sym-cell"><span class="sym-dot"></span>'+h.symbol+'</span></td>'+
+          '<td class="'+(h.side==='buy'?'up':'down')+'">'+(h.side==='buy'?'Buy':'Sell')+'</td>'+
+          '<td class="mono">'+h.qty+'</td>'+
+          '<td class="mono">'+fmt(h.price)+'</td>'+
+          '<td><span class="bp-status '+h.status+'">'+h.status.charAt(0).toUpperCase()+h.status.slice(1)+'</span></td>'+
+          '<td class="mono">'+h.time+'</td>'+
+        '</tr>'
+      ).join('');
     }
     function syncQtyFromRisk(){
       if(!order || order.sizeMode!=='risk' || !order.sl) return;
@@ -1441,29 +1626,23 @@
       const plotW = Math.max(0, w-AXIS_RIGHT_W);
       const ih = Math.max(0, h-AXIS_BOTTOM_H);
       const upColor = '#1fd980', downColor = '#ff5470';
-      const gridColor = '#161c26', axisLineColor = '#202a37', labelColor = '#5e6878';
+      const axisLineColor = '#202a37', labelColor = '#5e6878';
 
       const n = candleBars.length;
       const slot = plotW/n;
       const bodyW = Math.max(2, slot*0.6);
 
-      /* ---- price axis gridlines (drawn first, behind candles) ---- */
+      /* ---- price axis labels (no gridlines — just the right-edge scale) ---- */
       const targetPxGap = 56;
       const priceStep = niceStep(targetPxGap/PX_PER_POINT);
       const topPrice = yToPrice(0, h);
       const botPrice = yToPrice(ih, h);
-      ctx.strokeStyle = gridColor;
       ctx.fillStyle = labelColor;
       ctx.font = '11px "JetBrains Mono", monospace';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.lineWidth = 1;
       for(let p = Math.ceil(botPrice/priceStep)*priceStep; p <= topPrice; p += priceStep){
-        const y = priceToY(p, h);
-        ctx.beginPath();
-        ctx.moveTo(0, y); ctx.lineTo(plotW, y);
-        ctx.stroke();
-        ctx.fillText(fmt(p), plotW+8, y);
+        ctx.fillText(fmt(p), plotW+8, priceToY(p, h));
       }
 
       /* ---- candles (clipped to the plot area so panning doesn't bleed into the axes) ---- */
@@ -1508,11 +1687,22 @@
       ctx.moveTo(0, ih+0.5); ctx.lineTo(plotW, ih+0.5);
       ctx.stroke();
 
-      /* ---- highlighted current-price tag ---- */
+      /* ---- dotted current-price line ---- */
       const lastBar = candleBars[n-1];
       const lastUp = lastBar.close >= lastBar.open;
       const tagColor = lastUp ? upColor : downColor;
       const tagY = clamp(priceToY(lastBar.close, h), 8, h-8);
+      ctx.save();
+      ctx.strokeStyle = tagColor;
+      ctx.globalAlpha = 0.45;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2,3]);
+      ctx.beginPath();
+      ctx.moveTo(0, tagY); ctx.lineTo(plotW, tagY);
+      ctx.stroke();
+      ctx.restore();
+
+      /* ---- highlighted current-price tag ---- */
       ctx.fillStyle = tagColor;
       ctx.fillRect(plotW, tagY-9, AXIS_RIGHT_W, 18);
       ctx.fillStyle = '#08101f';
@@ -1636,12 +1826,26 @@
         lastBar.high = Math.max(lastBar.high, last);
         lastBar.low = Math.min(lastBar.low, last);
         scheduleDrawPriceChart();
+
+        let alertsChanged = false;
+        alerts.forEach(a=>{
+          if(a.status!=='active') return;
+          const hit = a.condition==='Crosses Above' ? last>=a.price : last<=a.price;
+          if(hit){
+            a.status = 'triggered';
+            alertsChanged = true;
+            showToast('Alert triggered: ESU5 '+a.condition.toLowerCase()+' '+fmt(a.price), 'notifications_active');
+          }
+        });
+        if(alertsChanged) renderAlerts();
       }
       setInterval(tick, 1200 + Math.random()*400);
     })();
 
     /* ---------- main render ---------- */
     function render(){
+      renderOpenOrders();
+      renderOrderHistory();
       layer.innerHTML = '';
       if(!order){ return; }
       const H = rectH();
@@ -2066,6 +2270,10 @@
       showToast('Exit amount updated', 'check_circle');
     });
     editBackdrop.addEventListener('click', (e)=>{ if(e.target===editBackdrop) closeEditExitModal(); });
+
+    renderOpenOrders();
+    renderOrderHistory();
+    renderAlerts();
 
   })();
 
