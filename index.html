@@ -926,6 +926,580 @@
       background: var(--accent-dim);
     }
 
+    /* ====== Workspace panes (AI / News / Scanner) ====== */
+    .ws-pane {
+      display: none;
+      flex: 1;
+      min-height: 0;
+      flex-direction: column;
+    }
+
+    .ws-pane.active {
+      display: flex;
+    }
+
+    .wsp-header {
+      height: 44px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: var(--ink-900);
+      border-bottom: 1px solid var(--line-1);
+      gap: 16px;
+    }
+
+    .wsp-updated {
+      font-size: 11px;
+      color: var(--paper-500);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .wsp-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 20px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--ink-900);
+    }
+
+    .ai-hl {
+      color: var(--accent);
+      font-family: var(--mono);
+      font-weight: 700;
+    }
+
+    .ai-verdict-card {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      background: var(--ink-850);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-lg);
+      padding: 20px 24px;
+    }
+
+    .ai-gauge-wrap {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      flex-shrink: 0;
+    }
+
+    .ai-gauge {
+      width: 120px;
+      height: 120px;
+      transform: rotate(-90deg);
+    }
+
+    .ai-gauge-track {
+      fill: none;
+      stroke: var(--line-2);
+      stroke-width: 10;
+    }
+
+    .ai-gauge-fill {
+      fill: none;
+      stroke: var(--long);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dashoffset: 326.7;
+      transition: stroke-dashoffset 1s ease;
+    }
+
+    .ai-gauge-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ai-gauge-pct {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--paper-100);
+      line-height: 1;
+    }
+
+    .ai-gauge-lbl {
+      font-size: 10px;
+      color: var(--paper-500);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    .ai-verdict-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .ai-model-tag {
+      font-size: 10px;
+      color: var(--intel);
+      letter-spacing: .04em;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .ai-bias-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .ai-bias-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+
+    .ai-bias-chip.bullish {
+      background: var(--long-dim);
+      color: var(--long);
+    }
+
+    .ai-bias-chip .material-symbols-outlined {
+      font-size: 16px;
+    }
+
+    .ai-strength-meter {
+      display: flex;
+      gap: 3px;
+    }
+
+    .ai-strength-bar {
+      width: 14px;
+      height: 7px;
+      border-radius: 2px;
+      background: var(--line-2);
+    }
+
+    .ai-strength-bar.filled {
+      background: var(--long);
+    }
+
+    .ai-strength-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--long);
+    }
+
+    .ai-summary {
+      font-size: 12.5px;
+      color: var(--paper-300);
+      line-height: 1.55;
+      max-width: 560px;
+    }
+
+    .ai-reasons-card {
+      background: var(--ink-850);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-lg);
+      padding: 16px 20px;
+    }
+
+    .ai-reasons-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--paper-300);
+      margin-bottom: 12px;
+    }
+
+    .ai-reasons-head .material-symbols-outlined {
+      font-size: 16px;
+      color: var(--long);
+    }
+
+    .ai-reason-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .ai-reason {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      font-size: 12.5px;
+      color: var(--paper-100);
+      line-height: 1.5;
+    }
+
+    .ai-reason-ic {
+      font-size: 16px;
+      color: var(--long);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .ai-foot-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .ai-foot-stat {
+      flex: 1;
+      background: var(--ink-850);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-md);
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .ai-foot-stat .l {
+      font-size: 10px;
+      color: var(--paper-500);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .ai-foot-stat .v {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .ai-disclaimer {
+      font-size: 10.5px;
+      color: var(--paper-500);
+      line-height: 1.5;
+      max-width: 700px;
+    }
+
+    /* ---- News Intel ---- */
+    .news-card {
+      display: flex;
+      background: var(--ink-850);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-md);
+    }
+
+    .news-bar {
+      width: 4px;
+      flex-shrink: 0;
+      border-radius: var(--r-md) 0 0 var(--r-md);
+    }
+
+    .news-bar.bullish {
+      background: var(--long);
+    }
+
+    .news-bar.bearish {
+      background: var(--short);
+    }
+
+    .news-bar.neutral {
+      background: var(--line-3);
+    }
+
+    .news-main {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 16px;
+    }
+
+    .news-row-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 7px;
+      flex-wrap: wrap;
+    }
+
+    .news-time {
+      font-size: 10.5px;
+      color: var(--paper-500);
+    }
+
+    .news-src {
+      font-size: 10.5px;
+      color: var(--paper-300);
+      background: var(--ink-800);
+      border: 1px solid var(--line-2);
+      border-radius: 5px;
+      padding: 2px 7px;
+    }
+
+    .news-impact {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+
+    .news-impact.high {
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .news-impact.medium {
+      color: var(--intel);
+      background: var(--intel-dim);
+    }
+
+    .news-impact.low {
+      color: var(--paper-500);
+      background: var(--ink-800);
+    }
+
+    .news-sentiment {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10.5px;
+      font-weight: 600;
+      margin-left: auto;
+    }
+
+    .news-sentiment .material-symbols-outlined {
+      font-size: 14px;
+    }
+
+    .news-sentiment.bullish {
+      color: var(--long);
+    }
+
+    .news-sentiment.bearish {
+      color: var(--short);
+    }
+
+    .news-sentiment.neutral {
+      color: var(--paper-500);
+    }
+
+    .news-headline {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--paper-100);
+      line-height: 1.4;
+      margin-bottom: 6px;
+    }
+
+    .news-why {
+      font-size: 11.5px;
+      color: var(--paper-300);
+      line-height: 1.5;
+    }
+
+    .news-why b {
+      color: var(--accent);
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    /* ---- Market Scanner ---- */
+    .mc-strip {
+      display: flex;
+      gap: 22px;
+      background: var(--ink-850);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-md);
+      padding: 12px 18px;
+      flex-wrap: wrap;
+    }
+
+    .mc-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .mc-stat .l {
+      font-size: 10px;
+      color: var(--paper-500);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .mc-stat .v {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--paper-300);
+      background: var(--ink-850);
+      border: 1px solid var(--line-2);
+      border-radius: 999px;
+      padding: 6px 13px;
+    }
+
+    .filter-chip:hover {
+      color: var(--paper-100);
+      border-color: var(--line-3);
+    }
+
+    .filter-chip.active {
+      color: var(--accent);
+      border-color: rgba(227, 160, 57, .45);
+      background: var(--accent-dim);
+    }
+
+    .opp-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--paper-300);
+    }
+
+    .opp-head .material-symbols-outlined {
+      font-size: 16px;
+      color: var(--accent);
+    }
+
+    .top-opps {
+      display: flex;
+      gap: 12px;
+    }
+
+    .opp-card {
+      flex: 1;
+      background: var(--ink-850);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-md);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .opp-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .opp-sym {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .opp-chg {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .opp-setup {
+      font-size: 11px;
+      color: var(--paper-500);
+    }
+
+    .opp-strength {
+      display: flex;
+      gap: 4px;
+    }
+
+    .opp-strength .dot,
+    .strength-dots .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--line-2);
+      display: inline-block;
+    }
+
+    .opp-strength .dot.on,
+    .strength-dots .dot.on {
+      background: var(--accent);
+    }
+
+    .strength-dots {
+      display: inline-flex;
+      gap: 4px;
+      justify-content: center;
+    }
+
+    .scan-table th:first-child,
+    .scan-table td:first-child {
+      text-align: left;
+    }
+
+    .trend-spark {
+      width: 50px;
+      height: 20px;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .trend-spark polyline {
+      fill: none;
+      stroke-width: 1.6;
+    }
+
+    .trend-spark.up polyline {
+      stroke: var(--long);
+    }
+
+    .trend-spark.down polyline {
+      stroke: var(--short);
+    }
+
+    .trend-spark.flat polyline {
+      stroke: var(--paper-500);
+    }
+
+    .signal-badge {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 5px;
+      letter-spacing: .02em;
+    }
+
+    .signal-badge.buy {
+      color: var(--long);
+      background: var(--long-dim);
+    }
+
+    .signal-badge.sell {
+      color: var(--short);
+      background: var(--short-dim);
+    }
+
+    .signal-badge.neutral {
+      color: var(--paper-300);
+      background: var(--ink-800);
+    }
+
+    .scan-table tr[data-tags].hide-row {
+      display: none;
+    }
+
     .bottom-panel {
       height: 228px;
       flex-shrink: 0;
@@ -1642,23 +2216,23 @@
     }
 
     .bs-btn.buy {
-      background: var(--ink-800);
+      background: rgba(43, 212, 126, .1);
       border: 1px solid var(--long);
       color: var(--long);
     }
 
     .bs-btn.buy:hover {
-      background: var(--long-dim);
+      background: rgba(43, 212, 126, .2);
     }
 
     .bs-btn.sell {
-      background: var(--ink-800);
+      background: rgba(242, 73, 92, .1);
       border: 1px solid var(--short);
       color: var(--short);
     }
 
     .bs-btn.sell:hover {
-      background: var(--short-dim);
+      background: rgba(242, 73, 92, .2);
     }
 
     .join-row {
@@ -1989,15 +2563,15 @@
     }
 
     .ol-pill.tp-tag {
-      background: rgba(43, 212, 126, .14);
+      background: rgba(43, 212, 126, .4);
       color: var(--long);
-      border: 1px solid rgba(43, 212, 126, .4);
+      border: 1px solid rgba(43, 212, 126, .6);
     }
 
     .ol-pill.sl-tag {
-      background: rgba(242, 73, 92, .14);
+      background: rgba(242, 73, 92, .4);
       color: var(--short);
-      border: 1px solid rgba(242, 73, 92, .4);
+      border: 1px solid rgba(242, 73, 92, .6);
     }
 
     .ol-pill.neutral {
@@ -3019,15 +3593,15 @@
 
     <!-- ===================== WORKSPACE TABS ===================== -->
     <nav class="workspace-tabs" id="wsTabs">
-      <button class="ws-tab active"><span class="material-symbols-outlined">show_chart</span>Chart</button>
-      <button class="ws-tab"><span class="material-symbols-outlined">thermostat</span>Liquidity Heat Map</button>
-      <button class="ws-tab"><span class="material-symbols-outlined">stacked_line_chart</span>L2 Indicators</button>
-      <button class="ws-tab"><span class="material-symbols-outlined">psychology</span>Smart Money Flow</button>
-      <button class="ws-tab"><span class="material-symbols-outlined">swap_horiz</span>Order Flow</button>
-      <button class="ws-tab"><span class="material-symbols-outlined">bar_chart</span>Volume Profile</button>
-      <button class="ws-tab"><span class="material-symbols-outlined">article</span>News Intel</button>
-      <button class="ws-tab"><span class="material-symbols-outlined">smart_toy</span>AI Market Assistant</button>
-      <button class="ws-tab"><span class="material-symbols-outlined">radar</span>Market Scanner</button>
+      <button class="ws-tab active" data-ws="chart"><span class="material-symbols-outlined">show_chart</span>Chart</button>
+      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">thermostat</span>Liquidity Heat Map</button>
+      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">stacked_line_chart</span>L2 Indicators</button>
+      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">psychology</span>Smart Money Flow</button>
+      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">swap_horiz</span>Order Flow</button>
+      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">bar_chart</span>Volume Profile</button>
+      <button class="ws-tab" data-ws="news"><span class="material-symbols-outlined">article</span>News Intel</button>
+      <button class="ws-tab" data-ws="ai"><span class="material-symbols-outlined">smart_toy</span>AI Market Assistant</button>
+      <button class="ws-tab" data-ws="scanner"><span class="material-symbols-outlined">radar</span>Market Scanner</button>
     </nav>
 
     <!-- ===================== MAIN GRID ===================== -->
@@ -3128,6 +3702,7 @@
       <!-- CENTER PANEL -->
       <main class="center-panel">
 
+        <div class="ws-pane active" id="wsPane-chart">
         <div class="chart-toolbar">
           <div class="ct-left">
             <div>
@@ -3187,6 +3762,362 @@
             <button class="toggle-pill">%</button>
             <button class="toggle-pill">log</button>
             <button class="toggle-pill active">auto</button>
+          </div>
+        </div>
+        </div>
+
+        <!-- ===================== AI MARKET ASSISTANT WORKSPACE ===================== -->
+        <div class="ws-pane" id="wsPane-ai">
+          <div class="wsp-header">
+            <div class="ct-left">
+              <div>
+                <div class="ct-sym mono">ESU5</div>
+                <div class="ct-name">AI MARKET ASSISTANT</div>
+              </div>
+            </div>
+            <div class="ct-right">
+              <span class="wsp-updated"><span class="material-symbols-outlined" style="font-size:14px;">schedule</span>Updated 14s ago</span>
+              <button class="ct-icon"><span class="material-symbols-outlined">refresh</span></button>
+            </div>
+          </div>
+
+          <div class="wsp-body ai-body">
+
+            <div class="ai-verdict-card">
+              <div class="ai-gauge-wrap">
+                <svg class="ai-gauge" viewBox="0 0 120 120">
+                  <circle class="ai-gauge-track" cx="60" cy="60" r="52" />
+                  <circle class="ai-gauge-fill" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="71.9" />
+                </svg>
+                <div class="ai-gauge-center">
+                  <span class="ai-gauge-pct mono">78%</span>
+                  <span class="ai-gauge-lbl">Confidence</span>
+                </div>
+              </div>
+
+              <div class="ai-verdict-info">
+                <span class="ai-model-tag mono">ChartPrime SMC Model · v2.3</span>
+                <div class="ai-bias-row">
+                  <span class="ai-bias-chip bullish"><span class="material-symbols-outlined">trending_up</span>Bullish</span>
+                  <span class="ai-strength-meter" title="Strength: Strong">
+                    <span class="ai-strength-bar filled"></span>
+                    <span class="ai-strength-bar filled"></span>
+                    <span class="ai-strength-bar filled"></span>
+                  </span>
+                  <span class="ai-strength-lbl">Strong</span>
+                </div>
+                <p class="ai-summary">ESU5 is showing a constructive bias into the close. Structure, order flow and
+                  positioning are aligned to the upside while price respects a defended support shelf.</p>
+              </div>
+            </div>
+
+            <div class="ai-reasons-card">
+              <div class="ai-reasons-head">
+                <span class="material-symbols-outlined">checklist</span>
+                <span>Why the model is bullish</span>
+              </div>
+              <ul class="ai-reason-list">
+                <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Price is
+                  holding above a key support zone.</li>
+                <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Bullish
+                  order flow remains intact.</li>
+                <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Smart
+                  Money accumulation detected on pullbacks.</li>
+                <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Liquidity
+                  above <b class="ai-hl">5,325</b> is acting as a magnet.</li>
+                <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Market
+                  structure is shifting higher (<b class="ai-hl">HH / HL</b>).</li>
+                <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Risk-to-reward
+                  remains favorable for long setups.</li>
+              </ul>
+            </div>
+
+            <div class="ai-foot-row">
+              <div class="ai-foot-stat">
+                <span class="l">Invalidation</span>
+                <span class="v mono down">Below 5,288</span>
+              </div>
+              <div class="ai-foot-stat">
+                <span class="l">Target Zone</span>
+                <span class="v mono up">5,318 – 5,325</span>
+              </div>
+              <div class="ai-foot-stat">
+                <span class="l">Suggested R:R</span>
+                <span class="v mono">1 : 2.4</span>
+              </div>
+            </div>
+
+            <p class="ai-disclaimer">AI-generated read of current price action, order flow and positioning data. Not
+              investment advice — always confirm with your own risk plan.</p>
+          </div>
+        </div>
+
+        <!-- ===================== NEWS INTEL WORKSPACE ===================== -->
+        <div class="ws-pane" id="wsPane-news">
+          <div class="wsp-header">
+            <div class="ct-left">
+              <div>
+                <div class="ct-sym mono">ESU5</div>
+                <div class="ct-name">NEWS INTEL</div>
+              </div>
+            </div>
+            <div class="ct-right">
+              <span class="news-filter">All Sources <span class="material-symbols-outlined" style="font-size:13px;">expand_more</span></span>
+              <button class="ct-icon"><span class="material-symbols-outlined">refresh</span></button>
+            </div>
+          </div>
+
+          <div class="wsp-body news-body">
+
+            <div class="news-card" data-sentiment="bullish">
+              <div class="news-bar bullish"></div>
+              <div class="news-main">
+                <div class="news-row-top">
+                  <span class="news-time mono">09:42 AM</span>
+                  <span class="news-src">ChartPrime Order Flow</span>
+                  <span class="news-impact high">High Impact</span>
+                  <span class="news-sentiment bullish"><span class="material-symbols-outlined">trending_up</span>Bullish</span>
+                </div>
+                <div class="news-headline">Institutional desks add to S&amp;P futures longs into the close</div>
+                <div class="news-why"><b>Why it matters</b> Large block buying near 5,310 confirms the order-flow
+                  bias and raises the odds of a retest toward the <b class="ai-hl">5,325</b> liquidity pocket.</div>
+              </div>
+            </div>
+
+            <div class="news-card" data-sentiment="bullish">
+              <div class="news-bar bullish"></div>
+              <div class="news-main">
+                <div class="news-row-top">
+                  <span class="news-time mono">09:27 AM</span>
+                  <span class="news-src">ChartPrime Desk</span>
+                  <span class="news-impact medium">Medium Impact</span>
+                  <span class="news-sentiment bullish"><span class="material-symbols-outlined">trending_up</span>Bullish</span>
+                </div>
+                <div class="news-headline">ES holds firm after touching <b class="ai-hl">5,288 support</b> for the
+                  third time this week</div>
+                <div class="news-why"><b>Why it matters</b> Repeated absorption at a defended level often precedes a
+                  breakout — watch for volume confirmation above 5,312.</div>
+              </div>
+            </div>
+
+            <div class="news-card" data-sentiment="neutral">
+              <div class="news-bar neutral"></div>
+              <div class="news-main">
+                <div class="news-row-top">
+                  <span class="news-time mono">09:15 AM</span>
+                  <span class="news-src">Reuters</span>
+                  <span class="news-impact high">High Impact</span>
+                  <span class="news-sentiment neutral"><span class="material-symbols-outlined">trending_flat</span>Neutral</span>
+                </div>
+                <div class="news-headline">Fed officials signal no rush to cut, but data dependence keeps door open
+                </div>
+                <div class="news-why"><b>Why it matters</b> Removes a near-term volatility catalyst; futures likely
+                  stay range-bound until the next CPI print.</div>
+              </div>
+            </div>
+
+            <div class="news-card" data-sentiment="neutral">
+              <div class="news-bar neutral"></div>
+              <div class="news-main">
+                <div class="news-row-top">
+                  <span class="news-time mono">09:05 AM</span>
+                  <span class="news-src">Bloomberg</span>
+                  <span class="news-impact medium">Medium Impact</span>
+                  <span class="news-sentiment neutral"><span class="material-symbols-outlined">trending_flat</span>Neutral</span>
+                </div>
+                <div class="news-headline">Energy shares lag as capital rotates into mega-cap tech</div>
+                <div class="news-why"><b>Why it matters</b> Sector rotation can mask broad index strength — confirm
+                  moves with breadth, not just price.</div>
+              </div>
+            </div>
+
+            <div class="news-card" data-sentiment="bullish">
+              <div class="news-bar bullish"></div>
+              <div class="news-main">
+                <div class="news-row-top">
+                  <span class="news-time mono">08:51 AM</span>
+                  <span class="news-src">ChartPrime Order Flow</span>
+                  <span class="news-impact high">High Impact</span>
+                  <span class="news-sentiment bullish"><span class="material-symbols-outlined">trending_up</span>Bullish</span>
+                </div>
+                <div class="news-headline">Liquidity pooling above <b class="ai-hl">5,325</b> as dealers position
+                  for a gamma squeeze</div>
+                <div class="news-why"><b>Why it matters</b> Resting buy-side liquidity above price often acts as a
+                  magnet during low-resistance rallies.</div>
+              </div>
+            </div>
+
+            <div class="news-card" data-sentiment="neutral">
+              <div class="news-bar neutral"></div>
+              <div class="news-main">
+                <div class="news-row-top">
+                  <span class="news-time mono">08:30 AM</span>
+                  <span class="news-src">ChartPrime Desk</span>
+                  <span class="news-impact low">Low Impact</span>
+                  <span class="news-sentiment neutral"><span class="material-symbols-outlined">trending_flat</span>Neutral</span>
+                </div>
+                <div class="news-headline">Overnight range narrows as Asia, Europe await the US open</div>
+                <div class="news-why"><b>Why it matters</b> Compressed ranges frequently resolve with an expansion
+                  move at the cash open.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ===================== MARKET SCANNER WORKSPACE ===================== -->
+        <div class="ws-pane" id="wsPane-scanner">
+          <div class="wsp-header">
+            <div class="ct-left">
+              <div>
+                <div class="ct-sym mono">SCANNER</div>
+                <div class="ct-name">MARKET SCANNER · 8 SYMBOLS</div>
+              </div>
+            </div>
+            <div class="ct-right">
+              <button class="ct-icon"><span class="material-symbols-outlined">refresh</span></button>
+              <button class="ct-icon"><span class="material-symbols-outlined">tune</span></button>
+            </div>
+          </div>
+
+          <div class="wsp-body scanner-body">
+
+            <div class="mc-strip">
+              <div class="mc-stat"><span class="l">Advancers</span><span class="v up mono">1,842 (65%)</span></div>
+              <div class="mc-stat"><span class="l">Decliners</span><span class="v down mono">987 (35%)</span></div>
+              <div class="mc-stat"><span class="l">A/D Ratio</span><span class="v mono">1.87</span></div>
+              <div class="mc-stat"><span class="l">Breadth</span><span class="v up mono">Bullish</span></div>
+              <div class="mc-stat"><span class="l">Volatility</span><span class="v mono" style="color:var(--accent);">Elevated</span></div>
+              <div class="mc-stat"><span class="l">Session Bias</span><span class="v mono" style="color:var(--intel);">Risk-On</span></div>
+            </div>
+
+            <div class="filter-chips" id="scanFilters">
+              <button class="filter-chip" data-tag="breakout">Breakouts</button>
+              <button class="filter-chip" data-tag="pullback">Pullbacks</button>
+              <button class="filter-chip" data-tag="reversal">Reversals</button>
+              <button class="filter-chip" data-tag="highvol">High Volume</button>
+              <button class="filter-chip" data-tag="bullflow">Bullish Flow</button>
+              <button class="filter-chip" data-tag="bearflow">Bearish Flow</button>
+              <button class="filter-chip" data-tag="nearsupport">Near Support</button>
+              <button class="filter-chip" data-tag="nearresistance">Near Resistance</button>
+            </div>
+
+            <div class="opp-head"><span class="material-symbols-outlined">bolt</span>Top Opportunities</div>
+            <div class="top-opps">
+              <div class="opp-card">
+                <div class="opp-top"><span class="opp-sym">NQU5</span><span class="opp-chg up mono">+0.52%</span></div>
+                <div class="opp-setup">Breakout · Bullish Flow</div>
+                <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span></div>
+              </div>
+              <div class="opp-card">
+                <div class="opp-top"><span class="opp-sym">BTCUSD</span><span class="opp-chg up mono">+1.18%</span></div>
+                <div class="opp-setup">Bullish Flow · High Volume</div>
+                <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span></div>
+              </div>
+              <div class="opp-card">
+                <div class="opp-top"><span class="opp-sym">GCQ5</span><span class="opp-chg up mono">+0.18%</span></div>
+                <div class="opp-setup">Near Support · Pullback</div>
+                <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></div>
+              </div>
+            </div>
+
+            <table class="bp-table scan-table">
+              <thead>
+                <tr>
+                  <th style="text-align:left;">Symbol</th>
+                  <th>Last</th>
+                  <th>Change %</th>
+                  <th>Volume</th>
+                  <th>Trend</th>
+                  <th>Signal</th>
+                  <th style="text-align:left;">Setup</th>
+                  <th>Strength</th>
+                </tr>
+              </thead>
+              <tbody id="scanTableBody">
+                <tr data-tags="breakout bullflow highvol">
+                  <td style="text-align:left;"><span class="sym-cell">NQU5</span></td>
+                  <td class="mono">18,624.50</td>
+                  <td class="mono up">+0.52%</td>
+                  <td class="mono">312K</td>
+                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,18 10,16 20,17 30,11 40,12 50,5 60,6" /></svg></td>
+                  <td><span class="signal-badge buy">Buy</span></td>
+                  <td style="text-align:left;">Breakout</td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span></span></td>
+                </tr>
+                <tr data-tags="bullflow highvol">
+                  <td style="text-align:left;"><span class="sym-cell">BTCUSD</span></td>
+                  <td class="mono">63,245.0</td>
+                  <td class="mono up">+1.18%</td>
+                  <td class="mono">1.4B</td>
+                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,20 10,15 20,16 30,9 40,10 50,4 60,3" /></svg></td>
+                  <td><span class="signal-badge buy">Buy</span></td>
+                  <td style="text-align:left;">Bullish Flow</td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span></span></td>
+                </tr>
+                <tr data-tags="nearsupport pullback">
+                  <td style="text-align:left;"><span class="sym-cell">GCQ5</span></td>
+                  <td class="mono">2,346.30</td>
+                  <td class="mono up">+0.18%</td>
+                  <td class="mono">88K</td>
+                  <td><svg class="trend-spark flat" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,12 10,14 20,11 30,13 40,10 50,12 60,9" /></svg></td>
+                  <td><span class="signal-badge neutral">Watch</span></td>
+                  <td style="text-align:left;">Near Support</td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+                </tr>
+                <tr data-tags="nearresistance reversal">
+                  <td style="text-align:left;"><span class="sym-cell">ESU5</span></td>
+                  <td class="mono">5,312.25</td>
+                  <td class="mono up">+0.34%</td>
+                  <td class="mono">248K</td>
+                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,19 10,17 20,14 30,15 40,9 50,10 60,7" /></svg></td>
+                  <td><span class="signal-badge buy">Buy</span></td>
+                  <td style="text-align:left;">Near Resistance</td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+                </tr>
+                <tr data-tags="bearflow reversal nearresistance">
+                  <td style="text-align:left;"><span class="sym-cell">RTYU5</span></td>
+                  <td class="mono">2,078.40</td>
+                  <td class="mono down">-0.12%</td>
+                  <td class="mono">61K</td>
+                  <td><svg class="trend-spark down" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,5 10,8 20,7 30,11 40,10 50,15 60,17" /></svg></td>
+                  <td><span class="signal-badge sell">Sell</span></td>
+                  <td style="text-align:left;">Reversal</td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+                </tr>
+                <tr data-tags="bearflow highvol">
+                  <td style="text-align:left;"><span class="sym-cell">CLN5</span></td>
+                  <td class="mono">78.24</td>
+                  <td class="mono down">-0.45%</td>
+                  <td class="mono">156K</td>
+                  <td><svg class="trend-spark down" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,4 10,9 20,8 30,14 40,13 50,18 60,20" /></svg></td>
+                  <td><span class="signal-badge sell">Sell</span></td>
+                  <td style="text-align:left;">Bearish Flow</td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></td>
+                </tr>
+                <tr data-tags="pullback bullflow">
+                  <td style="text-align:left;"><span class="sym-cell">YMU5</span></td>
+                  <td class="mono">39,865.00</td>
+                  <td class="mono up">+0.27%</td>
+                  <td class="mono">42K</td>
+                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,16 10,17 20,13 30,14 40,10 50,11 60,8" /></svg></td>
+                  <td><span class="signal-badge buy">Buy</span></td>
+                  <td style="text-align:left;">Pullback</td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+                </tr>
+                <tr data-tags="nearsupport">
+                  <td style="text-align:left;"><span class="sym-cell">6EU5</span></td>
+                  <td class="mono">1.0843</td>
+                  <td class="mono down">-0.21%</td>
+                  <td class="mono">34K</td>
+                  <td><svg class="trend-spark flat" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,10 10,12 20,11 30,13 40,12 50,14 60,12" /></svg></td>
+                  <td><span class="signal-badge neutral">Watch</span></td>
+                  <td style="text-align:left;">Near Support</td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></td>
+                </tr>
+              </tbody>
+            </table>
+
           </div>
         </div>
 
@@ -3742,7 +4673,27 @@
       });
     }
 
-    setupGroup('#wsTabs', '.ws-tab');
+    document.querySelectorAll('#wsTabs .ws-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#wsTabs .ws-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.center-panel .ws-pane').forEach(p => p.classList.remove('active'));
+        const ws = btn.dataset.ws || 'chart';
+        const pane = document.getElementById('wsPane-' + ws);
+        (pane || document.getElementById('wsPane-chart')).classList.add('active');
+      });
+    });
+    document.querySelectorAll('#scanFilters .filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        chip.classList.toggle('active');
+        const activeTags = Array.from(document.querySelectorAll('#scanFilters .filter-chip.active')).map(c => c.dataset.tag);
+        document.querySelectorAll('#scanTableBody tr[data-tags]').forEach(row => {
+          const tags = row.dataset.tags.split(' ');
+          const show = activeTags.length === 0 || activeTags.some(t => tags.includes(t));
+          row.classList.toggle('hide-row', !show);
+        });
+      });
+    });
     setupGroup('#tfGroup', '.tf-btn');
     document.querySelectorAll('#bpTabs .bp-tab').forEach(btn => {
       btn.addEventListener('click', () => {
