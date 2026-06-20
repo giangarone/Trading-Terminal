@@ -1372,15 +1372,15 @@
 
     .news-impact {
       font-size: 10px;
-      font-weight: 700;
+      font-weight: 600;
       letter-spacing: .03em;
       padding: 2px 7px;
       border-radius: 5px;
     }
 
     .news-impact.high {
-      color: var(--intel);
-      background: var(--intel-dim);
+      color: var(--accent);
+      background: var(--accent-dim);
     }
 
     .news-impact.medium {
@@ -4108,7 +4108,7 @@
 
         <div class="symbol-block">
           <div class="symbol-select">
-            <span class="sym">ETH</span>
+            <span class="sym">ETHUSD</span>
             <span class="material-symbols-outlined" style="font-size:16px;color:var(--paper-500);">expand_more</span>
           </div>
           <div class="symbol-meta">
@@ -4216,9 +4216,9 @@
           <div class="wl-cols"><span>Symbol</span><span style="text-align:right;">Last</span><span
               style="text-align:right;">Chg%</span></div>
           <div id="wlRows">
-            <div class="wl-row selected" data-sym="ETH" data-cat="crypto" tabindex="0" role="button">
-              <span class="wl-sym">ETH</span><span class="wl-last" id="wlLast-ETH">4,500.25</span><span
-                class="wl-chg up" id="wlChg-ETH">+0.41%</span>
+            <div class="wl-row selected" data-sym="ETHUSD" data-cat="crypto" tabindex="0" role="button">
+              <span class="wl-sym">ETHUSD</span><span class="wl-last" id="wlLast-ETHUSD">4,500.25</span><span
+                class="wl-chg up" id="wlChg-ETHUSD">+0.41%</span>
             </div>
             <div class="wl-row" data-sym="BTCUSD" data-cat="crypto" tabindex="0" role="button">
               <span class="wl-sym">BTCUSD</span><span class="wl-last" id="wlLast-BTCUSD">63,245.0</span><span
@@ -4231,6 +4231,14 @@
             <div class="wl-row" data-sym="XRPUSD" data-cat="crypto" tabindex="0" role="button">
               <span class="wl-sym">XRPUSD</span><span class="wl-last" id="wlLast-XRPUSD">0.5210</span><span
                 class="wl-chg up" id="wlChg-XRPUSD">+1.40%</span>
+            </div>
+            <div class="wl-row" data-sym="BNBUSD" data-cat="crypto" tabindex="0" role="button">
+              <span class="wl-sym">BNBUSD</span><span class="wl-last" id="wlLast-BNBUSD">589.40</span><span
+                class="wl-chg up" id="wlChg-BNBUSD">+0.85%</span>
+            </div>
+            <div class="wl-row" data-sym="DOGEUSD" data-cat="crypto" tabindex="0" role="button">
+              <span class="wl-sym">DOGEUSD</span><span class="wl-last" id="wlLast-DOGEUSD">0.1620</span><span
+                class="wl-chg up" id="wlChg-DOGEUSD">+2.30%</span>
             </div>
             <div class="wl-row" data-sym="AAPL" data-cat="stocks" style="display:none;" tabindex="0" role="button">
               <span class="wl-sym">AAPL</span><span class="wl-last" id="wlLast-AAPL">187.42</span><span
@@ -4247,6 +4255,14 @@
             <div class="wl-row" data-sym="MSFT" data-cat="stocks" style="display:none;" tabindex="0" role="button">
               <span class="wl-sym">MSFT</span><span class="wl-last" id="wlLast-MSFT">415.30</span><span
                 class="wl-chg up" id="wlChg-MSFT">+0.33%</span>
+            </div>
+            <div class="wl-row" data-sym="AMZN" data-cat="stocks" style="display:none;" tabindex="0" role="button">
+              <span class="wl-sym">AMZN</span><span class="wl-last" id="wlLast-AMZN">186.20</span><span
+                class="wl-chg up" id="wlChg-AMZN">+0.95%</span>
+            </div>
+            <div class="wl-row" data-sym="GOOGL" data-cat="stocks" style="display:none;" tabindex="0" role="button">
+              <span class="wl-sym">GOOGL</span><span class="wl-last" id="wlLast-GOOGL">175.80</span><span
+                class="wl-chg down" id="wlChg-GOOGL">-0.40%</span>
             </div>
             <div class="wl-row" data-sym="NQU5" data-cat="futures" style="display:none;" tabindex="0" role="button">
               <span class="wl-sym">NQU5</span><span class="wl-last" id="wlLast-NQU5">18,624.50</span><span
@@ -4287,6 +4303,14 @@
             <div class="wl-row" data-sym="AUDUSD" data-cat="forex" style="display:none;" tabindex="0" role="button">
               <span class="wl-sym">AUDUSD</span><span class="wl-last" id="wlLast-AUDUSD">0.6512</span><span
                 class="wl-chg down" id="wlChg-AUDUSD">-0.15%</span>
+            </div>
+            <div class="wl-row" data-sym="USDCAD" data-cat="forex" style="display:none;" tabindex="0" role="button">
+              <span class="wl-sym">USDCAD</span><span class="wl-last" id="wlLast-USDCAD">1.3625</span><span
+                class="wl-chg up" id="wlChg-USDCAD">+0.05%</span>
+            </div>
+            <div class="wl-row" data-sym="NZDUSD" data-cat="forex" style="display:none;" tabindex="0" role="button">
+              <span class="wl-sym">NZDUSD</span><span class="wl-last" id="wlLast-NZDUSD">0.6022</span><span
+                class="wl-chg down" id="wlChg-NZDUSD">-0.30%</span>
             </div>
           </div>
           <div class="wl-empty" id="wlEmpty" style="display:none;">No symbols match your search.</div>
@@ -4358,7 +4382,7 @@
           <div class="chart-toolbar">
             <div class="ct-left">
               <div>
-                <div class="ct-sym">ETH</div>
+                <div class="ct-sym">ETHUSD</div>
                 <div class="ct-name">ETHEREUM</div>
               </div>
               <div class="tf-group" id="tfGroup">
@@ -4426,7 +4450,7 @@
           <div class="wsp-header">
             <div class="ct-left">
               <div>
-                <div class="ct-sym">ETH</div>
+                <div class="ct-sym">ETHUSD</div>
                 <div class="ct-name">AI MARKET ASSISTANT</div>
               </div>
             </div>
@@ -4516,7 +4540,7 @@
           <div class="wsp-header">
             <div class="ct-left">
               <div>
-                <div class="ct-sym">ETH</div>
+                <div class="ct-sym">ETHUSD</div>
                 <div class="ct-name">NEWS INTEL</div>
               </div>
             </div>
@@ -4797,7 +4821,7 @@
                         class="dot"></span></span></td>
                 </tr>
                 <tr data-tags="nearresistance reversal">
-                  <td style="text-align:left;"><span class="sym-cell">ETH</span></td>
+                  <td style="text-align:left;"><span class="sym-cell">ETHUSD</span></td>
                   <td>4,500.25</td>
                   <td class="up">+0.41%</td>
                   <td>248K</td>
@@ -4947,15 +4971,15 @@
                 </tr>
               </thead>
               <tbody>
-                <tr data-pos-row="ETH">
-                  <td><span class="sym-cell">ETH</span></td>
+                <tr data-pos-row="ETHUSD">
+                  <td><span class="sym-cell">ETHUSD</span></td>
                   <td>2</td>
                   <td>4,486.50</td>
-                  <td id="posMark-ETH">4,500.25</td>
-                  <td class="up" id="posPnlOpen-ETH">+2,750.00</td>
-                  <td class="up" id="posPnlDay-ETH">+1,950.00</td>
-                  <td class="up" id="posPct-ETH">+0.74%</td>
-                  <td><span class="material-symbols-outlined action-dots" data-pos-actions="ETH">more_horiz</span></td>
+                  <td id="posMark-ETHUSD">4,500.25</td>
+                  <td class="up" id="posPnlOpen-ETHUSD">+2,750.00</td>
+                  <td class="up" id="posPnlDay-ETHUSD">+1,950.00</td>
+                  <td class="up" id="posPct-ETHUSD">+0.74%</td>
+                  <td><span class="material-symbols-outlined action-dots" data-pos-actions="ETHUSD">more_horiz</span></td>
                 </tr>
                 <tr data-pos-row="NQU5">
                   <td><span class="sym-cell">NQU5</span></td>
@@ -6029,7 +6053,7 @@
       let alerts = [];
       function nowTimeStr() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
       let orderHistory = [
-        { symbol: 'ETH', side: 'buy', qty: 2, price: 4486.50, status: 'filled', time: '09:15:32 AM' },
+        { symbol: 'ETHUSD', side: 'buy', qty: 2, price: 4486.50, status: 'filled', time: '09:15:32 AM' },
         { symbol: 'NQU5', side: 'buy', qty: 1, price: 18480.00, status: 'filled', time: '09:18:47 AM' },
         { symbol: 'RTYU5', side: 'buy', qty: 3, price: 2070.00, status: 'cancelled', time: '08:55:10 AM' },
       ];
@@ -6157,12 +6181,12 @@
           tps: [{ id: 'tp' + (tpCounter++), price: tpPrice, pct: 100, trailing: false }],
           sl: { price: roundTick(entry - dir * tpDist), trailing: false, atr: false }
         };
-        orderHistory.unshift({ symbol: 'ETH', side, qty: order.qty, price: order.entry, status: 'placed', time: nowTimeStr() });
+        orderHistory.unshift({ symbol: 'ETHUSD', side, qty: order.qty, price: order.entry, status: 'placed', time: nowTimeStr() });
         render();
         showToast((side === 'buy' ? 'Long' : 'Short') + ' order placed at ' + fmt(order.entry), side === 'buy' ? 'north_east' : 'south_east');
       }
       function cancelOrder() {
-        if (order) orderHistory.unshift({ symbol: 'ETH', side: order.side, qty: order.qty, price: order.entry, status: 'cancelled', time: nowTimeStr() });
+        if (order) orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'cancelled', time: nowTimeStr() });
         order = null; render(); closeAllPopovers();
       }
       function removeTp(id) {
@@ -6187,10 +6211,10 @@
         const lastEl = document.getElementById('hdrLast');
         const last = lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
         const condition = price >= last ? 'Crosses Above' : 'Crosses Below';
-        alerts.unshift({ id: 'al' + (alertCounter++), symbol: 'ETH', price: roundTick(price), condition, status: 'active', created: nowTimeStr() });
+        alerts.unshift({ id: 'al' + (alertCounter++), symbol: 'ETHUSD', price: roundTick(price), condition, status: 'active', created: nowTimeStr() });
         renderAlerts();
         render();
-        showToast('Alert set: ETH ' + condition.toLowerCase() + ' ' + fmt(roundTick(price)), 'notifications');
+        showToast('Alert set: ETHUSD ' + condition.toLowerCase() + ' ' + fmt(roundTick(price)), 'notifications');
       }
       function removeAlert(id) {
         alerts = alerts.filter(a => a.id !== id);
@@ -6230,7 +6254,7 @@
           const closingSide = order.side === 'buy' ? 'Sell' : 'Buy';
           rows.push(
             '<tr>' +
-            '<td><span class="sym-cell">ETH</span></td>' +
+            '<td><span class="sym-cell">ETHUSD</span></td>' +
             '<td class="' + (order.side === 'buy' ? 'up' : 'down') + '">' + (order.side === 'buy' ? 'Buy' : 'Sell') + '</td>' +
             '<td>' + order.orderType + '</td>' +
             '<td>' + order.qty + '</td>' +
@@ -6243,7 +6267,7 @@
             const tpQty = Math.max(1, Math.round(order.qty * tp.pct / 100));
             rows.push(
               '<tr>' +
-              '<td><span class="sym-cell">ETH</span></td>' +
+              '<td><span class="sym-cell">ETHUSD</span></td>' +
               '<td class="' + (closingSide === 'Buy' ? 'up' : 'down') + '">' + closingSide + '</td>' +
               '<td>Limit (TP)</td>' +
               '<td>' + tpQty + '</td>' +
@@ -6256,7 +6280,7 @@
           if (order.sl) {
             rows.push(
               '<tr>' +
-              '<td><span class="sym-cell">ETH</span></td>' +
+              '<td><span class="sym-cell">ETHUSD</span></td>' +
               '<td class="' + (closingSide === 'Buy' ? 'up' : 'down') + '">' + closingSide + '</td>' +
               '<td>Stop (SL)</td>' +
               '<td>' + order.qty + '</td>' +
@@ -6653,8 +6677,8 @@
           hdrAsk: document.getElementById('hdrAsk'),
           hdrDayHigh: document.getElementById('hdrDayHigh'),
           hdrDayLow: document.getElementById('hdrDayLow'),
-          wlLast: document.getElementById('wlLast-ETH'),
-          wlChg: document.getElementById('wlChg-ETH'),
+          wlLast: document.getElementById('wlLast-ETHUSD'),
+          wlChg: document.getElementById('wlChg-ETHUSD'),
           ohlcH: document.getElementById('ohlcH'),
           ohlcL: document.getElementById('ohlcL'),
           ohlcC: document.getElementById('ohlcC'),
@@ -6718,7 +6742,7 @@
             if (hit) {
               a.status = 'triggered';
               alertsChanged = true;
-              showToast('Alert triggered: ETH ' + a.condition.toLowerCase() + ' ' + fmt(a.price), 'notifications_active');
+              showToast('Alert triggered: ETHUSD ' + a.condition.toLowerCase() + ' ' + fmt(a.price), 'notifications_active');
             }
           });
           if (alertsChanged) renderAlerts();
@@ -7341,14 +7365,20 @@
         { sym: 'BTCUSD', last: 63245.0, chgPct: 1.18, step: 0.5, dec: 1 },
         { sym: 'SOLUSD', last: 142.30, chgPct: 3.10, step: 0.05, dec: 2 },
         { sym: 'XRPUSD', last: 0.5210, chgPct: 1.40, step: 0.0005, dec: 4 },
+        { sym: 'BNBUSD', last: 589.40, chgPct: 0.85, step: 0.05, dec: 2 },
+        { sym: 'DOGEUSD', last: 0.1620, chgPct: 2.30, step: 0.0005, dec: 4 },
         { sym: 'AAPL', last: 187.42, chgPct: 0.55, step: 0.05, dec: 2 },
         { sym: 'TSLA', last: 248.50, chgPct: -1.20, step: 0.10, dec: 2 },
         { sym: 'NVDA', last: 924.10, chgPct: 2.05, step: 0.20, dec: 2 },
         { sym: 'MSFT', last: 415.30, chgPct: 0.33, step: 0.05, dec: 2 },
+        { sym: 'AMZN', last: 186.20, chgPct: 0.95, step: 0.05, dec: 2 },
+        { sym: 'GOOGL', last: 175.80, chgPct: -0.40, step: 0.05, dec: 2 },
         { sym: 'EURUSD', last: 1.0843, chgPct: -0.12, step: 0.0001, dec: 4 },
         { sym: 'GBPUSD', last: 1.2674, chgPct: -0.08, step: 0.0001, dec: 4 },
         { sym: 'USDJPY', last: 149.82, chgPct: 0.21, step: 0.01, dec: 2 },
         { sym: 'AUDUSD', last: 0.6512, chgPct: -0.15, step: 0.0001, dec: 4 },
+        { sym: 'USDCAD', last: 1.3625, chgPct: 0.05, step: 0.0001, dec: 4 },
+        { sym: 'NZDUSD', last: 0.6022, chgPct: -0.30, step: 0.0001, dec: 4 },
       ];
       watchSyms.forEach(s => {
         s.prevClose = s.last / (1 + s.chgPct / 100);
@@ -7370,7 +7400,7 @@
         };
       }
       const positions = [
-        makePosition('ETH', 2, 4486.50, 4500.25, 2750.00, 1950.00, 0.74),
+        makePosition('ETHUSD', 2, 4486.50, 4500.25, 2750.00, 1950.00, 0.74),
         makePosition('NQU5', 1, 18480.00, 18624.50, 1445.00, 980.00, 0.78),
       ];
       const totPnlOpenEl = document.getElementById('totPnlOpen');
@@ -7396,7 +7426,7 @@
         // ETH position mark price mirrors the header/chart simulation already on screen
         const esLast = parseFloat(document.getElementById('hdrLast').textContent.replace(/,/g, ''));
         const nq = watchSyms.find(s => s.sym === 'NQU5');
-        const markBySym = { ETH: esLast, NQU5: nq.last };
+        const markBySym = { ETHUSD: esLast, NQU5: nq.last };
 
         let sumPnlOpen = 0, sumPnlDay = 0, sumBase = 0;
         positions.forEach(p => {
