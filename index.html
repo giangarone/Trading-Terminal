@@ -110,7 +110,7 @@
   .symbol-meta .session{font-size:10.5px;color:var(--text-2);display:flex;align-items:center;gap:5px;}
   .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px var(--green-dim);}
 
-  .tb-stats{display:flex;align-items:center;gap:26px;flex:1;justify-content:center;min-width:0;overflow:hidden;}
+  .tb-stats{display:flex;align-items:center;gap:26px;flex:1;justify-content:flex-start;min-width:0;overflow:hidden;}
   .stat{display:flex;flex-direction:column;gap:2px;min-width:60px;}
   .stat .lbl{font-size:9.5px;color:var(--text-2);letter-spacing:.1em;text-transform:uppercase;}
   .stat .val{font-size:13.5px;font-weight:600;}
@@ -137,6 +137,15 @@
     position:absolute;top:0;right:4px;
     background:var(--red);color:#fff;font-size:9px;font-weight:700;
     border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;
+  }
+
+  /* ====== Scrollable containers: keep scrolling, hide the scrollbar ====== */
+  .workspace-tabs,.left-panel,.right-panel,.bp-table-wrap,.dom-rows,.ts-rows{
+    scrollbar-width:none;-ms-overflow-style:none;
+  }
+  .workspace-tabs::-webkit-scrollbar,.left-panel::-webkit-scrollbar,.right-panel::-webkit-scrollbar,
+  .bp-table-wrap::-webkit-scrollbar,.dom-rows::-webkit-scrollbar,.ts-rows::-webkit-scrollbar{
+    display:none;
   }
 
   /* ====== Workspace tabs ====== */
@@ -188,7 +197,7 @@
   }
   .card{
     background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--r-md);
-    padding:12px;
+    padding:12px;min-width:0;
   }
   .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
   .card-title{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--text-1);text-transform:uppercase;}
@@ -196,13 +205,14 @@
   .card-head-actions .material-symbols-outlined{font-size:16px;cursor:pointer;}
   .card-head-actions .material-symbols-outlined:hover{color:var(--text-0);}
 
-  .wl-cols{display:grid;grid-template-columns:1fr 64px 56px;gap:4px;font-size:9.5px;color:var(--text-2);letter-spacing:.05em;text-transform:uppercase;padding:0 6px 6px;}
+  .wl-cols{display:grid;grid-template-columns:minmax(36px,1fr) 64px 56px;gap:4px;font-size:9.5px;color:var(--text-2);letter-spacing:.05em;text-transform:uppercase;padding:0 6px 6px;min-width:0;}
   .wl-row{
-    display:grid;grid-template-columns:1fr 64px 56px;gap:4px;align-items:center;
-    padding:7px 6px;border-radius:6px;cursor:pointer;
+    display:grid;grid-template-columns:minmax(36px,1fr) 64px 56px;gap:4px;align-items:center;
+    padding:7px 6px;border-radius:6px;cursor:pointer;min-width:0;
   }
   .wl-row:hover{background:var(--bg-3);}
   .wl-row.selected{background:var(--blue-dim);}
+  .wl-cols span,.wl-sym,.wl-last,.wl-chg{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .wl-sym{font-weight:600;font-size:12px;}
   .wl-last{font-size:12px;text-align:right;}
   .wl-chg{font-size:11px;text-align:right;font-weight:500;}
@@ -408,7 +418,7 @@
   .tif-field{flex:1.3;}
   .oco-field{flex:1;display:flex;flex-direction:column;align-items:flex-start;}
 
-  .switch{width:38px;height:21px;border-radius:11px;background:var(--bg-4);border:1px solid var(--border-2);position:relative;flex-shrink:0;}
+  .switch{width:38px;height:21px;border-radius:11px;background:var(--bg-4);border:1px solid var(--border-2);position:relative;flex-shrink:0;cursor:pointer;}
   .switch::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--text-1);transition:.18s;}
   .switch.on{background:var(--blue-dim);border-color:rgba(79,141,249,.5);}
   .switch.on::after{left:19px;background:var(--blue);}
@@ -480,6 +490,20 @@
   .ol-line.tp{border-color:rgba(31,217,128,.5);}
   .ol-line.sl{border-color:rgba(255,84,112,.5);}
   .ol-line.ghost{border-color:rgba(255,255,255,.16);}
+  .ol-line.alert{border-color:rgba(243,185,79,.55);transition:border-color .12s;}
+
+  .ol-alert-hit{position:absolute;left:0;right:0;height:13px;margin-top:-6.5px;pointer-events:auto;z-index:4;cursor:pointer;}
+  .ol-alert-hit .ol-line.alert{top:50%;}
+  .ol-alert-hit:hover .ol-line.alert{border-color:var(--amber);}
+  .ol-alert-tag{
+    position:absolute;right:84px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:6px;
+    background:var(--amber-dim);color:var(--amber);border:1px solid rgba(243,185,79,.4);
+    padding:3px 4px 3px 8px;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--mono);
+    opacity:0;pointer-events:none;transition:opacity .12s;white-space:nowrap;
+  }
+  .ol-alert-hit:hover .ol-alert-tag{opacity:1;pointer-events:auto;}
+  .ol-alert-del{display:flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;color:var(--amber);cursor:pointer;}
+  .ol-alert-del:hover{background:rgba(243,185,79,.25);}
 
   .ol-entry-bar{position:absolute;right:84px;transform:translateY(-50%);display:flex;align-items:center;gap:6px;pointer-events:auto;z-index:6;}
   .ol-pill{display:flex;align-items:center;gap:5px;height:30px;padding:0 11px;border-radius:7px;font-size:11.5px;font-weight:700;white-space:nowrap;letter-spacing:.02em;}
@@ -661,7 +685,6 @@
 
     <div class="tb-stats">
       <div class="stat">
-        <span class="lbl">Last</span>
         <span class="val lg mono" id="hdrLast">5,312.25</span>
         <span class="chg up mono" id="hdrChg">+18.25 (+0.34%)</span>
       </div>
@@ -838,7 +861,6 @@
         </div>
         <div class="ct-right">
           <button class="ct-action-btn"><span class="material-symbols-outlined" style="font-size:15px;">function</span>Indicators</button>
-          <button class="ct-action-btn"><span class="material-symbols-outlined" style="font-size:15px;">link</span>Add Chart Link</button>
           <button class="ct-icon"><span class="material-symbols-outlined">edit</span></button>
           <button class="ct-icon"><span class="material-symbols-outlined">add</span></button>
           <button class="ct-icon"><span class="material-symbols-outlined">view_column</span></button>
@@ -1407,8 +1429,8 @@
       document.addEventListener('mouseup', up);
     });
   }
-  setupHorizontalResize(document.getElementById('leftResizeHandle'), document.querySelector('.left-panel'), 'left', 200, 480);
-  setupHorizontalResize(document.getElementById('rightResizeHandle'), document.querySelector('.right-panel'), 'right', 240, 520);
+  setupHorizontalResize(document.getElementById('leftResizeHandle'), document.querySelector('.left-panel'), 'left', 230, 480);
+  setupHorizontalResize(document.getElementById('rightResizeHandle'), document.querySelector('.right-panel'), 'right', 260, 520);
   setupVerticalResize(document.getElementById('bottomResizeHandle'), document.querySelector('.bottom-panel'), 100, 560);
 
   document.querySelectorAll('.wl-row').forEach(row=>{
@@ -1584,11 +1606,13 @@
       const condition = price >= last ? 'Crosses Above' : 'Crosses Below';
       alerts.unshift({ id:'al'+(alertCounter++), symbol:'ESU5', price:roundTick(price), condition, status:'active', created:nowTimeStr() });
       renderAlerts();
+      render();
       showToast('Alert set: ESU5 '+condition.toLowerCase()+' '+fmt(roundTick(price)), 'notifications');
     }
     function removeAlert(id){
       alerts = alerts.filter(a=>a.id!==id);
       renderAlerts();
+      render();
     }
     function renderAlerts(){
       const body = document.getElementById('bpBody-alerts');
@@ -1966,7 +1990,7 @@
     let panStart = { x:0, y:0, panX:0, panY:0 };
     chart.addEventListener('mousedown', (e)=>{
       if(e.button !== 0) return;
-      if(e.target.closest('.ol-entry-bar, .ol-side-row, .ol-rr-footer, .pop-menu, .ctx-menu')) return;
+      if(e.target.closest('.ol-entry-bar, .ol-side-row, .ol-rr-footer, .ol-alert-hit, .pop-menu, .ctx-menu')) return;
       isPanning = true;
       chart.classList.add('panning');
       panStart = { x: e.clientX, y: e.clientY, panX, panY };
@@ -2109,6 +2133,23 @@
       renderOpenOrders();
       renderOrderHistory();
       layer.innerHTML = '';
+      const H0 = rectH();
+      alerts.forEach(a=>{
+        const y = clamp(priceToY(a.price, H0), 10, H0-10);
+        const hit = document.createElement('div');
+        hit.className = 'ol-alert-hit';
+        hit.style.top = y+'px';
+        hit.innerHTML =
+          '<div class="ol-line alert"></div>'+
+          '<div class="ol-alert-tag">'+fmt(a.price)+
+            '<span class="ol-alert-del" data-del-alert="'+a.id+'"><span class="material-symbols-outlined" style="font-size:13px;">close</span></span>'+
+          '</div>';
+        layer.appendChild(hit);
+        hit.querySelector('[data-del-alert]').addEventListener('click', (e)=>{
+          e.stopPropagation();
+          removeAlert(a.id);
+        });
+      });
       if(!order){ return; }
       const H = rectH();
 
