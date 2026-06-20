@@ -249,16 +249,12 @@
 
   .chart-placeholder{
     flex:1;position:relative;overflow:hidden;
-    background:
-      radial-gradient(circle at 50% 35%, rgba(79,141,249,.04), transparent 60%),
-      var(--bg-0);
-    background-image:
-      radial-gradient(circle at 50% 35%, rgba(79,141,249,.05), transparent 60%);
+    background:var(--bg-0);
     display:flex;align-items:center;justify-content:center;
   }
   #priceChartCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
-  @keyframes flashUp{0%{background:rgba(31,217,128,.35);}100%{background:transparent;}}
-  @keyframes flashDown{0%{background:rgba(255,84,112,.35);}100%{background:transparent;}}
+  @keyframes flashUp{0%{color:var(--green);}100%{color:inherit;}}
+  @keyframes flashDown{0%{color:var(--red);}100%{color:inherit;}}
   .flash-up{animation:flashUp .6s ease-out;}
   .flash-down{animation:flashDown .6s ease-out;}
   .cp-empty{display:flex;flex-direction:column;align-items:center;gap:10px;opacity:.55;}
@@ -320,6 +316,36 @@
   .oe-tab{flex:1;text-align:center;font-size:11px;font-weight:600;padding:6px 0;border-radius:5px;color:var(--text-1);letter-spacing:.03em;background:transparent;}
   .oe-tab:hover:not(.active){color:var(--text-0);background:var(--bg-2);}
   .oe-tab.active{background:var(--bg-4);color:var(--text-0);}
+  .oe-panel{display:none;}
+  .oe-panel.active{display:block;}
+
+  .dom-head,.ts-head{
+    display:grid;font-size:9.5px;letter-spacing:.06em;color:var(--text-2);text-transform:uppercase;font-weight:600;
+    padding:0 4px 6px;border-bottom:1px solid var(--border-0);margin-bottom:2px;
+  }
+  .dom-head{grid-template-columns:1fr 1fr 1fr;}
+  .ts-head{grid-template-columns:1fr 1fr 1fr 0.8fr;}
+  .dom-head span:not(:first-child),.ts-head span:not(:first-child){text-align:right;}
+  .dom-rows{display:flex;flex-direction:column;max-height:360px;overflow-y:auto;}
+  .dom-row{
+    display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;font-size:12px;font-family:var(--mono);
+    padding:4px;border-radius:5px;position:relative;
+  }
+  .dom-row .dom-price{font-weight:600;text-align:left;z-index:1;}
+  .dom-row .dom-bid,.dom-row .dom-ask{text-align:right;z-index:1;cursor:pointer;padding:2px 4px;border-radius:4px;}
+  .dom-row .dom-bid:hover{background:rgba(31,217,128,.18);}
+  .dom-row .dom-ask:hover{background:rgba(255,84,112,.18);}
+  .dom-row.dom-current{background:var(--bg-3);}
+  .dom-row.dom-current .dom-price{color:var(--blue);}
+  .dom-bar{position:absolute;top:2px;bottom:2px;border-radius:4px;z-index:0;}
+  .dom-bar.bid{background:rgba(31,217,128,.14);right:33.4%;}
+  .dom-bar.ask{background:rgba(255,84,112,.14);left:66.6%;}
+  .dom-hint{font-size:10.5px;color:var(--text-2);text-align:center;margin-top:8px;}
+
+  .ts-rows{display:flex;flex-direction:column;max-height:380px;overflow-y:auto;}
+  .ts-row{display:grid;grid-template-columns:1fr 1fr 1fr 0.8fr;align-items:center;font-size:12px;font-family:var(--mono);padding:4px;}
+  .ts-row span:not(:first-child){text-align:right;}
+  .ts-row .ts-side{font-weight:600;}
 
   .field-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;}
   .search-input{
@@ -936,10 +962,10 @@
     <aside class="right-panel">
 
       <div class="card">
-        <div class="oe-tabs">
-          <button class="oe-tab active">Order Entry</button>
-          <button class="oe-tab">DOM</button>
-          <button class="oe-tab">T&amp;S</button>
+        <div class="oe-tabs" id="oeTabs">
+          <button class="oe-tab active" data-panel="entry">Order Entry</button>
+          <button class="oe-tab" data-panel="dom">DOM</button>
+          <button class="oe-tab" data-panel="ts">T&amp;S</button>
         </div>
 
         <div class="field-row">
@@ -952,62 +978,79 @@
 
         <div class="curr-row">-- USD</div>
 
-        <div class="seg-3">
-          <button class="seg-btn active">Limit</button>
-          <button class="seg-btn">Market</button>
-          <button class="seg-btn">Stop</button>
+        <div class="oe-panel active" id="oePanel-entry">
+          <div class="seg-3">
+            <button class="seg-btn active">Limit</button>
+            <button class="seg-btn">Market</button>
+            <button class="seg-btn">Stop</button>
+          </div>
+
+          <label class="label-sm">Quantity</label>
+          <div class="qty-row">
+            <div class="qty-stepper">
+              <button class="qty-dec">−</button>
+              <input type="text" value="1" class="qty-input mono">
+              <button class="qty-inc">+</button>
+            </div>
+            <div class="qty-quick">
+              <button>1</button><button>10</button><button>25</button><button>50</button>
+            </div>
+          </div>
+
+          <div class="lp-row">
+            <div class="lp-field">
+              <label class="label-sm">Limit Price</label>
+              <div class="text-input"><span id="oeLimitPrice">5,312.25</span><span class="material-symbols-outlined">lock</span></div>
+            </div>
+            <div class="ts-field">
+              <label class="label-sm">Tick Size</label>
+              <div class="select-input pop-trigger" id="tickSizeTrigger"><span id="tickSizeVal">0.25</span><span class="material-symbols-outlined">expand_more</span></div>
+            </div>
+          </div>
+
+          <div class="tif-row">
+            <div class="tif-field">
+              <label class="label-sm">Time in Force</label>
+              <div class="select-input pop-trigger" id="tifTrigger"><span id="tifVal">DAY</span><span class="material-symbols-outlined">expand_more</span></div>
+            </div>
+            <div class="oco-field">
+              <label class="label-sm">Attach OCO</label>
+              <div class="switch" id="ocoSwitch"></div>
+            </div>
+          </div>
+
+          <div class="bs-row">
+            <button class="bs-btn buy"><span class="bs-lbl">BUY / BID</span><span class="bs-price mono" id="oeBuyPrice">5,312.00</span></button>
+            <button class="bs-btn sell"><span class="bs-lbl">SELL / ASK</span><span class="bs-price mono" id="oeSellPrice">5,312.25</span></button>
+          </div>
+          <div class="join-row">
+            <button class="ghost-btn">Join Bid</button>
+            <button class="ghost-btn">Join Ask</button>
+          </div>
+          <div class="join-row" style="margin-bottom:0;">
+            <button class="ghost-btn">Flatten</button>
+            <button class="ghost-btn danger">Cancel All</button>
+          </div>
+
+          <div class="acct-info">
+            <div class="ai-row"><span class="l">Buying Power</span><span class="v">$87,643.20</span></div>
+            <div class="ai-row"><span class="l">Margin Required</span><span class="v">$6,980.00</span></div>
+          </div>
         </div>
 
-        <label class="label-sm">Quantity</label>
-        <div class="qty-row">
-          <div class="qty-stepper">
-            <button class="qty-dec">−</button>
-            <input type="text" value="1" class="qty-input mono">
-            <button class="qty-inc">+</button>
+        <div class="oe-panel" id="oePanel-dom">
+          <div class="dom-head">
+            <span>Price</span><span>Bid Size</span><span>Ask Size</span>
           </div>
-          <div class="qty-quick">
-            <button>1</button><button>10</button><button>25</button><button>50</button>
-          </div>
+          <div class="dom-rows" id="domRows"></div>
+          <div class="dom-hint">Click a bid to sell into it, or an ask to buy it.</div>
         </div>
 
-        <div class="lp-row">
-          <div class="lp-field">
-            <label class="label-sm">Limit Price</label>
-            <div class="text-input"><span id="oeLimitPrice">5,312.25</span><span class="material-symbols-outlined">lock</span></div>
+        <div class="oe-panel" id="oePanel-ts">
+          <div class="ts-head">
+            <span>Time</span><span>Price</span><span>Size</span><span>Side</span>
           </div>
-          <div class="ts-field">
-            <label class="label-sm">Tick Size</label>
-            <div class="select-input"><span>0.25</span><span class="material-symbols-outlined">expand_more</span></div>
-          </div>
-        </div>
-
-        <div class="tif-row">
-          <div class="tif-field">
-            <label class="label-sm">Time in Force</label>
-            <div class="select-input"><span>DAY</span><span class="material-symbols-outlined">expand_more</span></div>
-          </div>
-          <div class="oco-field">
-            <label class="label-sm">Attach OCO</label>
-            <div class="switch" id="ocoSwitch"></div>
-          </div>
-        </div>
-
-        <div class="bs-row">
-          <button class="bs-btn buy"><span class="bs-lbl">BUY / BID</span><span class="bs-price mono" id="oeBuyPrice">5,312.00</span></button>
-          <button class="bs-btn sell"><span class="bs-lbl">SELL / ASK</span><span class="bs-price mono" id="oeSellPrice">5,312.25</span></button>
-        </div>
-        <div class="join-row">
-          <button class="ghost-btn">Join Bid</button>
-          <button class="ghost-btn">Join Ask</button>
-        </div>
-        <div class="join-row" style="margin-bottom:0;">
-          <button class="ghost-btn">Flatten</button>
-          <button class="ghost-btn danger">Cancel All</button>
-        </div>
-
-        <div class="acct-info">
-          <div class="ai-row"><span class="l">Buying Power</span><span class="v">$87,643.20</span></div>
-          <div class="ai-row"><span class="l">Margin Required</span><span class="v">$6,980.00</span></div>
+          <div class="ts-rows" id="tsRows"></div>
         </div>
       </div>
 
@@ -1091,6 +1134,31 @@
   <button class="ctx-item" id="ctxReset"><span class="material-symbols-outlined">restart_alt</span>Reset Chart View<span class="shortcut">R</span></button>
   <div class="ctx-sep"></div>
   <button class="ctx-item" id="ctxSettings"><span class="material-symbols-outlined">settings</span>Settings...</button>
+</div>
+
+<!-- ===================== TICK SIZE DROPDOWN ===================== -->
+<div class="pop-menu" id="tickSizeMenu" style="width:140px;">
+  <button class="pop-item" data-tick="0.25"><span class="pop-text"><span class="pt-title">0.25</span></span></button>
+  <button class="pop-item" data-tick="0.5"><span class="pop-text"><span class="pt-title">0.5</span></span></button>
+  <button class="pop-item" data-tick="1"><span class="pop-text"><span class="pt-title">1</span></span></button>
+  <button class="pop-item" data-tick="2.5"><span class="pop-text"><span class="pt-title">2.5</span></span></button>
+  <button class="pop-item" data-tick="5"><span class="pop-text"><span class="pt-title">5</span></span></button>
+</div>
+
+<!-- ===================== TIME IN FORCE DROPDOWN ===================== -->
+<div class="pop-menu" id="tifMenu" style="width:200px;">
+  <button class="pop-item" data-tif="DAY">
+    <span class="pop-text"><span class="pt-title">DAY</span><span class="pt-sub">Expires at end of trading session</span></span>
+  </button>
+  <button class="pop-item" data-tif="GTC">
+    <span class="pop-text"><span class="pt-title">GTC</span><span class="pt-sub">Good 'Til Cancelled</span></span>
+  </button>
+  <button class="pop-item" data-tif="IOC">
+    <span class="pop-text"><span class="pt-title">IOC</span><span class="pt-sub">Immediate Or Cancel</span></span>
+  </button>
+  <button class="pop-item" data-tif="FOK">
+    <span class="pop-text"><span class="pt-title">FOK</span><span class="pt-sub">Fill Or Kill</span></span>
+  </button>
 </div>
 
 <!-- ===================== ORDER TYPE DROPDOWN ===================== -->
@@ -1266,7 +1334,15 @@
   });
   setupGroup('.range-bar .range-group', '.range-btn');
   setupGroup('.seg-3', '.seg-btn');
-  setupGroup('.oe-tabs', '.oe-tab');
+  document.querySelectorAll('#oeTabs .oe-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#oeTabs .oe-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.right-panel .oe-panel').forEach(p=>p.classList.remove('active'));
+      const panel = document.getElementById('oePanel-'+btn.dataset.panel);
+      if(panel) panel.classList.add('active');
+    });
+  });
 
   document.querySelectorAll('.toggle-pill').forEach(btn=>{
     btn.addEventListener('click', ()=>btn.classList.toggle('active'));
@@ -1298,7 +1374,7 @@
      ================================================================ */
   (function(){
     const POINT_VALUE = 50;          // $ per point per contract (ES)
-    const TICK = 0.25;
+    let TICK = 0.25;
     const PX_PER_POINT = 22;         // vertical px per 1.0 point
     const BASE_PRICE = 5312.25;      // anchors chart's vertical price scale
     const AXIS_RIGHT_W = 68;         // width reserved for the price axis gutter
@@ -1545,6 +1621,67 @@
         '</tr>'
       ).join('');
     }
+
+    /* ---------- DOM (depth of market) ---------- */
+    const domRand = mulberry32(555);
+    function renderDOM(centerPrice){
+      const wrap = document.getElementById('domRows');
+      if(!wrap) return;
+      const levels = 8;
+      const center = roundTick(centerPrice);
+      let rows = '';
+      for(let i=levels; i>=-levels; i--){
+        const price = roundTick(center + i*TICK);
+        const isCurrent = i===0;
+        const bidSize = isCurrent ? 0 : Math.round(20 + domRand()*180*(1/(1+Math.abs(i)*0.15)));
+        const askSize = isCurrent ? 0 : Math.round(20 + domRand()*180*(1/(1+Math.abs(i)*0.15)));
+        const bidPct = Math.min(100, bidSize/3);
+        const askPct = Math.min(100, askSize/3);
+        rows +=
+          '<div class="dom-row'+(isCurrent?' dom-current':'')+'" data-price="'+price+'">'+
+            (i<0 ? '<div class="dom-bar bid" style="width:'+bidPct+'%;"></div>' : '')+
+            (i>0 ? '<div class="dom-bar ask" style="width:'+askPct+'%;"></div>' : '')+
+            '<span class="dom-price">'+fmt(price)+'</span>'+
+            '<span class="dom-bid">'+(i<0 ? bidSize : '')+'</span>'+
+            '<span class="dom-ask">'+(i>0 ? askSize : '')+'</span>'+
+          '</div>';
+      }
+      wrap.innerHTML = rows;
+      wrap.querySelectorAll('.dom-row .dom-bid').forEach(el=>{
+        if(!el.textContent) return;
+        el.addEventListener('click', ()=>{
+          const price = parseFloat(el.closest('.dom-row').dataset.price);
+          createOrder('sell', price);
+        });
+      });
+      wrap.querySelectorAll('.dom-row .dom-ask').forEach(el=>{
+        if(!el.textContent) return;
+        el.addEventListener('click', ()=>{
+          const price = parseFloat(el.closest('.dom-row').dataset.price);
+          createOrder('buy', price);
+        });
+      });
+    }
+
+    /* ---------- T&S (time & sales) ---------- */
+    const tsRand = mulberry32(777);
+    let trades = [];
+    function pushTrade(price, isUp){
+      const size = Math.max(1, Math.round(1 + tsRand()*14));
+      trades.unshift({ time:nowTimeStr(), price, size, isUp });
+      if(trades.length>40) trades.length = 40;
+      const wrap = document.getElementById('tsRows');
+      if(!wrap) return;
+      wrap.innerHTML = trades.map(t=>
+        '<div class="ts-row">'+
+          '<span class="mono">'+t.time+'</span>'+
+          '<span class="mono">'+fmt(t.price)+'</span>'+
+          '<span class="mono">'+t.size+'</span>'+
+          '<span class="ts-side '+(t.isUp?'up':'down')+'">'+(t.isUp?'Buy':'Sell')+'</span>'+
+        '</div>'
+      ).join('');
+    }
+
     function syncQtyFromRisk(){
       if(!order || order.sizeMode!=='risk' || !order.sl) return;
       const stopDist = Math.abs(order.entry - order.sl.price);
@@ -1838,6 +1975,9 @@
           }
         });
         if(alertsChanged) renderAlerts();
+
+        renderDOM(last);
+        pushTrade(last, tickUp);
       }
       setInterval(tick, 1200 + Math.random()*400);
     })();
@@ -2009,6 +2149,42 @@
         layer.appendChild(footer);
       }
     }
+
+    /* ---------- tick size dropdown ---------- */
+    const tickSizeMenu = document.getElementById('tickSizeMenu');
+    const tickSizeTrigger = document.getElementById('tickSizeTrigger');
+    tickSizeTrigger.addEventListener('click', ()=>{
+      tickSizeMenu.querySelectorAll('.pop-item').forEach(it=>{
+        it.classList.toggle('selected', parseFloat(it.dataset.tick)===TICK);
+      });
+      openNear(tickSizeMenu, tickSizeTrigger.getBoundingClientRect(), 'right');
+    });
+    tickSizeMenu.querySelectorAll('.pop-item').forEach(it=>{
+      it.addEventListener('click', ()=>{
+        TICK = parseFloat(it.dataset.tick);
+        document.getElementById('tickSizeVal').textContent = it.dataset.tick;
+        closeAllPopovers();
+        showToast('Tick size set to '+it.dataset.tick, 'tune');
+      });
+    });
+
+    /* ---------- time in force dropdown ---------- */
+    const tifMenu = document.getElementById('tifMenu');
+    const tifTrigger = document.getElementById('tifTrigger');
+    let timeInForce = 'DAY';
+    tifTrigger.addEventListener('click', ()=>{
+      tifMenu.querySelectorAll('.pop-item').forEach(it=>{
+        it.classList.toggle('selected', it.dataset.tif===timeInForce);
+      });
+      openNear(tifMenu, tifTrigger.getBoundingClientRect(), 'right');
+    });
+    tifMenu.querySelectorAll('.pop-item').forEach(it=>{
+      it.addEventListener('click', ()=>{
+        timeInForce = it.dataset.tif;
+        document.getElementById('tifVal').textContent = timeInForce;
+        closeAllPopovers();
+      });
+    });
 
     /* ---------- order type dropdown ---------- */
     const orderTypeMenu = document.getElementById('orderTypeMenu');
@@ -2274,6 +2450,8 @@
     renderOpenOrders();
     renderOrderHistory();
     renderAlerts();
+    renderDOM(BASE_PRICE);
+    for(let i=0;i<8;i++) pushTrade(roundTick(BASE_PRICE + (mulberry32(900+i)()-0.5)*2), i%2===0);
 
   })();
 
