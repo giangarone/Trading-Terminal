@@ -654,7 +654,6 @@
       font-size: 10.5px;
       color: var(--paper-500);
       flex-shrink: 0;
-      width: 34px;
       font-family: var(--mono);
       padding-top: 1px;
     }
@@ -1024,7 +1023,7 @@
     .ai-gauge-pct {
       font-size: 26px;
       font-weight: 700;
-      color: var(--paper-100);
+      color: var(--long);
       line-height: 1;
     }
 
@@ -1251,18 +1250,20 @@
     }
 
     .news-impact.high {
-      color: var(--accent);
-      background: var(--accent-dim);
+      color: var(--intel);
+      background: var(--intel-dim);
     }
 
     .news-impact.medium {
-      color: var(--intel);
-      background: var(--intel-dim);
+      color: var(--paper-300);
+      background: var(--ink-800);
+      border: 1px solid var(--line-2);
     }
 
     .news-impact.low {
       color: var(--paper-500);
       background: var(--ink-800);
+      border: 1px solid var(--line-2);
     }
 
     .news-sentiment {
@@ -1298,16 +1299,54 @@
       margin-bottom: 6px;
     }
 
-    .news-why {
+    .news-hl {
+      font-weight: 700;
+    }
+
+    .news-hl.up {
+      color: var(--long);
+    }
+
+    .news-hl.down {
+      color: var(--short);
+    }
+
+    .news-text {
       font-size: 11.5px;
       color: var(--paper-300);
       line-height: 1.5;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
-    .news-why b {
-      color: var(--accent);
-      font-weight: 700;
-      margin-right: 4px;
+    .news-card.expanded .news-text {
+      -webkit-line-clamp: unset;
+      overflow: visible;
+    }
+
+    .news-expand-btn {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--paper-300);
+    }
+
+    .news-expand-btn:hover {
+      color: var(--paper-100);
+    }
+
+    .news-expand-btn .material-symbols-outlined {
+      font-size: 15px;
+      transition: transform .15s ease;
+    }
+
+    .news-card.expanded .news-expand-btn .material-symbols-outlined {
+      transform: rotate(180deg);
     }
 
     /* ---- Market Scanner ---- */
@@ -1501,7 +1540,7 @@
     }
 
     .bottom-panel {
-      height: 228px;
+      height: 196px;
       flex-shrink: 0;
       border-top: 1px solid var(--line-1);
       background: var(--ink-900);
@@ -2443,7 +2482,7 @@
     }
 
     .ol-line.entry {
-      border-color: rgba(233, 237, 240, .34);
+      border-color: rgba(59, 130, 246, 0.5);
     }
 
     .ol-line.tp {
@@ -2548,30 +2587,8 @@
       letter-spacing: .02em;
     }
 
-    .ol-pill.buy {
-      background: var(--long);
-      color: var(--on-signal);
-    }
-
-    .ol-pill.sell {
-      background: var(--short);
-      color: var(--on-signal);
-    }
-
     .ol-pill.tag {
       cursor: pointer;
-    }
-
-    .ol-pill.tp-tag {
-      background: rgba(43, 212, 126, .4);
-      color: var(--long);
-      border: 1px solid rgba(43, 212, 126, .6);
-    }
-
-    .ol-pill.sl-tag {
-      background: rgba(242, 73, 92, .4);
-      color: var(--short);
-      border: 1px solid rgba(242, 73, 92, .6);
     }
 
     .ol-pill.neutral {
@@ -2615,25 +2632,6 @@
       background: var(--short-dim);
     }
 
-    .ol-price-tag {
-      height: 30px;
-      padding: 0 11px;
-      border-radius: 7px;
-      background: var(--accent);
-      color: var(--on-accent);
-      font-family: var(--mono);
-      font-weight: 700;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      letter-spacing: .01em;
-      cursor: ns-resize;
-    }
-
-    .ol-price-tag:hover {
-      box-shadow: 0 0 0 2px rgba(227, 160, 57, .4);
-    }
-
     .ol-side-row {
       position: absolute;
       right: 84px;
@@ -2669,17 +2667,36 @@
     .ol-chip.tp {
       background: rgba(43, 212, 126, .16);
       color: var(--long);
+      cursor: ns-resize;
     }
 
     .ol-chip.sl {
       background: rgba(242, 73, 92, .16);
       color: var(--short);
+      cursor: ns-resize;
     }
 
     .ol-chip.ghost {
       background: var(--ink-800);
       color: var(--paper-500);
       border: 1px dashed var(--line-3);
+    }
+
+    .ol-chip.entry {
+      background: rgba(59, 130, 246, 0.16);
+      color: #3b82f6;
+      cursor: ns-resize;
+    }
+
+    .ol-chip.entry:hover {
+      filter: brightness(1.08);
+    }
+
+    .ol-entry-price {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: #3b82f6;
     }
 
     .ol-amt {
@@ -2714,22 +2731,6 @@
 
     .ol-pct-chip:hover {
       text-decoration-color: currentColor;
-    }
-
-    .ol-side-price {
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--paper-100);
-      background: var(--ink-800);
-      border: 1px solid var(--line-2);
-      padding: 3px 8px;
-      border-radius: 6px;
-      cursor: ns-resize;
-    }
-
-    .ol-side-price:hover {
-      box-shadow: 0 0 0 2px var(--line-3);
     }
 
     .ol-gear {
@@ -2770,46 +2771,6 @@
     .ol-badge.atr {
       background: var(--accent-dim);
       color: var(--accent);
-    }
-
-    .ol-rr-footer {
-      position: absolute;
-      right: 84px;
-      bottom: 14px;
-      display: flex;
-      gap: 8px;
-      pointer-events: auto;
-      z-index: 6;
-    }
-
-    .ol-rr-pill {
-      padding: 7px 12px;
-      border-radius: 7px;
-      font-size: 11px;
-      font-weight: 700;
-      font-family: var(--mono);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .ol-rr-pill .lbl {
-      font-family: var(--sans);
-      font-weight: 600;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      opacity: .8;
-    }
-
-    .ol-rr-pill.risk {
-      background: rgba(242, 73, 92, .14);
-      color: var(--short);
-    }
-
-    .ol-rr-pill.reward {
-      background: rgba(43, 212, 126, .14);
-      color: var(--long);
     }
 
     /* Right-click context menu */
@@ -2894,7 +2855,7 @@
 
     .pop-item {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 10px;
       padding: 8px 9px;
       border-radius: 9px;
@@ -3536,11 +3497,11 @@
 
         <div class="symbol-block">
           <div class="symbol-select">
-            <span class="sym mono">ESU5</span>
+            <span class="sym mono">ETH</span>
             <span class="material-symbols-outlined" style="font-size:16px;color:var(--paper-500);">expand_more</span>
           </div>
           <div class="symbol-meta">
-            <span class="desc">E-mini S&amp;P 500</span>
+            <span class="desc">Ethereum</span>
             <span class="session"><span class="live-dot"></span>LIVE · 09:46:31 AM ET</span>
           </div>
         </div>
@@ -3548,24 +3509,24 @@
 
       <div class="tb-stats">
         <div class="stat">
-          <span class="val hero mono" id="hdrLast">5,312.25</span>
-          <span class="chg up mono" id="hdrChg">+18.25 (+0.34%)</span>
+          <span class="val hero mono" id="hdrLast">4,500.25</span>
+          <span class="chg up mono" id="hdrChg">+18.25 (+0.41%)</span>
         </div>
         <div class="stat">
           <span class="lbl">Bid</span>
-          <span class="val mono" id="hdrBid">5,312.00</span>
+          <span class="val mono" id="hdrBid">4,500.00</span>
         </div>
         <div class="stat">
           <span class="lbl">Ask</span>
-          <span class="val mono" id="hdrAsk">5,312.25</span>
+          <span class="val mono" id="hdrAsk">4,500.25</span>
         </div>
         <div class="stat">
           <span class="lbl">Day High</span>
-          <span class="val mono" id="hdrDayHigh">5,318.00</span>
+          <span class="val mono" id="hdrDayHigh">4,505.75</span>
         </div>
         <div class="stat">
           <span class="lbl">Day Low</span>
-          <span class="val mono" id="hdrDayLow">5,285.25</span>
+          <span class="val mono" id="hdrDayLow">4,473.25</span>
         </div>
       </div>
 
@@ -3593,15 +3554,23 @@
 
     <!-- ===================== WORKSPACE TABS ===================== -->
     <nav class="workspace-tabs" id="wsTabs">
-      <button class="ws-tab active" data-ws="chart"><span class="material-symbols-outlined">show_chart</span>Chart</button>
-      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">thermostat</span>Liquidity Heat Map</button>
-      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">stacked_line_chart</span>L2 Indicators</button>
-      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">psychology</span>Smart Money Flow</button>
-      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">swap_horiz</span>Order Flow</button>
-      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">bar_chart</span>Volume Profile</button>
+      <button class="ws-tab active" data-ws="chart"><span
+          class="material-symbols-outlined">show_chart</span>Chart</button>
+      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">thermostat</span>Liquidity Heat
+        Map</button>
+      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">stacked_line_chart</span>L2
+        Indicators</button>
+      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">psychology</span>Smart Money
+        Flow</button>
+      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">swap_horiz</span>Order
+        Flow</button>
+      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">bar_chart</span>Volume
+        Profile</button>
       <button class="ws-tab" data-ws="news"><span class="material-symbols-outlined">article</span>News Intel</button>
-      <button class="ws-tab" data-ws="ai"><span class="material-symbols-outlined">smart_toy</span>AI Market Assistant</button>
-      <button class="ws-tab" data-ws="scanner"><span class="material-symbols-outlined">radar</span>Market Scanner</button>
+      <button class="ws-tab" data-ws="ai"><span class="material-symbols-outlined">smart_toy</span>AI Market
+        Assistant</button>
+      <button class="ws-tab" data-ws="scanner"><span class="material-symbols-outlined">radar</span>Market
+        Scanner</button>
     </nav>
 
     <!-- ===================== MAIN GRID ===================== -->
@@ -3620,9 +3589,9 @@
           </div>
           <div class="wl-cols"><span>Symbol</span><span style="text-align:right;">Last</span><span
               style="text-align:right;">Chg%</span></div>
-          <div class="wl-row selected" data-sym="ESU5" tabindex="0" role="button">
-            <span class="wl-sym">ESU5</span><span class="wl-last mono" id="wlLast-ESU5">5,312.25</span><span
-              class="wl-chg up mono" id="wlChg-ESU5">+0.34%</span>
+          <div class="wl-row selected" data-sym="ETH" tabindex="0" role="button">
+            <span class="wl-sym">ETH</span><span class="wl-last mono" id="wlLast-ETH">4,500.25</span><span
+              class="wl-chg up mono" id="wlChg-ETH">+0.41%</span>
           </div>
           <div class="wl-row" data-sym="NQU5" tabindex="0" role="button">
             <span class="wl-sym">NQU5</span><span class="wl-last mono" id="wlLast-NQU5">18,624.50</span><span
@@ -3691,7 +3660,7 @@
             <span class="news-time">09:05</span>
             <span class="news-head">Energy sector rotation accelerates into the close</span>
           </div>
-          <div class="more-link" style="margin-top:8px;">View All News <span
+          <div class="more-link" id="viewAllNewsBtn" style="margin-top:8px;">View All News <span
               class="material-symbols-outlined">chevron_right</span></div>
         </div>
 
@@ -3703,67 +3672,67 @@
       <main class="center-panel">
 
         <div class="ws-pane active" id="wsPane-chart">
-        <div class="chart-toolbar">
-          <div class="ct-left">
-            <div>
-              <div class="ct-sym mono">ESU5</div>
-              <div class="ct-name">E-MINI S&amp;P 500</div>
+          <div class="chart-toolbar">
+            <div class="ct-left">
+              <div>
+                <div class="ct-sym mono">ETH</div>
+                <div class="ct-name">ETHEREUM</div>
+              </div>
+              <div class="tf-group" id="tfGroup">
+                <button class="tf-btn">1m</button>
+                <button class="tf-btn">3m</button>
+                <button class="tf-btn">5m</button>
+                <button class="tf-btn active">15m</button>
+                <button class="tf-btn">30m</button>
+                <button class="tf-btn">1h</button>
+                <button class="tf-btn">4h</button>
+                <button class="tf-btn">D</button>
+                <span class="tf-chevron material-symbols-outlined">expand_more</span>
+              </div>
             </div>
-            <div class="tf-group" id="tfGroup">
-              <button class="tf-btn">1m</button>
-              <button class="tf-btn">3m</button>
-              <button class="tf-btn">5m</button>
-              <button class="tf-btn active">15m</button>
-              <button class="tf-btn">30m</button>
-              <button class="tf-btn">1h</button>
-              <button class="tf-btn">4h</button>
-              <button class="tf-btn">D</button>
-              <span class="tf-chevron material-symbols-outlined">expand_more</span>
+            <div class="ct-right">
+              <button class="ct-action-btn"><span class="material-symbols-outlined"
+                  style="font-size:15px;">function</span>Indicators</button>
+              <button class="ct-icon"><span class="material-symbols-outlined">edit</span></button>
+              <button class="ct-icon"><span class="material-symbols-outlined">add</span></button>
+              <button class="ct-icon"><span class="material-symbols-outlined">view_column</span></button>
+              <button class="ct-icon"><span class="material-symbols-outlined">settings</span></button>
+              <button class="ct-icon"><span class="material-symbols-outlined">more_horiz</span></button>
             </div>
           </div>
-          <div class="ct-right">
-            <button class="ct-action-btn"><span class="material-symbols-outlined"
-                style="font-size:15px;">function</span>Indicators</button>
-            <button class="ct-icon"><span class="material-symbols-outlined">edit</span></button>
-            <button class="ct-icon"><span class="material-symbols-outlined">add</span></button>
-            <button class="ct-icon"><span class="material-symbols-outlined">view_column</span></button>
-            <button class="ct-icon"><span class="material-symbols-outlined">settings</span></button>
-            <button class="ct-icon"><span class="material-symbols-outlined">more_horiz</span></button>
-          </div>
-        </div>
 
-        <div class="ohlc-row">
-          <span><b>O</b><span class="mono" id="ohlcO">5,305.50</span></span>
-          <span><b>H</b><span class="mono" id="ohlcH">5,312.75</span></span>
-          <span><b>L</b><span class="mono" id="ohlcL">5,303.75</span></span>
-          <span><b>C</b><span class="mono up" id="ohlcC">5,312.25</span></span>
-          <span class="up mono" id="ohlcChg">+6.75 (+0.13%)</span>
-          <span><b>Vol</b><span class="mono" id="ohlcVol">24.8K</span></span>
-        </div>
-
-        <div class="chart-placeholder" id="chartPlaceholder">
-          <canvas id="priceChartCanvas"></canvas>
-          <div id="orderLineLayer"></div>
-        </div>
-
-        <div class="range-bar">
-          <div class="range-group">
-            <button class="range-btn active">1D</button>
-            <button class="range-btn">5D</button>
-            <button class="range-btn">1M</button>
-            <button class="range-btn">3M</button>
-            <button class="range-btn">6M</button>
-            <button class="range-btn">YTD</button>
-            <button class="range-btn">1Y</button>
-            <button class="range-btn">5Y</button>
-            <button class="range-btn">All</button>
+          <div class="ohlc-row">
+            <span><b>O</b><span class="mono" id="ohlcO">4,493.50</span></span>
+            <span><b>H</b><span class="mono" id="ohlcH">4,505.75</span></span>
+            <span><b>L</b><span class="mono" id="ohlcL">4,473.25</span></span>
+            <span><b>C</b><span class="mono up" id="ohlcC">4,500.25</span></span>
+            <span class="up mono" id="ohlcChg">+6.75 (+0.13%)</span>
+            <span><b>Vol</b><span class="mono" id="ohlcVol">24.8K</span></span>
           </div>
-          <div class="toggle-pill-group">
-            <button class="toggle-pill">%</button>
-            <button class="toggle-pill">log</button>
-            <button class="toggle-pill active">auto</button>
+
+          <div class="chart-placeholder" id="chartPlaceholder">
+            <canvas id="priceChartCanvas"></canvas>
+            <div id="orderLineLayer"></div>
           </div>
-        </div>
+
+          <div class="range-bar">
+            <div class="range-group">
+              <button class="range-btn active">1D</button>
+              <button class="range-btn">5D</button>
+              <button class="range-btn">1M</button>
+              <button class="range-btn">3M</button>
+              <button class="range-btn">6M</button>
+              <button class="range-btn">YTD</button>
+              <button class="range-btn">1Y</button>
+              <button class="range-btn">5Y</button>
+              <button class="range-btn">All</button>
+            </div>
+            <div class="toggle-pill-group">
+              <button class="toggle-pill">%</button>
+              <button class="toggle-pill">log</button>
+              <button class="toggle-pill active">auto</button>
+            </div>
+          </div>
         </div>
 
         <!-- ===================== AI MARKET ASSISTANT WORKSPACE ===================== -->
@@ -3771,12 +3740,13 @@
           <div class="wsp-header">
             <div class="ct-left">
               <div>
-                <div class="ct-sym mono">ESU5</div>
+                <div class="ct-sym mono">ETH</div>
                 <div class="ct-name">AI MARKET ASSISTANT</div>
               </div>
             </div>
             <div class="ct-right">
-              <span class="wsp-updated"><span class="material-symbols-outlined" style="font-size:14px;">schedule</span>Updated 14s ago</span>
+              <span class="wsp-updated"><span class="material-symbols-outlined"
+                  style="font-size:14px;">schedule</span>Updated 14s ago</span>
               <button class="ct-icon"><span class="material-symbols-outlined">refresh</span></button>
             </div>
           </div>
@@ -3787,7 +3757,8 @@
               <div class="ai-gauge-wrap">
                 <svg class="ai-gauge" viewBox="0 0 120 120">
                   <circle class="ai-gauge-track" cx="60" cy="60" r="52" />
-                  <circle class="ai-gauge-fill" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="71.9" />
+                  <circle class="ai-gauge-fill" cx="60" cy="60" r="52" stroke-dasharray="326.7"
+                    stroke-dashoffset="71.9" />
                 </svg>
                 <div class="ai-gauge-center">
                   <span class="ai-gauge-pct mono">78%</span>
@@ -3798,7 +3769,8 @@
               <div class="ai-verdict-info">
                 <span class="ai-model-tag mono">ChartPrime SMC Model · v2.3</span>
                 <div class="ai-bias-row">
-                  <span class="ai-bias-chip bullish"><span class="material-symbols-outlined">trending_up</span>Bullish</span>
+                  <span class="ai-bias-chip bullish"><span
+                      class="material-symbols-outlined">trending_up</span>Bullish</span>
                   <span class="ai-strength-meter" title="Strength: Strong">
                     <span class="ai-strength-bar filled"></span>
                     <span class="ai-strength-bar filled"></span>
@@ -3806,7 +3778,7 @@
                   </span>
                   <span class="ai-strength-lbl">Strong</span>
                 </div>
-                <p class="ai-summary">ESU5 is showing a constructive bias into the close. Structure, order flow and
+                <p class="ai-summary">ETH is showing a constructive bias into the close. Structure, order flow and
                   positioning are aligned to the upside while price respects a defended support shelf.</p>
               </div>
             </div>
@@ -3827,7 +3799,8 @@
                   above <b class="ai-hl">5,325</b> is acting as a magnet.</li>
                 <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Market
                   structure is shifting higher (<b class="ai-hl">HH / HL</b>).</li>
-                <li class="ai-reason"><span class="material-symbols-outlined ai-reason-ic">check_circle</span>Risk-to-reward
+                <li class="ai-reason"><span
+                    class="material-symbols-outlined ai-reason-ic">check_circle</span>Risk-to-reward
                   remains favorable for long setups.</li>
               </ul>
             </div>
@@ -3857,12 +3830,13 @@
           <div class="wsp-header">
             <div class="ct-left">
               <div>
-                <div class="ct-sym mono">ESU5</div>
+                <div class="ct-sym mono">ETH</div>
                 <div class="ct-name">NEWS INTEL</div>
               </div>
             </div>
             <div class="ct-right">
-              <span class="news-filter">All Sources <span class="material-symbols-outlined" style="font-size:13px;">expand_more</span></span>
+              <span class="news-filter">All Sources <span class="material-symbols-outlined"
+                  style="font-size:13px;">expand_more</span></span>
               <button class="ct-icon"><span class="material-symbols-outlined">refresh</span></button>
             </div>
           </div>
@@ -3876,11 +3850,18 @@
                   <span class="news-time mono">09:42 AM</span>
                   <span class="news-src">ChartPrime Order Flow</span>
                   <span class="news-impact high">High Impact</span>
-                  <span class="news-sentiment bullish"><span class="material-symbols-outlined">trending_up</span>Bullish</span>
+                  <span class="news-sentiment bullish"><span
+                      class="material-symbols-outlined">trending_up</span>Bullish</span>
                 </div>
                 <div class="news-headline">Institutional desks add to S&amp;P futures longs into the close</div>
-                <div class="news-why"><b>Why it matters</b> Large block buying near 5,310 confirms the order-flow
-                  bias and raises the odds of a retest toward the <b class="ai-hl">5,325</b> liquidity pocket.</div>
+                <div class="news-text">Large block buying surfaced near 5,310 in the closing rotation, with several
+                  multi-hundred-lot prints absorbed without slippage. The order-flow bias has stayed firmly net-long
+                  since the cash open, and dealer positioning suggests dips are being treated as entries rather than
+                  exits. If the pace of accumulation continues into tomorrow's session, the path of least resistance
+                  favors a retest of the <span class="news-hl up">5,325</span> liquidity pocket resting just above
+                  the recent high.</div>
+                <button class="news-expand-btn">Show more<span
+                    class="material-symbols-outlined">expand_more</span></button>
               </div>
             </div>
 
@@ -3891,12 +3872,38 @@
                   <span class="news-time mono">09:27 AM</span>
                   <span class="news-src">ChartPrime Desk</span>
                   <span class="news-impact medium">Medium Impact</span>
-                  <span class="news-sentiment bullish"><span class="material-symbols-outlined">trending_up</span>Bullish</span>
+                  <span class="news-sentiment bullish"><span
+                      class="material-symbols-outlined">trending_up</span>Bullish</span>
                 </div>
-                <div class="news-headline">ES holds firm after touching <b class="ai-hl">5,288 support</b> for the
-                  third time this week</div>
-                <div class="news-why"><b>Why it matters</b> Repeated absorption at a defended level often precedes a
-                  breakout — watch for volume confirmation above 5,312.</div>
+                <div class="news-headline">ES holds firm after touching 5,288 support for the third time this week</div>
+                <div class="news-text">Buyers stepped in again at the <span class="news-hl up">5,288</span> shelf,
+                  marking the third successful defense of that level since Monday. Each retest has come on lighter
+                  selling volume than the last, a pattern that typically precedes a breakout once sellers exhaust
+                  their supply. A daily close back above 5,312 would confirm the higher-low structure and open the
+                  door to a fresh leg toward the week's highs.</div>
+                <button class="news-expand-btn">Show more<span
+                    class="material-symbols-outlined">expand_more</span></button>
+              </div>
+            </div>
+
+            <div class="news-card" data-sentiment="bearish">
+              <div class="news-bar bearish"></div>
+              <div class="news-main">
+                <div class="news-row-top">
+                  <span class="news-time mono">09:18 AM</span>
+                  <span class="news-src">ChartPrime Order Flow</span>
+                  <span class="news-impact high">High Impact</span>
+                  <span class="news-sentiment bearish"><span
+                      class="material-symbols-outlined">trending_down</span>Bearish</span>
+                </div>
+                <div class="news-headline">Distribution detected near 5,318 as large sellers unload into strength</div>
+                <div class="news-text">Footprint data shows a cluster of sizable offers absorbed by buyers near
+                  5,318, but the seller continued to replenish size rather than stepping aside — a classic
+                  distribution signature. Volume on the move up has been declining even as price grinds higher, a
+                  divergence that often precedes a pullback. A failure to hold above 5,308 on the next dip would
+                  tilt the bias back toward a retest of the <span class="news-hl down">5,288</span> support shelf.</div>
+                <button class="news-expand-btn">Show more<span
+                    class="material-symbols-outlined">expand_more</span></button>
               </div>
             </div>
 
@@ -3907,12 +3914,18 @@
                   <span class="news-time mono">09:15 AM</span>
                   <span class="news-src">Reuters</span>
                   <span class="news-impact high">High Impact</span>
-                  <span class="news-sentiment neutral"><span class="material-symbols-outlined">trending_flat</span>Neutral</span>
+                  <span class="news-sentiment neutral"><span
+                      class="material-symbols-outlined">trending_flat</span>Neutral</span>
                 </div>
                 <div class="news-headline">Fed officials signal no rush to cut, but data dependence keeps door open
                 </div>
-                <div class="news-why"><b>Why it matters</b> Removes a near-term volatility catalyst; futures likely
-                  stay range-bound until the next CPI print.</div>
+                <div class="news-text">Several regional Fed presidents reiterated that policy will stay
+                  data-dependent rather than committing to a fixed cutting timeline. Markets had priced in some
+                  chance of an earlier move, so the comments removed a near-term volatility catalyst rather than
+                  adding one. Futures are likely to stay range-bound until the next CPI print gives the market a
+                  clearer signal on the pace of disinflation.</div>
+                <button class="news-expand-btn">Show more<span
+                    class="material-symbols-outlined">expand_more</span></button>
               </div>
             </div>
 
@@ -3923,11 +3936,17 @@
                   <span class="news-time mono">09:05 AM</span>
                   <span class="news-src">Bloomberg</span>
                   <span class="news-impact medium">Medium Impact</span>
-                  <span class="news-sentiment neutral"><span class="material-symbols-outlined">trending_flat</span>Neutral</span>
+                  <span class="news-sentiment neutral"><span
+                      class="material-symbols-outlined">trending_flat</span>Neutral</span>
                 </div>
                 <div class="news-headline">Energy shares lag as capital rotates into mega-cap tech</div>
-                <div class="news-why"><b>Why it matters</b> Sector rotation can mask broad index strength — confirm
-                  moves with breadth, not just price.</div>
+                <div class="news-text">Energy was the weakest sector on the day even as the broader index pushed
+                  higher, a sign that the rally is increasingly concentrated rather than broad-based. Capital
+                  continues to favor mega-cap technology names, which now account for an outsized share of index
+                  gains. Traders should confirm any breakout with participation across sectors rather than relying
+                  on headline index strength alone.</div>
+                <button class="news-expand-btn">Show more<span
+                    class="material-symbols-outlined">expand_more</span></button>
               </div>
             </div>
 
@@ -3938,12 +3957,17 @@
                   <span class="news-time mono">08:51 AM</span>
                   <span class="news-src">ChartPrime Order Flow</span>
                   <span class="news-impact high">High Impact</span>
-                  <span class="news-sentiment bullish"><span class="material-symbols-outlined">trending_up</span>Bullish</span>
+                  <span class="news-sentiment bullish"><span
+                      class="material-symbols-outlined">trending_up</span>Bullish</span>
                 </div>
-                <div class="news-headline">Liquidity pooling above <b class="ai-hl">5,325</b> as dealers position
-                  for a gamma squeeze</div>
-                <div class="news-why"><b>Why it matters</b> Resting buy-side liquidity above price often acts as a
-                  magnet during low-resistance rallies.</div>
+                <div class="news-headline">Liquidity pooling above 5,325 as dealers position for a gamma squeeze</div>
+                <div class="news-text">Options desks report a meaningful build-up of resting buy-side liquidity in
+                  the <span class="news-hl up">5,325–5,330</span> zone, consistent with stop orders and short-dated
+                  call hedging. Pools like this tend to act as a magnet once price approaches, especially in
+                  low-resistance tape with thin two-way flow. A sweep through the zone could accelerate quickly if
+                  dealers are forced to chase their hedges higher.</div>
+                <button class="news-expand-btn">Show more<span
+                    class="material-symbols-outlined">expand_more</span></button>
               </div>
             </div>
 
@@ -3954,11 +3978,17 @@
                   <span class="news-time mono">08:30 AM</span>
                   <span class="news-src">ChartPrime Desk</span>
                   <span class="news-impact low">Low Impact</span>
-                  <span class="news-sentiment neutral"><span class="material-symbols-outlined">trending_flat</span>Neutral</span>
+                  <span class="news-sentiment neutral"><span
+                      class="material-symbols-outlined">trending_flat</span>Neutral</span>
                 </div>
                 <div class="news-headline">Overnight range narrows as Asia, Europe await the US open</div>
-                <div class="news-why"><b>Why it matters</b> Compressed ranges frequently resolve with an expansion
-                  move at the cash open.</div>
+                <div class="news-text">Overnight trade was unusually quiet, with the index confined to a tight
+                  6-point range across both the Asian and European sessions. Compressed ranges like this one
+                  frequently resolve with an expansion move once the US cash session begins and volume returns.
+                  Watch the first thirty minutes of trade for a directional cue rather than fading the opening
+                  print outright.</div>
+                <button class="news-expand-btn">Show more<span
+                    class="material-symbols-outlined">expand_more</span></button>
               </div>
             </div>
 
@@ -3987,8 +4017,10 @@
               <div class="mc-stat"><span class="l">Decliners</span><span class="v down mono">987 (35%)</span></div>
               <div class="mc-stat"><span class="l">A/D Ratio</span><span class="v mono">1.87</span></div>
               <div class="mc-stat"><span class="l">Breadth</span><span class="v up mono">Bullish</span></div>
-              <div class="mc-stat"><span class="l">Volatility</span><span class="v mono" style="color:var(--accent);">Elevated</span></div>
-              <div class="mc-stat"><span class="l">Session Bias</span><span class="v mono" style="color:var(--intel);">Risk-On</span></div>
+              <div class="mc-stat"><span class="l">Volatility</span><span class="v mono"
+                  style="color:var(--accent);">Elevated</span></div>
+              <div class="mc-stat"><span class="l">Session Bias</span><span class="v mono"
+                  style="color:var(--intel);">Risk-On</span></div>
             </div>
 
             <div class="filter-chips" id="scanFilters">
@@ -4007,17 +4039,21 @@
               <div class="opp-card">
                 <div class="opp-top"><span class="opp-sym">NQU5</span><span class="opp-chg up mono">+0.52%</span></div>
                 <div class="opp-setup">Breakout · Bullish Flow</div>
-                <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span></div>
+                <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span
+                    class="dot on"></span></div>
               </div>
               <div class="opp-card">
-                <div class="opp-top"><span class="opp-sym">BTCUSD</span><span class="opp-chg up mono">+1.18%</span></div>
+                <div class="opp-top"><span class="opp-sym">BTCUSD</span><span class="opp-chg up mono">+1.18%</span>
+                </div>
                 <div class="opp-setup">Bullish Flow · High Volume</div>
-                <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span></div>
+                <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span
+                    class="dot on"></span></div>
               </div>
               <div class="opp-card">
                 <div class="opp-top"><span class="opp-sym">GCQ5</span><span class="opp-chg up mono">+0.18%</span></div>
                 <div class="opp-setup">Near Support · Pullback</div>
-                <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></div>
+                <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span
+                    class="dot"></span></div>
               </div>
             </div>
 
@@ -4040,80 +4076,104 @@
                   <td class="mono">18,624.50</td>
                   <td class="mono up">+0.52%</td>
                   <td class="mono">312K</td>
-                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,18 10,16 20,17 30,11 40,12 50,5 60,6" /></svg></td>
+                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none">
+                      <polyline points="0,18 10,16 20,17 30,11 40,12 50,5 60,6" />
+                    </svg></td>
                   <td><span class="signal-badge buy">Buy</span></td>
                   <td style="text-align:left;">Breakout</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span></span></td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
+                        class="dot on"></span></span></td>
                 </tr>
                 <tr data-tags="bullflow highvol">
                   <td style="text-align:left;"><span class="sym-cell">BTCUSD</span></td>
                   <td class="mono">63,245.0</td>
                   <td class="mono up">+1.18%</td>
                   <td class="mono">1.4B</td>
-                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,20 10,15 20,16 30,9 40,10 50,4 60,3" /></svg></td>
+                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none">
+                      <polyline points="0,20 10,15 20,16 30,9 40,10 50,4 60,3" />
+                    </svg></td>
                   <td><span class="signal-badge buy">Buy</span></td>
                   <td style="text-align:left;">Bullish Flow</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span></span></td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
+                        class="dot on"></span></span></td>
                 </tr>
                 <tr data-tags="nearsupport pullback">
                   <td style="text-align:left;"><span class="sym-cell">GCQ5</span></td>
                   <td class="mono">2,346.30</td>
                   <td class="mono up">+0.18%</td>
                   <td class="mono">88K</td>
-                  <td><svg class="trend-spark flat" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,12 10,14 20,11 30,13 40,10 50,12 60,9" /></svg></td>
+                  <td><svg class="trend-spark flat" viewBox="0 0 60 24" preserveAspectRatio="none">
+                      <polyline points="0,12 10,14 20,11 30,13 40,10 50,12 60,9" />
+                    </svg></td>
                   <td><span class="signal-badge neutral">Watch</span></td>
                   <td style="text-align:left;">Near Support</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
+                        class="dot"></span></span></td>
                 </tr>
                 <tr data-tags="nearresistance reversal">
-                  <td style="text-align:left;"><span class="sym-cell">ESU5</span></td>
-                  <td class="mono">5,312.25</td>
-                  <td class="mono up">+0.34%</td>
+                  <td style="text-align:left;"><span class="sym-cell">ETH</span></td>
+                  <td class="mono">4,500.25</td>
+                  <td class="mono up">+0.41%</td>
                   <td class="mono">248K</td>
-                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,19 10,17 20,14 30,15 40,9 50,10 60,7" /></svg></td>
+                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none">
+                      <polyline points="0,19 10,17 20,14 30,15 40,9 50,10 60,7" />
+                    </svg></td>
                   <td><span class="signal-badge buy">Buy</span></td>
                   <td style="text-align:left;">Near Resistance</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
+                        class="dot"></span></span></td>
                 </tr>
                 <tr data-tags="bearflow reversal nearresistance">
                   <td style="text-align:left;"><span class="sym-cell">RTYU5</span></td>
                   <td class="mono">2,078.40</td>
                   <td class="mono down">-0.12%</td>
                   <td class="mono">61K</td>
-                  <td><svg class="trend-spark down" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,5 10,8 20,7 30,11 40,10 50,15 60,17" /></svg></td>
+                  <td><svg class="trend-spark down" viewBox="0 0 60 24" preserveAspectRatio="none">
+                      <polyline points="0,5 10,8 20,7 30,11 40,10 50,15 60,17" />
+                    </svg></td>
                   <td><span class="signal-badge sell">Sell</span></td>
                   <td style="text-align:left;">Reversal</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
+                        class="dot"></span></span></td>
                 </tr>
                 <tr data-tags="bearflow highvol">
                   <td style="text-align:left;"><span class="sym-cell">CLN5</span></td>
                   <td class="mono">78.24</td>
                   <td class="mono down">-0.45%</td>
                   <td class="mono">156K</td>
-                  <td><svg class="trend-spark down" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,4 10,9 20,8 30,14 40,13 50,18 60,20" /></svg></td>
+                  <td><svg class="trend-spark down" viewBox="0 0 60 24" preserveAspectRatio="none">
+                      <polyline points="0,4 10,9 20,8 30,14 40,13 50,18 60,20" />
+                    </svg></td>
                   <td><span class="signal-badge sell">Sell</span></td>
                   <td style="text-align:left;">Bearish Flow</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span><span
+                        class="dot"></span></span></td>
                 </tr>
                 <tr data-tags="pullback bullflow">
                   <td style="text-align:left;"><span class="sym-cell">YMU5</span></td>
                   <td class="mono">39,865.00</td>
                   <td class="mono up">+0.27%</td>
                   <td class="mono">42K</td>
-                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,16 10,17 20,13 30,14 40,10 50,11 60,8" /></svg></td>
+                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none">
+                      <polyline points="0,16 10,17 20,13 30,14 40,10 50,11 60,8" />
+                    </svg></td>
                   <td><span class="signal-badge buy">Buy</span></td>
                   <td style="text-align:left;">Pullback</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
+                        class="dot"></span></span></td>
                 </tr>
                 <tr data-tags="nearsupport">
                   <td style="text-align:left;"><span class="sym-cell">6EU5</span></td>
                   <td class="mono">1.0843</td>
                   <td class="mono down">-0.21%</td>
                   <td class="mono">34K</td>
-                  <td><svg class="trend-spark flat" viewBox="0 0 60 24" preserveAspectRatio="none"><polyline points="0,10 10,12 20,11 30,13 40,12 50,14 60,12" /></svg></td>
+                  <td><svg class="trend-spark flat" viewBox="0 0 60 24" preserveAspectRatio="none">
+                      <polyline points="0,10 10,12 20,11 30,13 40,12 50,14 60,12" />
+                    </svg></td>
                   <td><span class="signal-badge neutral">Watch</span></td>
                   <td style="text-align:left;">Near Support</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></td>
+                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span><span
+                        class="dot"></span></span></td>
                 </tr>
               </tbody>
             </table>
@@ -4147,15 +4207,15 @@
                 </tr>
               </thead>
               <tbody>
-                <tr data-pos-row="ESU5">
-                  <td><span class="sym-cell">ESU5</span></td>
+                <tr data-pos-row="ETH">
+                  <td><span class="sym-cell">ETH</span></td>
                   <td class="mono">2</td>
-                  <td class="mono">5,298.50</td>
-                  <td class="mono" id="posMark-ESU5">5,312.25</td>
-                  <td class="mono up" id="posPnlOpen-ESU5">+2,750.00</td>
-                  <td class="mono up" id="posPnlDay-ESU5">+1,950.00</td>
-                  <td class="mono up" id="posPct-ESU5">+0.74%</td>
-                  <td><span class="material-symbols-outlined action-dots" data-pos-actions="ESU5">more_horiz</span></td>
+                  <td class="mono">4,486.50</td>
+                  <td class="mono" id="posMark-ETH">4,500.25</td>
+                  <td class="mono up" id="posPnlOpen-ETH">+2,750.00</td>
+                  <td class="mono up" id="posPnlDay-ETH">+1,950.00</td>
+                  <td class="mono up" id="posPct-ETH">+0.74%</td>
+                  <td><span class="material-symbols-outlined action-dots" data-pos-actions="ETH">more_horiz</span></td>
                 </tr>
                 <tr data-pos-row="NQU5">
                   <td><span class="sym-cell">NQU5</span></td>
@@ -4245,16 +4305,6 @@
             <button class="oe-tab" data-panel="ts">T&amp;S</button>
           </div>
 
-          <div class="field-row">
-            <div class="search-input">
-              <span class="material-symbols-outlined">search</span>
-              <span class="symv mono">ESU5</span>
-            </div>
-            <div class="pos-badge">POSITION<b>2</b></div>
-          </div>
-
-          <div class="curr-row">-- USD</div>
-
           <div class="oe-panel active" id="oePanel-entry">
             <div class="ord-type-tabs" id="ordTypeTabs">
               <button class="ord-type-btn active" data-type="limit"><span
@@ -4281,7 +4331,7 @@
               <div class="lp-field" id="oePriceFieldWrap">
                 <div class="ord-price-block" data-for="limit">
                   <label class="label-sm">Limit Price</label>
-                  <div class="text-input"><span id="oeLimitPrice">5,312.25</span><span
+                  <div class="text-input"><span id="oeLimitPrice">4,500.25</span><span
                       class="material-symbols-outlined">edit</span></div>
                   <p class="ord-help">Fills only at this price or better.</p>
                 </div>
@@ -4293,7 +4343,7 @@
                 </div>
                 <div class="ord-price-block" data-for="stop" style="display:none;">
                   <label class="label-sm">Stop Trigger Price</label>
-                  <div class="text-input"><span id="oeStopPrice">5,318.00</span><span
+                  <div class="text-input"><span id="oeStopPrice">4,505.75</span><span
                       class="material-symbols-outlined">edit</span></div>
                   <p class="ord-help">Triggers a <span id="oeStopFillLbl">market</span> order once price reaches this
                     level.</p>
@@ -4315,7 +4365,7 @@
               <div class="lp-row" id="stopLimitPriceRow" style="display:none;margin-top:10px;">
                 <div class="lp-field">
                   <label class="label-sm">Limit Price</label>
-                  <div class="text-input"><span id="oeStopLimitPrice">5,318.25</span><span
+                  <div class="text-input"><span id="oeStopLimitPrice">4,506.00</span><span
                       class="material-symbols-outlined">edit</span></div>
                 </div>
               </div>
@@ -4335,9 +4385,9 @@
 
             <div class="bs-row">
               <button class="bs-btn buy"><span class="bs-lbl">BUY / BID</span><span class="bs-price mono"
-                  id="oeBuyPrice">5,312.00</span></button>
+                  id="oeBuyPrice">4,500.00</span></button>
               <button class="bs-btn sell"><span class="bs-lbl">SELL / ASK</span><span class="bs-price mono"
-                  id="oeSellPrice">5,312.25</span></button>
+                  id="oeSellPrice">4,500.25</span></button>
             </div>
             <div class="join-row">
               <button class="ghost-btn">Join Bid</button>
@@ -4451,10 +4501,10 @@
 
   <!-- ===================== RIGHT-CLICK CONTEXT MENU ===================== -->
   <div class="ctx-menu" id="ctxMenu">
-    <button class="ctx-item long" id="ctxLong"><span class="material-symbols-outlined">north_east</span>Trade Long
-      Here</button>
-    <button class="ctx-item short" id="ctxShort"><span class="material-symbols-outlined">south_east</span>Trade Short
-      Here</button>
+    <button class="ctx-item long" id="ctxLong"><span class="material-symbols-outlined">north_east</span><span
+        id="ctxLongLbl">Buy</span></button>
+    <button class="ctx-item short" id="ctxShort"><span class="material-symbols-outlined">south_east</span><span
+        id="ctxShortLbl">Sell</span></button>
     <div class="ctx-sep"></div>
     <button class="ctx-item" id="ctxAlert"><span class="material-symbols-outlined">notifications</span>Add Alert
       Here</button>
@@ -4467,8 +4517,8 @@
 
   <!-- ===================== POSITION ROW ACTIONS DROPDOWN ===================== -->
   <div class="ctx-menu" id="posActionsMenu">
-    <button class="ctx-item short" id="posActionsClose"><span
-        class="material-symbols-outlined">close</span>Close Trade</button>
+    <button class="ctx-item short" id="posActionsClose"><span class="material-symbols-outlined">close</span>Close
+      Trade</button>
   </div>
 
   <!-- ===================== TICK SIZE DROPDOWN ===================== -->
@@ -4522,7 +4572,7 @@
     <button class="pop-item" data-type="MIT">
       <span class="pop-icon"><span class="material-symbols-outlined">sync_alt</span></span>
       <span class="pop-text"><span class="pt-title">MIT (Market If Touched)</span><span class="pt-sub">Buy when price
-          touches level (server-side)</span></span>
+          touches level</span></span>
     </button>
   </div>
 
@@ -4586,7 +4636,7 @@
       <label class="sm-amount-lbl">Quantity</label>
       <div class="sm-stepper">
         <button id="smQtyDec">−</button>
-        <input type="text" id="smQtyInput" readonly value="4">
+        <input type="text" id="smQtyInput" readonly value="1">
         <button id="smQtyInc">+</button>
       </div>
       <label class="sm-amount-lbl">Quick Select</label>
@@ -4673,14 +4723,24 @@
       });
     }
 
+    function activateWorkspace(ws, btn) {
+      document.querySelectorAll('#wsTabs .ws-tab').forEach(b => b.classList.remove('active'));
+      const activeBtn = btn || document.querySelector('#wsTabs .ws-tab[data-ws="' + ws + '"]');
+      if (activeBtn) activeBtn.classList.add('active');
+      document.querySelectorAll('.center-panel .ws-pane').forEach(p => p.classList.remove('active'));
+      const pane = document.getElementById('wsPane-' + ws);
+      (pane || document.getElementById('wsPane-chart')).classList.add('active');
+    }
     document.querySelectorAll('#wsTabs .ws-tab').forEach(btn => {
+      btn.addEventListener('click', () => activateWorkspace(btn.dataset.ws || 'chart', btn));
+    });
+    const viewAllNewsBtn = document.getElementById('viewAllNewsBtn');
+    if (viewAllNewsBtn) viewAllNewsBtn.addEventListener('click', () => activateWorkspace('news'));
+    document.querySelectorAll('.news-expand-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('#wsTabs .ws-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.querySelectorAll('.center-panel .ws-pane').forEach(p => p.classList.remove('active'));
-        const ws = btn.dataset.ws || 'chart';
-        const pane = document.getElementById('wsPane-' + ws);
-        (pane || document.getElementById('wsPane-chart')).classList.add('active');
+        const card = btn.closest('.news-card');
+        const expanded = card.classList.toggle('expanded');
+        btn.firstChild.textContent = expanded ? 'Show less' : 'Show more';
       });
     });
     document.querySelectorAll('#scanFilters .filter-chip').forEach(chip => {
@@ -4825,7 +4885,7 @@
       const POINT_VALUE = 50;          // $ per point per contract (ES)
       let TICK = 0.25;
       const PX_PER_POINT = 22;         // vertical px per 1.0 point
-      const BASE_PRICE = 5312.25;      // anchors chart's vertical price scale
+      const BASE_PRICE = 4500.25;      // anchors chart's vertical price scale
       const AXIS_RIGHT_W = 68;         // width reserved for the price axis gutter
       const AXIS_BOTTOM_H = 24;        // height reserved for the time axis gutter
       const BAR_INTERVAL_MIN = 15;     // minutes per candle, matches the active "15m" timeframe
@@ -4851,7 +4911,7 @@
       let alerts = [];
       function nowTimeStr() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
       let orderHistory = [
-        { symbol: 'ESU5', side: 'buy', qty: 2, price: 5298.50, status: 'filled', time: '09:15:32 AM' },
+        { symbol: 'ETH', side: 'buy', qty: 2, price: 4486.50, status: 'filled', time: '09:15:32 AM' },
         { symbol: 'NQU5', side: 'buy', qty: 1, price: 18480.00, status: 'filled', time: '09:18:47 AM' },
         { symbol: 'RTYU5', side: 'buy', qty: 3, price: 2070.00, status: 'cancelled', time: '08:55:10 AM' },
       ];
@@ -4919,10 +4979,19 @@
 
       /* ---------- context menu ---------- */
       const ctxMenu = document.getElementById('ctxMenu');
+      const ctxLongLbl = document.getElementById('ctxLongLbl');
+      const ctxShortLbl = document.getElementById('ctxShortLbl');
       chart.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         const rect = chart.getBoundingClientRect();
         pendingClickPrice = roundTick(yToPrice(e.clientY - rect.top, rect.height));
+        const qty = parseInt(qtyInput.value || '1');
+        const lastEl = document.getElementById('hdrLast');
+        const currentPrice = lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
+        const below = pendingClickPrice < currentPrice;
+        const priceStr = fmt(pendingClickPrice);
+        ctxLongLbl.textContent = 'Buy ' + qty + ' ETH @ ' + priceStr + ' ' + (below ? 'limit' : 'stop');
+        ctxShortLbl.textContent = 'Sell ' + qty + ' ETH @ ' + priceStr + ' ' + (below ? 'stop' : 'limit');
         openAt(ctxMenu, e.clientX, e.clientY);
       });
       document.getElementById('ctxLong').addEventListener('click', () => { createOrder('buy', pendingClickPrice); closeAllPopovers(); });
@@ -4953,19 +5022,22 @@
       /* ---------- order lifecycle ---------- */
       function createOrder(side, entryPrice) {
         const dir = side === 'buy' ? 1 : -1;
+        const entry = roundTick(entryPrice);
+        const tpPrice = roundTick(entry + dir * 5);
+        const tpDist = Math.abs(tpPrice - entry);
         order = {
-          side, entry: roundTick(entryPrice), qty: 4, orderType: 'Limit',
+          side, entry, qty: parseInt(qtyInput.value || '1'), orderType: 'Limit',
           sizeMode: 'contracts',
           sizeValues: { dollar: 5000, percent: 25, risk: 500 },
-          tps: [{ id: 'tp' + (tpCounter++), price: roundTick(entryPrice + dir * 10), pct: 100, trailing: false }],
-          sl: { price: roundTick(entryPrice - dir * 5), trailing: false, atr: false }
+          tps: [{ id: 'tp' + (tpCounter++), price: tpPrice, pct: 100, trailing: false }],
+          sl: { price: roundTick(entry - dir * tpDist), trailing: false, atr: false }
         };
-        orderHistory.unshift({ symbol: 'ESU5', side, qty: order.qty, price: order.entry, status: 'placed', time: nowTimeStr() });
+        orderHistory.unshift({ symbol: 'ETH', side, qty: order.qty, price: order.entry, status: 'placed', time: nowTimeStr() });
         render();
         showToast((side === 'buy' ? 'Long' : 'Short') + ' order placed at ' + fmt(order.entry), side === 'buy' ? 'north_east' : 'south_east');
       }
       function cancelOrder() {
-        if (order) orderHistory.unshift({ symbol: 'ESU5', side: order.side, qty: order.qty, price: order.entry, status: 'cancelled', time: nowTimeStr() });
+        if (order) orderHistory.unshift({ symbol: 'ETH', side: order.side, qty: order.qty, price: order.entry, status: 'cancelled', time: nowTimeStr() });
         order = null; render(); closeAllPopovers();
       }
       function removeTp(id) {
@@ -4981,7 +5053,7 @@
       function addDefaultSL() {
         if (!order) return;
         const dir = order.side === 'buy' ? 1 : -1;
-        order.sl = { price: roundTick(order.entry - dir * 5), trailing: false, atr: false };
+        order.sl = { price: roundTick(order.entry - dir * 2.5), trailing: false, atr: false };
         render();
       }
 
@@ -4990,10 +5062,10 @@
         const lastEl = document.getElementById('hdrLast');
         const last = lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
         const condition = price >= last ? 'Crosses Above' : 'Crosses Below';
-        alerts.unshift({ id: 'al' + (alertCounter++), symbol: 'ESU5', price: roundTick(price), condition, status: 'active', created: nowTimeStr() });
+        alerts.unshift({ id: 'al' + (alertCounter++), symbol: 'ETH', price: roundTick(price), condition, status: 'active', created: nowTimeStr() });
         renderAlerts();
         render();
-        showToast('Alert set: ESU5 ' + condition.toLowerCase() + ' ' + fmt(roundTick(price)), 'notifications');
+        showToast('Alert set: ETH ' + condition.toLowerCase() + ' ' + fmt(roundTick(price)), 'notifications');
       }
       function removeAlert(id) {
         alerts = alerts.filter(a => a.id !== id);
@@ -5033,7 +5105,7 @@
           const closingSide = order.side === 'buy' ? 'Sell' : 'Buy';
           rows.push(
             '<tr>' +
-            '<td><span class="sym-cell">ESU5</span></td>' +
+            '<td><span class="sym-cell">ETH</span></td>' +
             '<td class="' + (order.side === 'buy' ? 'up' : 'down') + '">' + (order.side === 'buy' ? 'Buy' : 'Sell') + '</td>' +
             '<td>' + order.orderType + '</td>' +
             '<td class="mono">' + order.qty + '</td>' +
@@ -5046,7 +5118,7 @@
             const tpQty = Math.max(1, Math.round(order.qty * tp.pct / 100));
             rows.push(
               '<tr>' +
-              '<td><span class="sym-cell">ESU5</span></td>' +
+              '<td><span class="sym-cell">ETH</span></td>' +
               '<td class="' + (closingSide === 'Buy' ? 'up' : 'down') + '">' + closingSide + '</td>' +
               '<td>Limit (TP)</td>' +
               '<td class="mono">' + tpQty + '</td>' +
@@ -5059,7 +5131,7 @@
           if (order.sl) {
             rows.push(
               '<tr>' +
-              '<td><span class="sym-cell">ESU5</span></td>' +
+              '<td><span class="sym-cell">ETH</span></td>' +
               '<td class="' + (closingSide === 'Buy' ? 'up' : 'down') + '">' + closingSide + '</td>' +
               '<td>Stop (SL)</td>' +
               '<td class="mono">' + order.qty + '</td>' +
@@ -5206,7 +5278,6 @@
           const wick = 0.6 + rand() * 1.8;
           let high = Math.max(open, close) + rand() * wick;
           let low = Math.min(open, close) - rand() * wick;
-          if (isLast) { high = Math.max(high, 5312.75); low = Math.min(low, 5303.75); }
           bars.push({ open, high, low, close });
           price = close;
         }
@@ -5324,6 +5395,26 @@
         ctx.textBaseline = 'middle';
         ctx.fillText(fmt(lastBar.close), plotW + 8, tagY + 0.5);
 
+        /* ---- order price tags (entry / TP / SL) on the right axis ---- */
+        function drawOrderAxisTagOutline(price, color) {
+          const y = clamp(priceToY(price, h), 8, h - 8);
+          ctx.fillStyle = '#0c1014';
+          ctx.fillRect(plotW, y - 9, AXIS_RIGHT_W, 18);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(plotW + 0.5, y - 8.5, AXIS_RIGHT_W - 1, 17);
+          ctx.fillStyle = color;
+          ctx.font = '600 11px "JetBrains Mono", monospace';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(fmt(price), plotW + 8, y + 0.5);
+        }
+        if (order) {
+          order.tps.forEach(tp => drawOrderAxisTagOutline(tp.price, '#2bd47e'));
+          if (order.sl) drawOrderAxisTagOutline(order.sl.price, '#f2495c');
+          drawOrderAxisTagOutline(order.entry, '#3b82f6');
+        }
+
         /* ---- crosshair: dotted guide lines + axis labels at cursor ---- */
         if (crosshair) {
           const cx = clamp(crosshair.x, 0, plotW);
@@ -5378,7 +5469,7 @@
       let panStart = { x: 0, y: 0, panX: 0, panY: 0 };
       chart.addEventListener('mousedown', (e) => {
         if (e.button !== 0) return;
-        if (e.target.closest('.ol-entry-bar, .ol-side-row, .ol-rr-footer, .ol-alert-hit, .pop-menu, .ctx-menu')) return;
+        if (e.target.closest('.ol-entry-bar, .ol-side-row, .ol-alert-hit, .pop-menu, .ctx-menu')) return;
         isPanning = true;
         chart.classList.add('panning');
         panStart = { x: e.clientX, y: e.clientY, panX, panY };
@@ -5415,7 +5506,7 @@
         scheduleDrawPriceChart();
       });
 
-      /* ---------- live price simulation: primary symbol (ESU5) ---------- */
+      /* ---------- live price simulation: primary symbol (ETH) ---------- */
       (function () {
         const simRand = mulberry32(7777);
         function noise() { let s = 0; for (let i = 0; i < 3; i++) s += simRand(); return (s - 1.5); }
@@ -5423,10 +5514,10 @@
         function flashEl(el, isUp) { el.classList.remove('flash-up', 'flash-down'); void el.offsetWidth; el.classList.add(isUp ? 'flash-up' : 'flash-down'); }
         function fmtVol(v) { return v >= 1000 ? (v / 1000).toFixed(1) + 'K' : String(Math.round(v)); }
 
-        const dayOpen = 5305.50;
+        const dayOpen = 4493.50;
         const prevClose = BASE_PRICE - 18.25; // matches the +18.25 day change shown at load
         let last = BASE_PRICE;
-        let dayHigh = 5318.00, dayLow = 5285.25;
+        let dayHigh = 4505.75, dayLow = 4473.25;
         let vol = 24800;
 
         const els = {
@@ -5436,8 +5527,8 @@
           hdrAsk: document.getElementById('hdrAsk'),
           hdrDayHigh: document.getElementById('hdrDayHigh'),
           hdrDayLow: document.getElementById('hdrDayLow'),
-          wlLast: document.getElementById('wlLast-ESU5'),
-          wlChg: document.getElementById('wlChg-ESU5'),
+          wlLast: document.getElementById('wlLast-ETH'),
+          wlChg: document.getElementById('wlChg-ETH'),
           ohlcH: document.getElementById('ohlcH'),
           ohlcL: document.getElementById('ohlcL'),
           ohlcC: document.getElementById('ohlcC'),
@@ -5505,7 +5596,7 @@
             if (hit) {
               a.status = 'triggered';
               alertsChanged = true;
-              showToast('Alert triggered: ESU5 ' + a.condition.toLowerCase() + ' ' + fmt(a.price), 'notifications_active');
+              showToast('Alert triggered: ETH ' + a.condition.toLowerCase() + ' ' + fmt(a.price), 'notifications_active');
             }
           });
           if (alertsChanged) renderAlerts();
@@ -5564,13 +5655,15 @@
             '<span class="ol-amt up" data-edit-tp="' + tp.id + '">+' + fmtMoney(profit) + '</span>' +
             '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
             '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
-            '<span class="ol-side-price">' + fmt(tp.price) + '</span>' +
             '<span class="ol-gear" data-gear-tp="' + tp.id + '"><span class="material-symbols-outlined">settings</span></span>';
           layer.appendChild(row);
 
-          const priceHandle = row.querySelector('.ol-side-price');
-          makeDraggable(priceHandle,
-            (cy, h) => { row.style.top = cy + 'px'; line.style.top = cy + 'px'; },
+          makeDraggable(row.querySelector('.ol-chip'),
+            (cy, h) => {
+              row.style.top = cy + 'px'; line.style.top = cy + 'px';
+              tp.price = roundTick(yToPrice(cy, h));
+              drawPriceChart();
+            },
             (cy, h) => {
               tp.price = roundTick(yToPrice(cy, h));
               const dir2 = order.side === 'buy' ? 1 : -1;
@@ -5607,13 +5700,15 @@
             '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
             '<span class="ol-rmult">-1.0R</span>' +
             '<span class="ol-pct-chip">100%</span>' +
-            '<span class="ol-side-price">' + fmt(order.sl.price) + '</span>' +
             '<span class="ol-gear" id="slGearTrigger"><span class="material-symbols-outlined">settings</span></span>';
           layer.appendChild(row);
 
-          const slPriceHandle = row.querySelector('.ol-side-price');
-          makeDraggable(slPriceHandle,
-            (cy, h) => { row.style.top = cy + 'px'; line.style.top = cy + 'px'; },
+          makeDraggable(row.querySelector('.ol-chip'),
+            (cy, h) => {
+              row.style.top = cy + 'px'; line.style.top = cy + 'px';
+              order.sl.price = roundTick(yToPrice(cy, h));
+              drawPriceChart();
+            },
             (cy, h) => {
               order.sl.price = roundTick(yToPrice(cy, h));
               const dir2 = order.side === 'buy' ? 1 : -1;
@@ -5647,35 +5742,29 @@
           const bar = document.createElement('div');
           bar.className = 'ol-entry-bar';
           bar.style.top = y + 'px';
-          const sizeLabel = order.sizeMode === 'contracts' ? order.qty + ' ES'
+          const sizeLabel = order.sizeMode === 'contracts' ? String(order.qty)
             : order.sizeMode === 'dollar' ? '$' + fmt(order.sizeValues.dollar, 0)
               : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
                 : '$' + fmt(order.sizeValues.risk, 0) + ' risk';
           bar.innerHTML =
-            '<span class="ol-pill ' + (order.side === 'buy' ? 'buy' : 'sell') + '">' + (order.side === 'buy' ? 'BUY' : 'SELL') + '</span>' +
-            '<span class="ol-pill tp-tag tag" id="tpPillTrigger">TP<span class="material-symbols-outlined ol-gear-ic">settings</span></span>' +
-            '<span class="ol-pill sl-tag tag" id="slPillTrigger">SL<span class="material-symbols-outlined ol-gear-ic">settings</span></span>' +
+            '<span class="ol-chip entry" id="entryPriceHandle">ENTRY</span>' +
+            '<span class="ol-entry-price">' + fmt(order.entry) + '</span>' +
             '<span class="ol-pill neutral tag pop-trigger" id="sizePillTrigger">' + sizeLabel + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
             '<span class="ol-pill neutral tag pop-trigger" id="typePillTrigger">' + order.orderType + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
-            '<span class="ol-x" id="cancelOrderBtn"><span class="material-symbols-outlined">close</span></span>' +
-            '<span class="ol-price-tag">' + fmt(order.entry) + '</span>';
+            '<span class="ol-x" id="cancelOrderBtn"><span class="material-symbols-outlined">close</span></span>';
           layer.appendChild(bar);
 
-          const entryPriceHandle = bar.querySelector('.ol-price-tag');
+          const entryPriceHandle = bar.querySelector('#entryPriceHandle');
+          const entryPriceLbl = bar.querySelector('.ol-entry-price');
           makeDraggable(entryPriceHandle,
             (cy, h) => {
               bar.style.top = cy + 'px'; line.style.top = cy + 'px';
-              entryPriceHandle.textContent = fmt(roundTick(yToPrice(cy, h)));
+              order.entry = roundTick(yToPrice(cy, h));
+              entryPriceLbl.textContent = fmt(order.entry);
+              drawPriceChart();
             },
             (cy, h) => { order.entry = roundTick(yToPrice(cy, h)); syncQtyFromRisk(); render(); });
 
-          bar.querySelector('#tpPillTrigger').addEventListener('click', (e) => {
-            e.stopPropagation(); activeGearTpId = order.tps[0] ? order.tps[0].id : null;
-            openTpGearMenu(e.currentTarget.getBoundingClientRect());
-          });
-          bar.querySelector('#slPillTrigger').addEventListener('click', (e) => {
-            e.stopPropagation(); openSlGearMenu(e.currentTarget.getBoundingClientRect());
-          });
           bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
             e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect());
           });
@@ -5685,24 +5774,7 @@
           bar.querySelector('#cancelOrderBtn').addEventListener('click', (e) => { e.stopPropagation(); cancelOrder(); });
         }
 
-        // ---- Risk / Reward footer ----
-        if (order.sl) {
-          const dir = order.side === 'buy' ? 1 : -1;
-          const riskPts = dir * (order.entry - order.sl.price);
-          const risk = riskPts * POINT_VALUE * order.qty;
-          let reward = 0;
-          order.tps.forEach(tp => {
-            const pts = dir * (tp.price - order.entry);
-            const contracts = Math.round(order.qty * tp.pct / 100);
-            reward += pts * POINT_VALUE * contracts;
-          });
-          const footer = document.createElement('div');
-          footer.className = 'ol-rr-footer';
-          footer.innerHTML =
-            '<span class="ol-rr-pill risk"><span class="lbl">Risk</span>-' + fmtMoney(Math.abs(risk)) + ' (-1.0R)</span>' +
-            '<span class="ol-rr-pill reward"><span class="lbl">Reward Potential</span>+' + fmtMoney(Math.abs(reward)) + '</span>';
-          layer.appendChild(footer);
-        }
+        drawPriceChart();
       }
 
       /* ---------- tick size dropdown ---------- */
@@ -5856,11 +5928,12 @@
 
       function refreshSizeBodies() {
         if (!order) return;
+        smQtyInput.value = order.qty;
         // dollar
         smDolInput.value = '$' + fmt(order.sizeValues.dollar, 0);
         const dolQty = +(order.sizeValues.dollar / MARGIN_PER_CONTRACT).toFixed(2);
         const dolMargin = +(dolQty * MARGIN_PER_CONTRACT).toFixed(2);
-        document.getElementById('smDolQty').textContent = fmt(dolQty) + ' ES';
+        document.getElementById('smDolQty').textContent = fmt(dolQty) + ' ETH';
         document.getElementById('smDolMargin').textContent = fmtMoney(dolMargin);
         document.getElementById('smDolBp').textContent = fmtMoney(BUYING_POWER - dolMargin);
 
@@ -5872,7 +5945,7 @@
         const pctMargin = +(pctQty * MARGIN_PER_CONTRACT).toFixed(2);
         document.getElementById('smPctBal').textContent = fmtMoney(ACCOUNT_BALANCE);
         document.getElementById('smPctPos').textContent = fmtMoney(posVal);
-        document.getElementById('smPctQty').textContent = fmt(pctQty) + ' ES';
+        document.getElementById('smPctQty').textContent = fmt(pctQty) + ' ETH';
         document.getElementById('smPctMargin').textContent = fmtMoney(pctMargin);
 
         // risk — rebuilt each time since it has 3 distinct states
@@ -5964,8 +6037,8 @@
         const totalOther = order.tps.filter(t => t.id !== exitModal.tpId).reduce((s, t) => s + t.pct, 0);
         const total = totalOther + pct;
         document.getElementById('exitCurrent').textContent = pct + '% (' + contracts + ' ES)';
-        document.getElementById('exitThis').textContent = contracts + ' ES';
-        document.getElementById('exitRemaining').textContent = remaining + ' ES (' + (100 - pct) + '%)';
+        document.getElementById('exitThis').textContent = contracts + ' ETH';
+        document.getElementById('exitRemaining').textContent = remaining + ' ETH (' + (100 - pct) + '%)';
         const totalEl = document.getElementById('exitTotal');
         if (total === 100) {
           totalEl.innerHTML = total + '% <span class="material-symbols-outlined">check_circle</span>';
@@ -6035,7 +6108,7 @@
       function flashEl(el, isUp) { el.classList.remove('flash-up', 'flash-down'); void el.offsetWidth; el.classList.add(isUp ? 'flash-up' : 'flash-down'); }
       function roundStep(p, step) { return Math.round(p / step) * step; }
 
-      /* watchlist symbols (ESU5 is driven separately, alongside the chart) */
+      /* watchlist symbols (ETH is driven separately, alongside the chart) */
       const watchSyms = [
         { sym: 'NQU5', last: 18624.50, chgPct: 0.52, step: 0.25, dec: 2 },
         { sym: 'YMU5', last: 39865.00, chgPct: 0.27, step: 1, dec: 2 },
@@ -6065,7 +6138,7 @@
         };
       }
       const positions = [
-        makePosition('ESU5', 2, 5298.50, 5312.25, 2750.00, 1950.00, 0.74),
+        makePosition('ETH', 2, 4486.50, 4500.25, 2750.00, 1950.00, 0.74),
         makePosition('NQU5', 1, 18480.00, 18624.50, 1445.00, 980.00, 0.78),
       ];
       const totPnlOpenEl = document.getElementById('totPnlOpen');
@@ -6088,10 +6161,10 @@
           flashEl(s.elLast, isUp);
         });
 
-        // ESU5 position mark price mirrors the header/chart simulation already on screen
+        // ETH position mark price mirrors the header/chart simulation already on screen
         const esLast = parseFloat(document.getElementById('hdrLast').textContent.replace(/,/g, ''));
         const nq = watchSyms.find(s => s.sym === 'NQU5');
-        const markBySym = { ESU5: esLast, NQU5: nq.last };
+        const markBySym = { ETH: esLast, NQU5: nq.last };
 
         let sumPnlOpen = 0, sumPnlDay = 0, sumBase = 0;
         positions.forEach(p => {
