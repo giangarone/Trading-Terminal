@@ -253,10 +253,7 @@
       radial-gradient(circle at 50% 35%, rgba(79,141,249,.04), transparent 60%),
       var(--bg-0);
     background-image:
-      radial-gradient(circle at 50% 35%, rgba(79,141,249,.05), transparent 60%),
-      linear-gradient(var(--border-0) 1px, transparent 1px),
-      linear-gradient(90deg, var(--border-0) 1px, transparent 1px);
-    background-size: auto, 100% 48px, 64px 100%;
+      radial-gradient(circle at 50% 35%, rgba(79,141,249,.05), transparent 60%);
     display:flex;align-items:center;justify-content:center;
   }
   #priceChartCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
@@ -456,7 +453,7 @@
   .ol-price-tag{height:30px;padding:0 11px;border-radius:7px;background:var(--blue);color:#fff;font-family:var(--mono);font-weight:700;font-size:12px;display:flex;align-items:center;letter-spacing:.01em;cursor:ns-resize;}
   .ol-price-tag:hover{box-shadow:0 0 0 2px rgba(79,141,249,.4);}
 
-  .ol-side-row{position:absolute;right:16px;transform:translateY(-50%);display:flex;align-items:center;gap:7px;pointer-events:auto;z-index:5;}
+  .ol-side-row{position:absolute;right:84px;transform:translateY(-50%);display:flex;align-items:center;gap:7px;pointer-events:auto;z-index:5;}
   .ol-side-row.ghost-row{cursor:pointer;opacity:.7;}
   .ol-side-row.ghost-row:hover{opacity:1;}
   .ol-chip{display:flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:6px;font-size:10.5px;font-weight:700;letter-spacing:.02em;}
@@ -1252,6 +1249,9 @@
     const TICK = 0.25;
     const PX_PER_POINT = 22;         // vertical px per 1.0 point
     const BASE_PRICE = 5312.25;      // anchors chart's vertical price scale
+    const AXIS_RIGHT_W = 68;         // width reserved for the price axis gutter
+    const AXIS_BOTTOM_H = 24;        // height reserved for the time axis gutter
+    const BAR_INTERVAL_MIN = 15;     // minutes per candle, matches the active "15m" timeframe
     const MARGIN_PER_CONTRACT = 13200; // mock margin / contract (ballpark ES futures margin)
     const BUYING_POWER = 87643.20;   // matches Order Entry panel
     const ACCOUNT_BALANCE = 20000;   // mock, used for % of Account mode
@@ -1278,8 +1278,8 @@
     function roundTick(p){ return Math.round(p/TICK)*TICK; }
     function rectH(){ return chart.getBoundingClientRect().height; }
     let panX = 0, panY = 0; // panX: px shift of candles; panY: price shift applied to whole scale
-    function priceToY(price, h){ return h/2 - (price-BASE_PRICE-panY)*PX_PER_POINT; }
-    function yToPrice(y, h){ return BASE_PRICE + panY - (y-h/2)/PX_PER_POINT; }
+    function priceToY(price, h){ const ih = h-AXIS_BOTTOM_H; return ih/2 - (price-BASE_PRICE-panY)*PX_PER_POINT; }
+    function yToPrice(y, h){ const ih = h-AXIS_BOTTOM_H; return BASE_PRICE + panY - (y-ih/2)/PX_PER_POINT; }
     function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
     function showToast(msg, icon){
       const t = document.createElement('div');
@@ -1416,6 +1416,17 @@
       }
       return bars;
     })();
+    function niceStep(raw){
+      const pow10 = Math.pow(10, Math.floor(Math.log10(raw)));
+      const norm = raw/pow10;
+      let step;
+      if(norm<1.5) step=1; else if(norm<3) step=2; else if(norm<7) step=5; else step=10;
+      return step*pow10;
+    }
+    function fmtBarTime(idxFromEnd){
+      const ts = Date.now() - idxFromEnd*BAR_INTERVAL_MIN*60000;
+      return new Date(ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    }
     function drawPriceChart(){
       if(!priceCanvas) return;
       const rect = chart.getBoundingClientRect();
@@ -1426,13 +1437,44 @@
       const ctx = priceCanvas.getContext('2d');
       ctx.setTransform(dpr,0,0,dpr,0,0);
       ctx.clearRect(0,0,w,h);
-      const n = candleBars.length;
-      const slot = w/n;
-      const bodyW = Math.max(2, slot*0.6);
+
+      const plotW = Math.max(0, w-AXIS_RIGHT_W);
+      const ih = Math.max(0, h-AXIS_BOTTOM_H);
       const upColor = '#1fd980', downColor = '#ff5470';
+      const gridColor = '#161c26', axisLineColor = '#202a37', labelColor = '#5e6878';
+
+      const n = candleBars.length;
+      const slot = plotW/n;
+      const bodyW = Math.max(2, slot*0.6);
+
+      /* ---- price axis gridlines (drawn first, behind candles) ---- */
+      const targetPxGap = 56;
+      const priceStep = niceStep(targetPxGap/PX_PER_POINT);
+      const topPrice = yToPrice(0, h);
+      const botPrice = yToPrice(ih, h);
+      ctx.strokeStyle = gridColor;
+      ctx.fillStyle = labelColor;
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 1;
+      for(let p = Math.ceil(botPrice/priceStep)*priceStep; p <= topPrice; p += priceStep){
+        const y = priceToY(p, h);
+        ctx.beginPath();
+        ctx.moveTo(0, y); ctx.lineTo(plotW, y);
+        ctx.stroke();
+        ctx.fillText(fmt(p), plotW+8, y);
+      }
+
+      /* ---- candles (clipped to the plot area so panning doesn't bleed into the axes) ---- */
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0,0,plotW,ih);
+      ctx.clip();
       ctx.lineWidth = 1;
       candleBars.forEach((bar, i)=>{
         const cx = slot*i + slot/2 + panX;
+        if(cx < -slot || cx > plotW+slot) return;
         const up = bar.close >= bar.open;
         const color = up ? upColor : downColor;
         const yO = priceToY(bar.open, h), yC = priceToY(bar.close, h);
@@ -1445,6 +1487,39 @@
         const top = Math.min(yO,yC), bh = Math.max(1, Math.abs(yC-yO));
         ctx.fillRect(cx-bodyW/2, top, bodyW, bh);
       });
+      ctx.restore();
+
+      /* ---- time axis labels ---- */
+      const desiredLabels = Math.max(3, Math.round(plotW/110));
+      const stride = Math.max(1, Math.round(n/desiredLabels));
+      ctx.fillStyle = labelColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for(let i=0;i<n;i+=stride){
+        const x = slot*i + slot/2 + panX;
+        if(x < 0 || x > plotW) continue;
+        ctx.fillText(fmtBarTime(n-1-i), x, ih+7);
+      }
+
+      /* ---- axis divider lines ---- */
+      ctx.strokeStyle = axisLineColor;
+      ctx.beginPath();
+      ctx.moveTo(plotW+0.5, 0); ctx.lineTo(plotW+0.5, h);
+      ctx.moveTo(0, ih+0.5); ctx.lineTo(plotW, ih+0.5);
+      ctx.stroke();
+
+      /* ---- highlighted current-price tag ---- */
+      const lastBar = candleBars[n-1];
+      const lastUp = lastBar.close >= lastBar.open;
+      const tagColor = lastUp ? upColor : downColor;
+      const tagY = clamp(priceToY(lastBar.close, h), 8, h-8);
+      ctx.fillStyle = tagColor;
+      ctx.fillRect(plotW, tagY-9, AXIS_RIGHT_W, 18);
+      ctx.fillStyle = '#08101f';
+      ctx.font = '600 11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(fmt(lastBar.close), plotW+8, tagY+0.5);
     }
     let chartResizeRaf = null;
     function scheduleDrawPriceChart(){
