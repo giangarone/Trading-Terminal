@@ -158,6 +158,13 @@
   /* ====== Main grid ====== */
   .main-grid{flex:1;display:flex;min-height:0;}
 
+  .resize-handle{flex-shrink:0;position:relative;z-index:5;background:var(--border-0);}
+  .resize-handle.resize-h{width:1px;cursor:col-resize;}
+  .resize-handle.resize-h::after{content:'';position:absolute;top:0;bottom:0;left:-3px;right:-3px;}
+  .resize-handle.resize-v{height:1px;cursor:row-resize;}
+  .resize-handle.resize-v::after{content:'';position:absolute;left:0;right:0;top:-3px;bottom:-3px;}
+  .resize-handle:hover,.resize-handle.dragging{background:var(--blue);}
+
   .icon-rail{
     width:52px;flex-shrink:0;background:var(--bg-1);
     border-right:1px solid var(--border-0);
@@ -192,10 +199,10 @@
   .wl-cols{display:grid;grid-template-columns:1fr 64px 56px;gap:4px;font-size:9.5px;color:var(--text-2);letter-spacing:.05em;text-transform:uppercase;padding:0 6px 6px;}
   .wl-row{
     display:grid;grid-template-columns:1fr 64px 56px;gap:4px;align-items:center;
-    padding:7px 6px;border-radius:6px;cursor:pointer;border-left:2px solid transparent;
+    padding:7px 6px;border-radius:6px;cursor:pointer;
   }
   .wl-row:hover{background:var(--bg-3);}
-  .wl-row.selected{background:var(--blue-dim);border-left-color:var(--blue);}
+  .wl-row.selected{background:var(--blue-dim);}
   .wl-sym{font-weight:600;font-size:12px;}
   .wl-last{font-size:12px;text-align:right;}
   .wl-chg{font-size:11px;text-align:right;font-weight:500;}
@@ -393,7 +400,7 @@
   .select-input{
     width:100%;display:flex;align-items:center;justify-content:space-between;
     background:var(--bg-3);border:1px solid var(--border-1);border-radius:7px;padding:8px 10px;
-    font-size:12.5px;font-weight:500;
+    font-size:12.5px;font-weight:500;cursor:pointer;
   }
   .select-input .material-symbols-outlined{font-size:16px;color:var(--text-2);}
 
@@ -464,7 +471,7 @@
      order type / size-mode dropdowns, edit-exit modal, toasts
      ==================================================================== */
 
-  #chartPlaceholder{cursor:grab;}
+  #chartPlaceholder{cursor:crosshair;}
   #chartPlaceholder.panning{cursor:grabbing;}
   #orderLineLayer{position:absolute;inset:0;pointer-events:none;}
 
@@ -474,7 +481,7 @@
   .ol-line.sl{border-color:rgba(255,84,112,.5);}
   .ol-line.ghost{border-color:rgba(255,255,255,.16);}
 
-  .ol-entry-bar{position:absolute;left:16px;transform:translateY(-50%);display:flex;align-items:center;gap:6px;pointer-events:auto;z-index:6;}
+  .ol-entry-bar{position:absolute;right:84px;transform:translateY(-50%);display:flex;align-items:center;gap:6px;pointer-events:auto;z-index:6;}
   .ol-pill{display:flex;align-items:center;gap:5px;height:30px;padding:0 11px;border-radius:7px;font-size:11.5px;font-weight:700;white-space:nowrap;letter-spacing:.02em;}
   .ol-pill.buy{background:var(--blue);color:#fff;}
   .ol-pill.sell{background:var(--red);color:#fff;}
@@ -510,7 +517,7 @@
   .ol-badge.trail{background:var(--violet-dim);color:var(--violet);}
   .ol-badge.atr{background:var(--amber-dim);color:var(--amber);}
 
-  .ol-rr-footer{position:absolute;left:16px;bottom:14px;display:flex;gap:8px;pointer-events:auto;z-index:6;}
+  .ol-rr-footer{position:absolute;right:84px;bottom:14px;display:flex;gap:8px;pointer-events:auto;z-index:6;}
   .ol-rr-pill{padding:7px 12px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--mono);display:flex;align-items:center;gap:6px;}
   .ol-rr-pill .lbl{font-family:var(--sans);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.04em;opacity:.8;}
   .ol-rr-pill.risk{background:rgba(255,84,112,.14);color:var(--red);}
@@ -806,6 +813,8 @@
 
     </aside>
 
+    <div class="resize-handle resize-h" id="leftResizeHandle"></div>
+
     <!-- CENTER PANEL -->
     <main class="center-panel">
 
@@ -870,6 +879,8 @@
           <button class="toggle-pill active">auto</button>
         </div>
       </div>
+
+      <div class="resize-handle resize-v" id="bottomResizeHandle"></div>
 
       <div class="bottom-panel">
         <div class="bp-tabs" id="bpTabs">
@@ -957,6 +968,8 @@
       </div>
 
     </main>
+
+    <div class="resize-handle resize-h" id="rightResizeHandle"></div>
 
     <!-- RIGHT PANEL -->
     <aside class="right-panel">
@@ -1348,6 +1361,56 @@
     btn.addEventListener('click', ()=>btn.classList.toggle('active'));
   });
 
+  /* ---------- resizable panels ---------- */
+  function clampResize(v,min,max){ return Math.max(min,Math.min(max,v)); }
+  function setupHorizontalResize(handle, panel, side, minW, maxW){
+    if(!handle || !panel) return;
+    handle.addEventListener('mousedown', (e)=>{
+      e.preventDefault();
+      const startX = e.clientX, startW = panel.getBoundingClientRect().width;
+      handle.classList.add('dragging');
+      document.body.style.userSelect = 'none';
+      function move(ev){
+        const dx = ev.clientX - startX;
+        const w = clampResize((side==='left' ? startW + dx : startW - dx), minW, maxW);
+        panel.style.width = w + 'px';
+      }
+      function up(){
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  }
+  function setupVerticalResize(handle, panel, minH, maxH){
+    if(!handle || !panel) return;
+    handle.addEventListener('mousedown', (e)=>{
+      e.preventDefault();
+      const startY = e.clientY, startH = panel.getBoundingClientRect().height;
+      handle.classList.add('dragging');
+      document.body.style.userSelect = 'none';
+      function move(ev){
+        const dy = ev.clientY - startY;
+        const h = clampResize(startH - dy, minH, maxH);
+        panel.style.height = h + 'px';
+      }
+      function up(){
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  }
+  setupHorizontalResize(document.getElementById('leftResizeHandle'), document.querySelector('.left-panel'), 'left', 200, 480);
+  setupHorizontalResize(document.getElementById('rightResizeHandle'), document.querySelector('.right-panel'), 'right', 240, 520);
+  setupVerticalResize(document.getElementById('bottomResizeHandle'), document.querySelector('.bottom-panel'), 100, 560);
+
   document.querySelectorAll('.wl-row').forEach(row=>{
     row.addEventListener('click', ()=>{
       document.querySelectorAll('.wl-row').forEach(r=>r.classList.remove('selected'));
@@ -1416,6 +1479,7 @@
     function roundTick(p){ return Math.round(p/TICK)*TICK; }
     function rectH(){ return chart.getBoundingClientRect().height; }
     let panX = 0, panY = 0; // panX: px shift of candles; panY: price shift applied to whole scale
+    let crosshair = null; // {x,y} in CSS px relative to chart, within plot bounds, or null when not hovering
     function priceToY(price, h){ const ih = h-AXIS_BOTTOM_H; return ih/2 - (price-BASE_PRICE-panY)*PX_PER_POINT; }
     function yToPrice(y, h){ const ih = h-AXIS_BOTTOM_H; return BASE_PRICE + panY - (y-ih/2)/PX_PER_POINT; }
     function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
@@ -1847,6 +1911,46 @@
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(fmt(lastBar.close), plotW+8, tagY+0.5);
+
+      /* ---- crosshair: dotted guide lines + axis labels at cursor ---- */
+      if(crosshair){
+        const cx = clamp(crosshair.x, 0, plotW);
+        const cy = clamp(crosshair.y, 0, ih);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(154,166,184,.5)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3,3]);
+        ctx.beginPath();
+        ctx.moveTo(cx+0.5, 0); ctx.lineTo(cx+0.5, ih);
+        ctx.moveTo(0, cy+0.5); ctx.lineTo(plotW, cy+0.5);
+        ctx.stroke();
+        ctx.restore();
+
+        const hoverPrice = yToPrice(cy, h);
+        ctx.fillStyle = '#1a222f';
+        ctx.strokeStyle = '#2c3848';
+        ctx.lineWidth = 1;
+        ctx.fillRect(plotW, cy-9, AXIS_RIGHT_W, 18);
+        ctx.strokeRect(plotW+0.5, cy-8.5, AXIS_RIGHT_W-1, 17);
+        ctx.fillStyle = '#eef1f6';
+        ctx.font = '600 11px "JetBrains Mono", monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(fmt(hoverPrice), plotW+8, cy+0.5);
+
+        const i = clamp(Math.round((cx - panX - slot/2)/slot), 0, n-1);
+        const timeLabel = fmtBarTime(n-1-i);
+        ctx.font = '600 11px "JetBrains Mono", monospace';
+        const tw = ctx.measureText(timeLabel).width + 16;
+        const tx = clamp(cx - tw/2, 0, plotW-tw);
+        ctx.fillStyle = '#1a222f';
+        ctx.fillRect(tx, ih, tw, AXIS_BOTTOM_H);
+        ctx.strokeRect(tx+0.5, ih+0.5, tw-1, AXIS_BOTTOM_H-1);
+        ctx.fillStyle = '#eef1f6';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(timeLabel, tx+tw/2, ih+AXIS_BOTTOM_H/2+0.5);
+      }
     }
     let chartResizeRaf = null;
     function scheduleDrawPriceChart(){
@@ -1879,6 +1983,24 @@
       if(!isPanning) return;
       isPanning = false;
       chart.classList.remove('panning');
+    });
+
+    /* ---------- chart crosshair (dotted guide lines + axis labels) ---------- */
+    chart.addEventListener('mousemove', (e)=>{
+      const rect = chart.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      const plotW = rect.width - AXIS_RIGHT_W, ih = rect.height - AXIS_BOTTOM_H;
+      if(isPanning || x<0 || x>plotW || y<0 || y>ih){
+        if(crosshair){ crosshair = null; scheduleDrawPriceChart(); }
+        return;
+      }
+      crosshair = { x, y };
+      scheduleDrawPriceChart();
+    });
+    chart.addEventListener('mouseleave', ()=>{
+      if(!crosshair) return;
+      crosshair = null;
+      scheduleDrawPriceChart();
     });
 
     /* ---------- live price simulation: primary symbol (ESU5) ---------- */
