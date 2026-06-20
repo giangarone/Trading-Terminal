@@ -33,6 +33,9 @@
       --accent-dim: rgba(227, 160, 57, .14);
       --intel: #2bb8c9;
       --intel-dim: rgba(43, 184, 201, .14);
+      --purple: #a78bfa;
+      --purple-dim: rgba(167, 139, 250, .14);
+      --purple-guide: rgba(167, 139, 250, .55);
       --on-accent: #1d1406;
       --on-signal: #0b0f10;
       --r-xs: 5px;
@@ -501,8 +504,8 @@
 
     .card-title {
       font-size: 10.5px;
-      font-weight: 700;
-      letter-spacing: .09em;
+      font-weight: 600;
+      letter-spacing: .03em;
       color: var(--paper-300);
       text-transform: uppercase;
     }
@@ -812,6 +815,12 @@
       align-items: center;
       gap: 12px;
       min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .ct-left::-webkit-scrollbar {
+      display: none;
     }
 
     .ct-sym {
@@ -822,7 +831,6 @@
     .ct-name {
       font-size: 10.5px;
       color: var(--paper-500);
-      letter-spacing: .03em;
     }
 
     .tf-group {
@@ -877,6 +885,8 @@
       border: 1px solid var(--line-2);
       background: var(--ink-850);
       font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .ct-action-btn:hover {
@@ -3032,6 +3042,133 @@
       pointer-events: none;
     }
 
+    #newsMarkerLayer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .news-marker {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      pointer-events: none;
+    }
+
+    .news-marker-guide {
+      position: absolute;
+      top: 0;
+      bottom: 24px;
+      left: 0;
+      width: 0;
+      border-left: 1px dotted var(--purple-guide);
+      opacity: 0;
+      transition: opacity .12s;
+    }
+
+    .news-marker.hovered .news-marker-guide,
+    .news-marker.active .news-marker-guide {
+      opacity: 1;
+    }
+
+    .news-marker-icon {
+      position: absolute;
+      bottom: 30px;
+      left: 0;
+      transform: translateX(-50%);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--ink-850);
+      border: 1px solid var(--purple);
+      color: var(--purple);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      cursor: pointer;
+      z-index: 5;
+    }
+
+    .news-marker-icon:hover,
+    .news-marker.active .news-marker-icon {
+      background: var(--purple);
+      color: var(--ink-950);
+    }
+
+    .news-marker-icon .material-symbols-outlined {
+      font-size: 13px;
+    }
+
+    .news-marker-popup {
+      position: absolute;
+      bottom: 64px;
+      left: 0;
+      transform: translateX(-50%);
+      width: 260px;
+      background: var(--ink-850);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-md);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, .55);
+      display: none;
+      pointer-events: auto;
+      z-index: 6;
+      overflow: hidden;
+    }
+
+    .news-marker.active .news-marker-popup {
+      display: flex;
+    }
+
+    .news-marker-popup .news-bar {
+      width: 4px;
+      flex-shrink: 0;
+      background: var(--purple);
+    }
+
+    .news-marker-popup .news-main {
+      flex: 1;
+      min-width: 0;
+      padding: 11px 13px;
+    }
+
+    .news-marker-popup .news-row-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+
+    .news-marker-popup .news-time {
+      font-size: 10.5px;
+      color: var(--paper-500);
+      font-weight: 500;
+    }
+
+    .news-marker-popup .news-src {
+      font-size: 10px;
+      color: var(--purple);
+      background: var(--purple-dim);
+      border-radius: 5px;
+      padding: 2px 7px;
+      font-weight: 600;
+    }
+
+    .news-marker-popup .news-headline {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--paper-100);
+      line-height: 1.4;
+      margin-bottom: 5px;
+    }
+
+    .news-marker-popup .news-desc {
+      font-size: 11.5px;
+      color: var(--paper-300);
+      line-height: 1.5;
+    }
+
     .ol-line {
       position: absolute;
       left: 0;
@@ -4178,8 +4315,6 @@
     <nav class="workspace-tabs" id="wsTabs">
       <button class="ws-tab active" data-ws="chart"><span
           class="material-symbols-outlined">show_chart</span>Chart</button>
-      <button class="ws-tab" data-ws="chart"><span class="material-symbols-outlined">stacked_line_chart</span>L2
-        Indicators</button>
       <button class="ws-tab" data-ws="news"><span class="material-symbols-outlined">article</span>News Intel</button>
       <button class="ws-tab" data-ws="ai"><span class="material-symbols-outlined">smart_toy</span>AI Market
         Assistant</button>
@@ -4383,7 +4518,7 @@
             <div class="ct-left">
               <div>
                 <div class="ct-sym">ETHUSD</div>
-                <div class="ct-name">ETHEREUM</div>
+                <div class="ct-name">Ethereum</div>
               </div>
               <div class="tf-group" id="tfGroup">
                 <button class="tf-btn">1m</button>
@@ -4398,6 +4533,10 @@
               <button class="ct-action-btn pop-trigger" id="indicatorsTrigger"><span class="material-symbols-outlined"
                   style="font-size:15px;">function</span>Indicators<span class="ind-count" id="indicatorsCount"
                   style="display:none;"></span><span class="material-symbols-outlined"
+                  style="font-size:15px;">expand_more</span></button>
+              <button class="ct-action-btn pop-trigger" id="l2IndicatorsTrigger"><span class="material-symbols-outlined"
+                  style="font-size:15px;">stacked_line_chart</span>L2 Indicators<span class="ind-count"
+                  id="l2IndicatorsCount" style="display:none;"></span><span class="material-symbols-outlined"
                   style="font-size:15px;">expand_more</span></button>
               <button class="ct-action-btn" id="replayToggle"><span class="material-symbols-outlined"
                   style="font-size:15px;">fast_rewind</span>Replay</button>
@@ -4423,6 +4562,7 @@
           <div class="chart-placeholder" id="chartPlaceholder">
             <canvas id="priceChartCanvas"></canvas>
             <div id="orderLineLayer"></div>
+            <div id="newsMarkerLayer"></div>
           </div>
 
           <div class="range-bar">
@@ -4979,7 +5119,8 @@
                   <td class="up" id="posPnlOpen-ETHUSD">+2,750.00</td>
                   <td class="up" id="posPnlDay-ETHUSD">+1,950.00</td>
                   <td class="up" id="posPct-ETHUSD">+0.74%</td>
-                  <td><span class="material-symbols-outlined action-dots" data-pos-actions="ETHUSD">more_horiz</span></td>
+                  <td><span class="material-symbols-outlined action-dots" data-pos-actions="ETHUSD">more_horiz</span>
+                  </td>
                 </tr>
                 <tr data-pos-row="NQU5">
                   <td><span class="sym-cell">NQU5</span></td>
@@ -5320,21 +5461,29 @@
 
   <!-- ===================== INDICATORS CHECKLIST DROPDOWN ===================== -->
   <div class="pop-menu" id="indicatorsMenu" style="width:230px;">
-    <button class="pop-item checklist" data-ind="Liquidity Heat Map">
+    <button class="pop-item checklist" data-ind="RSI">
       <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
-      <span class="pop-text"><span class="pt-title">Liquidity Heat Map</span></span>
+      <span class="pop-text"><span class="pt-title">RSI</span></span>
     </button>
-    <button class="pop-item checklist" data-ind="Smart Money Flow">
+    <button class="pop-item checklist" data-ind="MACD">
       <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
-      <span class="pop-text"><span class="pt-title">Smart Money Flow</span></span>
+      <span class="pop-text"><span class="pt-title">MACD</span></span>
     </button>
-    <button class="pop-item checklist" data-ind="Order Flow">
+    <button class="pop-item checklist" data-ind="Bollinger Bands">
       <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
-      <span class="pop-text"><span class="pt-title">Order Flow</span></span>
+      <span class="pop-text"><span class="pt-title">Bollinger Bands</span></span>
     </button>
-    <button class="pop-item checklist" data-ind="Volume Profile">
+    <button class="pop-item checklist" data-ind="VWAP">
       <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
-      <span class="pop-text"><span class="pt-title">Volume Profile</span></span>
+      <span class="pop-text"><span class="pt-title">VWAP</span></span>
+    </button>
+    <button class="pop-item checklist" data-ind="EMA">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">EMA</span></span>
+    </button>
+    <button class="pop-item checklist" data-ind="Stochastic Oscillator">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">Stochastic Oscillator</span></span>
     </button>
     <div class="pop-sep"></div>
     <button class="pop-item checklist" data-ind="Market Oracle">
@@ -5352,6 +5501,38 @@
     <button class="pop-item checklist" data-ind="Prime Screener">
       <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
       <span class="pop-text"><span class="pt-title">Prime Screener</span></span>
+    </button>
+  </div>
+
+  <!-- ===================== L2 INDICATORS CHECKLIST DROPDOWN ===================== -->
+  <div class="pop-menu" id="l2IndicatorsMenu" style="width:230px;">
+    <button class="pop-item checklist" data-ind="Depth of Market">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">Depth of Market</span></span>
+    </button>
+    <button class="pop-item checklist" data-ind="Order Book Heatmap">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">Order Book Heatmap</span></span>
+    </button>
+    <button class="pop-item checklist" data-ind="Footprint Chart">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">Footprint Chart</span></span>
+    </button>
+    <button class="pop-item checklist" data-ind="Order Flow Imbalance">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">Order Flow Imbalance</span></span>
+    </button>
+    <button class="pop-item checklist" data-ind="Volume Profile">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">Volume Profile</span></span>
+    </button>
+    <button class="pop-item checklist" data-ind="Liquidity Absorption">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">Liquidity Absorption</span></span>
+    </button>
+    <button class="pop-item checklist" data-ind="Iceberg Detection">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">Iceberg Detection</span></span>
     </button>
   </div>
 
@@ -6039,6 +6220,7 @@
 
       const chart = document.getElementById('chartPlaceholder');
       const layer = document.getElementById('orderLineLayer');
+      const newsMarkerLayer = document.getElementById('newsMarkerLayer');
       const toastStack = document.getElementById('toastStack');
       const priceCanvas = document.getElementById('priceChartCanvas');
 
@@ -6432,6 +6614,81 @@
         }
         return bars;
       })();
+      function newsTimeLabel(idxFromEnd) {
+        const mins = idxFromEnd * BAR_INTERVAL_MIN;
+        const hrs = Math.round(Math.abs(mins) / 60 * 10) / 10;
+        const hrsStr = hrs % 1 === 0 ? hrs.toFixed(0) : hrs.toFixed(1);
+        return mins > 0 ? hrsStr + 'h ago' : 'in ' + hrsStr + 'h';
+      }
+      const newsEvents = [
+        {
+          idxFromEnd: 14,
+          headline: 'SEC Delays Ruling on Ether ETF Options Listing',
+          description: 'The regulator pushed its decision window on the pending spot Ether ETF options proposal, citing the need for further review of market manipulation safeguards. Traders had priced in approval this week, raising the odds of near-term volatility.',
+        },
+        {
+          idxFromEnd: -8,
+          headline: 'Ethereum Foundation Sets Fusaka Upgrade Mainnet Date',
+          description: 'The Foundation confirmed a mainnet activation date for the Fusaka upgrade, which bundles several EIPs aimed at boosting blob throughput and cutting L2 data costs. Validators are expected to begin client upgrades ahead of the rollout.',
+        },
+      ].map(ev => Object.assign(ev, { timeLabel: newsTimeLabel(ev.idxFromEnd) }));
+      let newsMarkerEls = null;
+      let hoveringNewsMarker = false;
+      function buildNewsMarkers() {
+        if (!newsMarkerLayer) return [];
+        const els = newsEvents.map(ev => {
+          const el = document.createElement('div');
+          el.className = 'news-marker';
+          el.innerHTML =
+            '<div class="news-marker-guide"></div>' +
+            '<div class="news-marker-icon"><span class="material-symbols-outlined">article</span></div>' +
+            '<div class="news-marker-popup">' +
+            '<div class="news-bar"></div>' +
+            '<div class="news-main">' +
+            '<div class="news-row-top"><span class="news-src">News</span><span class="news-time">' + ev.timeLabel + '</span></div>' +
+            '<div class="news-headline">' + ev.headline + '</div>' +
+            '<div class="news-desc">' + ev.description + '</div>' +
+            '</div>' +
+            '</div>';
+          newsMarkerLayer.appendChild(el);
+          const icon = el.querySelector('.news-marker-icon');
+          icon.addEventListener('mouseenter', () => {
+            el.classList.add('hovered');
+            hoveringNewsMarker = true;
+            if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
+          });
+          icon.addEventListener('mouseleave', () => {
+            el.classList.remove('hovered');
+            hoveringNewsMarker = false;
+          });
+          icon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const wasActive = el.classList.contains('active');
+            els.forEach(m => m.classList.remove('active'));
+            if (!wasActive) el.classList.add('active');
+          });
+          return el;
+        });
+        return els;
+      }
+      document.addEventListener('click', () => {
+        if (newsMarkerEls) newsMarkerEls.forEach(m => m.classList.remove('active'));
+      });
+      function renderNewsMarkers(slot, baseIndexOffset, panX, plotW, ih, n) {
+        if (!newsMarkerLayer) return;
+        if (!newsMarkerEls) newsMarkerEls = buildNewsMarkers();
+        newsEvents.forEach((ev, i) => {
+          const el = newsMarkerEls[i];
+          const barIndex = (n - 1) - ev.idxFromEnd;
+          const x = slot * (barIndex - baseIndexOffset) + slot / 2 + panX;
+          if (x < -slot || x > plotW + slot) {
+            el.style.display = 'none';
+          } else {
+            el.style.display = '';
+            el.style.left = x + 'px';
+          }
+        });
+      }
       function niceStep(raw) {
         const pow10 = Math.pow(10, Math.floor(Math.log10(raw)));
         const norm = raw / pow10;
@@ -6513,6 +6770,7 @@
           if (x < 0 || x > plotW) continue;
           ctx.fillText(fmtBarTime((VISIBLE_BARS - 1) - vi), x, ih + 7);
         }
+        renderNewsMarkers(slot, baseIndexOffset, panX, plotW, ih, n);
 
         /* ---- axis divider lines ---- */
         ctx.strokeStyle = axisLineColor;
@@ -6643,7 +6901,7 @@
         const rect = chart.getBoundingClientRect();
         const x = e.clientX - rect.left, y = e.clientY - rect.top;
         const plotW = rect.width - AXIS_RIGHT_W, ih = rect.height - AXIS_BOTTOM_H;
-        if (isPanning || x < 0 || x > plotW || y < 0 || y > ih) {
+        if (isPanning || hoveringNewsMarker || x < 0 || x > plotW || y < 0 || y > ih) {
           if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
           return;
         }
@@ -6972,6 +7230,28 @@
           it.classList.toggle('checked');
           updateIndicatorsCount();
           showToast((it.classList.contains('checked') ? it.dataset.ind + ' enabled' : it.dataset.ind + ' disabled'), 'function');
+        });
+      });
+
+      /* ---------- L2 indicators checklist dropdown ---------- */
+      const l2IndicatorsTrigger = document.getElementById('l2IndicatorsTrigger');
+      const l2IndicatorsMenu = document.getElementById('l2IndicatorsMenu');
+      const l2IndicatorsCount = document.getElementById('l2IndicatorsCount');
+      function updateL2IndicatorsCount() {
+        const n = l2IndicatorsMenu.querySelectorAll('.pop-item.checked').length;
+        l2IndicatorsCount.style.display = n > 0 ? 'inline-flex' : 'none';
+        l2IndicatorsCount.textContent = n;
+      }
+      l2IndicatorsTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openNear(l2IndicatorsMenu, l2IndicatorsTrigger.getBoundingClientRect(), 'left');
+      });
+      l2IndicatorsMenu.querySelectorAll('.pop-item').forEach(it => {
+        it.addEventListener('click', (e) => {
+          e.stopPropagation();
+          it.classList.toggle('checked');
+          updateL2IndicatorsCount();
+          showToast((it.classList.contains('checked') ? it.dataset.ind + ' enabled' : it.dataset.ind + ' disabled'), 'stacked_line_chart');
         });
       });
 
