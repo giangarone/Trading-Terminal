@@ -728,8 +728,8 @@
     }
 
     .tf-btn.active {
-      background: var(--accent);
-      color: var(--on-accent);
+      background: var(--line-2);
+      color: var(--paper-100);
     }
 
     .tf-chevron {
@@ -1642,21 +1642,23 @@
     }
 
     .bs-btn.buy {
-      background: var(--long);
-      color: var(--on-signal);
+      background: var(--ink-800);
+      border: 1px solid var(--long);
+      color: var(--long);
     }
 
     .bs-btn.buy:hover {
-      filter: brightness(1.08);
+      background: var(--long-dim);
     }
 
     .bs-btn.sell {
-      background: var(--short);
-      color: var(--on-signal);
+      background: var(--ink-800);
+      border: 1px solid var(--short);
+      color: var(--short);
     }
 
     .bs-btn.sell:hover {
-      filter: brightness(1.08);
+      background: var(--short-dim);
     }
 
     .join-row {
@@ -2132,6 +2134,12 @@
       color: var(--paper-300);
       font-weight: 700;
       font-family: var(--mono);
+      cursor: pointer;
+      text-decoration: underline dotted transparent;
+    }
+
+    .ol-pct-chip:hover {
+      text-decoration-color: currentColor;
     }
 
     .ol-side-price {
@@ -3208,7 +3216,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
+                <tr data-pos-row="ESU5">
                   <td><span class="sym-cell">ESU5</span></td>
                   <td class="mono">2</td>
                   <td class="mono">5,298.50</td>
@@ -3216,9 +3224,9 @@
                   <td class="mono up" id="posPnlOpen-ESU5">+2,750.00</td>
                   <td class="mono up" id="posPnlDay-ESU5">+1,950.00</td>
                   <td class="mono up" id="posPct-ESU5">+0.74%</td>
-                  <td><span class="material-symbols-outlined action-dots">more_horiz</span></td>
+                  <td><span class="material-symbols-outlined action-dots" data-pos-actions="ESU5">more_horiz</span></td>
                 </tr>
-                <tr>
+                <tr data-pos-row="NQU5">
                   <td><span class="sym-cell">NQU5</span></td>
                   <td class="mono">1</td>
                   <td class="mono">18,480.00</td>
@@ -3226,7 +3234,7 @@
                   <td class="mono up" id="posPnlOpen-NQU5">+1,445.00</td>
                   <td class="mono up" id="posPnlDay-NQU5">+980.00</td>
                   <td class="mono up" id="posPct-NQU5">+0.78%</td>
-                  <td><span class="material-symbols-outlined action-dots">more_horiz</span></td>
+                  <td><span class="material-symbols-outlined action-dots" data-pos-actions="NQU5">more_horiz</span></td>
                 </tr>
                 <tr class="total-row">
                   <td>TOTAL</td>
@@ -3524,6 +3532,12 @@
     <div class="ctx-sep"></div>
     <button class="ctx-item" id="ctxSettings"><span
         class="material-symbols-outlined">settings</span>Settings...</button>
+  </div>
+
+  <!-- ===================== POSITION ROW ACTIONS DROPDOWN ===================== -->
+  <div class="ctx-menu" id="posActionsMenu">
+    <button class="ctx-item short" id="posActionsClose"><span
+        class="material-symbols-outlined">close</span>Close Trade</button>
   </div>
 
   <!-- ===================== TICK SIZE DROPDOWN ===================== -->
@@ -3962,6 +3976,25 @@
       });
       document.getElementById('ctxLong').addEventListener('click', () => { createOrder('buy', pendingClickPrice); closeAllPopovers(); });
       document.getElementById('ctxShort').addEventListener('click', () => { createOrder('sell', pendingClickPrice); closeAllPopovers(); });
+
+      /* ---------- position row actions dropdown ---------- */
+      const posActionsMenu = document.getElementById('posActionsMenu');
+      let activeClosePosSym = null;
+      document.querySelectorAll('[data-pos-actions]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          activeClosePosSym = el.dataset.posActions;
+          openNear(posActionsMenu, el.getBoundingClientRect(), 'right');
+        });
+      });
+      document.getElementById('posActionsClose').addEventListener('click', () => {
+        if (!activeClosePosSym) return;
+        const row = document.querySelector('[data-pos-row="' + activeClosePosSym + '"]');
+        if (row) row.remove();
+        showToast(activeClosePosSym + ' position closed', 'check_circle');
+        closeAllPopovers();
+        activeClosePosSym = null;
+      });
       document.getElementById('ctxAlert').addEventListener('click', () => { addAlert(pendingClickPrice); closeAllPopovers(); });
       document.getElementById('ctxReset').addEventListener('click', () => { showToast('Chart view reset', 'restart_alt'); closeAllPopovers(); });
       document.getElementById('ctxSettings').addEventListener('click', () => { showToast('Opening chart settings…', 'settings'); closeAllPopovers(); });
@@ -4579,7 +4612,7 @@
             '<span class="ol-chip tp">TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '</span>' +
             '<span class="ol-amt up" data-edit-tp="' + tp.id + '">+' + fmtMoney(profit) + '</span>' +
             '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
-            '<span class="ol-pct-chip">' + tp.pct + '%</span>' +
+            '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
             '<span class="ol-side-price">' + fmt(tp.price) + '</span>' +
             '<span class="ol-gear" data-gear-tp="' + tp.id + '"><span class="material-symbols-outlined">settings</span></span>';
           layer.appendChild(row);
@@ -4595,6 +4628,7 @@
             });
 
           row.querySelector('[data-edit-tp]').addEventListener('click', (e) => { openEditExitModal(tp.id); });
+          row.querySelector('[data-pct-tp]').addEventListener('click', (e) => { e.stopPropagation(); openEditExitModal(tp.id); });
           row.querySelector('[data-gear-tp]').addEventListener('click', (e) => {
             e.stopPropagation();
             activeGearTpId = tp.id;
@@ -4678,7 +4712,10 @@
 
           const entryPriceHandle = bar.querySelector('.ol-price-tag');
           makeDraggable(entryPriceHandle,
-            (cy, h) => { bar.style.top = cy + 'px'; line.style.top = cy + 'px'; },
+            (cy, h) => {
+              bar.style.top = cy + 'px'; line.style.top = cy + 'px';
+              entryPriceHandle.textContent = fmt(roundTick(yToPrice(cy, h)));
+            },
             (cy, h) => { order.entry = roundTick(yToPrice(cy, h)); syncQtyFromRisk(); render(); });
 
           bar.querySelector('#tpPillTrigger').addEventListener('click', (e) => {
