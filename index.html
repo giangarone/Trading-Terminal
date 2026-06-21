@@ -861,6 +861,16 @@
       color: var(--paper-100);
     }
 
+    .tf-btn.tf-more {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .tf-btn.tf-more #tfMoreLabel:empty {
+      display: none;
+    }
+
     .tf-chevron {
       color: var(--paper-500);
       display: flex;
@@ -898,6 +908,18 @@
       color: var(--accent);
       border-color: rgba(227, 160, 57, .4);
       background: var(--accent-dim);
+    }
+
+    #newsToggle.active {
+      color: var(--purple);
+      border-color: var(--purple-guide);
+      background: var(--purple-dim);
+    }
+
+    #replayToggle.active {
+      color: #3b82f6;
+      border-color: rgba(59, 130, 246, .4);
+      background: rgba(59, 130, 246, .14);
     }
 
     .ct-icon {
@@ -2819,6 +2841,11 @@
       position: absolute;
       inset: 0;
       pointer-events: none;
+      display: none;
+    }
+
+    #newsMarkerLayer.show {
+      display: block;
     }
 
     .ai-assist-popup {
@@ -2847,6 +2874,8 @@
       justify-content: space-between;
       padding: 10px 12px;
       border-bottom: 1px solid var(--line-1);
+      cursor: move;
+      user-select: none;
     }
 
     .aip-title {
@@ -3573,6 +3602,75 @@
       background: var(--ink-750);
     }
 
+    .sym-select-menu.show {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sym-select-search {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--ink-800);
+      border: 1px solid var(--line-2);
+      border-radius: 7px;
+      padding: 6px 9px;
+      margin-bottom: 6px;
+      flex-shrink: 0;
+    }
+
+    .sym-select-search .material-symbols-outlined {
+      font-size: 15px;
+      color: var(--paper-500);
+    }
+
+    .sym-select-search input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 12px;
+      color: var(--paper-100);
+      min-width: 0;
+    }
+
+    .sym-select-search input::placeholder {
+      color: var(--paper-500);
+    }
+
+    .sym-select-list {
+      overflow-y: auto;
+      max-height: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .sym-select-item {
+      padding: 7px 9px;
+      border-radius: 7px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--paper-100);
+      text-align: left;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: background .12s, color .12s;
+    }
+
+    .sym-select-item:hover {
+      background: var(--ink-800);
+      color: var(--accent);
+    }
+
+    .sym-select-empty {
+      padding: 12px 9px;
+      font-size: 12px;
+      color: var(--paper-500);
+      text-align: center;
+    }
+
     .pop-icon {
       width: 27px;
       height: 27px;
@@ -4238,8 +4336,8 @@
         </div>
 
         <div class="symbol-block">
-          <div class="symbol-select">
-            <span class="sym">ETHUSD</span>
+          <div class="symbol-select pop-trigger" id="symSelectTrigger">
+            <span class="sym" id="symSelectLabel">ETHUSD</span>
             <span class="material-symbols-outlined" style="font-size:16px;color:var(--paper-500);">expand_more</span>
           </div>
           <div class="symbol-meta">
@@ -4513,14 +4611,13 @@
                 <div class="ct-name">Ethereum</div>
               </div>
               <div class="tf-group" id="tfGroup">
-                <button class="tf-btn">1m</button>
-                <button class="tf-btn">3m</button>
-                <button class="tf-btn">5m</button>
-                <button class="tf-btn active">15m</button>
-                <button class="tf-btn">30m</button>
-                <button class="tf-btn">1h</button>
-                <button class="tf-btn">4h</button>
-                <button class="tf-btn">D</button>
+                <button class="tf-btn active" data-tf="15m">15m</button>
+                <button class="tf-btn" data-tf="1h">1h</button>
+                <button class="tf-btn" data-tf="4h">4h</button>
+                <button class="tf-btn" data-tf="D">D</button>
+                <button class="tf-btn" data-tf="W">W</button>
+                <button class="tf-btn tf-more pop-trigger" id="tfMoreTrigger"><span id="tfMoreLabel"></span><span
+                    class="material-symbols-outlined" style="font-size:14px;">expand_more</span></button>
               </div>
               <button class="ct-action-btn pop-trigger" id="indicatorsTrigger"><span class="material-symbols-outlined"
                   style="font-size:15px;">function</span>Indicators<span class="ind-count" id="indicatorsCount"
@@ -4533,14 +4630,12 @@
               <button class="ct-action-btn" id="replayToggle"><span class="material-symbols-outlined"
                   style="font-size:15px;">fast_rewind</span>Replay</button>
               <button class="ct-action-btn" id="aiAssistTrigger"><span class="material-symbols-outlined"
-                  style="font-size:15px;">smart_toy</span>AI Assistance</button>
+                  style="font-size:15px;">auto_awesome</span>AI Assistance</button>
+              <button class="ct-action-btn" id="newsToggle"><span class="material-symbols-outlined"
+                  style="font-size:15px;">article</span>News</button>
             </div>
             <div class="ct-right">
-              <button class="ct-icon"><span class="material-symbols-outlined">edit</span></button>
-              <button class="ct-icon"><span class="material-symbols-outlined">add</span></button>
-              <button class="ct-icon"><span class="material-symbols-outlined">view_column</span></button>
               <button class="ct-icon"><span class="material-symbols-outlined">settings</span></button>
-              <button class="ct-icon"><span class="material-symbols-outlined">more_horiz</span></button>
             </div>
           </div>
 
@@ -4560,7 +4655,7 @@
 
             <div class="ai-assist-popup" id="aiAssistPopup">
               <div class="aip-head">
-                <span class="aip-title"><span class="material-symbols-outlined">smart_toy</span>AI Assistance</span>
+                <span class="aip-title"><span class="material-symbols-outlined">auto_awesome</span>AI Assistance</span>
                 <button class="aip-close" id="aiAssistClose"><span
                     class="material-symbols-outlined">close</span></button>
               </div>
@@ -5403,6 +5498,35 @@
       Trade</button>
   </div>
 
+  <!-- ===================== MORE TIMEFRAMES DROPDOWN ===================== -->
+  <div class="pop-menu" id="tfMoreMenu" style="width:110px;">
+    <button class="pop-item" data-tf="1m">1m</button>
+    <button class="pop-item" data-tf="3m">3m</button>
+    <button class="pop-item" data-tf="5m">5m</button>
+    <button class="pop-item" data-tf="10m">10m</button>
+    <button class="pop-item" data-tf="30m">30m</button>
+    <button class="pop-item" data-tf="2h">2h</button>
+    <button class="pop-item" data-tf="6h">6h</button>
+    <button class="pop-item" data-tf="12h">12h</button>
+    <button class="pop-item" data-tf="M">M</button>
+    <button class="pop-item" data-tf="Y">Y</button>
+  </div>
+
+  <!-- ===================== SYMBOL SELECTOR DROPDOWN ===================== -->
+  <div class="pop-menu sym-select-menu" id="symSelectMenu" style="width:280px;">
+    <div class="wl-tabs" id="symSelectTabs">
+      <button class="wl-tab active" data-cat="crypto">Crypto</button>
+      <button class="wl-tab" data-cat="stocks">Stocks</button>
+      <button class="wl-tab" data-cat="futures">Futures</button>
+      <button class="wl-tab" data-cat="forex">Forex</button>
+    </div>
+    <div class="sym-select-search">
+      <span class="material-symbols-outlined">search</span>
+      <input type="text" id="symSelectSearch" placeholder="Search symbol…">
+    </div>
+    <div class="sym-select-list" id="symSelectList"></div>
+  </div>
+
   <!-- ===================== INDICATORS CHECKLIST DROPDOWN ===================== -->
   <div class="pop-menu" id="indicatorsMenu" style="width:230px;">
     <button class="pop-item checklist" data-ind="RSI">
@@ -5781,6 +5905,10 @@
       }
       tjDaySelect.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (tjDayMenu.classList.contains('show')) {
+          closeAllPopoversLocal();
+          return;
+        }
         closeAllPopoversLocal();
         const anchorRect = tjDaySelect.getBoundingClientRect();
         tjDayMenu.classList.add('show');
@@ -5930,7 +6058,6 @@
         });
       });
     });
-    setupGroup('#tfGroup', '.tf-btn');
     document.querySelectorAll('#bpTabs .bp-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('#bpTabs .bp-tab').forEach(b => b.classList.remove('active'));
@@ -6000,6 +6127,45 @@
     if (aiAssistClose) aiAssistClose.addEventListener('click', (e) => {
       e.stopPropagation();
       closeAiAssistPopup();
+    });
+    (function () {
+      const head = aiAssistPopup.querySelector('.aip-head');
+      const chartEl = document.getElementById('chartPlaceholder');
+      let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+      head.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.aip-close')) return;
+        dragging = true;
+        const rect = aiAssistPopup.getBoundingClientRect();
+        const chartRect = chartEl.getBoundingClientRect();
+        startX = e.clientX; startY = e.clientY;
+        startLeft = rect.left - chartRect.left;
+        startTop = rect.top - chartRect.top;
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const chartRect = chartEl.getBoundingClientRect();
+        const maxLeft = Math.max(0, chartRect.width - aiAssistPopup.offsetWidth);
+        const maxTop = Math.max(0, chartRect.height - aiAssistPopup.offsetHeight);
+        let left = startLeft + (e.clientX - startX);
+        let top = startTop + (e.clientY - startY);
+        left = Math.min(Math.max(0, left), maxLeft);
+        top = Math.min(Math.max(0, top), maxTop);
+        aiAssistPopup.style.left = left + 'px';
+        aiAssistPopup.style.top = top + 'px';
+        e.stopPropagation();
+      }, true);
+      document.addEventListener('mouseup', () => { dragging = false; });
+    })();
+
+    /* ---------- chart news visibility toggle ---------- */
+    const newsToggle = document.getElementById('newsToggle');
+    const newsMarkerLayerEl = document.getElementById('newsMarkerLayer');
+    if (newsToggle) newsToggle.addEventListener('click', () => {
+      const willShow = !newsMarkerLayerEl.classList.contains('show');
+      newsMarkerLayerEl.classList.toggle('show', willShow);
+      newsToggle.classList.toggle('active', willShow);
     });
 
     /* ---------- editable order-entry price fields ---------- */
@@ -6243,9 +6409,14 @@
         el.style.left = Math.max(8, x) + 'px';
         el.style.top = Math.max(8, y) + 'px';
       }
-      function openNear(el, anchorRect, align) {
+      function openNear(el, anchorRect, align, trigger) {
+        if (trigger && el.classList.contains('show') && el._openTrigger === trigger) {
+          closeAllPopovers();
+          return;
+        }
         closeAllPopoversExcept(el);
         el.classList.add('show');
+        el._openTrigger = trigger || null;
         const vw = window.innerWidth, vh = window.innerHeight;
         const w = el.offsetWidth, h = el.offsetHeight;
         let x = align === 'right' ? anchorRect.right - w : anchorRect.left;
@@ -6846,7 +7017,7 @@
       let panStart = { x: 0, y: 0, panX: 0, panY: 0 };
       chart.addEventListener('mousedown', (e) => {
         if (e.button !== 0) return;
-        if (e.target.closest('.ol-entry-bar, .ol-side-row, .ol-alert-hit, .pop-menu, .ctx-menu')) return;
+        if (e.target.closest('.ol-entry-bar, .ol-side-row, .ol-alert-hit, .pop-menu, .ctx-menu, .ai-assist-popup')) return;
         isPanning = true;
         chart.classList.add('panning');
         panStart = { x: e.clientX, y: e.clientY, panX, panY };
@@ -7178,7 +7349,7 @@
       const accountVal = document.getElementById('accountVal');
       accountBox.addEventListener('click', (e) => {
         e.stopPropagation();
-        openNear(accountMenu, accountBox.getBoundingClientRect(), 'left');
+        openNear(accountMenu, accountBox.getBoundingClientRect(), 'left', accountBox);
       });
       accountMenu.querySelectorAll('.pop-item').forEach(it => {
         it.addEventListener('click', () => {
@@ -7187,6 +7358,99 @@
           accountVal.textContent = it.dataset.account;
           closeAllPopovers();
           showToast('Switched to ' + it.dataset.account, 'account_balance');
+        });
+      });
+
+      /* ---------- timeframe group (5 quick buttons + "more" dropdown) ---------- */
+      (function () {
+        const tfGroup = document.getElementById('tfGroup');
+        const tfMoreTrigger = document.getElementById('tfMoreTrigger');
+        const tfMoreMenu = document.getElementById('tfMoreMenu');
+        const tfMoreLabel = document.getElementById('tfMoreLabel');
+        function selectTimeframe(tf, fromMenuItem) {
+          tfGroup.querySelectorAll('.tf-btn[data-tf]').forEach(b => b.classList.remove('active'));
+          tfMoreMenu.querySelectorAll('.pop-item').forEach(b => b.classList.remove('selected'));
+          if (fromMenuItem) {
+            tfMoreTrigger.classList.add('active');
+            tfMoreLabel.textContent = tf;
+            fromMenuItem.classList.add('selected');
+          } else {
+            tfMoreTrigger.classList.remove('active');
+            tfMoreLabel.textContent = '';
+            const btn = tfGroup.querySelector('.tf-btn[data-tf="' + tf + '"]');
+            if (btn) btn.classList.add('active');
+          }
+        }
+        tfGroup.querySelectorAll('.tf-btn[data-tf]').forEach(btn => {
+          btn.addEventListener('click', () => selectTimeframe(btn.dataset.tf, null));
+        });
+        tfMoreTrigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openNear(tfMoreMenu, tfMoreTrigger.getBoundingClientRect(), 'left', tfMoreTrigger);
+        });
+        tfMoreMenu.querySelectorAll('.pop-item').forEach(item => {
+          item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectTimeframe(item.dataset.tf, item);
+            closeAllPopovers();
+          });
+        });
+      })();
+
+      /* ---------- symbol selector dropdown ---------- */
+      const SYMBOL_LIST = [
+        ...['ETHUSD', 'BTCUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'DOGEUSD', 'ADAUSD', 'AVAXUSD', 'LINKUSD', 'MATICUSD',
+          'LTCUSD', 'DOTUSD', 'TRXUSD', 'ATOMUSD', 'NEARUSD', 'UNIUSD', 'FILUSD', 'APTUSD', 'ARBUSD', 'OPUSD',
+          'SUIUSD', 'ICPUSD', 'ETCUSD'].map(sym => ({ sym, cat: 'crypto' })),
+        ...['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'JPM',
+          'BAC', 'DIS', 'KO', 'PEP', 'WMT', 'V', 'MA', 'XOM', 'CVX', 'INTC',
+          'ORCL', 'CRM', 'ADBE'].map(sym => ({ sym, cat: 'stocks' })),
+        ...['NQU5', 'ESU5', 'YMU5', 'RTYU5', 'CLN5', 'GCQ5', 'SIN5', 'ZBU5', 'ZNU5', 'ZCU5',
+          'HGU5', 'NGU5', 'PLU5', 'KCU5', 'ZSU5', 'ZWU5', '6BU5'].map(sym => ({ sym, cat: 'futures' })),
+        ...['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD', 'USDCHF', 'EURGBP', 'EURJPY', 'GBPJPY',
+          'USDTRY', 'USDMXN', 'USDZAR', 'EURCHF', 'AUDJPY', 'CHFJPY', 'EURAUD'].map(sym => ({ sym, cat: 'forex' })),
+      ];
+      const symSelectTrigger = document.getElementById('symSelectTrigger');
+      const symSelectMenu = document.getElementById('symSelectMenu');
+      const symSelectSearch = document.getElementById('symSelectSearch');
+      const symSelectList = document.getElementById('symSelectList');
+      const symSelectLabel = document.getElementById('symSelectLabel');
+      const symSelectTabs = document.querySelectorAll('#symSelectTabs .wl-tab');
+      let symSelectCat = 'crypto';
+      function renderSymSelectList(filter) {
+        const q = (filter || '').trim().toUpperCase();
+        const items = SYMBOL_LIST.filter(s => s.cat === symSelectCat && (!q || s.sym.includes(q)));
+        symSelectList.innerHTML = items.length
+          ? items.map(s => '<button class="sym-select-item" data-sym="' + s.sym + '">' + s.sym + '</button>').join('')
+          : '<div class="sym-select-empty">No symbols found</div>';
+        symSelectList.querySelectorAll('.sym-select-item').forEach(it => {
+          it.addEventListener('click', (e) => {
+            e.stopPropagation();
+            symSelectLabel.textContent = it.dataset.sym;
+            closeAllPopovers();
+            showToast('Switched to ' + it.dataset.sym, 'sync_alt');
+          });
+        });
+      }
+      if (symSelectTrigger) symSelectTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (symSelectMenu.classList.contains('show') && symSelectMenu._openTrigger === symSelectTrigger) {
+          closeAllPopovers();
+          return;
+        }
+        openNear(symSelectMenu, symSelectTrigger.getBoundingClientRect(), 'left', symSelectTrigger);
+        symSelectSearch.value = '';
+        renderSymSelectList('');
+        symSelectSearch.focus();
+      });
+      symSelectSearch.addEventListener('input', () => renderSymSelectList(symSelectSearch.value));
+      symSelectSearch.addEventListener('click', (e) => e.stopPropagation());
+      symSelectTabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          e.stopPropagation();
+          symSelectTabs.forEach(t => t.classList.toggle('active', t === tab));
+          symSelectCat = tab.dataset.cat;
+          renderSymSelectList(symSelectSearch.value);
         });
       });
 
@@ -7201,7 +7465,7 @@
       }
       indicatorsTrigger.addEventListener('click', (e) => {
         e.stopPropagation();
-        openNear(indicatorsMenu, indicatorsTrigger.getBoundingClientRect(), 'left');
+        openNear(indicatorsMenu, indicatorsTrigger.getBoundingClientRect(), 'left', indicatorsTrigger);
       });
       indicatorsMenu.querySelectorAll('.pop-item').forEach(it => {
         it.addEventListener('click', (e) => {
@@ -7223,7 +7487,7 @@
       }
       l2IndicatorsTrigger.addEventListener('click', (e) => {
         e.stopPropagation();
-        openNear(l2IndicatorsMenu, l2IndicatorsTrigger.getBoundingClientRect(), 'left');
+        openNear(l2IndicatorsMenu, l2IndicatorsTrigger.getBoundingClientRect(), 'left', l2IndicatorsTrigger);
       });
       l2IndicatorsMenu.querySelectorAll('.pop-item').forEach(it => {
         it.addEventListener('click', (e) => {
@@ -7242,7 +7506,7 @@
         tifMenu.querySelectorAll('.pop-item').forEach(it => {
           it.classList.toggle('selected', it.dataset.tif === timeInForce);
         });
-        openNear(tifMenu, tifTrigger.getBoundingClientRect(), 'right');
+        openNear(tifMenu, tifTrigger.getBoundingClientRect(), 'right', tifTrigger);
       });
       tifMenu.querySelectorAll('.pop-item').forEach(it => {
         it.addEventListener('click', () => {
