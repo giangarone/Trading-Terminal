@@ -2759,6 +2759,10 @@
       margin-top: 1px;
     }
 
+    .mh-rows {
+      margin-top: 8px;
+    }
+
     /* ====== Status bar ====== */
     .statusbar {
       height: 26px;
@@ -5427,6 +5431,10 @@
         </div>
 
         <div class="card">
+          <div class="card-head">
+            <span class="card-title">Market Health</span>
+            <span class="material-symbols-outlined" style="font-size:16px;color:var(--paper-500);">monitor_heart</span>
+          </div>
           <div class="gauge-wrap">
             <svg width="220" height="118" viewBox="0 0 240 130">
               <defs>
@@ -5451,8 +5459,27 @@
                 letter-spacing="0.5">BULLISH</text>
             </svg>
             <div class="gauge-caption">
-              <span class="eyebrow">L2 Sentiment</span>
+              <span class="eyebrow">Overall Sentiment</span>
               <span class="verdict up">BULLISH</span>
+            </div>
+          </div>
+          <div class="mh-rows">
+            <div class="l2-row">
+              <span class="l2-lbl"><span class="l2-dot" style="background:var(--long);"></span>Bias</span>
+              <span class="l2-val up">Bullish <span class="material-symbols-outlined">arrow_upward</span></span>
+            </div>
+            <div class="l2-row">
+              <span class="l2-lbl"><span class="l2-dot" style="background:var(--long);"></span>Trend Strength</span>
+              <span class="l2-val up">Strong <span class="material-symbols-outlined">trending_up</span></span>
+            </div>
+            <div class="l2-row">
+              <span class="l2-lbl"><span class="l2-dot" style="background:var(--accent);"></span>Volatility</span>
+              <span class="l2-val" style="color:var(--accent);">Elevated <span
+                  class="material-symbols-outlined">bolt</span></span>
+            </div>
+            <div class="l2-row">
+              <span class="l2-lbl"><span class="l2-dot" style="background:var(--long);"></span>Risk Level</span>
+              <span class="l2-val up">Low <span class="material-symbols-outlined">shield</span></span>
             </div>
           </div>
         </div>
@@ -5659,7 +5686,7 @@
     <button class="pop-item" id="tpEdit">
       <span class="pop-icon"><span class="material-symbols-outlined">tune</span></span>
       <span class="pop-text"><span class="pt-title">Edit Exit Amount</span><span class="pt-sub">Adjust the exit amount
-          for this take profit</span></span>
+          for this TP</span></span>
     </button>
     <button class="pop-item" id="tpTrail">
       <span class="pop-icon"><span class="material-symbols-outlined">trending_up</span></span>
@@ -6383,6 +6410,7 @@
       let panX = 0, panY = 0; // panX: px shift of candles; panY: price shift applied to whole scale
       let panXInitialized = false; // on first draw, panX is set to push candles left, leaving more empty space on the right
       let crosshair = null; // {x,y} in CSS px relative to chart, within plot bounds, or null when not hovering
+      let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | null — which order-line handle is currently hovered
       function priceToY(price, h) { const ih = h - AXIS_BOTTOM_H; return ih / 2 - (price - BASE_PRICE - panY) * PX_PER_POINT; }
       function yToPrice(y, h) { const ih = h - AXIS_BOTTOM_H; return BASE_PRICE + panY - (y - ih / 2) / PX_PER_POINT; }
       function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
@@ -6488,7 +6516,7 @@
       function createOrder(side, entryPrice) {
         const dir = side === 'buy' ? 1 : -1;
         const entry = roundTick(entryPrice);
-        const tpPrice = roundTick(entry + dir * 5);
+        const tpPrice = roundTick(entry + dir * 2);
         const tpDist = Math.abs(tpPrice - entry);
         order = {
           side, entry, qty: parseInt(qtyInput.value || '1'), orderType: 'Limit',
@@ -6726,6 +6754,17 @@
           document.addEventListener('mouseup', up);
         });
       }
+      function bindHandleHover(handle, key) {
+        handle.addEventListener('mouseenter', () => {
+          hoveredHandle = key;
+          if (crosshair) crosshair = null;
+          scheduleDrawPriceChart();
+        });
+        handle.addEventListener('mouseleave', () => {
+          if (hoveredHandle === key) hoveredHandle = null;
+          scheduleDrawPriceChart();
+        });
+      }
 
       /* ---------- price chart (candlesticks) ---------- */
       function mulberry32(seed) {
@@ -6944,23 +6983,24 @@
         ctx.fillText(fmt(lastBar.close), plotW + 8, tagY + 0.5);
 
         /* ---- order price tags (entry / TP / SL) on the right axis ---- */
-        function drawOrderAxisTagOutline(price, color) {
+        function drawOrderAxisTagOutline(price, color, highlighted) {
           const y = clamp(priceToY(price, h), 8, h - 8);
-          ctx.fillStyle = '#0c1014';
-          ctx.fillRect(plotW, y - 9, AXIS_RIGHT_W, 18);
+          const hh = highlighted ? 20 : 18;
+          ctx.fillStyle = highlighted ? color : '#0c1014';
+          ctx.fillRect(plotW, y - hh / 2, AXIS_RIGHT_W, hh);
           ctx.strokeStyle = color;
-          ctx.lineWidth = 1;
-          ctx.strokeRect(plotW + 0.5, y - 8.5, AXIS_RIGHT_W - 1, 17);
-          ctx.fillStyle = color;
+          ctx.lineWidth = highlighted ? 1.5 : 1;
+          ctx.strokeRect(plotW + 0.5, y - hh / 2 + 0.5, AXIS_RIGHT_W - 1, hh - 1);
+          ctx.fillStyle = highlighted ? '#0c1014' : color;
           ctx.font = '600 11px "IBM Plex Sans", sans-serif';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
           ctx.fillText(fmt(price), plotW + 8, y + 0.5);
         }
         if (order) {
-          order.tps.forEach(tp => drawOrderAxisTagOutline(tp.price, '#2bd47e'));
-          if (order.sl) drawOrderAxisTagOutline(order.sl.price, '#f2495c');
-          drawOrderAxisTagOutline(order.entry, '#3b82f6');
+          order.tps.forEach(tp => drawOrderAxisTagOutline(tp.price, '#2bd47e', hoveredHandle === 'tp:' + tp.id));
+          if (order.sl) drawOrderAxisTagOutline(order.sl.price, '#f2495c', hoveredHandle === 'sl');
+          drawOrderAxisTagOutline(order.entry, '#3b82f6', hoveredHandle === 'entry');
         }
 
         /* ---- crosshair: dotted guide lines + axis labels at cursor ---- */
@@ -7041,7 +7081,7 @@
         const rect = chart.getBoundingClientRect();
         const x = e.clientX - rect.left, y = e.clientY - rect.top;
         const plotW = rect.width - AXIS_RIGHT_W, ih = rect.height - AXIS_BOTTOM_H;
-        if (isPanning || hoveringNewsMarker || x < 0 || x > plotW || y < 0 || y > ih) {
+        if (isPanning || hoveringNewsMarker || hoveredHandle || x < 0 || x > plotW || y < 0 || y > ih) {
           if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
           return;
         }
@@ -7164,7 +7204,7 @@
           hit.style.top = y + 'px';
           hit.innerHTML =
             '<div class="ol-line alert"></div>' +
-            '<div class="ol-alert-tag">' + fmt(a.price) +
+            '<div class="ol-alert-tag"><span class="material-symbols-outlined" style="font-size:13px;">notifications</span>' + fmt(a.price) +
             '<span class="ol-alert-del" data-del-alert="' + a.id + '"><span class="material-symbols-outlined" style="font-size:13px;">close</span></span>' +
             '</div>';
           layer.appendChild(hit);
@@ -7203,6 +7243,7 @@
           layer.appendChild(row);
 
           const tpAmtEl = row.querySelector('.ol-amt');
+          bindHandleHover(row.querySelector('.ol-chip'), 'tp:' + tp.id);
           makeDraggable(row.querySelector('.ol-chip'),
             (cy, h) => {
               row.style.top = cy + 'px'; line.style.top = cy + 'px';
@@ -7265,6 +7306,7 @@
           layer.appendChild(row);
 
           const slAmtEl = row.querySelector('.ol-amt');
+          bindHandleHover(row.querySelector('.ol-chip'), 'sl');
           makeDraggable(row.querySelector('.ol-chip'),
             (cy, h) => {
               row.style.top = cy + 'px'; line.style.top = cy + 'px';
@@ -7322,6 +7364,7 @@
 
           const entryPriceHandle = bar.querySelector('#entryPriceHandle');
           const entryPriceLbl = bar.querySelector('.ol-entry-price');
+          bindHandleHover(entryPriceHandle, 'entry');
           makeDraggable(entryPriceHandle,
             (cy, h) => {
               bar.style.top = cy + 'px'; line.style.top = cy + 'px';
@@ -7332,10 +7375,10 @@
             (cy, h) => { order.entry = roundTick(yToPrice(cy, h)); syncQtyFromRisk(); render(); });
 
           bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
-            e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect());
+            e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
           });
           bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
-            e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect());
+            e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
           });
           bar.querySelector('#cancelOrderBtn').addEventListener('click', (e) => { e.stopPropagation(); cancelOrder(); });
         }
@@ -7518,11 +7561,15 @@
 
       /* ---------- order type dropdown ---------- */
       const orderTypeMenu = document.getElementById('orderTypeMenu');
-      function openOrderTypeMenu(anchorRect) {
+      function openOrderTypeMenu(anchorRect, trigger) {
+        if (trigger && orderTypeMenu.classList.contains('show') && orderTypeMenu._openTrigger === trigger) {
+          closeAllPopovers();
+          return;
+        }
         orderTypeMenu.querySelectorAll('.pop-item').forEach(it => {
           it.classList.toggle('selected', it.dataset.type === order.orderType);
         });
-        openNear(orderTypeMenu, anchorRect, 'left');
+        openNear(orderTypeMenu, anchorRect, 'left', trigger);
       }
       orderTypeMenu.querySelectorAll('.pop-item').forEach(it => {
         it.addEventListener('click', () => {
@@ -7591,11 +7638,15 @@
       /* ---------- size & mode dropdown ---------- */
       const sizeMenu = document.getElementById('sizeMenu');
       const smTabs = document.getElementById('smTabs');
-      function openSizeMenu(anchorRect) {
+      function openSizeMenu(anchorRect, trigger) {
+        if (trigger && sizeMenu.classList.contains('show') && sizeMenu._openTrigger === trigger) {
+          closeAllPopovers();
+          return;
+        }
         smTabs.querySelectorAll('.sm-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === order.sizeMode));
         sizeMenu.querySelectorAll('.sm-body').forEach(b => b.classList.toggle('active', b.dataset.mode === order.sizeMode));
         refreshSizeBodies();
-        openNear(sizeMenu, anchorRect, 'left');
+        openNear(sizeMenu, anchorRect, 'left', trigger);
       }
       smTabs.querySelectorAll('.sm-tab').forEach(tab => {
         tab.addEventListener('click', () => {
