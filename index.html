@@ -5023,16 +5023,13 @@
                 </div>
               </div>
               <label class="label-sm" style="margin-top:12px;">Price</label>
-              <div class="qty-row" style="margin-bottom:0;">
-                <div class="price-stepper">
-                  <input type="text" id="qtStopLimitPrice" placeholder="Limit price" value="4,500.25">
-                  <span class="qty-unit">USD</span>
-                  <div class="price-stepper-arrows">
-                    <button type="button" class="ps-up" data-target="qtStopLimitPrice"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                    <button type="button" class="ps-down" data-target="qtStopLimitPrice"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                  </div>
+              <div class="price-stepper">
+                <input type="text" id="qtStopLimitPrice" placeholder="Limit price" value="4,500.25">
+                <span class="qty-unit">USD</span>
+                <div class="price-stepper-arrows">
+                  <button type="button" class="ps-up" data-target="qtStopLimitPrice"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtStopLimitPrice"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
-                <button type="button" class="qt-side-btn" id="qtStopLimitBbo">BBO</button>
               </div>
               <p class="qt-help">Triggers a limit order at the limit price once the stop price is reached.</p>
             </div>
@@ -6387,11 +6384,6 @@
           const next = btn.classList.contains('ps-up') ? cur + step : Math.max(min, cur - step);
           input.value = input.id === 'qtTrailDelta' ? next.toFixed(1) : isSlippage ? next.toFixed(2) : fmt(next);
         });
-      });
-
-      /* ---------- Stop Limit: BBO (best bid/offer) shortcut ---------- */
-      document.getElementById('qtStopLimitBbo').addEventListener('click', () => {
-        document.getElementById('qtStopLimitPrice').value = fmt(qtCurrentPrice());
       });
 
       /* ---------- Trailing Stop: quick delta %, Limit/Market toggle, Activation Price ---------- */
@@ -7771,7 +7763,7 @@
         if (!order) return;
         const dir = order.side === 'buy' ? 1 : -1;
         const farthest = order.tps.reduce((m, t) => Math.max(m, dir * (t.price - order.entry)), 0);
-        const newPrice = roundTick(order.entry + dir * (farthest + 10));
+        const newPrice = roundTick(order.entry + dir * (farthest + 50 / PX_PER_POINT));
         const newId = 'tp' + (tpCounter++);
         order.tps.push({ id: newId, price: newPrice, pct: 25, trailing: false });
         rebalanceTpAllocations(newId);
