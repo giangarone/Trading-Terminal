@@ -959,6 +959,12 @@
       margin-right: 3px;
     }
 
+    .chart-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+    }
+
     .chart-placeholder {
       flex: 1;
       position: relative;
@@ -967,6 +973,73 @@
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+
+    .chart-draw-toolbar {
+      width: 44px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--ink-900);
+      border-right: 1px solid var(--line-1);
+      padding: 8px 0;
+      gap: 2px;
+      overflow: visible;
+    }
+
+    .cdt-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      color: var(--paper-300);
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .cdt-btn .material-symbols-outlined {
+      font-size: 18px;
+    }
+
+    .cdt-btn:hover {
+      background: var(--ink-800);
+      color: var(--paper-100);
+    }
+
+    .cdt-btn.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .cdt-btn[data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: calc(100% + 10px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--ink-850);
+      color: var(--paper-100);
+      border: 1px solid var(--line-2);
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      font-family: var(--sans);
+      white-space: nowrap;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .5);
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    .cdt-sep {
+      width: 24px;
+      height: 1px;
+      background: var(--line-2);
+      margin: 5px 0;
+      flex-shrink: 0;
     }
 
     #priceChartCanvas {
@@ -2671,7 +2744,7 @@
       font-weight: 700;
       color: var(--accent);
       text-transform: uppercase;
-      letter-spacing: .06em;
+      letter-spacing: .03em;
       margin-bottom: 6px;
     }
 
@@ -2742,7 +2815,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: 2px;
+      margin-top: 4px;
     }
 
     .gauge-caption .eyebrow {
@@ -2893,7 +2966,7 @@
 
     .aip-title .material-symbols-outlined {
       font-size: 15px;
-      color: var(--purple);
+      color: var(--accent);
     }
 
     .aip-close {
@@ -3055,7 +3128,7 @@
 
     .aip-foot-stat .v {
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--paper-100);
       white-space: nowrap;
     }
@@ -3199,7 +3272,7 @@
     .ol-line {
       position: absolute;
       left: 0;
-      right: 0;
+      right: 68px;
       height: 0;
       border-top: 1px dashed;
       pointer-events: none;
@@ -3265,9 +3338,11 @@
       pointer-events: none;
       transition: opacity .12s;
       white-space: nowrap;
+      cursor: ns-resize;
     }
 
-    .ol-alert-hit:hover .ol-alert-tag {
+    .ol-alert-hit:hover .ol-alert-tag,
+    .ol-alert-hit.dragging .ol-alert-tag {
       opacity: 1;
       pointer-events: auto;
     }
@@ -3320,6 +3395,14 @@
       border: 1px solid var(--line-2);
       color: var(--paper-100);
       cursor: pointer;
+    }
+
+    .ol-pill.neutral:hover {
+      border: 1px solid var(--line-3);
+    }
+
+    .ol-pill.neutral:hover {
+      border: 1px solid var(--line-3);
     }
 
     .ol-pill .material-symbols-outlined {
@@ -4652,48 +4735,78 @@
             <span><b>Vol</b><span id="ohlcVol">24.8K</span></span>
           </div>
 
-          <div class="chart-placeholder" id="chartPlaceholder">
-            <canvas id="priceChartCanvas"></canvas>
-            <div id="orderLineLayer"></div>
-            <div id="newsMarkerLayer"></div>
+          <div class="chart-body">
+            <div class="chart-draw-toolbar" id="chartDrawToolbar">
+              <button class="cdt-btn active" data-tooltip="Cursor"><span
+                  class="material-symbols-outlined">crop_free</span></button>
+              <button class="cdt-btn" data-tooltip="Trend Line"><span
+                  class="material-symbols-outlined">timeline</span></button>
+              <button class="cdt-btn" data-tooltip="Horizontal Line"><span
+                  class="material-symbols-outlined">horizontal_split</span></button>
+              <button class="cdt-btn" data-tooltip="Brush"><span
+                  class="material-symbols-outlined">gesture</span></button>
+              <button class="cdt-btn" data-tooltip="Text"><span
+                  class="material-symbols-outlined">text_fields</span></button>
+              <div class="cdt-sep"></div>
+              <button class="cdt-btn" data-tooltip="Measure"><span
+                  class="material-symbols-outlined">straighten</span></button>
+              <button class="cdt-btn" data-tooltip="Zoom In"><span
+                  class="material-symbols-outlined">zoom_in</span></button>
+              <button class="cdt-btn" data-tooltip="Lock All"><span
+                  class="material-symbols-outlined">lock</span></button>
+              <button class="cdt-btn" data-tooltip="Hide Drawings"><span
+                  class="material-symbols-outlined">visibility</span></button>
+              <div class="cdt-sep"></div>
+              <button class="cdt-btn" data-tooltip="Remove Drawings"><span
+                  class="material-symbols-outlined">delete_outline</span></button>
+            </div>
+            <div class="chart-placeholder" id="chartPlaceholder">
+              <canvas id="priceChartCanvas"></canvas>
+              <div id="orderLineLayer"></div>
+              <div id="newsMarkerLayer"></div>
 
-            <div class="ai-assist-popup" id="aiAssistPopup">
-              <div class="aip-head">
-                <span class="aip-title"><span class="material-symbols-outlined">auto_awesome</span>AI Assistance</span>
-                <button class="aip-close" id="aiAssistClose"><span
-                    class="material-symbols-outlined">close</span></button>
-              </div>
-              <div class="aip-body">
-                <div class="aip-top">
-                  <div class="aip-gauge-wrap">
-                    <svg class="aip-gauge" viewBox="0 0 72 72">
-                      <circle class="aip-gauge-track" cx="36" cy="36" r="30" />
-                      <circle class="aip-gauge-fill" cx="36" cy="36" r="30" stroke-dasharray="188.5"
-                        stroke-dashoffset="41.5" />
-                    </svg>
-                    <div class="aip-gauge-center"><span class="aip-gauge-pct">78%</span></div>
-                  </div>
-                  <div class="aip-top-info">
-                    <span class="aip-bias-chip bullish"><span
-                        class="material-symbols-outlined">trending_up</span>Bullish</span>
-                    <span class="aip-model-tag">SMC Model · v2.3</span>
-                  </div>
+              <div class="ai-assist-popup" id="aiAssistPopup">
+                <div class="aip-head">
+                  <span class="aip-title"><span class="material-symbols-outlined">auto_awesome</span>AI
+                    Assistance</span>
+                  <button class="aip-close" id="aiAssistClose"><span
+                      class="material-symbols-outlined">close</span></button>
                 </div>
-                <p class="aip-summary">ETH is showing a constructive bias into the close, with structure and order flow
-                  aligned to the upside.</p>
-                <ul class="aip-reason-list">
-                  <li><span class="material-symbols-outlined">check_circle</span>Holding above key support</li>
-                  <li><span class="material-symbols-outlined">check_circle</span>Bullish order flow intact</li>
-                  <li><span class="material-symbols-outlined">check_circle</span>Liquidity above 5,325 acting as magnet
-                  </li>
-                </ul>
-                <div class="aip-foot-row">
-                  <div class="aip-foot-stat"><span class="l">Invalidation</span><span class="v down">Below 5,288</span>
+                <div class="aip-body">
+                  <div class="aip-top">
+                    <div class="aip-gauge-wrap">
+                      <svg class="aip-gauge" viewBox="0 0 72 72">
+                        <circle class="aip-gauge-track" cx="36" cy="36" r="30" />
+                        <circle class="aip-gauge-fill" cx="36" cy="36" r="30" stroke-dasharray="188.5"
+                          stroke-dashoffset="41.5" />
+                      </svg>
+                      <div class="aip-gauge-center"><span class="aip-gauge-pct">78%</span></div>
+                    </div>
+                    <div class="aip-top-info">
+                      <span class="aip-bias-chip bullish"><span
+                          class="material-symbols-outlined">trending_up</span>Bullish</span>
+                      <span class="aip-model-tag">SMC Model · v2.3</span>
+                    </div>
                   </div>
-                  <div class="aip-foot-stat"><span class="l">Target</span><span class="v up">5,318–5,325</span></div>
-                  <div class="aip-foot-stat"><span class="l">R:R</span><span class="v">1:2.4</span></div>
+                  <p class="aip-summary">ETH is showing a constructive bias into the close, with structure and order
+                    flow
+                    aligned to the upside.</p>
+                  <ul class="aip-reason-list">
+                    <li><span class="material-symbols-outlined">check_circle</span>Holding above key support</li>
+                    <li><span class="material-symbols-outlined">check_circle</span>Bullish order flow intact</li>
+                    <li><span class="material-symbols-outlined">check_circle</span>Liquidity above 5,325 acting as
+                      magnet
+                    </li>
+                  </ul>
+                  <div class="aip-foot-row">
+                    <div class="aip-foot-stat"><span class="l">Invalidation</span><span class="v down">Below
+                        5,288</span>
+                    </div>
+                    <div class="aip-foot-stat"><span class="l">Target</span><span class="v up">5,318–5,325</span></div>
+                    <div class="aip-foot-stat"><span class="l">R:R</span><span class="v">1:2.4</span></div>
+                  </div>
+                  <p class="aip-disclaimer">AI-generated read of price action. Not investment advice.</p>
                 </div>
-                <p class="aip-disclaimer">AI-generated read of price action. Not investment advice.</p>
               </div>
             </div>
           </div>
@@ -5433,10 +5546,9 @@
         <div class="card">
           <div class="card-head">
             <span class="card-title">Market Health</span>
-            <span class="material-symbols-outlined" style="font-size:16px;color:var(--paper-500);">monitor_heart</span>
           </div>
           <div class="gauge-wrap">
-            <svg width="220" height="118" viewBox="0 0 240 130">
+            <svg width="220" height="132" viewBox="0 0 240 144">
               <defs>
                 <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" style="stop-color:var(--short);" />
@@ -5451,12 +5563,12 @@
               <line x1="120" y1="120" x2="189" y2="71" style="stroke:var(--paper-100);" stroke-width="3"
                 stroke-linecap="round" />
               <circle cx="120" cy="120" r="7" style="fill:var(--ink-850);stroke:var(--line-3);" stroke-width="1.5" />
-              <text x="22" y="135" font-size="8.5" style="fill:var(--paper-500);" font-family="IBM Plex Sans"
-                letter-spacing="0.5">BEARISH</text>
-              <text x="105" y="14" font-size="8.5" style="fill:var(--paper-500);" font-family="IBM Plex Sans"
-                letter-spacing="0.5">NEUTRAL</text>
-              <text x="183" y="135" font-size="8.5" style="fill:var(--paper-500);" font-family="IBM Plex Sans"
-                letter-spacing="0.5">BULLISH</text>
+              <text x="24" y="140" font-size="8.5" text-anchor="start" style="fill:var(--paper-500);"
+                font-family="IBM Plex Sans" letter-spacing="0.5">BEARISH</text>
+              <text x="120" y="16" font-size="8.5" text-anchor="middle" style="fill:var(--paper-500);"
+                font-family="IBM Plex Sans" letter-spacing="0.5">NEUTRAL</text>
+              <text x="216" y="140" font-size="8.5" text-anchor="end" style="fill:var(--paper-500);"
+                font-family="IBM Plex Sans" letter-spacing="0.5">BULLISH</text>
             </svg>
             <div class="gauge-caption">
               <span class="eyebrow">Overall Sentiment</span>
@@ -6195,6 +6307,27 @@
       newsToggle.classList.toggle('active', willShow);
     });
 
+    /* ---------- chart drawing toolbar (visual only — no drawing functionality yet) ---------- */
+    (function () {
+      const toolbar = document.getElementById('chartDrawToolbar');
+      if (!toolbar) return;
+      const exclusiveTools = ['Cursor', 'Trend Line', 'Horizontal Line', 'Brush', 'Text', 'Measure', 'Zoom In'];
+      const independentToggles = ['Magnet Mode', 'Lock All', 'Hide Drawings'];
+      toolbar.querySelectorAll('.cdt-btn').forEach(btn => {
+        const tip = btn.dataset.tooltip;
+        if (exclusiveTools.includes(tip)) {
+          btn.addEventListener('click', () => {
+            toolbar.querySelectorAll('.cdt-btn').forEach(b => {
+              if (exclusiveTools.includes(b.dataset.tooltip)) b.classList.remove('active');
+            });
+            btn.classList.add('active');
+          });
+        } else if (independentToggles.includes(tip)) {
+          btn.addEventListener('click', () => btn.classList.toggle('active'));
+        }
+      });
+    })();
+
     /* ---------- editable order-entry price fields ---------- */
     function formatPriceVal(n) {
       const neg = n < 0; n = Math.abs(n);
@@ -6907,6 +7040,8 @@
         const priceStep = niceStep(targetPxGap / PX_PER_POINT);
         const topPrice = yToPrice(0, h);
         const botPrice = yToPrice(ih, h);
+        const desiredLabels = Math.max(3, Math.round(plotW / 110));
+        const stride = Math.max(1, Math.round(slotCount / desiredLabels));
         ctx.fillStyle = labelColor;
         ctx.font = '11px "IBM Plex Sans", sans-serif';
         ctx.textAlign = 'left';
@@ -6939,8 +7074,6 @@
         ctx.restore();
 
         /* ---- time axis labels (continues past the last candle into the future) ---- */
-        const desiredLabels = Math.max(3, Math.round(plotW / 110));
-        const stride = Math.max(1, Math.round(slotCount / desiredLabels));
         ctx.fillStyle = labelColor;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
@@ -7204,13 +7337,39 @@
           hit.style.top = y + 'px';
           hit.innerHTML =
             '<div class="ol-line alert"></div>' +
-            '<div class="ol-alert-tag"><span class="material-symbols-outlined" style="font-size:13px;">notifications</span>' + fmt(a.price) +
+            '<div class="ol-alert-tag"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span><span class="material-symbols-outlined" style="font-size:13px;">notifications</span><span class="ol-alert-price">' + fmt(a.price) + '</span>' +
             '<span class="ol-alert-del" data-del-alert="' + a.id + '"><span class="material-symbols-outlined" style="font-size:13px;">close</span></span>' +
             '</div>';
           layer.appendChild(hit);
           hit.querySelector('[data-del-alert]').addEventListener('click', (e) => {
             e.stopPropagation();
             removeAlert(a.id);
+          });
+          const alertTagEl = hit.querySelector('.ol-alert-tag');
+          const alertPriceEl = hit.querySelector('.ol-alert-price');
+          alertTagEl.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.ol-alert-del')) return;
+            e.preventDefault(); e.stopPropagation();
+            closeAllPopovers();
+            hit.classList.add('dragging');
+            const rect = chart.getBoundingClientRect();
+            function move(ev) {
+              const cy = clamp(ev.clientY - rect.top, 10, rect.height - 10);
+              hit.style.top = cy + 'px';
+              a.price = roundTick(yToPrice(cy, rect.height));
+              alertPriceEl.textContent = fmt(a.price);
+              drawPriceChart();
+            }
+            function up(ev) {
+              document.removeEventListener('mousemove', move);
+              document.removeEventListener('mouseup', up);
+              hit.classList.remove('dragging');
+              const cy = clamp(ev.clientY - rect.top, 10, rect.height - 10);
+              a.price = roundTick(yToPrice(cy, rect.height));
+              render();
+            }
+            document.addEventListener('mousemove', move);
+            document.addEventListener('mouseup', up);
           });
         });
         if (!order) { return; }
@@ -7268,12 +7427,12 @@
           row.querySelector('[data-gear-tp]').addEventListener('click', (e) => {
             e.stopPropagation();
             activeGearTpId = tp.id;
-            openTpGearMenu(e.currentTarget.getBoundingClientRect());
+            openTpGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
           });
         });
 
         if (order.tps.length === 0) {
-          const y = clamp(priceToY(order.entry + (order.side === 'buy' ? 1 : -1) * 5, H), 10, H - 10);
+          const y = clamp(priceToY(order.entry + (order.side === 'buy' ? 1 : -1) * 2.5, H), 10, H - 10);
           const row = document.createElement('div');
           row.className = 'ol-side-row ghost-row';
           row.style.top = y + 'px';
@@ -7327,10 +7486,10 @@
 
           row.querySelector('#slGearTrigger').addEventListener('click', (e) => {
             e.stopPropagation();
-            openSlGearMenu(e.currentTarget.getBoundingClientRect());
+            openSlGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
           });
         } else {
-          const y = clamp(priceToY(order.entry - (order.side === 'buy' ? 1 : -1) * 5, H), 10, H - 10);
+          const y = clamp(priceToY(order.entry - (order.side === 'buy' ? 1 : -1) * 2.5, H), 10, H - 10);
           const row = document.createElement('div');
           row.className = 'ol-side-row ghost-row';
           row.style.top = y + 'px';
@@ -7581,7 +7740,13 @@
 
       /* ---------- TP gear menu ---------- */
       const tpGearMenu = document.getElementById('tpGearMenu');
-      function openTpGearMenu(anchorRect) { openNear(tpGearMenu, anchorRect, 'right'); }
+      function openTpGearMenu(anchorRect, trigger) {
+        if (trigger && tpGearMenu.classList.contains('show') && tpGearMenu._openTrigger === trigger) {
+          closeAllPopovers();
+          return;
+        }
+        openNear(tpGearMenu, anchorRect, 'right', trigger);
+      }
       document.getElementById('tpAdd').addEventListener('click', () => {
         if (!order) return;
         const dir = order.side === 'buy' ? 1 : -1;
@@ -7608,7 +7773,13 @@
 
       /* ---------- SL gear menu ---------- */
       const slGearMenu = document.getElementById('slGearMenu');
-      function openSlGearMenu(anchorRect) { openNear(slGearMenu, anchorRect, 'right'); }
+      function openSlGearMenu(anchorRect, trigger) {
+        if (trigger && slGearMenu.classList.contains('show') && slGearMenu._openTrigger === trigger) {
+          closeAllPopovers();
+          return;
+        }
+        openNear(slGearMenu, anchorRect, 'right', trigger);
+      }
       document.getElementById('slBreakeven').addEventListener('click', () => {
         if (order.sl) { order.sl.price = order.entry; syncQtyFromRisk(); }
         closeAllPopovers(); render();
