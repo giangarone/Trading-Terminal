@@ -1632,43 +1632,6 @@
       margin-bottom: 12px;
     }
 
-    .qty-stepper {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      background: var(--ink-800);
-      border: 1px solid var(--line-2);
-      border-radius: 7px;
-      overflow: hidden;
-    }
-
-    .qty-stepper button {
-      width: 30px;
-      height: 34px;
-      background: transparent;
-      color: var(--paper-300);
-      font-size: 15px;
-      border: none;
-    }
-
-    .qty-stepper button:hover {
-      color: var(--paper-100);
-      background: var(--ink-750);
-    }
-
-    .qty-stepper input {
-      flex: 1;
-      text-align: right;
-      background: transparent;
-      border: none;
-      outline: none;
-      font-family: var(--sans);
-      font-size: 13px;
-      font-weight: 600;
-      width: 30px;
-      color: var(--paper-100);
-    }
-
     .qty-unit {
       flex-shrink: 0;
       padding-right: 8px;
@@ -2109,11 +2072,14 @@
       background: transparent;
       border: none;
       color: var(--paper-500);
-      font-size: 8px;
       line-height: 1;
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+
+    .price-stepper-arrows button .material-symbols-outlined {
+      font-size: 15px;
     }
 
     .price-stepper-arrows button:first-child {
@@ -5023,10 +4989,10 @@
               <label class="label-sm">Stop</label>
               <div class="price-stepper">
                 <input type="text" id="qtStopMarketTrigger" placeholder="Stop price" value="4,505.75">
-                <span class="qty-unit">USDC</span>
+                <span class="qty-unit">USD</span>
                 <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtStopMarketTrigger">▲</button>
-                  <button type="button" class="ps-down" data-target="qtStopMarketTrigger">▼</button>
+                  <button type="button" class="ps-up" data-target="qtStopMarketTrigger"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtStopMarketTrigger"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
               <label class="label-sm" style="margin-top:12px;">Price</label>
@@ -5034,29 +5000,36 @@
               <p class="qt-help">Triggers a market order once the last price reaches the stop price.</p>
               <label class="label-sm">Slippage Tolerance</label>
               <div class="price-stepper">
-                <input type="text" id="qtStopMarketSlippage" value="0.1" style="text-align:left;padding-left:0;">
-                <span class="qty-unit">% &nbsp;&nbsp;Minimum 0.1</span>
+                <input type="text" id="qtStopMarketSlippage" value="0.10">
+                <span class="qty-unit">%</span>
+                <div class="price-stepper-arrows">
+                  <button type="button" class="ps-up" data-target="qtStopMarketSlippage"><span
+                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtStopMarketSlippage"><span
+                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                </div>
               </div>
+              <p class="qt-help">Minimum 0.1%</p>
             </div>
 
             <div class="qt-tab-panel" data-tab-panel="stopLimit" id="qtTabPanel-stopLimit">
               <label class="label-sm">Stop</label>
               <div class="price-stepper">
                 <input type="text" id="qtStopLimitTrigger" placeholder="Stop price" value="4,505.75">
-                <span class="qty-unit">USDC</span>
+                <span class="qty-unit">USD</span>
                 <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtStopLimitTrigger">▲</button>
-                  <button type="button" class="ps-down" data-target="qtStopLimitTrigger">▼</button>
+                  <button type="button" class="ps-up" data-target="qtStopLimitTrigger"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtStopLimitTrigger"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
               <label class="label-sm" style="margin-top:12px;">Price</label>
               <div class="qty-row" style="margin-bottom:0;">
                 <div class="price-stepper">
                   <input type="text" id="qtStopLimitPrice" placeholder="Limit price" value="4,500.25">
-                  <span class="qty-unit">USDC</span>
+                  <span class="qty-unit">USD</span>
                   <div class="price-stepper-arrows">
-                    <button type="button" class="ps-up" data-target="qtStopLimitPrice">▲</button>
-                    <button type="button" class="ps-down" data-target="qtStopLimitPrice">▼</button>
+                    <button type="button" class="ps-up" data-target="qtStopLimitPrice"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                    <button type="button" class="ps-down" data-target="qtStopLimitPrice"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
                   </div>
                 </div>
                 <button type="button" class="qt-side-btn" id="qtStopLimitBbo">BBO</button>
@@ -5081,8 +5054,8 @@
                 <div class="price-stepper">
                   <input type="text" id="qtTrailLimit" placeholder="Limit price" value="4,500.25">
                   <div class="price-stepper-arrows">
-                    <button type="button" class="ps-up" data-target="qtTrailLimit">▲</button>
-                    <button type="button" class="ps-down" data-target="qtTrailLimit">▼</button>
+                    <button type="button" class="ps-up" data-target="qtTrailLimit"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                    <button type="button" class="ps-down" data-target="qtTrailLimit"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
                   </div>
                 </div>
                 <button type="button" class="qt-side-btn" id="qtTrailMarketToggle">Market</button>
@@ -5095,10 +5068,10 @@
               </label>
               <div class="price-stepper" id="qtTrailActivationBlock" style="display:none;margin-top:10px;">
                 <input type="text" id="qtTrailActivationPrice" placeholder="Activation price" value="4,510.00">
-                <span class="qty-unit">USDC</span>
+                <span class="qty-unit">USD</span>
                 <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtTrailActivationPrice">▲</button>
-                  <button type="button" class="ps-down" data-target="qtTrailActivationPrice">▼</button>
+                  <button type="button" class="ps-up" data-target="qtTrailActivationPrice"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtTrailActivationPrice"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
             </div>
@@ -5107,10 +5080,10 @@
               <label class="label-sm">Trigger</label>
               <div class="price-stepper">
                 <input type="text" id="qtMitTrigger" placeholder="Trigger price" value="4,498.50">
-                <span class="qty-unit">USDC</span>
+                <span class="qty-unit">USD</span>
                 <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtMitTrigger">▲</button>
-                  <button type="button" class="ps-down" data-target="qtMitTrigger">▼</button>
+                  <button type="button" class="ps-up" data-target="qtMitTrigger"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtMitTrigger"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
               <label class="label-sm" style="margin-top:12px;">Price</label>
@@ -5119,9 +5092,16 @@
                 a more favorable price than the current market without watching the chart.</p>
               <label class="label-sm">Slippage Tolerance</label>
               <div class="price-stepper">
-                <input type="text" id="qtMitSlippage" value="0.1" style="text-align:left;padding-left:0;">
-                <span class="qty-unit">% &nbsp;&nbsp;Minimum 0.1</span>
+                <input type="text" id="qtMitSlippage" value="0.10">
+                <span class="qty-unit">%</span>
+                <div class="price-stepper-arrows">
+                  <button type="button" class="ps-up" data-target="qtMitSlippage"><span
+                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtMitSlippage"><span
+                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                </div>
               </div>
+              <p class="qt-help">Minimum 0.1%</p>
             </div>
 
             <div class="qt-sep"></div>
@@ -5135,11 +5115,13 @@
               <div class="qt-col">
                 <label class="label-sm" id="qtAmountLabel">Quantity</label>
                 <div class="qty-row" style="margin-bottom:0;">
-                  <div class="qty-stepper">
-                    <button class="qty-dec">−</button>
+                  <div class="price-stepper">
                     <input type="text" value="1" class="qty-input" id="qtAmountInput">
                     <span class="qty-unit" id="qtQtyUnit">ETH</span>
-                    <button class="qty-inc">+</button>
+                    <div class="price-stepper-arrows">
+                      <button type="button" class="qty-inc"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                      <button type="button" class="qty-dec"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -6393,14 +6375,17 @@
       });
 
       /* ---------- generic price stepper arrows (Stop / Limit / Trailing Delta / Trigger / Activation fields) ---------- */
+      const QT_SLIPPAGE_IDS = ['qtStopMarketSlippage', 'qtMitSlippage'];
       document.querySelectorAll('.price-stepper-arrows .ps-up, .price-stepper-arrows .ps-down').forEach(btn => {
         btn.addEventListener('click', () => {
           const input = document.getElementById(btn.dataset.target);
           if (!input || input.disabled) return;
-          const step = input.id === 'qtTrailDelta' ? 0.1 : 0.25;
+          const isSlippage = QT_SLIPPAGE_IDS.includes(input.id);
+          const step = input.id === 'qtTrailDelta' ? 0.1 : isSlippage ? 0.05 : 0.25;
+          const min = isSlippage ? 0.1 : 0;
           const cur = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
-          const next = btn.classList.contains('ps-up') ? cur + step : Math.max(0, cur - step);
-          input.value = input.id === 'qtTrailDelta' ? next.toFixed(1) : fmt(next);
+          const next = btn.classList.contains('ps-up') ? cur + step : Math.max(min, cur - step);
+          input.value = input.id === 'qtTrailDelta' ? next.toFixed(1) : isSlippage ? next.toFixed(2) : fmt(next);
         });
       });
 
@@ -7786,7 +7771,7 @@
         if (!order) return;
         const dir = order.side === 'buy' ? 1 : -1;
         const farthest = order.tps.reduce((m, t) => Math.max(m, dir * (t.price - order.entry)), 0);
-        const newPrice = roundTick(order.entry + dir * (farthest + 50 / PX_PER_POINT));
+        const newPrice = roundTick(order.entry + dir * (farthest + 10));
         const newId = 'tp' + (tpCounter++);
         order.tps.push({ id: newId, price: newPrice, pct: 25, trailing: false });
         rebalanceTpAllocations(newId);
