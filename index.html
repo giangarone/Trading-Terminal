@@ -1482,6 +1482,11 @@
       background: var(--ink-800);
     }
 
+    .bp-status.closed {
+      color: var(--paper-100);
+      background: var(--ink-750);
+    }
+
     .bp-status.active-status {
       color: var(--accent);
       background: var(--accent-dim);
@@ -1811,7 +1816,8 @@
 
     /* ====== Quick Trade ====== */
     .qt-order-tabs {
-      display: flex;
+      display: grid;
+      grid-template-columns: .75fr .75fr 1fr;
       gap: 3px;
       background: var(--ink-800);
       border: 1px solid var(--line-2);
@@ -3226,6 +3232,61 @@
       background: var(--short-dim);
     }
 
+    .ol-check {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: var(--ink-800);
+      border: 1px solid var(--line-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--paper-300);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .ol-check:hover {
+      color: var(--long);
+      border-color: rgba(43, 212, 126, .4);
+      background: var(--long-dim);
+    }
+
+    /* Filled position: subtle entry line by default, full TP/SL/edit controls reveal on hover */
+    .ol-position-group {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .ol-hover-zone {
+      position: absolute;
+      left: 0;
+      right: 0;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    .ol-position-group .reveal {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .12s ease;
+    }
+
+    .ol-position-group:hover .reveal {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .ol-line.entry.subtle {
+      opacity: .5;
+      transition: opacity .12s ease;
+    }
+
+    .ol-position-group:hover .ol-line.entry.subtle {
+      opacity: .95;
+    }
+
     .ol-side-row {
       position: absolute;
       right: 84px;
@@ -3282,6 +3343,10 @@
       cursor: ns-resize;
     }
 
+    .ol-chip.entry.locked {
+      cursor: default;
+    }
+
     .ol-chip.entry:hover {
       filter: brightness(1.08);
     }
@@ -3290,13 +3355,6 @@
       font-size: 13px !important;
       opacity: .75;
       margin-right: -1px;
-    }
-
-    .ol-entry-price {
-      font-family: var(--sans);
-      font-size: 11px;
-      font-weight: 700;
-      color: #3b82f6;
     }
 
     .ol-amt {
@@ -4025,29 +4083,10 @@
       margin-top: 6px;
     }
 
-    /* Edit exit amount modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(2, 4, 8, .65);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1100;
-      backdrop-filter: blur(2px);
-    }
-
-    .modal-backdrop.show {
-      display: flex;
-    }
-
-    .modal-box {
-      width: 336px;
-      background: var(--ink-850);
-      border: 1px solid var(--line-2);
-      border-radius: var(--r-lg);
-      padding: 18px;
-      box-shadow: 0 28px 64px rgba(0, 0, 0, .6);
+    /* Edit exit amount popup */
+    #editExitBackdrop {
+      width: 300px;
+      padding: 14px;
     }
 
     .modal-head {
@@ -4109,7 +4148,7 @@
       font-weight: 600;
     }
 
-    .modal-box .sm-body {
+    #editExitBackdrop .sm-body {
       margin-bottom: 15px;
     }
 
@@ -4286,7 +4325,8 @@
           <button class="tf-btn tf-more pop-trigger" id="tfMoreTrigger"><span id="tfMoreLabel"></span><span
               class="material-symbols-outlined" style="font-size:14px;">expand_more</span></button>
         </div>
-        <button class="ct-action-btn pop-trigger" id="candleTypeTrigger"><span id="candleTypeLabel">Candles</span><span
+        <button class="ct-action-btn pop-trigger" id="candleTypeTrigger"><span class="material-symbols-outlined"
+            style="font-size:15px;">candlestick_chart</span><span id="candleTypeLabel">Candles</span><span
             class="material-symbols-outlined" style="font-size:15px;">expand_more</span></button>
         <button class="ct-action-btn pop-trigger" id="indicatorsTrigger"><span class="material-symbols-outlined"
             style="font-size:15px;">function</span>Indicators<span class="ind-count" id="indicatorsCount"
@@ -4960,7 +5000,6 @@
               <button class="qt-tab" data-tab="market"><span
                   class="material-symbols-outlined">bolt</span>Market</button>
               <button class="qt-tab qt-tab-dropdown" data-tab="advanced" id="qtAdvancedTab">
-                <span class="material-symbols-outlined">shield</span>
                 <span id="qtAdvancedTabLabel">Stop Market</span>
                 <span class="material-symbols-outlined qt-tab-caret">expand_more</span>
               </button>
@@ -5494,11 +5533,6 @@
       <span class="pop-icon"><span class="material-symbols-outlined">add_circle</span></span>
       <span class="pop-text"><span class="pt-title">Add Take Profit</span></span>
     </button>
-    <button class="pop-item" id="tpEdit">
-      <span class="pop-icon"><span class="material-symbols-outlined">tune</span></span>
-      <span class="pop-text"><span class="pt-title">Edit Exit Amount</span><span class="pt-sub">Adjust the exit amount
-          for this TP</span></span>
-    </button>
     <button class="pop-item" id="tpTrail">
       <span class="pop-icon"><span class="material-symbols-outlined">trending_up</span></span>
       <span class="pop-text"><span class="pt-title">Trail This TP</span><span class="pt-sub">Trail TP as price
@@ -5515,9 +5549,10 @@
   <div class="pop-menu" id="slGearMenu">
     <button class="pop-item settings-acc-row" id="slBeToggle">
       <span class="pop-icon"><span class="material-symbols-outlined">vertical_align_center</span></span>
-      <span class="pop-text"><span class="pt-title">Move to Break Even</span><span class="pt-sub"
-          id="slBeSub">Move SL to entry once a TP is hit</span></span>
-      <span class="settings-acc-right"><span class="material-symbols-outlined settings-chevron">expand_more</span></span>
+      <span class="pop-text"><span class="pt-title">Move to Break Even</span><span class="pt-sub" id="slBeSub">Move SL
+          to entry once a TP is hit</span></span>
+      <span class="settings-acc-right"><span
+          class="material-symbols-outlined settings-chevron">expand_more</span></span>
     </button>
     <div class="settings-subpanel" id="slBePanel">
       <div class="pop-menu-label">Trigger On</div>
@@ -5526,13 +5561,13 @@
     <div class="pop-sep"></div>
     <button class="pop-item" id="slTrail">
       <span class="pop-icon"><span class="material-symbols-outlined">trending_down</span></span>
-      <span class="pop-text"><span class="pt-title">Trailing Stop</span><span class="pt-sub">Trail stop loss as price
-          moves</span></span>
+      <span class="pop-text"><span class="pt-title">Trailing Stop</span><span class="pt-sub" id="slTrailSub">Trail stop
+          loss as price moves</span></span>
     </button>
     <button class="pop-item" id="slAtr">
       <span class="pop-icon"><span class="material-symbols-outlined">ssid_chart</span></span>
-      <span class="pop-text"><span class="pt-title">ATR Stop</span><span class="pt-sub">Use ATR based stop
-          loss</span></span>
+      <span class="pop-text"><span class="pt-title">ATR Stop</span><span class="pt-sub" id="slAtrSub">Use ATR based
+          stop loss</span></span>
     </button>
     <div class="pop-sep"></div>
     <button class="pop-item danger" id="slRemove">
@@ -5594,60 +5629,58 @@
 
   </div>
 
-  <!-- ===================== EDIT EXIT AMOUNT MODAL ===================== -->
-  <div class="modal-backdrop" id="editExitBackdrop">
-    <div class="modal-box">
-      <div class="modal-head">
-        <span class="modal-title">Edit Exit Amount — <b id="exitModalTpName">TP1</b></span>
-        <span class="modal-close" id="exitModalClose"><span class="material-symbols-outlined">close</span></span>
-      </div>
-      <label class="modal-label">Exit Size</label>
-      <div class="modal-radio-group" id="exitModeGroup">
-        <label class="modal-radio-row checked" data-exitmode="percent"><span class="sm-radio checked"></span>% of
-          Position</label>
-        <label class="modal-radio-row" data-exitmode="contracts"><span class="sm-radio"></span>Exact Contracts
-          (ETH)</label>
-        <label class="modal-radio-row" data-exitmode="dollar"><span class="sm-radio"></span>Dollar Amount (USD)</label>
-      </div>
+  <!-- ===================== EDIT EXIT AMOUNT POPUP ===================== -->
+  <div class="pop-menu" id="editExitBackdrop">
+    <div class="modal-head">
+      <span class="modal-title">Edit Exit Amount — <b id="exitModalTpName">TP1</b></span>
+      <span class="modal-close" id="exitModalClose"><span class="material-symbols-outlined">close</span></span>
+    </div>
+    <label class="modal-label">Exit Size</label>
+    <div class="modal-radio-group" id="exitModeGroup">
+      <label class="modal-radio-row checked" data-exitmode="percent"><span class="sm-radio checked"></span>% of
+        Position</label>
+      <label class="modal-radio-row" data-exitmode="contracts"><span class="sm-radio"></span>Exact Contracts
+        (ETH)</label>
+      <label class="modal-radio-row" data-exitmode="dollar"><span class="sm-radio"></span>Dollar Amount (USD)</label>
+    </div>
 
-      <div class="sm-body active" data-exitbody="percent">
-        <div class="sm-pct-display" id="exitPctDisplay">100%</div>
-        <input type="range" class="sm-slider" id="exitPctSlider" min="0" max="100" step="5" value="100">
-        <div class="sm-tick-row"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
-      </div>
+    <div class="sm-body active" data-exitbody="percent">
+      <div class="sm-pct-display" id="exitPctDisplay">100%</div>
+      <input type="range" class="sm-slider" id="exitPctSlider" min="0" max="100" step="5" value="100">
+      <div class="sm-tick-row"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+    </div>
 
-      <div class="sm-body" data-exitbody="contracts">
-        <label class="sm-amount-lbl">Quantity</label>
-        <div class="sm-stepper">
-          <button id="exitQtyDec">−</button>
-          <input type="text" id="exitQtyInput" readonly value="0">
-          <button id="exitQtyInc">+</button>
-        </div>
-        <label class="sm-amount-lbl">Quick Select</label>
-        <div class="sm-quick" id="exitQtyQuick"></div>
+    <div class="sm-body" data-exitbody="contracts">
+      <label class="sm-amount-lbl">Quantity</label>
+      <div class="sm-stepper">
+        <button id="exitQtyDec">−</button>
+        <input type="text" id="exitQtyInput" readonly value="0">
+        <button id="exitQtyInc">+</button>
       </div>
+      <label class="sm-amount-lbl">Quick Select</label>
+      <div class="sm-quick" id="exitQtyQuick"></div>
+    </div>
 
-      <div class="sm-body" data-exitbody="dollar">
-        <label class="sm-amount-lbl">Dollar Amount</label>
-        <div class="sm-stepper">
-          <button id="exitDolDec">−</button>
-          <input type="text" id="exitDolInput" readonly value="$0">
-          <button id="exitDolInc">+</button>
-        </div>
-        <label class="sm-amount-lbl">Quick Select</label>
-        <div class="sm-quick" id="exitDolQuick"></div>
+    <div class="sm-body" data-exitbody="dollar">
+      <label class="sm-amount-lbl">Dollar Amount</label>
+      <div class="sm-stepper">
+        <button id="exitDolDec">−</button>
+        <input type="text" id="exitDolInput" readonly value="$0">
+        <button id="exitDolInc">+</button>
       </div>
+      <label class="sm-amount-lbl">Quick Select</label>
+      <div class="sm-quick" id="exitDolQuick"></div>
+    </div>
 
-      <div class="modal-summary">
-        <div class="row"><span class="l">Current Exit</span><span class="v" id="exitCurrent">—</span></div>
-        <div class="row"><span class="l">This TP Exits</span><span class="v" id="exitThis">—</span></div>
-        <div class="row"><span class="l">Remaining Position</span><span class="v" id="exitRemaining">—</span></div>
-        <div class="row total"><span class="l">Total TP Exits</span><span class="v" id="exitTotal">—</span></div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn-cancel" id="exitCancel">Cancel</button>
-        <button class="btn-save" id="exitSave">Save Changes</button>
-      </div>
+    <div class="modal-summary">
+      <div class="row"><span class="l">Current Exit</span><span class="v" id="exitCurrent">—</span></div>
+      <div class="row"><span class="l">This TP Exits</span><span class="v" id="exitThis">—</span></div>
+      <div class="row"><span class="l">Remaining Position</span><span class="v" id="exitRemaining">—</span></div>
+      <div class="row total"><span class="l">Total TP Exits</span><span class="v" id="exitTotal">—</span></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="exitCancel">Cancel</button>
+      <button class="btn-save" id="exitSave">Save Changes</button>
     </div>
   </div>
 
@@ -6284,7 +6317,7 @@
         const tpDist = Math.abs(tpPrice - entry);
         order = {
           side, entry, qty: parseInt(qtyInput.value || '1'), orderType: 'Limit',
-          sizeMode: 'contracts',
+          sizeMode: 'contracts', filled: false, editing: false,
           sizeValues: { dollar: 5000, percent: 25, risk: 500 },
           tps: [{ id: 'tp' + (tpCounter++), price: tpPrice, pct: 100, trailing: false }],
           sl: { price: roundTick(entry - dir * tpDist), trailing: false, atr: false, beTpId: null, beActive: false }
@@ -6329,12 +6362,26 @@
       const qtAdvancedTab = document.getElementById('qtAdvancedTab');
       const qtAdvancedTabLabel = document.getElementById('qtAdvancedTabLabel');
       const qtAdvancedTypeMenu = document.getElementById('qtAdvancedTypeMenu');
-      qtAdvancedTab.addEventListener('click', (e) => {
-        e.stopPropagation();
+      let qtAdvHoverTimer = null;
+      function qtOpenAdvMenu() {
+        clearTimeout(qtAdvHoverTimer);
         qtAdvancedTypeMenu.querySelectorAll('.pop-item').forEach(it => {
           it.classList.toggle('selected', it.dataset.advType === qtAdvancedType);
         });
         openNear(qtAdvancedTypeMenu, qtAdvancedTab.getBoundingClientRect(), 'right', qtAdvancedTab);
+      }
+      function qtScheduleCloseAdvMenu() {
+        clearTimeout(qtAdvHoverTimer);
+        qtAdvHoverTimer = setTimeout(() => closeAllPopovers(), 150);
+      }
+      qtAdvancedTab.addEventListener('mouseenter', qtOpenAdvMenu);
+      qtAdvancedTab.addEventListener('mouseleave', qtScheduleCloseAdvMenu);
+      qtAdvancedTypeMenu.addEventListener('mouseenter', () => clearTimeout(qtAdvHoverTimer));
+      qtAdvancedTypeMenu.addEventListener('mouseleave', qtScheduleCloseAdvMenu);
+      qtAdvancedTab.addEventListener('click', (e) => {
+        e.stopPropagation();
+        qtSetActiveTab('advanced');
+        closeAllPopovers();
       });
       qtAdvancedTypeMenu.querySelectorAll('.pop-item').forEach(it => {
         it.addEventListener('click', () => {
@@ -6579,8 +6626,14 @@
       qtUpdateEstimates();
 
       function cancelOrder() {
-        if (order) orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'cancelled', time: nowTimeStr() });
+        if (order) orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: order.filled ? 'closed' : 'cancelled', time: nowTimeStr() });
         order = null; render(); closeAllPopovers();
+      }
+      function confirmOrderFill() {
+        if (!order || order.filled) return;
+        order.filled = true;
+        render();
+        showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
       }
       function removeTp(id) {
         if (!order) return;
@@ -6603,7 +6656,7 @@
       }
       /* ---------- TP fill detection (drives "Move to Break Even" once the chosen TP is hit) ---------- */
       function checkTpFills(prevPrice, currentPrice) {
-        if (!order || !order.tps.length) return;
+        if (!order || !order.filled || !order.tps.length) return;
         const dir = order.side === 'buy' ? 1 : -1;
         const hitTps = order.tps.filter(tp => dir === 1
           ? (prevPrice < tp.price && currentPrice >= tp.price)
@@ -6630,6 +6683,24 @@
         const dir = order.side === 'buy' ? 1 : -1;
         order.tps.push({ id: 'tp' + (tpCounter++), price: roundTick(order.entry + dir * 2.5), pct: 100, trailing: false });
         render();
+      }
+      /* ---------- auto-balance TP allocations so they always sum to exactly 100% ---------- */
+      function rebalanceTpAllocations(newTpId) {
+        if (!order) return;
+        const n = order.tps.length;
+        if (n === 0) return;
+        if (n === 1) { order.tps[0].pct = 100; return; }
+        const newShare = Math.round(100 / n);
+        const others = order.tps.filter(t => t.id !== newTpId);
+        const remaining = 100 - newShare;
+        const othersTotalPct = others.reduce((s, t) => s + t.pct, 0) || 1;
+        let allocated = 0;
+        others.forEach((t, i) => {
+          if (i === others.length - 1) { t.pct = remaining - allocated; }
+          else { t.pct = Math.round(t.pct / othersTotalPct * remaining); allocated += t.pct; }
+        });
+        const newTp = order.tps.find(t => t.id === newTpId);
+        if (newTp) newTp.pct = newShare;
       }
 
       /* ---------- alerts ---------- */
@@ -6685,7 +6756,7 @@
             '<td>' + order.orderType + '</td>' +
             '<td>' + order.qty + '</td>' +
             '<td>' + fmt(order.entry) + '</td>' +
-            '<td><span class="bp-status working">Working</span></td>' +
+            '<td>' + (order.filled ? '<span class="bp-status filled">Filled</span>' : '<span class="bp-status working">Working</span>') + '</td>' +
             '<td><span class="bp-action-icon" data-cancel-entry="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
             '</tr>'
           );
@@ -7014,8 +7085,11 @@
           ctx.fillText(fmt(price), plotW + 8, y + 0.5);
         }
         if (order) {
-          order.tps.forEach(tp => drawOrderAxisTagOutline(tp.price, '#2bd47e', hoveredHandle === 'tp:' + tp.id));
-          if (order.sl) drawOrderAxisTagOutline(order.sl.price, '#f2495c', hoveredHandle === 'sl');
+          const tagFullEdit = !order.filled || order.editing;
+          if (tagFullEdit) {
+            order.tps.forEach(tp => drawOrderAxisTagOutline(tp.price, '#2bd47e', hoveredHandle === 'tp:' + tp.id));
+            if (order.sl) drawOrderAxisTagOutline(order.sl.price, '#f2495c', hoveredHandle === 'sl');
+          }
           drawOrderAxisTagOutline(order.entry, '#3b82f6', hoveredHandle === 'entry');
         }
 
@@ -7264,170 +7338,225 @@
         if (!order) { return; }
         const H = rectH();
 
-        // ---- TP lines (stack sorted by price; furthest from entry rendered correctly via actual price->Y) ----
-        order.tps.slice().forEach((tp, idx) => {
-          const y = clamp(priceToY(tp.price, H), 10, H - 10);
-          const line = document.createElement('div');
-          line.className = 'ol-line tp';
-          line.style.top = y + 'px';
-          layer.appendChild(line);
+        // ---- Once filled & not in edit mode: only the entry shows (subtle line, hover reveals its bar). ----
+        // ---- TP/SL stay fully hidden until "full edit mode" is entered via the entry's settings icon.   ----
+        const fullEdit = !order.filled || order.editing;
 
-          const dir = order.side === 'buy' ? 1 : -1;
-          const pts = dir * (tp.price - order.entry);
-          const contracts = Math.round(order.qty * tp.pct / 100);
-          const profit = pts * POINT_VALUE * contracts;
-          const riskPerContractTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
-          const rMultiple = riskPerContractTotal ? (pts * POINT_VALUE / riskPerContractTotal) : null;
+        if (fullEdit) {
+          // ---- TP lines (stack sorted by price; furthest from entry rendered correctly via actual price->Y) ----
+          order.tps.slice().forEach((tp, idx) => {
+            const y = clamp(priceToY(tp.price, H), 10, H - 10);
+            const line = document.createElement('div');
+            line.className = 'ol-line tp';
+            line.style.top = y + 'px';
+            layer.appendChild(line);
 
-          const row = document.createElement('div');
-          row.className = 'ol-side-row';
-          row.style.top = y + 'px';
-          row.innerHTML =
-            '<span class="ol-chip tp"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '</span>' +
-            '<span class="ol-amt up" data-edit-tp="' + tp.id + '">+' + fmtMoney(profit) + '</span>' +
-            '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
-            '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
-            '<span class="ol-gear" data-gear-tp="' + tp.id + '"><span class="material-symbols-outlined">settings</span></span>';
-          layer.appendChild(row);
+            const dir = order.side === 'buy' ? 1 : -1;
+            const pts = dir * (tp.price - order.entry);
+            const contracts = Math.round(order.qty * tp.pct / 100);
+            const profit = pts * POINT_VALUE * contracts;
+            const riskPerContractTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
+            const rMultiple = riskPerContractTotal ? (pts * POINT_VALUE / riskPerContractTotal) : null;
 
-          const tpAmtEl = row.querySelector('.ol-amt');
-          bindHandleHover(row.querySelector('.ol-chip'), 'tp:' + tp.id);
-          makeDraggable(row.querySelector('.ol-chip'),
-            (cy, h) => {
-              row.style.top = cy + 'px'; line.style.top = cy + 'px';
-              tp.price = roundTick(yToPrice(cy, h));
-              const liveDir = order.side === 'buy' ? 1 : -1;
-              const livePts = liveDir * (tp.price - order.entry);
-              const liveProfit = livePts * POINT_VALUE * contracts;
-              tpAmtEl.textContent = (liveProfit >= 0 ? '+' : '-') + fmtMoney(Math.abs(liveProfit));
-              tpAmtEl.classList.toggle('up', liveProfit >= 0);
-              tpAmtEl.classList.toggle('down', liveProfit < 0);
-              drawPriceChart();
-            },
-            (cy, h) => {
-              tp.price = roundTick(yToPrice(cy, h));
-              const dir2 = order.side === 'buy' ? 1 : -1;
-              if (dir2 * (tp.price - order.entry) < 0.25) tp.price = roundTick(order.entry + dir2 * 0.25);
-              render();
+            const row = document.createElement('div');
+            row.className = 'ol-side-row';
+            row.style.top = y + 'px';
+            row.innerHTML =
+              '<span class="ol-chip tp"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '</span>' +
+              '<span class="ol-amt up" data-edit-tp="' + tp.id + '">+' + fmtMoney(profit) + '</span>' +
+              '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
+              '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
+              '<span class="ol-gear" data-gear-tp="' + tp.id + '"><span class="material-symbols-outlined">settings</span></span>';
+            layer.appendChild(row);
+
+            const tpAmtEl = row.querySelector('.ol-amt');
+            bindHandleHover(row.querySelector('.ol-chip'), 'tp:' + tp.id);
+            makeDraggable(row.querySelector('.ol-chip'),
+              (cy, h) => {
+                row.style.top = cy + 'px'; line.style.top = cy + 'px';
+                tp.price = roundTick(yToPrice(cy, h));
+                const liveDir = order.side === 'buy' ? 1 : -1;
+                const livePts = liveDir * (tp.price - order.entry);
+                const liveProfit = livePts * POINT_VALUE * contracts;
+                tpAmtEl.textContent = (liveProfit >= 0 ? '+' : '-') + fmtMoney(Math.abs(liveProfit));
+                tpAmtEl.classList.toggle('up', liveProfit >= 0);
+                tpAmtEl.classList.toggle('down', liveProfit < 0);
+                drawPriceChart();
+              },
+              (cy, h) => {
+                tp.price = roundTick(yToPrice(cy, h));
+                const dir2 = order.side === 'buy' ? 1 : -1;
+                if (dir2 * (tp.price - order.entry) < 0.25) tp.price = roundTick(order.entry + dir2 * 0.25);
+                render();
+              });
+
+            row.querySelector('[data-edit-tp]').addEventListener('click', (e) => {
+              e.stopPropagation();
+              openEditExitModal(tp.id, e.currentTarget.getBoundingClientRect(), e.currentTarget);
             });
-
-          row.querySelector('[data-edit-tp]').addEventListener('click', (e) => { openEditExitModal(tp.id); });
-          row.querySelector('[data-pct-tp]').addEventListener('click', (e) => { e.stopPropagation(); openEditExitModal(tp.id); });
-          row.querySelector('[data-gear-tp]').addEventListener('click', (e) => {
-            e.stopPropagation();
-            activeGearTpId = tp.id;
-            openTpGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-          });
-        });
-
-        if (order.tps.length === 0) {
-          const y = clamp(priceToY(order.entry + (order.side === 'buy' ? 1 : -1) * 2.5, H), 10, H - 10);
-          const row = document.createElement('div');
-          row.className = 'ol-side-row ghost-row';
-          row.style.top = y + 'px';
-          row.innerHTML = '<span class="ol-chip ghost"><span class="material-symbols-outlined" style="font-size:13px;">add</span>Set Take Profit</span>';
-          row.addEventListener('click', addDefaultTP);
-          layer.appendChild(row);
-        }
-
-        // ---- SL line ----
-        if (order.sl) {
-          const y = clamp(priceToY(order.sl.price, H), 10, H - 10);
-          const line = document.createElement('div');
-          line.className = 'ol-line sl';
-          line.style.top = y + 'px';
-          layer.appendChild(line);
-
-          const dir = order.side === 'buy' ? 1 : -1;
-          const pts = dir * (order.entry - order.sl.price);
-          const loss = pts * POINT_VALUE * order.qty;
-
-          const row = document.createElement('div');
-          row.className = 'ol-side-row';
-          row.style.top = y + 'px';
-          row.innerHTML =
-            '<span class="ol-chip sl"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>SL' + (order.sl.beTpId ? '<span class="ol-badge be">SL → BE</span>' : '') + (order.sl.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + (order.sl.atr ? '<span class="ol-badge atr">ATR</span>' : '') + '</span>' +
-            '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
-            '<span class="ol-rmult">-1.0R</span>' +
-            '<span class="ol-pct-chip">100%</span>' +
-            '<span class="ol-gear" id="slGearTrigger"><span class="material-symbols-outlined">settings</span></span>';
-          layer.appendChild(row);
-
-          const slAmtEl = row.querySelector('.ol-amt');
-          bindHandleHover(row.querySelector('.ol-chip'), 'sl');
-          makeDraggable(row.querySelector('.ol-chip'),
-            (cy, h) => {
-              row.style.top = cy + 'px'; line.style.top = cy + 'px';
-              order.sl.price = roundTick(yToPrice(cy, h));
-              const liveDir = order.side === 'buy' ? 1 : -1;
-              const livePts = liveDir * (order.entry - order.sl.price);
-              const liveLoss = livePts * POINT_VALUE * order.qty;
-              slAmtEl.textContent = '-' + fmtMoney(Math.abs(liveLoss));
-              drawPriceChart();
-            },
-            (cy, h) => {
-              order.sl.price = roundTick(yToPrice(cy, h));
-              const dir2 = order.side === 'buy' ? 1 : -1;
-              if (dir2 * (order.entry - order.sl.price) < 0.25) order.sl.price = roundTick(order.entry - dir2 * 0.25);
-              syncQtyFromRisk();
-              render();
+            row.querySelector('[data-pct-tp]').addEventListener('click', (e) => {
+              e.stopPropagation();
+              openEditExitModal(tp.id, e.currentTarget.getBoundingClientRect(), e.currentTarget);
             });
-
-          row.querySelector('#slGearTrigger').addEventListener('click', (e) => {
-            e.stopPropagation();
-            openSlGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+            row.querySelector('[data-gear-tp]').addEventListener('click', (e) => {
+              e.stopPropagation();
+              activeGearTpId = tp.id;
+              openTpGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+            });
           });
-        } else {
-          const y = clamp(priceToY(order.entry - (order.side === 'buy' ? 1 : -1) * 2.5, H), 10, H - 10);
-          const row = document.createElement('div');
-          row.className = 'ol-side-row ghost-row';
-          row.style.top = y + 'px';
-          row.innerHTML = '<span class="ol-chip ghost"><span class="material-symbols-outlined" style="font-size:13px;">add</span>Set Stop Loss</span>';
-          row.addEventListener('click', addDefaultSL);
-          layer.appendChild(row);
+
+          if (order.tps.length === 0) {
+            const y = clamp(priceToY(order.entry + (order.side === 'buy' ? 1 : -1) * 2.5, H), 10, H - 10);
+            const row = document.createElement('div');
+            row.className = 'ol-side-row ghost-row';
+            row.style.top = y + 'px';
+            row.innerHTML = '<span class="ol-chip ghost"><span class="material-symbols-outlined" style="font-size:13px;">add</span>Set Take Profit</span>';
+            row.addEventListener('click', addDefaultTP);
+            layer.appendChild(row);
+          }
+
+          // ---- SL line ----
+          if (order.sl) {
+            const y = clamp(priceToY(order.sl.price, H), 10, H - 10);
+            const line = document.createElement('div');
+            line.className = 'ol-line sl';
+            line.style.top = y + 'px';
+            layer.appendChild(line);
+
+            const dir = order.side === 'buy' ? 1 : -1;
+            const pts = dir * (order.entry - order.sl.price);
+            const loss = pts * POINT_VALUE * order.qty;
+
+            const row = document.createElement('div');
+            row.className = 'ol-side-row';
+            row.style.top = y + 'px';
+            row.innerHTML =
+              '<span class="ol-chip sl"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>SL' + (order.sl.beTpId ? '<span class="ol-badge be">SL → BE</span>' : '') + (order.sl.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + (order.sl.atr ? '<span class="ol-badge atr">ATR</span>' : '') + '</span>' +
+              '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
+              '<span class="ol-rmult">-1.0R</span>' +
+              '<span class="ol-pct-chip">100%</span>' +
+              '<span class="ol-gear" id="slGearTrigger"><span class="material-symbols-outlined">settings</span></span>';
+            layer.appendChild(row);
+
+            const slAmtEl = row.querySelector('.ol-amt');
+            bindHandleHover(row.querySelector('.ol-chip'), 'sl');
+            makeDraggable(row.querySelector('.ol-chip'),
+              (cy, h) => {
+                row.style.top = cy + 'px'; line.style.top = cy + 'px';
+                order.sl.price = roundTick(yToPrice(cy, h));
+                const liveDir = order.side === 'buy' ? 1 : -1;
+                const livePts = liveDir * (order.entry - order.sl.price);
+                const liveLoss = livePts * POINT_VALUE * order.qty;
+                slAmtEl.textContent = '-' + fmtMoney(Math.abs(liveLoss));
+                drawPriceChart();
+              },
+              (cy, h) => {
+                order.sl.price = roundTick(yToPrice(cy, h));
+                const dir2 = order.side === 'buy' ? 1 : -1;
+                if (dir2 * (order.entry - order.sl.price) < 0.25) order.sl.price = roundTick(order.entry - dir2 * 0.25);
+                syncQtyFromRisk();
+                render();
+              });
+
+            row.querySelector('#slGearTrigger').addEventListener('click', (e) => {
+              e.stopPropagation();
+              openSlGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+            });
+          } else {
+            const y = clamp(priceToY(order.entry - (order.side === 'buy' ? 1 : -1) * 2.5, H), 10, H - 10);
+            const row = document.createElement('div');
+            row.className = 'ol-side-row ghost-row';
+            row.style.top = y + 'px';
+            row.innerHTML = '<span class="ol-chip ghost"><span class="material-symbols-outlined" style="font-size:13px;">add</span>Set Stop Loss</span>';
+            row.addEventListener('click', addDefaultSL);
+            layer.appendChild(row);
+          }
         }
 
         // ---- Entry line + control bar ----
+        // Pending or in full-edit mode: entry renders directly, always visible, fully interactive.
+        // Filled & not editing: entry renders inside a hover group — line stays subtle, bar reveals on hover.
         {
           const y = clamp(priceToY(order.entry, H), 10, H - 10);
+          let entryHost = layer;
+          if (!fullEdit) {
+            const group = document.createElement('div');
+            group.className = 'ol-position-group';
+            layer.appendChild(group);
+            const zone = document.createElement('div');
+            zone.className = 'ol-hover-zone';
+            zone.style.top = (y - 14) + 'px';
+            zone.style.height = '28px';
+            group.appendChild(zone);
+            entryHost = group;
+          }
+
           const line = document.createElement('div');
-          line.className = 'ol-line entry';
+          line.className = 'ol-line entry' + (!fullEdit ? ' subtle' : '');
           line.style.top = y + 'px';
-          layer.appendChild(line);
+          entryHost.appendChild(line);
 
           const bar = document.createElement('div');
-          bar.className = 'ol-entry-bar';
+          bar.className = 'ol-entry-bar' + (!fullEdit ? ' reveal' : '');
           bar.style.top = y + 'px';
-          const sizeLabel = order.sizeMode === 'contracts' ? String(order.qty)
-            : order.sizeMode === 'dollar' ? '$' + fmt(order.sizeValues.dollar, 0)
-              : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
-                : '$' + fmt(order.sizeValues.risk, 0) + ' risk';
-          bar.innerHTML =
-            '<span class="ol-chip entry" id="entryPriceHandle"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>ENTRY</span>' +
-            '<span class="ol-entry-price">' + fmt(order.entry) + '</span>' +
-            '<span class="ol-pill neutral tag pop-trigger" id="sizePillTrigger">' + sizeLabel + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
-            '<span class="ol-pill neutral tag pop-trigger" id="typePillTrigger">' + order.orderType + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
-            '<span class="ol-x" id="cancelOrderBtn"><span class="material-symbols-outlined">close</span></span>';
-          layer.appendChild(bar);
+
+          if (!order.filled) {
+            const sizeLabel = order.sizeMode === 'contracts' ? String(order.qty)
+              : order.sizeMode === 'dollar' ? '$' + fmt(order.sizeValues.dollar, 0)
+                : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
+                  : '$' + fmt(order.sizeValues.risk, 0) + ' risk';
+            bar.innerHTML =
+              '<span class="ol-chip entry" id="entryPriceHandle"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>ENTRY</span>' +
+              '<span class="ol-pill neutral tag pop-trigger" id="sizePillTrigger">' + sizeLabel + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
+              '<span class="ol-pill neutral tag pop-trigger" id="typePillTrigger">' + order.orderType + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
+              '<span class="ol-check" id="confirmOrderBtn" title="Execute Trade"><span class="material-symbols-outlined">check</span></span>' +
+              '<span class="ol-x" id="cancelOrderBtn" title="Cancel Order"><span class="material-symbols-outlined">delete</span></span>';
+          } else if (order.editing) {
+            bar.innerHTML =
+              '<span class="ol-chip entry" id="entryPriceHandle"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>' + (order.side === 'buy' ? 'LONG' : 'SHORT') + '</span>' +
+              '<span class="ol-pill neutral tag pop-trigger" id="sizePillTrigger">' + order.qty + ' ' + QT_INSTRUMENT_UNIT + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
+              '<span class="ol-check" id="doneEditingBtn" title="Done Editing"><span class="material-symbols-outlined">check</span></span>' +
+              '<span class="ol-x" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
+          } else {
+            bar.innerHTML =
+              '<span class="ol-chip entry locked" id="entryPriceHandle">' + (order.side === 'buy' ? 'LONG' : 'SHORT') + '</span>' +
+              '<span class="ol-gear" id="entryEditTrigger" title="Edit Trade"><span class="material-symbols-outlined">tune</span></span>' +
+              '<span class="ol-x" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
+          }
+          entryHost.appendChild(bar);
 
           const entryPriceHandle = bar.querySelector('#entryPriceHandle');
-          const entryPriceLbl = bar.querySelector('.ol-entry-price');
           bindHandleHover(entryPriceHandle, 'entry');
-          makeDraggable(entryPriceHandle,
-            (cy, h) => {
-              bar.style.top = cy + 'px'; line.style.top = cy + 'px';
-              order.entry = roundTick(yToPrice(cy, h));
-              entryPriceLbl.textContent = fmt(order.entry);
-              drawPriceChart();
-            },
-            (cy, h) => { order.entry = roundTick(yToPrice(cy, h)); syncQtyFromRisk(); render(); });
+          if (fullEdit) {
+            makeDraggable(entryPriceHandle,
+              (cy, h) => {
+                bar.style.top = cy + 'px'; line.style.top = cy + 'px';
+                order.entry = roundTick(yToPrice(cy, h));
+                drawPriceChart();
+              },
+              (cy, h) => { order.entry = roundTick(yToPrice(cy, h)); syncQtyFromRisk(); render(); });
+          }
 
-          bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
-            e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-          });
-          bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
-            e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-          });
+          if (!order.filled) {
+            bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
+              e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+            });
+            bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
+              e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+            });
+            bar.querySelector('#confirmOrderBtn').addEventListener('click', (e) => { e.stopPropagation(); confirmOrderFill(); });
+          } else if (order.editing) {
+            bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
+              e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+            });
+            bar.querySelector('#doneEditingBtn').addEventListener('click', (e) => {
+              e.stopPropagation(); order.editing = false; render();
+            });
+          } else {
+            bar.querySelector('#entryEditTrigger').addEventListener('click', (e) => {
+              e.stopPropagation(); order.editing = true; render();
+            });
+          }
           bar.querySelector('#cancelOrderBtn').addEventListener('click', (e) => { e.stopPropagation(); cancelOrder(); });
         }
 
@@ -7657,14 +7786,12 @@
         if (!order) return;
         const dir = order.side === 'buy' ? 1 : -1;
         const farthest = order.tps.reduce((m, t) => Math.max(m, dir * (t.price - order.entry)), 0);
-        const newPrice = roundTick(order.entry + dir * (farthest + 10));
-        order.tps.push({ id: 'tp' + (tpCounter++), price: newPrice, pct: 25, trailing: false });
+        const newPrice = roundTick(order.entry + dir * (farthest + 50 / PX_PER_POINT));
+        const newId = 'tp' + (tpCounter++);
+        order.tps.push({ id: newId, price: newPrice, pct: 25, trailing: false });
+        rebalanceTpAllocations(newId);
         closeAllPopovers(); render();
         showToast('Take profit added', 'add_circle');
-      });
-      document.getElementById('tpEdit').addEventListener('click', () => {
-        closeAllPopovers();
-        if (activeGearTpId) openEditExitModal(activeGearTpId);
       });
       document.getElementById('tpTrail').addEventListener('click', () => {
         const tp = order.tps.find(t => t.id === activeGearTpId);
@@ -7683,19 +7810,27 @@
       const slBePanel = document.getElementById('slBePanel');
       const slBeSub = document.getElementById('slBeSub');
       const slBeTpList = document.getElementById('slBeTpList');
+      const slTrailBtn = document.getElementById('slTrail');
+      const slTrailSub = document.getElementById('slTrailSub');
+      const slAtrBtn = document.getElementById('slAtr');
+      const slAtrSub = document.getElementById('slAtrSub');
       function renderSlGearMenu() {
         if (!order || !order.sl) return;
         const tooFewTps = order.tps.length < 2;
+        const trailActive = !!order.sl.trailing;
+        const atrActive = !!order.sl.atr;
         if (tooFewTps && !order.sl.beActive) { order.sl.beTpId = null; }
-        const locked = order.sl.beActive || (tooFewTps && !order.sl.beTpId);
-        slBeToggle.classList.toggle('disabled', locked);
-        if (locked) { slBeToggle.classList.remove('open'); slBePanel.classList.remove('open'); }
+        const beArmed = !!order.sl.beTpId || order.sl.beActive;
+        const beLocked = tooFewTps && !order.sl.beTpId && !order.sl.beActive;
+        slBeToggle.classList.toggle('disabled', beLocked);
+        slBeToggle.classList.toggle('selected', beArmed);
+        if (beLocked) { slBeToggle.classList.remove('open'); slBePanel.classList.remove('open'); }
         slBeSub.textContent = order.sl.beActive
           ? 'Active — SL moved to entry'
           : tooFewTps ? 'Requires 2+ take profits'
             : order.sl.beTpId ? 'Triggers on TP' + (order.tps.findIndex(t => t.id === order.sl.beTpId) + 1)
               : 'Off';
-        slBeTpList.innerHTML = locked ? '' : (
+        slBeTpList.innerHTML = beLocked ? '' : (
           '<button class="pop-item' + (!order.sl.beTpId ? ' selected' : '') + '" data-be-tp="">' +
           '<span class="pop-text"><span class="pt-title">Off</span></span></button>' +
           order.tps.map((tp, idx) =>
@@ -7709,10 +7844,15 @@
             if (!order || !order.sl) return;
             order.sl.beTpId = btn.dataset.beTp || null;
             order.sl.beActive = false;
+            if (order.sl.beTpId) { order.sl.trailing = false; order.sl.atr = false; }
             renderSlGearMenu();
             render();
           });
         });
+        slTrailBtn.classList.toggle('selected', trailActive);
+        slTrailSub.textContent = 'Trail stop loss as price moves';
+        slAtrBtn.classList.toggle('selected', atrActive);
+        slAtrSub.textContent = 'Use ATR based stop loss';
       }
       slBeToggle.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -7729,20 +7869,26 @@
         renderSlGearMenu();
         openNear(slGearMenu, anchorRect, 'right', trigger);
       }
-      document.getElementById('slTrail').addEventListener('click', () => {
-        if (order.sl) order.sl.trailing = !order.sl.trailing;
-        closeAllPopovers(); render();
+      slTrailBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (order.sl) {
+          order.sl.trailing = !order.sl.trailing;
+          if (order.sl.trailing) { order.sl.beTpId = null; order.sl.beActive = false; order.sl.atr = false; }
+        }
+        renderSlGearMenu(); render();
       });
-      document.getElementById('slAtr').addEventListener('click', () => {
+      slAtrBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (order.sl) {
           order.sl.atr = !order.sl.atr;
           if (order.sl.atr) {
+            order.sl.beTpId = null; order.sl.beActive = false; order.sl.trailing = false;
             const dir = order.side === 'buy' ? 1 : -1;
             order.sl.price = roundTick(order.entry - dir * 7.5);
             syncQtyFromRisk();
           }
         }
-        closeAllPopovers(); render();
+        renderSlGearMenu(); render();
       });
       document.getElementById('slRemove').addEventListener('click', () => {
         order.sl = null;
@@ -7939,7 +8085,7 @@
         syncExitModeInputs();
       }
 
-      function openEditExitModal(tpId) {
+      function openEditExitModal(tpId, anchorRect, trigger) {
         const tp = order.tps.find(t => t.id === tpId);
         if (!tp) return;
         const idx = order.tps.indexOf(tp);
@@ -7947,9 +8093,10 @@
         document.getElementById('exitModalTpName').textContent = 'TP' + (idx + 1);
         setExitMode('percent');
         refreshExitSummary();
-        editBackdrop.classList.add('show');
+        if (anchorRect) openNear(editBackdrop, anchorRect, 'right', trigger);
+        else editBackdrop.classList.add('show');
       }
-      function closeEditExitModal() { editBackdrop.classList.remove('show'); exitModal = null; }
+      function closeEditExitModal() { closeAllPopovers(); exitModal = null; }
 
       function refreshExitSummary() {
         if (!exitModal) return;
@@ -8008,8 +8155,6 @@
         render();
         showToast('Exit amount updated', 'check_circle');
       });
-      editBackdrop.addEventListener('click', (e) => { if (e.target === editBackdrop) closeEditExitModal(); });
-
       renderOpenOrders();
       renderOrderHistory();
       renderAlerts();
