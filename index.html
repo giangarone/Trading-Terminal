@@ -194,6 +194,25 @@
       display: none;
     }
 
+    .tb-logo {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .tb-logo img {
+      height: 22px;
+      width: auto;
+      display: block;
+    }
+
+    .tb-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--line-2);
+      flex-shrink: 0;
+    }
+
     .symbol-block {
       display: flex;
       align-items: center;
@@ -206,6 +225,14 @@
       align-items: center;
       gap: 4px;
       cursor: pointer;
+      padding: 6px 8px;
+      margin: -6px -8px;
+      border-radius: 6px;
+      transition: background .12s ease;
+    }
+
+    .symbol-select:hover {
+      background: var(--ink-800);
     }
 
     .symbol-select .sym {
@@ -1626,7 +1653,7 @@
 
     .qty-stepper input {
       flex: 1;
-      text-align: center;
+      text-align: right;
       background: transparent;
       border: none;
       outline: none;
@@ -1635,6 +1662,15 @@
       font-weight: 600;
       width: 30px;
       color: var(--paper-100);
+    }
+
+    .qty-unit {
+      flex-shrink: 0;
+      padding-right: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--paper-300);
+      white-space: nowrap;
     }
 
     .ts-field {
@@ -1731,23 +1767,23 @@
     }
 
     .bs-btn.buy {
-      background: rgba(43, 212, 126, .162);
+      background: rgba(43, 212, 126, .12);
       border: 1px solid var(--long);
       color: var(--long);
     }
 
     .bs-btn.buy:hover {
-      background: rgba(43, 212, 126, .22);
+      background: rgba(43, 212, 126, .20);
     }
 
     .bs-btn.sell {
-      background: rgba(242, 73, 92, .16);
+      background: rgba(242, 73, 92, .12);
       border: 1px solid var(--short);
       color: var(--short);
     }
 
     .bs-btn.sell:hover {
-      background: rgba(242, 73, 92, .22);
+      background: rgba(242, 73, 92, .20);
     }
 
     .join-row {
@@ -1969,7 +2005,8 @@
       gap: 8px;
       font-size: 13px;
       font-weight: 500;
-      color: var(--paper-100);
+      color: var(--paper-300);
+      background: var(--ink-750);
     }
 
     .text-input-qt.info .material-symbols-outlined {
@@ -2004,20 +2041,6 @@
       background: var(--line-1);
     }
 
-    .qty-unit-box {
-      flex-shrink: 0;
-      padding: 0 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--ink-800);
-      border: 1px solid var(--line-2);
-      border-radius: 7px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--paper-100);
-    }
-
     .qt-hotkeys {
       display: flex;
       flex-wrap: wrap;
@@ -2029,17 +2052,18 @@
       height: 34px;
       padding: 0 9px;
       border-radius: 7px;
-      border: 1px solid var(--purple-guide);
+      border: 1px solid var(--line-2);
       background: transparent;
-      color: var(--purple);
+      color: var(--paper-500);
       font-size: 11.5px;
       font-weight: 700;
       font-family: var(--sans);
     }
 
     .qt-hotkeys button:hover {
-      background: var(--purple-dim);
-      border-color: var(--purple);
+      color: var(--paper-300);
+      background: var(--ink-800);
+      border-color: var(--line-3);
     }
 
     .qt-slider-block {
@@ -2439,7 +2463,7 @@
       display: block;
     }
 
-    .ai-assist-popup {
+    .chart-popup {
       position: absolute;
       top: 14px;
       left: 14px;
@@ -2456,11 +2480,11 @@
       cursor: default;
     }
 
-    .ai-assist-popup.show {
+    .chart-popup.show {
       display: flex;
     }
 
-    .aip-head {
+    .chart-popup-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -2470,7 +2494,7 @@
       user-select: none;
     }
 
-    .aip-title {
+    .chart-popup-title {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -2479,67 +2503,67 @@
       color: var(--paper-100);
     }
 
-    .aip-title .material-symbols-outlined {
+    .chart-popup-title .material-symbols-outlined {
       font-size: 15px;
       color: var(--accent);
     }
 
-    .aip-close {
+    .chart-popup-close {
       display: flex;
       color: var(--paper-500);
       padding: 2px;
       border-radius: 5px;
     }
 
-    .aip-close:hover {
+    .chart-popup-close:hover {
       color: var(--paper-100);
       background: var(--ink-800);
     }
 
-    .aip-close .material-symbols-outlined {
+    .chart-popup-close .material-symbols-outlined {
       font-size: 16px;
     }
 
-    .aip-body {
+    .chart-popup-body {
       padding: 12px;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    .aip-top {
+    .chart-popup-top {
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .aip-gauge-wrap {
+    .chart-popup-gauge-wrap {
       position: relative;
       width: 56px;
       height: 56px;
       flex-shrink: 0;
     }
 
-    .aip-gauge {
+    .chart-popup-gauge {
       width: 56px;
       height: 56px;
       transform: rotate(-90deg);
     }
 
-    .aip-gauge-track {
+    .chart-popup-gauge-track {
       fill: none;
       stroke: var(--line-2);
       stroke-width: 7;
     }
 
-    .aip-gauge-fill {
+    .chart-popup-gauge-fill {
       fill: none;
       stroke: var(--long);
       stroke-width: 7;
       stroke-linecap: round;
     }
 
-    .aip-gauge-center {
+    .chart-popup-gauge-center {
       position: absolute;
       inset: 0;
       display: flex;
@@ -2547,20 +2571,20 @@
       justify-content: center;
     }
 
-    .aip-gauge-pct {
+    .chart-popup-gauge-pct {
       font-size: 13px;
       font-weight: 700;
       color: var(--long);
     }
 
-    .aip-top-info {
+    .chart-popup-top-info {
       display: flex;
       flex-direction: column;
       gap: 5px;
       min-width: 0;
     }
 
-    .aip-bias-chip {
+    .chart-popup-bias-chip {
       display: flex;
       align-items: center;
       gap: 4px;
@@ -2571,28 +2595,28 @@
       border-radius: 999px;
     }
 
-    .aip-bias-chip.bullish {
+    .chart-popup-bias-chip.bullish {
       background: var(--long-dim);
       color: var(--long);
     }
 
-    .aip-bias-chip .material-symbols-outlined {
+    .chart-popup-bias-chip .material-symbols-outlined {
       font-size: 13px;
     }
 
-    .aip-model-tag {
+    .chart-popup-model-tag {
       font-size: 9.5px;
       color: var(--intel);
     }
 
-    .aip-summary {
+    .chart-popup-summary {
       font-size: 11.5px;
       color: var(--paper-300);
       line-height: 1.5;
       margin: 0;
     }
 
-    .aip-reason-list {
+    .chart-popup-reason-list {
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -2601,7 +2625,7 @@
       list-style: none;
     }
 
-    .aip-reason-list li {
+    .chart-popup-reason-list li {
       display: flex;
       align-items: flex-start;
       gap: 6px;
@@ -2610,19 +2634,19 @@
       line-height: 1.4;
     }
 
-    .aip-reason-list .material-symbols-outlined {
+    .chart-popup-reason-list .material-symbols-outlined {
       font-size: 13px;
       color: var(--long);
       flex-shrink: 0;
       margin-top: 1px;
     }
 
-    .aip-foot-row {
+    .chart-popup-foot-row {
       display: flex;
       gap: 6px;
     }
 
-    .aip-foot-stat {
+    .chart-popup-foot-stat {
       flex: 1;
       background: var(--ink-800);
       border: 1px solid var(--line-2);
@@ -2634,29 +2658,29 @@
       min-width: 0;
     }
 
-    .aip-foot-stat .l {
+    .chart-popup-foot-stat .l {
       font-size: 8.5px;
       color: var(--paper-500);
       letter-spacing: .03em;
       text-transform: uppercase;
     }
 
-    .aip-foot-stat .v {
+    .chart-popup-foot-stat .v {
       font-size: 11px;
       font-weight: 600;
       color: var(--paper-100);
       white-space: nowrap;
     }
 
-    .aip-foot-stat .v.up {
+    .chart-popup-foot-stat .v.up {
       color: var(--long);
     }
 
-    .aip-foot-stat .v.down {
+    .chart-popup-foot-stat .v.down {
       color: var(--short);
     }
 
-    .aip-disclaimer {
+    .chart-popup-disclaimer {
       font-size: 9.5px;
       color: var(--paper-500);
       line-height: 1.4;
@@ -2664,17 +2688,17 @@
     }
 
     /* ---- Market Scanner popup ---- */
-    .ai-assist-popup.scanner-popup {
+    .chart-popup.scanner-popup {
       width: 460px;
       top: 14px;
       left: auto;
       right: 14px;
     }
 
-    .scanner-popup .aip-body {
+    .scanner-popup .chart-popup-body {
       padding: 12px;
       gap: 12px;
-      max-height: 70vh;
+      max-height: 480px;
       overflow-y: auto;
     }
 
@@ -4117,6 +4141,8 @@
     <!-- ===================== TOP BAR ===================== -->
     <header class="topbar">
       <div class="tb-left">
+        <div class="tb-logo"><img src="assets/chartprime-logo.webp" alt="ChartPrime"></div>
+        <div class="tb-divider"></div>
         <div class="symbol-block">
           <div class="symbol-select pop-trigger" id="symSelectTrigger">
             <span class="sym" id="symSelectLabel">ETHUSD</span>
@@ -4133,6 +4159,8 @@
           <button class="tf-btn tf-more pop-trigger" id="tfMoreTrigger"><span id="tfMoreLabel"></span><span
               class="material-symbols-outlined" style="font-size:14px;">expand_more</span></button>
         </div>
+        <button class="ct-action-btn pop-trigger" id="candleTypeTrigger"><span id="candleTypeLabel">Candles</span><span
+            class="material-symbols-outlined" style="font-size:15px;">expand_more</span></button>
         <button class="ct-action-btn pop-trigger" id="indicatorsTrigger"><span class="material-symbols-outlined"
             style="font-size:15px;">function</span>Indicators<span class="ind-count" id="indicatorsCount"
             style="display:none;"></span><span class="material-symbols-outlined"
@@ -4207,34 +4235,6 @@
         <button class="pop-item" data-account="Bitget">
           <span class="pop-icon"><span class="material-symbols-outlined">account_balance</span></span>
           <span class="pop-text"><span class="pt-title">Bitget</span></span>
-        </button>
-      </div>
-
-      <button class="pop-item settings-acc-row" id="settingsCandleToggle">
-        <span class="pop-text"><span class="pt-title">Candle Type</span></span>
-        <span class="settings-acc-right"><span class="settings-subval" id="settingsCandleVal">Candles</span><span
-            class="material-symbols-outlined settings-chevron">expand_more</span></span>
-      </button>
-      <div class="settings-subpanel" id="settingsCandlePanel">
-        <button class="pop-item selected" data-candle="Candles">
-          <span class="pop-icon"><span class="material-symbols-outlined">candlestick_chart</span></span>
-          <span class="pop-text"><span class="pt-title">Candles</span></span>
-        </button>
-        <button class="pop-item" data-candle="Heikin Ashi">
-          <span class="pop-icon"><span class="material-symbols-outlined">candlestick_chart</span></span>
-          <span class="pop-text"><span class="pt-title">Heikin Ashi</span></span>
-        </button>
-        <button class="pop-item" data-candle="Bars (OHLC)">
-          <span class="pop-icon"><span class="material-symbols-outlined">bar_chart</span></span>
-          <span class="pop-text"><span class="pt-title">Bars (OHLC)</span></span>
-        </button>
-        <button class="pop-item" data-candle="Line (Close)">
-          <span class="pop-icon"><span class="material-symbols-outlined">show_chart</span></span>
-          <span class="pop-text"><span class="pt-title">Line (Close)</span></span>
-        </button>
-        <button class="pop-item" data-candle="Area">
-          <span class="pop-icon"><span class="material-symbols-outlined">area_chart</span></span>
-          <span class="pop-text"><span class="pt-title">Area</span></span>
         </button>
       </div>
     </div>
@@ -4483,60 +4483,61 @@
               <div id="orderLineLayer"></div>
               <div id="newsMarkerLayer"></div>
 
-              <div class="ai-assist-popup" id="aiAssistPopup">
-                <div class="aip-head">
-                  <span class="aip-title"><span class="material-symbols-outlined">auto_awesome</span>AI
-                    Assistance</span>
-                  <button class="aip-close" id="aiAssistClose"><span
+              <div class="chart-popup" id="aiAssistPopup">
+                <div class="chart-popup-head">
+                  <span class="card-title">AI Assistance</span>
+                  <button class="chart-popup-close" id="aiAssistClose"><span
                       class="material-symbols-outlined">close</span></button>
                 </div>
-                <div class="aip-body">
-                  <div class="aip-top">
-                    <div class="aip-gauge-wrap">
-                      <svg class="aip-gauge" viewBox="0 0 72 72">
-                        <circle class="aip-gauge-track" cx="36" cy="36" r="30" />
-                        <circle class="aip-gauge-fill" cx="36" cy="36" r="30" stroke-dasharray="188.5"
+                <div class="chart-popup-body">
+                  <div class="chart-popup-top">
+                    <div class="chart-popup-gauge-wrap">
+                      <svg class="chart-popup-gauge" viewBox="0 0 72 72">
+                        <circle class="chart-popup-gauge-track" cx="36" cy="36" r="30" />
+                        <circle class="chart-popup-gauge-fill" cx="36" cy="36" r="30" stroke-dasharray="188.5"
                           stroke-dashoffset="41.5" />
                       </svg>
-                      <div class="aip-gauge-center"><span class="aip-gauge-pct">78%</span></div>
+                      <div class="chart-popup-gauge-center"><span class="chart-popup-gauge-pct">78%</span></div>
                     </div>
-                    <div class="aip-top-info">
-                      <span class="aip-bias-chip bullish"><span
+                    <div class="chart-popup-top-info">
+                      <span class="chart-popup-bias-chip bullish"><span
                           class="material-symbols-outlined">trending_up</span>Bullish</span>
                     </div>
                   </div>
-                  <p class="aip-summary">ETH is showing a constructive bias into the close, with structure and order
+                  <p class="chart-popup-summary">ETH is showing a constructive bias into the close, with structure and
+                    order
                     flow
                     aligned to the upside.</p>
-                  <ul class="aip-reason-list">
+                  <ul class="chart-popup-reason-list">
                     <li><span class="material-symbols-outlined">check_circle</span>Holding above key support</li>
                     <li><span class="material-symbols-outlined">check_circle</span>Bullish order flow intact</li>
                     <li><span class="material-symbols-outlined">check_circle</span>Liquidity above 5,325 acting as
                       magnet
                     </li>
                   </ul>
-                  <div class="aip-foot-row">
-                    <div class="aip-foot-stat"><span class="l">Invalidation</span><span class="v down">Below
+                  <div class="chart-popup-foot-row">
+                    <div class="chart-popup-foot-stat"><span class="l">Invalidation</span><span class="v down">Below
                         5,288</span>
                     </div>
-                    <div class="aip-foot-stat"><span class="l">Target</span><span class="v up">5,318–5,325</span></div>
-                    <div class="aip-foot-stat"><span class="l">R:R</span><span class="v">1:2.4</span></div>
+                    <div class="chart-popup-foot-stat"><span class="l">Target</span><span
+                        class="v up">5,318–5,325</span></div>
+                    <div class="chart-popup-foot-stat"><span class="l">R:R</span><span class="v">1:2.4</span></div>
                   </div>
-                  <p class="aip-disclaimer">AI-generated read of price action. Not investment advice.</p>
+                  <p class="chart-popup-disclaimer">AI-generated read of price action. Not investment advice.</p>
                 </div>
               </div>
 
-              <div class="ai-assist-popup scanner-popup" id="marketScannerPopup">
-                <div class="aip-head">
-                  <span class="aip-title"><span class="material-symbols-outlined">radar</span>Market Scanner</span>
+              <div class="chart-popup scanner-popup" id="marketScannerPopup">
+                <div class="chart-popup-head">
+                  <span class="card-title">Market Scanner</span>
                   <div style="display:flex;align-items:center;gap:4px;">
                     <button class="ct-icon" id="marketScannerRefresh" style="width:24px;height:24px;"><span
                         class="material-symbols-outlined" style="font-size:15px;">refresh</span></button>
-                    <button class="aip-close" id="marketScannerClose"><span
+                    <button class="chart-popup-close" id="marketScannerClose"><span
                         class="material-symbols-outlined">close</span></button>
                   </div>
                 </div>
-                <div class="aip-body">
+                <div class="chart-popup-body">
                   <div class="scn-stats">
                     <div class="scn-stat"><span class="l">Advancers</span><span class="v up">1,842 (65%)</span></div>
                     <div class="scn-stat"><span class="l">Decliners</span><span class="v down">987 (35%)</span></div>
@@ -4845,7 +4846,7 @@
               <label class="label-sm">Market Order</label>
               <div class="text-input-qt info"><span class="material-symbols-outlined">bolt</span><span>Best available
                   price</span></div>
-              <p class="qt-help">Fills immediately at the live Bid/Ask shown below.</p>
+              <p class="qt-help">Fills immediately at the best available price.</p>
             </div>
 
             <div class="qt-tab-panel" data-tab-panel="stop" id="qtTabPanel-stop">
@@ -4868,9 +4869,9 @@
                   <div class="qty-stepper">
                     <button class="qty-dec">−</button>
                     <input type="text" value="1" class="qty-input" id="qtAmountInput">
+                    <span class="qty-unit" id="qtQtyUnit">ETH</span>
                     <button class="qty-inc">+</button>
                   </div>
-                  <div class="qty-unit-box" id="qtQtyUnit">ETH</div>
                 </div>
               </div>
             </div>
@@ -4972,35 +4973,6 @@
                 class="material-symbols-outlined">arrow_upward</span></button>
           </div>
           <div class="ai-ask-output" id="askAiOutput"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-head">
-            <span class="card-title">L2 Indicators</span>
-            <span class="material-symbols-outlined" style="font-size:16px;color:var(--paper-500);">chevron_right</span>
-          </div>
-          <div class="l2-row">
-            <span class="l2-lbl"><span class="l2-dot" style="background:var(--long);"></span>Liquidity Imbalance</span>
-            <span class="l2-val up">Bullish <span class="material-symbols-outlined">arrow_upward</span></span>
-          </div>
-          <div class="l2-row">
-            <span class="l2-lbl"><span class="l2-dot" style="background:var(--long);"></span>Order Flow Pressure</span>
-            <span class="l2-val up">Buying <span class="material-symbols-outlined">arrow_upward</span></span>
-          </div>
-          <div class="l2-row">
-            <span class="l2-lbl"><span class="l2-dot" style="background:var(--long);"></span>Absorption Strength</span>
-            <span class="l2-val up">High <span class="material-symbols-outlined">arrow_upward</span></span>
-          </div>
-          <div class="l2-row">
-            <span class="l2-lbl"><span class="l2-dot" style="background:var(--accent);"></span>Iceberg Detects</span>
-            <span class="l2-val" style="color:var(--accent);">3 <span
-                class="material-symbols-outlined">chevron_right</span></span>
-          </div>
-          <div class="l2-row">
-            <span class="l2-lbl"><span class="l2-dot" style="background:var(--intel);"></span>Large Lot Activity</span>
-            <span class="l2-val" style="color:var(--intel);">Active <span
-                class="material-symbols-outlined">arrow_upward</span></span>
-          </div>
         </div>
 
         <div class="card">
@@ -5124,6 +5096,26 @@
       <input type="text" id="symSelectSearch" placeholder="Search symbol…">
     </div>
     <div class="sym-select-list" id="symSelectList"></div>
+  </div>
+
+  <!-- ===================== CANDLE TYPE DROPDOWN ===================== -->
+  <div class="pop-menu" id="candleTypeMenu" style="width:170px;">
+    <div class="pop-menu-label">Candle Type</div>
+    <button class="pop-item selected" data-candle="Candles">
+      <span class="pop-text"><span class="pt-title">Candles</span></span>
+    </button>
+    <button class="pop-item" data-candle="Heikin Ashi">
+      <span class="pop-text"><span class="pt-title">Heikin Ashi</span></span>
+    </button>
+    <button class="pop-item" data-candle="Bars (OHLC)">
+      <span class="pop-text"><span class="pt-title">Bars (OHLC)</span></span>
+    </button>
+    <button class="pop-item" data-candle="Line (Close)">
+      <span class="pop-text"><span class="pt-title">Line (Close)</span></span>
+    </button>
+    <button class="pop-item" data-candle="Area">
+      <span class="pop-text"><span class="pt-title">Area</span></span>
+    </button>
   </div>
 
   <!-- ===================== INDICATORS CHECKLIST DROPDOWN ===================== -->
@@ -5673,11 +5665,11 @@
 
     /* ---------- draggable chart popup helper ---------- */
     function makeDraggablePopup(popup) {
-      const head = popup.querySelector('.aip-head');
+      const head = popup.querySelector('.chart-popup-head');
       const chartEl = document.getElementById('chartPlaceholder');
       let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
       head.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.aip-close, .ct-icon')) return;
+        if (e.target.closest('.chart-popup-close, .ct-icon')) return;
         dragging = true;
         const rect = popup.getBoundingClientRect();
         const chartRect = chartEl.getBoundingClientRect();
@@ -6157,7 +6149,7 @@
       /* ---------- amount type (Quantity / USD / % of Balance) ---------- */
       const QT_MODES = {
         Quantity: { unit: QT_INSTRUMENT_UNIT, label: 'Quantity', step: 1, hotkeys: [1, 5, 10, 20, 50], default: '1' },
-        USD: { unit: 'USD', label: 'USD Amount', step: 50, hotkeys: [100, 500, 1000, 5000, 10000], default: '100' },
+        USD: { unit: 'USD', label: 'USD Amount', step: 50, hotkeys: [100, 500, 1000, 5000], default: '100' },
         '% of Balance': { unit: '%', label: 'Percent of Balance', step: 5, hotkeys: [5, 10, 25, 50, 75], default: '10' },
       };
       let qtAmountMode = 'Quantity';
@@ -6731,7 +6723,7 @@
       let panStart = { x: 0, y: 0, panX: 0, panY: 0 };
       chart.addEventListener('mousedown', (e) => {
         if (e.button !== 0) return;
-        if (e.target.closest('.ol-entry-bar, .ol-side-row, .ol-alert-hit, .pop-menu, .ctx-menu, .ai-assist-popup')) return;
+        if (e.target.closest('.ol-entry-bar, .ol-side-row, .ol-alert-hit, .pop-menu, .ctx-menu, .chart-popup')) return;
         isPanning = true;
         chart.classList.add('panning');
         panStart = { x: e.clientX, y: e.clientY, panX, panY };
@@ -6769,7 +6761,7 @@
       });
 
       /* ---------- suppress crosshair while hovering a chart popup (AI Assistance, Market Scanner) ---------- */
-      chart.querySelectorAll('.ai-assist-popup').forEach(popup => {
+      chart.querySelectorAll('.chart-popup').forEach(popup => {
         popup.addEventListener('mouseenter', () => {
           hoveringChartPopup = true;
           if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
@@ -7117,21 +7109,28 @@
         });
       }
       setupSettingsAccordion('settingsAccountToggle', 'settingsAccountPanel');
-      setupSettingsAccordion('settingsCandleToggle', 'settingsCandlePanel');
       settingsMenu.querySelectorAll('.pop-item[data-account]').forEach(it => {
         it.addEventListener('click', () => {
           settingsMenu.querySelectorAll('.pop-item[data-account]').forEach(i => i.classList.remove('selected'));
           it.classList.add('selected');
           document.getElementById('settingsAccountVal').textContent = it.dataset.account;
-          closeAllPopovers();
           showToast('Switched to ' + it.dataset.account, 'account_balance');
         });
       });
-      settingsMenu.querySelectorAll('.pop-item[data-candle]').forEach(it => {
+
+      /* ---------- candle type dropdown (topbar) ---------- */
+      const candleTypeTrigger = document.getElementById('candleTypeTrigger');
+      const candleTypeMenu = document.getElementById('candleTypeMenu');
+      const candleTypeLabel = document.getElementById('candleTypeLabel');
+      candleTypeTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openNear(candleTypeMenu, candleTypeTrigger.getBoundingClientRect(), 'left', candleTypeTrigger);
+      });
+      candleTypeMenu.querySelectorAll('.pop-item[data-candle]').forEach(it => {
         it.addEventListener('click', () => {
-          settingsMenu.querySelectorAll('.pop-item[data-candle]').forEach(i => i.classList.remove('selected'));
+          candleTypeMenu.querySelectorAll('.pop-item[data-candle]').forEach(i => i.classList.remove('selected'));
           it.classList.add('selected');
-          document.getElementById('settingsCandleVal').textContent = it.dataset.candle;
+          candleTypeLabel.textContent = it.dataset.candle;
           closeAllPopovers();
           showToast('Candle type set to ' + it.dataset.candle, 'candlestick_chart');
         });
