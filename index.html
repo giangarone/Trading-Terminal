@@ -366,7 +366,6 @@
     }
 
     /* ====== Scrollable containers: keep scrolling, hide the scrollbar ====== */
-    .workspace-tabs,
     .left-panel,
     .right-panel,
     .bp-table-wrap,
@@ -376,55 +375,12 @@
       -ms-overflow-style: none;
     }
 
-    .workspace-tabs::-webkit-scrollbar,
     .left-panel::-webkit-scrollbar,
     .right-panel::-webkit-scrollbar,
     .bp-table-wrap::-webkit-scrollbar,
     .dom-rows::-webkit-scrollbar,
     .ts-rows::-webkit-scrollbar {
       display: none;
-    }
-
-    /* ====== Workspace tabs (primary section nav) ====== */
-    .workspace-tabs {
-      height: 40px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: stretch;
-      background: var(--ink-900);
-      border-bottom: 1px solid var(--line-1);
-      padding: 0 12px;
-      overflow-x: auto;
-      gap: 2px;
-    }
-
-    .ws-tab {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 0 14px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--paper-300);
-      border-bottom: 2px solid transparent;
-      white-space: nowrap;
-      background: transparent;
-      border-top: none;
-      border-left: none;
-      border-right: none;
-    }
-
-    .ws-tab .material-symbols-outlined {
-      font-size: 16px;
-    }
-
-    .ws-tab:hover {
-      color: var(--paper-100);
-    }
-
-    .ws-tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
     }
 
     /* ====== Main grid ====== */
@@ -476,7 +432,7 @@
 
     /* ====== Left panel ====== */
     .left-panel {
-      width: 280px;
+      width: 310px;
       flex-shrink: 0;
       background: var(--ink-900);
       border-right: 1px solid var(--line-1);
@@ -524,6 +480,10 @@
 
     .card-head-actions .material-symbols-outlined:hover {
       color: var(--paper-100);
+    }
+
+    .card-head-actions .material-symbols-outlined.active {
+      color: var(--accent);
     }
 
     .wl-cols {
@@ -663,27 +623,30 @@
     }
 
     .tj-day-select {
-      width: 100%;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 6px;
+      gap: 2px;
       background: var(--ink-800);
       border: 1px solid var(--line-2);
-      border-radius: 7px;
-      padding: 7px 9px;
-      font-size: 12px;
-      font-weight: 600;
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-size: 10.5px;
+      font-weight: 500;
       cursor: pointer;
-      margin-bottom: 10px;
+      color: var(--paper-300)
     }
 
     .tj-day-select:hover {
       border-color: var(--line-3);
+      color: var(--paper-100);
+    }
+
+    .tj-day-select:hover .material-symbols-outlined {
+      color: var(--paper-100);
     }
 
     .tj-day-select .material-symbols-outlined {
-      font-size: 16px;
+      font-size: 14px;
       color: var(--paper-500);
     }
 
@@ -708,31 +671,6 @@
       height: 1px;
       background: var(--line-2);
       margin: 6px 0;
-    }
-
-    .tj-cal-btn {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 10px;
-      padding: 9px 0;
-      border-radius: 7px;
-      border: 1px solid var(--line-2);
-      background: var(--ink-800);
-      color: var(--paper-100);
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .tj-cal-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .tj-cal-btn .material-symbols-outlined {
-      font-size: 16px;
     }
 
     .more-link {
@@ -1193,197 +1131,12 @@
       background: var(--ink-900);
     }
 
-    /* ---- News Intel ---- */
-    .news-card {
-      display: flex;
-      background: var(--ink-850);
-      border: 1px solid var(--line-2);
-      border-radius: var(--r-md);
-    }
-
-    .news-bar {
-      width: 4px;
-      flex-shrink: 0;
-      border-radius: var(--r-md) 0 0 var(--r-md);
-    }
-
-    .news-bar.bullish {
-      background: var(--long);
-    }
-
-    .news-bar.bearish {
-      background: var(--short);
-    }
-
-    .news-bar.neutral {
-      background: var(--line-3);
-    }
-
-    .news-main {
-      flex: 1;
-      min-width: 0;
-      padding: 12px 16px;
-    }
-
-    .news-row-top {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 7px;
-      flex-wrap: wrap;
-    }
-
     .news-time {
       font-size: 10.5px;
       color: var(--paper-500);
     }
 
-    .news-src {
-      font-size: 10.5px;
-      color: var(--paper-300);
-      background: var(--ink-800);
-      border: 1px solid var(--line-2);
-      border-radius: 5px;
-      padding: 2px 7px;
-      font-weight: 500;
-    }
-
-    .news-impact {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: .03em;
-      padding: 2px 7px;
-      border-radius: 5px;
-    }
-
-    .news-impact.high {
-      color: var(--accent);
-      background: var(--accent-dim);
-    }
-
-    .news-impact.medium {
-      color: var(--paper-300);
-      background: var(--ink-800);
-      border: 1px solid var(--line-2);
-    }
-
-    .news-impact.low {
-      color: var(--paper-500);
-      background: var(--ink-800);
-      border: 1px solid var(--line-2);
-    }
-
-    .news-sentiment {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      font-size: 10.5px;
-      font-weight: 600;
-      margin-left: auto;
-    }
-
-    .news-sentiment .material-symbols-outlined {
-      font-size: 14px;
-    }
-
-    .news-sentiment.bullish {
-      color: var(--long);
-    }
-
-    .news-sentiment.bearish {
-      color: var(--short);
-    }
-
-    .news-sentiment.neutral {
-      color: var(--paper-500);
-    }
-
-    .news-headline {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--paper-100);
-      line-height: 1.4;
-      margin-bottom: 6px;
-    }
-
-    .news-hl {
-      font-weight: 700;
-    }
-
-    .news-hl.up {
-      color: var(--long);
-    }
-
-    .news-hl.down {
-      color: var(--short);
-    }
-
-    .news-text {
-      font-size: 11.5px;
-      color: var(--paper-300);
-      line-height: 1.5;
-      margin-bottom: 8px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .news-card.expanded .news-text {
-      -webkit-line-clamp: unset;
-      overflow: visible;
-    }
-
-    .news-expand-btn {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--paper-300);
-    }
-
-    .news-expand-btn:hover {
-      color: var(--paper-100);
-    }
-
-    .news-expand-btn .material-symbols-outlined {
-      font-size: 15px;
-      transition: transform .15s ease;
-    }
-
-    .news-card.expanded .news-expand-btn .material-symbols-outlined {
-      transform: rotate(180deg);
-    }
-
     /* ---- Market Scanner ---- */
-    .mc-strip {
-      display: flex;
-      gap: 22px;
-      background: var(--ink-850);
-      border: 1px solid var(--line-2);
-      border-radius: var(--r-md);
-      padding: 12px 18px;
-      flex-wrap: wrap;
-    }
-
-    .mc-stat {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    .mc-stat .l {
-      font-size: 10px;
-      color: var(--paper-500);
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-
-    .mc-stat .v {
-      font-size: 13px;
-      font-weight: 700;
-    }
 
     .filter-chips {
       display: flex;
@@ -1488,35 +1241,6 @@
       display: inline-flex;
       gap: 4px;
       justify-content: center;
-    }
-
-    .scan-table th:first-child,
-    .scan-table td:first-child {
-      text-align: left;
-    }
-
-    .trend-spark {
-      width: 50px;
-      height: 20px;
-      display: block;
-      margin: 0 auto;
-    }
-
-    .trend-spark polyline {
-      fill: none;
-      stroke-width: 1.6;
-    }
-
-    .trend-spark.up polyline {
-      stroke: var(--long);
-    }
-
-    .trend-spark.down polyline {
-      stroke: var(--short);
-    }
-
-    .trend-spark.flat polyline {
-      stroke: var(--paper-500);
     }
 
     /* ---- Trading Journal ---- */
@@ -1647,6 +1371,47 @@
       color: var(--paper-500);
     }
 
+    .jc-mini-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .jc-mini-month-lbl {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--paper-100);
+    }
+
+    .jc-mini-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+
+    .jc-mini-grid .jc-dow {
+      font-size: 8.5px;
+      padding-bottom: 3px;
+    }
+
+    .jc-day.mini {
+      aspect-ratio: 1;
+      padding: 2px;
+      border-radius: 5px;
+      gap: 1px;
+      align-items: center;
+    }
+
+    .jc-day.mini .d-num {
+      font-size: 8.5px;
+    }
+
+    .jc-day.mini .d-pnl {
+      font-size: 7px;
+      line-height: 1;
+    }
+
     .jc-legend {
       display: flex;
       align-items: center;
@@ -1691,7 +1456,7 @@
       background: var(--ink-800);
     }
 
-    .scan-table tr[data-tags].hide-row {
+    .scn-table tr[data-tags].hide-row {
       display: none;
     }
 
@@ -2883,7 +2648,7 @@
 
     @media (max-width:1300px) {
       .left-panel {
-        width: 236px;
+        width: 310px;
       }
 
       .right-panel {
@@ -2939,6 +2704,7 @@
       z-index: 7;
       pointer-events: auto;
       overflow: hidden;
+      cursor: default;
     }
 
     .ai-assist-popup.show {
@@ -3146,6 +2912,138 @@
       color: var(--paper-500);
       line-height: 1.4;
       margin: 0;
+    }
+
+    /* ---- Market Scanner popup ---- */
+    .ai-assist-popup.scanner-popup {
+      width: 460px;
+      top: 14px;
+      left: auto;
+      right: 14px;
+    }
+
+    .scanner-popup .aip-body {
+      padding: 12px;
+      gap: 12px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .scn-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .scn-stat {
+      background: var(--ink-800);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-sm);
+      padding: 7px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .scn-stat .l {
+      font-size: 8.5px;
+      color: var(--paper-500);
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .scn-stat .v {
+      font-size: 11.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .scn-filters {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .scn-filters .filter-chip {
+      font-size: 10.5px;
+      padding: 5px 10px;
+    }
+
+    .scn-opps {
+      display: flex;
+      gap: 8px;
+    }
+
+    .scn-opps .opp-card {
+      padding: 9px 10px;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .scn-opps .opp-setup {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .scn-table-wrap {
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-md);
+      max-height: 230px;
+      overflow-y: auto;
+    }
+
+    table.scn-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+    }
+
+    table.scn-table th {
+      text-align: right;
+      font-size: 9px;
+      letter-spacing: .04em;
+      color: var(--paper-500);
+      text-transform: uppercase;
+      font-weight: 600;
+      padding: 7px 10px;
+      position: sticky;
+      top: 0;
+      background: var(--ink-850);
+      border-bottom: 1px solid var(--line-1);
+      z-index: 1;
+    }
+
+    table.scn-table th:first-child,
+    table.scn-table td:first-child {
+      text-align: left;
+    }
+
+    table.scn-table td {
+      padding: 7px 10px;
+      text-align: right;
+      border-bottom: 1px solid var(--line-1);
+      font-weight: 500;
+    }
+
+    table.scn-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.scn-table tbody tr:hover {
+      background: var(--ink-850);
+    }
+
+    .scn-setup {
+      font-size: 9.5px;
+      color: var(--paper-500);
+      margin-top: 1px;
     }
 
     .news-marker {
@@ -4490,17 +4388,6 @@
       </button>
     </div>
 
-    <!-- ===================== WORKSPACE TABS ===================== -->
-    <nav class="workspace-tabs" id="wsTabs">
-      <button class="ws-tab active" data-ws="chart"><span
-          class="material-symbols-outlined">show_chart</span>Chart</button>
-      <button class="ws-tab" data-ws="news"><span class="material-symbols-outlined">article</span>News Intel</button>
-      <button class="ws-tab" data-ws="scanner"><span class="material-symbols-outlined">radar</span>Market
-        Scanner</button>
-      <button class="ws-tab" data-ws="journal"><span class="material-symbols-outlined">calendar_month</span>Trading
-        Journal</button>
-    </nav>
-
     <!-- ===================== MAIN GRID ===================== -->
     <div class="main-grid">
 
@@ -4628,30 +4515,47 @@
           <div class="wl-empty" id="wlEmpty" style="display:none;">No symbols match your search.</div>
         </div>
 
-        <div class="card">
-          <div class="card-head"><span class="card-title">Trading Journal</span></div>
-          <div class="tj-day-select pop-trigger" id="tjDaySelect">
-            <span id="tjDayLabel">Today · Jun 20</span>
-            <span class="material-symbols-outlined">expand_more</span>
+        <div class="card" id="tjCard">
+          <div class="card-head">
+            <span class="card-title">Trading Journal</span>
+            <div class="card-head-actions">
+              <div class="tj-day-select pop-trigger" id="tjDaySelect">
+                <span id="tjDayLabel">Today</span>
+                <span class="material-symbols-outlined">expand_more</span>
+              </div>
+              <span class="material-symbols-outlined" id="tjCalToggleBtn" title="Calendar view">calendar_month</span>
+            </div>
           </div>
-          <div class="tj-row"><span class="tj-lbl">Today's P&amp;L</span><span class="tj-val up"
-              id="tjPnl">+$2,975.00</span></div>
-          <div class="tj-row"><span class="tj-lbl">Trades</span><span class="tj-val" id="tjTrades">7</span>
+
+          <div id="tjDefaultView">
+            <div class="tj-row"><span class="tj-lbl">Today's P&amp;L</span><span class="tj-val up"
+                id="tjPnl">+$2,975.00</span></div>
+            <div class="tj-row"><span class="tj-lbl">Trades</span><span class="tj-val" id="tjTrades">7</span>
+            </div>
+            <div class="tj-row"><span class="tj-lbl">Win Rate</span><span class="tj-val" id="tjWinRate">71%</span>
+            </div>
+            <div class="tj-divider"></div>
+            <div class="tj-row"><span class="tj-lbl">Best Trade</span><span class="tj-val up"
+                id="tjBest">+$1,420.00</span></div>
+            <div class="tj-row"><span class="tj-lbl">Worst Trade</span><span class="tj-val down"
+                id="tjWorst">-$310.00</span></div>
           </div>
-          <div class="tj-row"><span class="tj-lbl">Win Rate</span><span class="tj-val" id="tjWinRate">71%</span>
+
+          <div id="tjCalView" style="display:none;">
+            <div class="jc-mini-nav">
+              <button class="jc-nav-btn" id="tjcPrevBtn"><span
+                  class="material-symbols-outlined">chevron_left</span></button>
+              <span class="jc-mini-month-lbl" id="tjcMonthLbl">June 2026</span>
+              <button class="jc-nav-btn" id="tjcNextBtn"><span
+                  class="material-symbols-outlined">chevron_right</span></button>
+            </div>
+            <div class="jc-mini-grid" id="tjcGrid"></div>
           </div>
-          <div class="tj-divider"></div>
-          <div class="tj-row"><span class="tj-lbl">Best Trade</span><span class="tj-val up"
-              id="tjBest">+$1,420.00</span></div>
-          <div class="tj-row"><span class="tj-lbl">Worst Trade</span><span class="tj-val down"
-              id="tjWorst">-$310.00</span></div>
-          <button class="tj-cal-btn" id="viewJournalCalBtn"><span
-              class="material-symbols-outlined">calendar_month</span>View Journal Calendar</button>
         </div>
 
-        <div class="pop-menu" id="tjDayMenu" style="width:180px;">
-          <button class="pop-item selected" data-day="0">Today · Jun 20</button>
-          <button class="pop-item" data-day="1">Yesterday · Jun 19</button>
+        <div class="pop-menu" id="tjDayMenu" style="width:130px;">
+          <button class="pop-item selected" data-day="0">Today</button>
+          <button class="pop-item" data-day="1">Jun 19</button>
           <button class="pop-item" data-day="2">Jun 18</button>
           <button class="pop-item" data-day="3">Jun 17</button>
           <button class="pop-item" data-day="4">Jun 16</button>
@@ -4718,6 +4622,8 @@
                   style="font-size:15px;">fast_rewind</span>Replay</button>
               <button class="ct-action-btn" id="aiAssistTrigger"><span class="material-symbols-outlined"
                   style="font-size:15px;">auto_awesome</span>AI Assistance</button>
+              <button class="ct-action-btn" id="marketScannerTrigger"><span class="material-symbols-outlined"
+                  style="font-size:15px;">radar</span>Market Scanner</button>
               <button class="ct-action-btn" id="newsToggle"><span class="material-symbols-outlined"
                   style="font-size:15px;">article</span>News</button>
             </div>
@@ -4808,6 +4714,162 @@
                   <p class="aip-disclaimer">AI-generated read of price action. Not investment advice.</p>
                 </div>
               </div>
+
+              <div class="ai-assist-popup scanner-popup" id="marketScannerPopup">
+                <div class="aip-head">
+                  <span class="aip-title"><span class="material-symbols-outlined">radar</span>Market Scanner</span>
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <button class="ct-icon" id="marketScannerRefresh" style="width:24px;height:24px;"><span
+                        class="material-symbols-outlined" style="font-size:15px;">refresh</span></button>
+                    <button class="aip-close" id="marketScannerClose"><span
+                        class="material-symbols-outlined">close</span></button>
+                  </div>
+                </div>
+                <div class="aip-body">
+                  <div class="scn-stats">
+                    <div class="scn-stat"><span class="l">Advancers</span><span class="v up">1,842 (65%)</span></div>
+                    <div class="scn-stat"><span class="l">Decliners</span><span class="v down">987 (35%)</span></div>
+                    <div class="scn-stat"><span class="l">A/D Ratio</span><span class="v">1.87</span></div>
+                    <div class="scn-stat"><span class="l">Breadth</span><span class="v up">Bullish</span></div>
+                    <div class="scn-stat"><span class="l">Volatility</span><span class="v"
+                        style="color:var(--accent);">Elevated</span></div>
+                    <div class="scn-stat"><span class="l">Session Bias</span><span class="v"
+                        style="color:var(--intel);">Risk-On</span></div>
+                  </div>
+
+                  <div class="scn-filters" id="scanFilters">
+                    <button class="filter-chip" data-tag="breakout">Breakouts</button>
+                    <button class="filter-chip" data-tag="pullback">Pullbacks</button>
+                    <button class="filter-chip" data-tag="reversal">Reversals</button>
+                    <button class="filter-chip" data-tag="highvol">High Volume</button>
+                    <button class="filter-chip" data-tag="bullflow">Bullish Flow</button>
+                    <button class="filter-chip" data-tag="bearflow">Bearish Flow</button>
+                    <button class="filter-chip" data-tag="nearsupport">Near Support</button>
+                    <button class="filter-chip" data-tag="nearresistance">Near Resistance</button>
+                  </div>
+
+                  <div class="opp-head"><span class="material-symbols-outlined">bolt</span>Top Opportunities</div>
+                  <div class="scn-opps">
+                    <div class="opp-card">
+                      <div class="opp-top"><span class="opp-sym">NQU5</span><span class="opp-chg up">+0.52%</span>
+                      </div>
+                      <div class="opp-setup">Breakout · Bullish Flow</div>
+                      <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span
+                          class="dot on"></span></div>
+                    </div>
+                    <div class="opp-card">
+                      <div class="opp-top"><span class="opp-sym">BTCUSD</span><span class="opp-chg up">+1.18%</span>
+                      </div>
+                      <div class="opp-setup">Bullish Flow · High Volume</div>
+                      <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span
+                          class="dot on"></span></div>
+                    </div>
+                    <div class="opp-card">
+                      <div class="opp-top"><span class="opp-sym">GCQ5</span><span class="opp-chg up">+0.18%</span>
+                      </div>
+                      <div class="opp-setup">Near Support · Pullback</div>
+                      <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span
+                          class="dot"></span></div>
+                    </div>
+                  </div>
+
+                  <div class="scn-table-wrap">
+                    <table class="scn-table">
+                      <thead>
+                        <tr>
+                          <th style="text-align:left;">Symbol</th>
+                          <th>Last</th>
+                          <th>Chg %</th>
+                          <th>Signal</th>
+                          <th>Strength</th>
+                        </tr>
+                      </thead>
+                      <tbody id="scanTableBody">
+                        <tr data-tags="breakout bullflow highvol">
+                          <td style="text-align:left;"><span class="sym-cell">NQU5</span>
+                            <div class="scn-setup">Breakout</div>
+                          </td>
+                          <td>18,624.50</td>
+                          <td class="up">+0.52%</td>
+                          <td><span class="signal-badge buy">Buy</span></td>
+                          <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span>
+                              <span class="dot on"></span></span></td>
+                        </tr>
+                        <tr data-tags="bullflow highvol">
+                          <td style="text-align:left;"><span class="sym-cell">BTCUSD</span>
+                            <div class="scn-setup">Bullish Flow</div>
+                          </td>
+                          <td>63,245.0</td>
+                          <td class="up">+1.18%</td>
+                          <td><span class="signal-badge buy">Buy</span></td>
+                          <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span>
+                              <span class="dot on"></span></span></td>
+                        </tr>
+                        <tr data-tags="nearsupport pullback">
+                          <td style="text-align:left;"><span class="sym-cell">GCQ5</span>
+                            <div class="scn-setup">Near Support</div>
+                          </td>
+                          <td>2,346.30</td>
+                          <td class="up">+0.18%</td>
+                          <td><span class="signal-badge neutral">Watch</span></td>
+                          <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span>
+                              <span class="dot"></span></span></td>
+                        </tr>
+                        <tr data-tags="nearresistance reversal">
+                          <td style="text-align:left;"><span class="sym-cell">ETHUSD</span>
+                            <div class="scn-setup">Near Resistance</div>
+                          </td>
+                          <td>4,500.25</td>
+                          <td class="up">+0.41%</td>
+                          <td><span class="signal-badge buy">Buy</span></td>
+                          <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span>
+                              <span class="dot"></span></span></td>
+                        </tr>
+                        <tr data-tags="bearflow reversal nearresistance">
+                          <td style="text-align:left;"><span class="sym-cell">RTYU5</span>
+                            <div class="scn-setup">Reversal</div>
+                          </td>
+                          <td>2,078.40</td>
+                          <td class="down">-0.12%</td>
+                          <td><span class="signal-badge sell">Sell</span></td>
+                          <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span>
+                              <span class="dot"></span></span></td>
+                        </tr>
+                        <tr data-tags="bearflow highvol">
+                          <td style="text-align:left;"><span class="sym-cell">CLN5</span>
+                            <div class="scn-setup">Bearish Flow</div>
+                          </td>
+                          <td>78.24</td>
+                          <td class="down">-0.45%</td>
+                          <td><span class="signal-badge sell">Sell</span></td>
+                          <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span>
+                              <span class="dot"></span></span></td>
+                        </tr>
+                        <tr data-tags="pullback bullflow">
+                          <td style="text-align:left;"><span class="sym-cell">YMU5</span>
+                            <div class="scn-setup">Pullback</div>
+                          </td>
+                          <td>39,865.00</td>
+                          <td class="up">+0.27%</td>
+                          <td><span class="signal-badge buy">Buy</span></td>
+                          <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span>
+                              <span class="dot"></span></span></td>
+                        </tr>
+                        <tr data-tags="nearsupport">
+                          <td style="text-align:left;"><span class="sym-cell">6EU5</span>
+                            <div class="scn-setup">Near Support</div>
+                          </td>
+                          <td>1.0843</td>
+                          <td class="down">-0.21%</td>
+                          <td><span class="signal-badge neutral">Watch</span></td>
+                          <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span>
+                              <span class="dot"></span></span></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -4831,416 +4893,7 @@
           </div>
         </div>
 
-        <!-- ===================== NEWS INTEL WORKSPACE ===================== -->
-        <div class="ws-pane" id="wsPane-news">
-          <div class="wsp-header">
-            <div class="ct-left">
-              <div>
-                <div class="ct-sym">ETHUSD</div>
-                <div class="ct-name">NEWS INTEL</div>
-              </div>
-            </div>
-            <div class="ct-right">
-              <span class="news-filter">All Sources <span class="material-symbols-outlined"
-                  style="font-size:13px;">expand_more</span></span>
-              <button class="ct-icon"><span class="material-symbols-outlined">refresh</span></button>
-            </div>
-          </div>
-
-          <div class="wsp-body news-body">
-
-            <div class="news-card" data-sentiment="bullish">
-              <div class="news-bar bullish"></div>
-              <div class="news-main">
-                <div class="news-row-top">
-                  <span class="news-time">09:42 AM</span>
-                  <span class="news-src">ChartPrime Order Flow</span>
-                  <span class="news-impact high">High Impact</span>
-                  <span class="news-sentiment bullish"><span
-                      class="material-symbols-outlined">trending_up</span>Bullish</span>
-                </div>
-                <div class="news-headline">Institutional desks add to S&amp;P futures longs into the close</div>
-                <div class="news-text">Large block buying surfaced near 5,310 in the closing rotation, with several
-                  multi-hundred-lot prints absorbed without slippage. The order-flow bias has stayed firmly net-long
-                  since the cash open, and dealer positioning suggests dips are being treated as entries rather than
-                  exits. If the pace of accumulation continues into tomorrow's session, the path of least resistance
-                  favors a retest of the <span class="news-hl up">5,325</span> liquidity pocket resting just above
-                  the recent high.</div>
-                <button class="news-expand-btn">Show more<span
-                    class="material-symbols-outlined">expand_more</span></button>
-              </div>
-            </div>
-
-            <div class="news-card" data-sentiment="bullish">
-              <div class="news-bar bullish"></div>
-              <div class="news-main">
-                <div class="news-row-top">
-                  <span class="news-time">09:27 AM</span>
-                  <span class="news-src">ChartPrime Desk</span>
-                  <span class="news-impact medium">Medium Impact</span>
-                  <span class="news-sentiment bullish"><span
-                      class="material-symbols-outlined">trending_up</span>Bullish</span>
-                </div>
-                <div class="news-headline">ES holds firm after touching 5,288 support for the third time this week</div>
-                <div class="news-text">Buyers stepped in again at the <span class="news-hl up">5,288</span> shelf,
-                  marking the third successful defense of that level since Monday. Each retest has come on lighter
-                  selling volume than the last, a pattern that typically precedes a breakout once sellers exhaust
-                  their supply. A daily close back above 5,312 would confirm the higher-low structure and open the
-                  door to a fresh leg toward the week's highs.</div>
-                <button class="news-expand-btn">Show more<span
-                    class="material-symbols-outlined">expand_more</span></button>
-              </div>
-            </div>
-
-            <div class="news-card" data-sentiment="bearish">
-              <div class="news-bar bearish"></div>
-              <div class="news-main">
-                <div class="news-row-top">
-                  <span class="news-time">09:18 AM</span>
-                  <span class="news-src">ChartPrime Order Flow</span>
-                  <span class="news-impact high">High Impact</span>
-                  <span class="news-sentiment bearish"><span
-                      class="material-symbols-outlined">trending_down</span>Bearish</span>
-                </div>
-                <div class="news-headline">Distribution detected near 5,318 as large sellers unload into strength</div>
-                <div class="news-text">Footprint data shows a cluster of sizable offers absorbed by buyers near
-                  5,318, but the seller continued to replenish size rather than stepping aside — a classic
-                  distribution signature. Volume on the move up has been declining even as price grinds higher, a
-                  divergence that often precedes a pullback. A failure to hold above 5,308 on the next dip would
-                  tilt the bias back toward a retest of the <span class="news-hl down">5,288</span> support shelf.</div>
-                <button class="news-expand-btn">Show more<span
-                    class="material-symbols-outlined">expand_more</span></button>
-              </div>
-            </div>
-
-            <div class="news-card" data-sentiment="neutral">
-              <div class="news-bar neutral"></div>
-              <div class="news-main">
-                <div class="news-row-top">
-                  <span class="news-time">09:15 AM</span>
-                  <span class="news-src">Reuters</span>
-                  <span class="news-impact high">High Impact</span>
-                  <span class="news-sentiment neutral"><span
-                      class="material-symbols-outlined">trending_flat</span>Neutral</span>
-                </div>
-                <div class="news-headline">Fed officials signal no rush to cut, but data dependence keeps door open
-                </div>
-                <div class="news-text">Several regional Fed presidents reiterated that policy will stay
-                  data-dependent rather than committing to a fixed cutting timeline. Markets had priced in some
-                  chance of an earlier move, so the comments removed a near-term volatility catalyst rather than
-                  adding one. Futures are likely to stay range-bound until the next CPI print gives the market a
-                  clearer signal on the pace of disinflation.</div>
-                <button class="news-expand-btn">Show more<span
-                    class="material-symbols-outlined">expand_more</span></button>
-              </div>
-            </div>
-
-            <div class="news-card" data-sentiment="neutral">
-              <div class="news-bar neutral"></div>
-              <div class="news-main">
-                <div class="news-row-top">
-                  <span class="news-time">09:05 AM</span>
-                  <span class="news-src">Bloomberg</span>
-                  <span class="news-impact medium">Medium Impact</span>
-                  <span class="news-sentiment neutral"><span
-                      class="material-symbols-outlined">trending_flat</span>Neutral</span>
-                </div>
-                <div class="news-headline">Energy shares lag as capital rotates into mega-cap tech</div>
-                <div class="news-text">Energy was the weakest sector on the day even as the broader index pushed
-                  higher, a sign that the rally is increasingly concentrated rather than broad-based. Capital
-                  continues to favor mega-cap technology names, which now account for an outsized share of index
-                  gains. Traders should confirm any breakout with participation across sectors rather than relying
-                  on headline index strength alone.</div>
-                <button class="news-expand-btn">Show more<span
-                    class="material-symbols-outlined">expand_more</span></button>
-              </div>
-            </div>
-
-            <div class="news-card" data-sentiment="bullish">
-              <div class="news-bar bullish"></div>
-              <div class="news-main">
-                <div class="news-row-top">
-                  <span class="news-time">08:51 AM</span>
-                  <span class="news-src">ChartPrime Order Flow</span>
-                  <span class="news-impact high">High Impact</span>
-                  <span class="news-sentiment bullish"><span
-                      class="material-symbols-outlined">trending_up</span>Bullish</span>
-                </div>
-                <div class="news-headline">Liquidity pooling above 5,325 as dealers position for a gamma squeeze</div>
-                <div class="news-text">Options desks report a meaningful build-up of resting buy-side liquidity in
-                  the <span class="news-hl up">5,325–5,330</span> zone, consistent with stop orders and short-dated
-                  call hedging. Pools like this tend to act as a magnet once price approaches, especially in
-                  low-resistance tape with thin two-way flow. A sweep through the zone could accelerate quickly if
-                  dealers are forced to chase their hedges higher.</div>
-                <button class="news-expand-btn">Show more<span
-                    class="material-symbols-outlined">expand_more</span></button>
-              </div>
-            </div>
-
-            <div class="news-card" data-sentiment="neutral">
-              <div class="news-bar neutral"></div>
-              <div class="news-main">
-                <div class="news-row-top">
-                  <span class="news-time">08:30 AM</span>
-                  <span class="news-src">ChartPrime Desk</span>
-                  <span class="news-impact low">Low Impact</span>
-                  <span class="news-sentiment neutral"><span
-                      class="material-symbols-outlined">trending_flat</span>Neutral</span>
-                </div>
-                <div class="news-headline">Overnight range narrows as Asia, Europe await the US open</div>
-                <div class="news-text">Overnight trade was unusually quiet, with the index confined to a tight
-                  6-point range across both the Asian and European sessions. Compressed ranges like this one
-                  frequently resolve with an expansion move once the US cash session begins and volume returns.
-                  Watch the first thirty minutes of trade for a directional cue rather than fading the opening
-                  print outright.</div>
-                <button class="news-expand-btn">Show more<span
-                    class="material-symbols-outlined">expand_more</span></button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- ===================== MARKET SCANNER WORKSPACE ===================== -->
-        <div class="ws-pane" id="wsPane-scanner">
-          <div class="wsp-header">
-            <div class="ct-left">
-              <div>
-                <div class="ct-sym">SCANNER</div>
-                <div class="ct-name">MARKET SCANNER · 8 SYMBOLS</div>
-              </div>
-            </div>
-            <div class="ct-right">
-              <button class="ct-icon"><span class="material-symbols-outlined">refresh</span></button>
-              <button class="ct-icon"><span class="material-symbols-outlined">tune</span></button>
-            </div>
-          </div>
-
-          <div class="wsp-body scanner-body">
-
-            <div class="mc-strip">
-              <div class="mc-stat"><span class="l">Advancers</span><span class="v up">1,842 (65%)</span></div>
-              <div class="mc-stat"><span class="l">Decliners</span><span class="v down">987 (35%)</span></div>
-              <div class="mc-stat"><span class="l">A/D Ratio</span><span class="v">1.87</span></div>
-              <div class="mc-stat"><span class="l">Breadth</span><span class="v up">Bullish</span></div>
-              <div class="mc-stat"><span class="l">Volatility</span><span class="v"
-                  style="color:var(--accent);">Elevated</span></div>
-              <div class="mc-stat"><span class="l">Session Bias</span><span class="v"
-                  style="color:var(--intel);">Risk-On</span></div>
-            </div>
-
-            <div class="filter-chips" id="scanFilters">
-              <button class="filter-chip" data-tag="breakout">Breakouts</button>
-              <button class="filter-chip" data-tag="pullback">Pullbacks</button>
-              <button class="filter-chip" data-tag="reversal">Reversals</button>
-              <button class="filter-chip" data-tag="highvol">High Volume</button>
-              <button class="filter-chip" data-tag="bullflow">Bullish Flow</button>
-              <button class="filter-chip" data-tag="bearflow">Bearish Flow</button>
-              <button class="filter-chip" data-tag="nearsupport">Near Support</button>
-              <button class="filter-chip" data-tag="nearresistance">Near Resistance</button>
-            </div>
-
-            <div class="opp-head"><span class="material-symbols-outlined">bolt</span>Top Opportunities</div>
-            <div class="top-opps">
-              <div class="opp-card">
-                <div class="opp-top"><span class="opp-sym">NQU5</span><span class="opp-chg up">+0.52%</span></div>
-                <div class="opp-setup">Breakout · Bullish Flow</div>
-                <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span
-                    class="dot on"></span></div>
-              </div>
-              <div class="opp-card">
-                <div class="opp-top"><span class="opp-sym">BTCUSD</span><span class="opp-chg up">+1.18%</span>
-                </div>
-                <div class="opp-setup">Bullish Flow · High Volume</div>
-                <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span
-                    class="dot on"></span></div>
-              </div>
-              <div class="opp-card">
-                <div class="opp-top"><span class="opp-sym">GCQ5</span><span class="opp-chg up">+0.18%</span></div>
-                <div class="opp-setup">Near Support · Pullback</div>
-                <div class="opp-strength"><span class="dot on"></span><span class="dot on"></span><span
-                    class="dot"></span></div>
-              </div>
-            </div>
-
-            <table class="bp-table scan-table">
-              <thead>
-                <tr>
-                  <th style="text-align:left;">Symbol</th>
-                  <th>Last</th>
-                  <th>Change %</th>
-                  <th>Volume</th>
-                  <th>Trend</th>
-                  <th>Signal</th>
-                  <th style="text-align:left;">Setup</th>
-                  <th>Strength</th>
-                </tr>
-              </thead>
-              <tbody id="scanTableBody">
-                <tr data-tags="breakout bullflow highvol">
-                  <td style="text-align:left;"><span class="sym-cell">NQU5</span></td>
-                  <td>18,624.50</td>
-                  <td class="up">+0.52%</td>
-                  <td>312K</td>
-                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none">
-                      <polyline points="0,18 10,16 20,17 30,11 40,12 50,5 60,6" />
-                    </svg></td>
-                  <td><span class="signal-badge buy">Buy</span></td>
-                  <td style="text-align:left;">Breakout</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                        class="dot on"></span></span></td>
-                </tr>
-                <tr data-tags="bullflow highvol">
-                  <td style="text-align:left;"><span class="sym-cell">BTCUSD</span></td>
-                  <td>63,245.0</td>
-                  <td class="up">+1.18%</td>
-                  <td>1.4B</td>
-                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none">
-                      <polyline points="0,20 10,15 20,16 30,9 40,10 50,4 60,3" />
-                    </svg></td>
-                  <td><span class="signal-badge buy">Buy</span></td>
-                  <td style="text-align:left;">Bullish Flow</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                        class="dot on"></span></span></td>
-                </tr>
-                <tr data-tags="nearsupport pullback">
-                  <td style="text-align:left;"><span class="sym-cell">GCQ5</span></td>
-                  <td>2,346.30</td>
-                  <td class="up">+0.18%</td>
-                  <td>88K</td>
-                  <td><svg class="trend-spark flat" viewBox="0 0 60 24" preserveAspectRatio="none">
-                      <polyline points="0,12 10,14 20,11 30,13 40,10 50,12 60,9" />
-                    </svg></td>
-                  <td><span class="signal-badge neutral">Watch</span></td>
-                  <td style="text-align:left;">Near Support</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                        class="dot"></span></span></td>
-                </tr>
-                <tr data-tags="nearresistance reversal">
-                  <td style="text-align:left;"><span class="sym-cell">ETHUSD</span></td>
-                  <td>4,500.25</td>
-                  <td class="up">+0.41%</td>
-                  <td>248K</td>
-                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none">
-                      <polyline points="0,19 10,17 20,14 30,15 40,9 50,10 60,7" />
-                    </svg></td>
-                  <td><span class="signal-badge buy">Buy</span></td>
-                  <td style="text-align:left;">Near Resistance</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                        class="dot"></span></span></td>
-                </tr>
-                <tr data-tags="bearflow reversal nearresistance">
-                  <td style="text-align:left;"><span class="sym-cell">RTYU5</span></td>
-                  <td>2,078.40</td>
-                  <td class="down">-0.12%</td>
-                  <td>61K</td>
-                  <td><svg class="trend-spark down" viewBox="0 0 60 24" preserveAspectRatio="none">
-                      <polyline points="0,5 10,8 20,7 30,11 40,10 50,15 60,17" />
-                    </svg></td>
-                  <td><span class="signal-badge sell">Sell</span></td>
-                  <td style="text-align:left;">Reversal</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                        class="dot"></span></span></td>
-                </tr>
-                <tr data-tags="bearflow highvol">
-                  <td style="text-align:left;"><span class="sym-cell">CLN5</span></td>
-                  <td>78.24</td>
-                  <td class="down">-0.45%</td>
-                  <td>156K</td>
-                  <td><svg class="trend-spark down" viewBox="0 0 60 24" preserveAspectRatio="none">
-                      <polyline points="0,4 10,9 20,8 30,14 40,13 50,18 60,20" />
-                    </svg></td>
-                  <td><span class="signal-badge sell">Sell</span></td>
-                  <td style="text-align:left;">Bearish Flow</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span><span
-                        class="dot"></span></span></td>
-                </tr>
-                <tr data-tags="pullback bullflow">
-                  <td style="text-align:left;"><span class="sym-cell">YMU5</span></td>
-                  <td>39,865.00</td>
-                  <td class="up">+0.27%</td>
-                  <td>42K</td>
-                  <td><svg class="trend-spark up" viewBox="0 0 60 24" preserveAspectRatio="none">
-                      <polyline points="0,16 10,17 20,13 30,14 40,10 50,11 60,8" />
-                    </svg></td>
-                  <td><span class="signal-badge buy">Buy</span></td>
-                  <td style="text-align:left;">Pullback</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                        class="dot"></span></span></td>
-                </tr>
-                <tr data-tags="nearsupport">
-                  <td style="text-align:left;"><span class="sym-cell">6EU5</span></td>
-                  <td>1.0843</td>
-                  <td class="down">-0.21%</td>
-                  <td>34K</td>
-                  <td><svg class="trend-spark flat" viewBox="0 0 60 24" preserveAspectRatio="none">
-                      <polyline points="0,10 10,12 20,11 30,13 40,12 50,14 60,12" />
-                    </svg></td>
-                  <td><span class="signal-badge neutral">Watch</span></td>
-                  <td style="text-align:left;">Near Support</td>
-                  <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span><span
-                        class="dot"></span></span></td>
-                </tr>
-              </tbody>
-            </table>
-
-          </div>
-        </div>
-
         <!-- ===================== TRADING JOURNAL WORKSPACE ===================== -->
-        <div class="ws-pane" id="wsPane-journal">
-          <div class="wsp-header">
-            <div class="ct-left">
-              <div>
-                <div class="ct-sym">JOURNAL</div>
-                <div class="ct-name">TRADING JOURNAL CALENDAR</div>
-              </div>
-            </div>
-            <div class="ct-right">
-              <button class="ct-icon"><span class="material-symbols-outlined">download</span></button>
-              <button class="ct-icon"><span class="material-symbols-outlined">tune</span></button>
-            </div>
-          </div>
-
-          <div class="wsp-body scanner-body">
-
-            <div class="jc-strip" id="jcStrip">
-              <div class="mc-stat"><span class="l">Month P&amp;L</span><span class="v up" id="jcMonthPnl">+$0.00</span>
-              </div>
-              <div class="mc-stat"><span class="l">Trading Days</span><span class="v" id="jcMonthDays">0</span>
-              </div>
-              <div class="mc-stat"><span class="l">Win Days</span><span class="v up" id="jcMonthWinDays">0</span>
-              </div>
-              <div class="mc-stat"><span class="l">Loss Days</span><span class="v down" id="jcMonthLossDays">0</span>
-              </div>
-              <div class="mc-stat"><span class="l">Best Day</span><span class="v up" id="jcMonthBest">+$0.00</span>
-              </div>
-              <div class="mc-stat"><span class="l">Worst Day</span><span class="v down" id="jcMonthWorst">$0.00</span>
-              </div>
-            </div>
-
-            <div class="jc-nav">
-              <button class="jc-nav-btn" id="jcPrevBtn"><span
-                  class="material-symbols-outlined">chevron_left</span></button>
-              <span class="jc-month-lbl" id="jcMonthLbl">June 2026</span>
-              <button class="jc-nav-btn" id="jcNextBtn"><span
-                  class="material-symbols-outlined">chevron_right</span></button>
-            </div>
-
-            <div class="jc-grid" id="jcGrid"></div>
-
-            <div class="jc-legend">
-              <div class="jc-legend-item"><span class="jc-legend-dot"
-                  style="background:rgba(43,212,126,.55);"></span>Profitable day</div>
-              <div class="jc-legend-item"><span class="jc-legend-dot"
-                  style="background:rgba(242,73,92,.55);"></span>Losing day</div>
-              <div class="jc-legend-item"><span class="jc-legend-dot"
-                  style="background:var(--ink-850);border:1px solid var(--line-2);"></span>No trades</div>
-            </div>
-
-          </div>
-        </div>
-
         <div class="resize-handle resize-v" id="bottomResizeHandle"></div>
 
         <div class="bottom-panel">
@@ -5961,21 +5614,8 @@
       });
     }
 
-    function activateWorkspace(ws, btn) {
-      document.querySelectorAll('#wsTabs .ws-tab').forEach(b => b.classList.remove('active'));
-      const activeBtn = btn || document.querySelector('#wsTabs .ws-tab[data-ws="' + ws + '"]');
-      if (activeBtn) activeBtn.classList.add('active');
-      document.querySelectorAll('.center-panel .ws-pane').forEach(p => p.classList.remove('active'));
-      const pane = document.getElementById('wsPane-' + ws);
-      (pane || document.getElementById('wsPane-chart')).classList.add('active');
-    }
-    document.querySelectorAll('#wsTabs .ws-tab').forEach(btn => {
-      btn.addEventListener('click', () => activateWorkspace(btn.dataset.ws || 'chart', btn));
-    });
     const viewAllNewsBtn = document.getElementById('viewAllNewsBtn');
-    if (viewAllNewsBtn) viewAllNewsBtn.addEventListener('click', () => activateWorkspace('news'));
-    const viewJournalCalBtn = document.getElementById('viewJournalCalBtn');
-    if (viewJournalCalBtn) viewJournalCalBtn.addEventListener('click', () => activateWorkspace('journal'));
+    if (viewAllNewsBtn) viewAllNewsBtn.addEventListener('click', () => setNewsOverlay(true));
 
     /* ---------- ask AI preview ---------- */
     (function () {
@@ -6010,8 +5650,8 @@
     /* ---------- trading journal: day selector ---------- */
     (function () {
       const journalDays = [
-        { label: 'Today · Jun 20', pnl: 2975.00, trades: 7, winRate: 71, best: 1420.00, worst: -310.00 },
-        { label: 'Yesterday · Jun 19', pnl: -640.00, trades: 5, winRate: 40, best: 510.00, worst: -560.00 },
+        { label: 'Today', pnl: 2975.00, trades: 7, winRate: 71, best: 1420.00, worst: -310.00 },
+        { label: 'Jun 19', pnl: -640.00, trades: 5, winRate: 40, best: 510.00, worst: -560.00 },
         { label: 'Jun 18', pnl: 1180.00, trades: 6, winRate: 67, best: 800.00, worst: -220.00 },
         { label: 'Jun 17', pnl: 0.00, trades: 0, winRate: 0, best: 0.00, worst: 0.00 },
         { label: 'Jun 16', pnl: 2110.00, trades: 9, winRate: 78, best: 990.00, worst: -180.00 },
@@ -6068,10 +5708,13 @@
       });
     })();
 
-    /* ---------- trading journal: calendar workspace ---------- */
+    /* ---------- trading journal: mini calendar view (toggled in place of the default widget view) ---------- */
     (function () {
-      const grid = document.getElementById('jcGrid');
-      const monthLbl = document.getElementById('jcMonthLbl');
+      const grid = document.getElementById('tjcGrid');
+      const monthLbl = document.getElementById('tjcMonthLbl');
+      const defaultView = document.getElementById('tjDefaultView');
+      const calView = document.getElementById('tjCalView');
+      const calToggleBtn = document.getElementById('tjCalToggleBtn');
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
       const today = new Date(2026, 5, 20);
       let viewYear = today.getFullYear(), viewMonth = today.getMonth();
@@ -6084,12 +5727,16 @@
         };
       }
       let jcRand = mulberry32Local(5530 + viewYear * 100 + viewMonth);
+      function fmtSignedShort(n) {
+        const sign = n > 0 ? '+' : n < 0 ? '-' : '';
+        return sign + '$' + Math.round(Math.abs(n)).toLocaleString('en-US');
+      }
 
       function buildCalendar() {
         jcRand = mulberry32Local(5530 + viewYear * 100 + viewMonth);
         monthLbl.textContent = monthNames[viewMonth] + ' ' + viewYear;
         grid.innerHTML = '';
-        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(d => {
+        ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => {
           const el = document.createElement('div');
           el.className = 'jc-dow';
           el.textContent = d;
@@ -6100,92 +5747,54 @@
         const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
         for (let i = 0; i < firstDow; i++) {
           const el = document.createElement('div');
-          el.className = 'jc-day empty';
+          el.className = 'jc-day mini empty';
           grid.appendChild(el);
         }
 
-        let monthPnl = 0, tradingDays = 0, winDays = 0, lossDays = 0, bestDay = 0, worstDay = 0;
         for (let day = 1; day <= daysInMonth; day++) {
           const isFuture = new Date(viewYear, viewMonth, day) > today;
           const el = document.createElement('div');
-          el.className = 'jc-day';
+          el.className = 'jc-day mini';
           const isToday = viewYear === today.getFullYear() && viewMonth === today.getMonth() && day === today.getDate();
           if (isToday) el.classList.add('today');
           if (isFuture) el.classList.add('future');
 
-          const numRow = document.createElement('div');
-          numRow.className = 'd-num-row';
           const numEl = document.createElement('span');
           numEl.className = 'd-num';
           numEl.textContent = day;
-          numRow.appendChild(numEl);
-          if (isToday) {
-            const tagEl = document.createElement('span');
-            tagEl.className = 'd-today-tag';
-            tagEl.textContent = 'Today';
-            numRow.appendChild(tagEl);
-          }
-          el.appendChild(numRow);
+          el.appendChild(numEl);
 
           if (!isFuture) {
             const hasTrades = jcRand() > 0.22;
             if (hasTrades) {
               const pnl = Math.round((jcRand() - 0.42) * 3200);
-              const trades = 1 + Math.floor(jcRand() * 9);
               el.classList.add(pnl >= 0 ? 'up' : 'down');
-              const pnlEl = document.createElement('div');
+              const pnlEl = document.createElement('span');
               pnlEl.className = 'd-pnl ' + (pnl >= 0 ? 'up' : 'down');
               pnlEl.textContent = fmtSignedShort(pnl);
-              const tradesEl = document.createElement('div');
-              tradesEl.className = 'd-trades';
-              tradesEl.textContent = trades + ' trade' + (trades === 1 ? '' : 's');
               el.appendChild(pnlEl);
-              el.appendChild(tradesEl);
-
-              monthPnl += pnl;
-              tradingDays++;
-              if (pnl >= 0) winDays++; else lossDays++;
-              bestDay = Math.max(bestDay, pnl);
-              worstDay = Math.min(worstDay, pnl);
             }
           }
           grid.appendChild(el);
         }
-
-        document.getElementById('jcMonthPnl').textContent = fmtSignedLong(monthPnl);
-        document.getElementById('jcMonthPnl').className = 'v ' + (monthPnl >= 0 ? 'up' : 'down');
-        document.getElementById('jcMonthDays').textContent = tradingDays;
-        document.getElementById('jcMonthWinDays').textContent = winDays;
-        document.getElementById('jcMonthLossDays').textContent = lossDays;
-        document.getElementById('jcMonthBest').textContent = fmtSignedLong(bestDay);
-        document.getElementById('jcMonthWorst').textContent = fmtSignedLong(worstDay);
-      }
-      function fmtSignedShort(n) {
-        const sign = n > 0 ? '+' : n < 0 ? '-' : '';
-        return sign + '$' + Math.round(Math.abs(n)).toLocaleString('en-US');
-      }
-      function fmtSignedLong(n) {
-        const sign = n > 0 ? '+' : n < 0 ? '-' : '';
-        return sign + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       }
 
-      document.getElementById('jcPrevBtn').addEventListener('click', () => {
+      document.getElementById('tjcPrevBtn').addEventListener('click', () => {
         viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
         buildCalendar();
       });
-      document.getElementById('jcNextBtn').addEventListener('click', () => {
+      document.getElementById('tjcNextBtn').addEventListener('click', () => {
         viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
         buildCalendar();
       });
+      if (calToggleBtn) calToggleBtn.addEventListener('click', () => {
+        const showCal = !calToggleBtn.classList.contains('active');
+        calToggleBtn.classList.toggle('active', showCal);
+        defaultView.style.display = showCal ? 'none' : 'block';
+        calView.style.display = showCal ? 'block' : 'none';
+      });
       buildCalendar();
     })();
-    document.querySelectorAll('.news-expand-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const card = btn.closest('.news-card');
-        const expanded = card.classList.toggle('expanded');
-        btn.firstChild.textContent = expanded ? 'Show less' : 'Show more';
-      });
-    });
     document.querySelectorAll('#scanFilters .filter-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         chip.classList.toggle('active');
@@ -6249,6 +5858,41 @@
     const replayToggle = document.getElementById('replayToggle');
     if (replayToggle) replayToggle.addEventListener('click', () => replayToggle.classList.toggle('active'));
 
+    /* ---------- draggable chart popup helper ---------- */
+    function makeDraggablePopup(popup) {
+      const head = popup.querySelector('.aip-head');
+      const chartEl = document.getElementById('chartPlaceholder');
+      let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+      head.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.aip-close, .ct-icon')) return;
+        dragging = true;
+        const rect = popup.getBoundingClientRect();
+        const chartRect = chartEl.getBoundingClientRect();
+        startX = e.clientX; startY = e.clientY;
+        startLeft = rect.left - chartRect.left;
+        startTop = rect.top - chartRect.top;
+        popup.style.right = 'auto';
+        popup.style.left = startLeft + 'px';
+        popup.style.top = startTop + 'px';
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const chartRect = chartEl.getBoundingClientRect();
+        const maxLeft = Math.max(0, chartRect.width - popup.offsetWidth);
+        const maxTop = Math.max(0, chartRect.height - popup.offsetHeight);
+        let left = startLeft + (e.clientX - startX);
+        let top = startTop + (e.clientY - startY);
+        left = Math.min(Math.max(0, left), maxLeft);
+        top = Math.min(Math.max(0, top), maxTop);
+        popup.style.left = left + 'px';
+        popup.style.top = top + 'px';
+        e.stopPropagation();
+      }, true);
+      document.addEventListener('mouseup', () => { dragging = false; });
+    }
+
     /* ---------- AI Assistance popup ---------- */
     const aiAssistTrigger = document.getElementById('aiAssistTrigger');
     const aiAssistPopup = document.getElementById('aiAssistPopup');
@@ -6267,44 +5911,39 @@
       e.stopPropagation();
       closeAiAssistPopup();
     });
-    (function () {
-      const head = aiAssistPopup.querySelector('.aip-head');
-      const chartEl = document.getElementById('chartPlaceholder');
-      let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
-      head.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.aip-close')) return;
-        dragging = true;
-        const rect = aiAssistPopup.getBoundingClientRect();
-        const chartRect = chartEl.getBoundingClientRect();
-        startX = e.clientX; startY = e.clientY;
-        startLeft = rect.left - chartRect.left;
-        startTop = rect.top - chartRect.top;
-        e.preventDefault();
-        e.stopPropagation();
-      });
-      document.addEventListener('mousemove', (e) => {
-        if (!dragging) return;
-        const chartRect = chartEl.getBoundingClientRect();
-        const maxLeft = Math.max(0, chartRect.width - aiAssistPopup.offsetWidth);
-        const maxTop = Math.max(0, chartRect.height - aiAssistPopup.offsetHeight);
-        let left = startLeft + (e.clientX - startX);
-        let top = startTop + (e.clientY - startY);
-        left = Math.min(Math.max(0, left), maxLeft);
-        top = Math.min(Math.max(0, top), maxTop);
-        aiAssistPopup.style.left = left + 'px';
-        aiAssistPopup.style.top = top + 'px';
-        e.stopPropagation();
-      }, true);
-      document.addEventListener('mouseup', () => { dragging = false; });
-    })();
+    makeDraggablePopup(aiAssistPopup);
+
+    /* ---------- Market Scanner popup ---------- */
+    const marketScannerTrigger = document.getElementById('marketScannerTrigger');
+    const marketScannerPopup = document.getElementById('marketScannerPopup');
+    const marketScannerClose = document.getElementById('marketScannerClose');
+    function closeMarketScannerPopup() {
+      marketScannerPopup.classList.remove('show');
+      marketScannerTrigger.classList.remove('active');
+    }
+    if (marketScannerTrigger) marketScannerTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willShow = !marketScannerPopup.classList.contains('show');
+      marketScannerPopup.classList.toggle('show', willShow);
+      marketScannerTrigger.classList.toggle('active', willShow);
+    });
+    if (marketScannerClose) marketScannerClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeMarketScannerPopup();
+    });
+    const marketScannerRefresh = document.getElementById('marketScannerRefresh');
+    if (marketScannerRefresh) marketScannerRefresh.addEventListener('click', (e) => e.stopPropagation());
+    makeDraggablePopup(marketScannerPopup);
 
     /* ---------- chart news visibility toggle ---------- */
     const newsToggle = document.getElementById('newsToggle');
     const newsMarkerLayerEl = document.getElementById('newsMarkerLayer');
+    function setNewsOverlay(show) {
+      newsMarkerLayerEl.classList.toggle('show', show);
+      newsToggle.classList.toggle('active', show);
+    }
     if (newsToggle) newsToggle.addEventListener('click', () => {
-      const willShow = !newsMarkerLayerEl.classList.contains('show');
-      newsMarkerLayerEl.classList.toggle('show', willShow);
-      newsToggle.classList.toggle('active', willShow);
+      setNewsOverlay(!newsMarkerLayerEl.classList.contains('show'));
     });
 
     /* ---------- chart drawing toolbar (visual only — no drawing functionality yet) ---------- */
@@ -6418,7 +6057,7 @@
         document.addEventListener('mouseup', up);
       });
     }
-    setupHorizontalResize(document.getElementById('leftResizeHandle'), document.querySelector('.left-panel'), 'left', 230, 480);
+    setupHorizontalResize(document.getElementById('leftResizeHandle'), document.querySelector('.left-panel'), 'left', 310, 480);
     setupHorizontalResize(document.getElementById('rightResizeHandle'), document.querySelector('.right-panel'), 'right', 280, 540);
     setupVerticalResize(document.getElementById('bottomResizeHandle'), document.querySelector('.bottom-panel'), 100, 560);
 
@@ -6544,6 +6183,7 @@
       let panXInitialized = false; // on first draw, panX is set to push candles left, leaving more empty space on the right
       let crosshair = null; // {x,y} in CSS px relative to chart, within plot bounds, or null when not hovering
       let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | null — which order-line handle is currently hovered
+      let hoveringChartPopup = false; // true while the cursor is over a draggable chart popup (AI Assistance, Market Scanner)
       function priceToY(price, h) { const ih = h - AXIS_BOTTOM_H; return ih / 2 - (price - BASE_PRICE - panY) * PX_PER_POINT; }
       function yToPrice(y, h) { const ih = h - AXIS_BOTTOM_H; return BASE_PRICE + panY - (y - ih / 2) / PX_PER_POINT; }
       function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
@@ -7214,7 +6854,7 @@
         const rect = chart.getBoundingClientRect();
         const x = e.clientX - rect.left, y = e.clientY - rect.top;
         const plotW = rect.width - AXIS_RIGHT_W, ih = rect.height - AXIS_BOTTOM_H;
-        if (isPanning || hoveringNewsMarker || hoveredHandle || x < 0 || x > plotW || y < 0 || y > ih) {
+        if (isPanning || hoveringNewsMarker || hoveredHandle || hoveringChartPopup || x < 0 || x > plotW || y < 0 || y > ih) {
           if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
           return;
         }
@@ -7225,6 +6865,17 @@
         if (!crosshair) return;
         crosshair = null;
         scheduleDrawPriceChart();
+      });
+
+      /* ---------- suppress crosshair while hovering a chart popup (AI Assistance, Market Scanner) ---------- */
+      chart.querySelectorAll('.ai-assist-popup').forEach(popup => {
+        popup.addEventListener('mouseenter', () => {
+          hoveringChartPopup = true;
+          if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
+        });
+        popup.addEventListener('mouseleave', () => {
+          hoveringChartPopup = false;
+        });
       });
 
       /* ---------- live price simulation: primary symbol (ETH) ---------- */
