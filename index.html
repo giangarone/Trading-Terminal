@@ -6203,7 +6203,7 @@
       function qtUpdateEstimates(syncSlider) {
         const { qty, usdValue } = qtComputeAmount();
         const qtyDisp = qtFmtQty(qty);
-        qtEstSize.textContent = qtyDisp + ' ' + QT_INSTRUMENT_UNIT + ' (' + qtyDisp + ' Contract' + (qty === 1 ? '' : 's') + ')';
+        qtEstSize.textContent = qtyDisp + ' ' + QT_INSTRUMENT_UNIT;
         qtEstValue.textContent = fmtMoney(usdValue) + ' USD';
         qtEstFees.textContent = fmtMoney(Math.max(0, qty) * QT_FEE_PER_CONTRACT);
         if (syncSlider !== false) {
