@@ -2041,6 +2041,122 @@
       background: var(--line-1);
     }
 
+    /* ====== Quick Trade: advanced order types (Stop Limit / Stop Market / Trailing Stop / MIT) ====== */
+    .qt-tab-dropdown {
+      gap: 4px;
+    }
+
+    .qt-tab-caret {
+      font-size: 14px !important;
+      margin-left: -1px;
+    }
+
+    .price-stepper {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--ink-800);
+      border: 1px solid var(--line-2);
+      border-radius: 7px;
+      padding: 0 0 0 10px;
+      overflow: hidden;
+    }
+
+    .price-stepper input {
+      flex: 1;
+      min-width: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      text-align: right;
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--paper-100);
+      padding: 8px 0;
+    }
+
+    .price-stepper input::placeholder {
+      color: var(--paper-500);
+      font-weight: 500;
+    }
+
+    .price-stepper input:disabled {
+      color: var(--paper-500);
+    }
+
+    .price-stepper .qty-unit {
+      padding-right: 0;
+    }
+
+    .price-stepper-arrows {
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--line-2);
+      flex-shrink: 0;
+    }
+
+    .price-stepper-arrows button {
+      width: 26px;
+      height: 17px;
+      background: transparent;
+      border: none;
+      color: var(--paper-500);
+      font-size: 8px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .price-stepper-arrows button:first-child {
+      border-bottom: 1px solid var(--line-2);
+    }
+
+    .price-stepper-arrows button:hover {
+      color: var(--paper-100);
+      background: var(--ink-750);
+    }
+
+    .qt-side-btn {
+      flex-shrink: 0;
+      width: auto;
+      padding: 0 14px;
+      border-radius: 7px;
+      font-size: 11.5px;
+      font-weight: 600;
+      background: var(--ink-800);
+      border: 1px solid var(--line-2);
+      color: var(--paper-300);
+      cursor: pointer;
+    }
+
+    .qt-side-btn:hover {
+      color: var(--paper-100);
+      border-color: var(--line-3);
+    }
+
+    .qt-side-btn.active {
+      color: var(--paper-50);
+      background: var(--ink-750);
+      border-color: var(--line-3);
+    }
+
+    .qt-pct-quick-row {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .qt-pct-quick-row .qt-side-btn {
+      padding: 0 11px;
+    }
+
+    .qt-disabled-row {
+      color: var(--paper-500) !important;
+    }
+
     .qt-hotkeys {
       display: flex;
       flex-wrap: wrap;
@@ -3258,6 +3374,11 @@
       color: var(--accent);
     }
 
+    .ol-badge.be {
+      background: rgba(43, 212, 126, .14);
+      color: var(--long);
+    }
+
     /* Right-click context menu */
     .ctx-menu {
       position: fixed;
@@ -3380,6 +3501,12 @@
 
     .settings-acc-row.open .settings-chevron {
       transform: rotate(180deg);
+    }
+
+    .pop-item.disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      pointer-events: none;
     }
 
     .settings-subpanel {
@@ -4832,7 +4959,11 @@
                   class="material-symbols-outlined">list_alt</span>Limit</button>
               <button class="qt-tab" data-tab="market"><span
                   class="material-symbols-outlined">bolt</span>Market</button>
-              <button class="qt-tab" data-tab="stop"><span class="material-symbols-outlined">shield</span>Stop</button>
+              <button class="qt-tab qt-tab-dropdown" data-tab="advanced" id="qtAdvancedTab">
+                <span class="material-symbols-outlined">shield</span>
+                <span id="qtAdvancedTabLabel">Stop Market</span>
+                <span class="material-symbols-outlined qt-tab-caret">expand_more</span>
+              </button>
             </div>
 
             <div class="qt-tab-panel active" data-tab-panel="limit" id="qtTabPanel-limit">
@@ -4849,10 +4980,109 @@
               <p class="qt-help">Fills immediately at the best available price.</p>
             </div>
 
-            <div class="qt-tab-panel" data-tab-panel="stop" id="qtTabPanel-stop">
-              <label class="label-sm">Stop Trigger Price</label>
-              <div class="text-input-qt" id="qtStopPriceWrap"><span id="qtStopPrice">4,505.75</span><span
-                  class="material-symbols-outlined">edit</span></div>
+            <div class="qt-tab-panel" data-tab-panel="stopMarket" id="qtTabPanel-stopMarket">
+              <label class="label-sm">Stop</label>
+              <div class="price-stepper">
+                <input type="text" id="qtStopMarketTrigger" placeholder="Stop price" value="4,505.75">
+                <span class="qty-unit">USDC</span>
+                <div class="price-stepper-arrows">
+                  <button type="button" class="ps-up" data-target="qtStopMarketTrigger">▲</button>
+                  <button type="button" class="ps-down" data-target="qtStopMarketTrigger">▼</button>
+                </div>
+              </div>
+              <label class="label-sm" style="margin-top:12px;">Price</label>
+              <div class="text-input-qt info qt-disabled-row"><span>Market Price</span></div>
+              <p class="qt-help">Triggers a market order once the last price reaches the stop price.</p>
+              <label class="label-sm">Slippage Tolerance</label>
+              <div class="price-stepper">
+                <input type="text" id="qtStopMarketSlippage" value="0.1" style="text-align:left;padding-left:0;">
+                <span class="qty-unit">% &nbsp;&nbsp;Minimum 0.1</span>
+              </div>
+            </div>
+
+            <div class="qt-tab-panel" data-tab-panel="stopLimit" id="qtTabPanel-stopLimit">
+              <label class="label-sm">Stop</label>
+              <div class="price-stepper">
+                <input type="text" id="qtStopLimitTrigger" placeholder="Stop price" value="4,505.75">
+                <span class="qty-unit">USDC</span>
+                <div class="price-stepper-arrows">
+                  <button type="button" class="ps-up" data-target="qtStopLimitTrigger">▲</button>
+                  <button type="button" class="ps-down" data-target="qtStopLimitTrigger">▼</button>
+                </div>
+              </div>
+              <label class="label-sm" style="margin-top:12px;">Price</label>
+              <div class="qty-row" style="margin-bottom:0;">
+                <div class="price-stepper">
+                  <input type="text" id="qtStopLimitPrice" placeholder="Limit price" value="4,500.25">
+                  <span class="qty-unit">USDC</span>
+                  <div class="price-stepper-arrows">
+                    <button type="button" class="ps-up" data-target="qtStopLimitPrice">▲</button>
+                    <button type="button" class="ps-down" data-target="qtStopLimitPrice">▼</button>
+                  </div>
+                </div>
+                <button type="button" class="qt-side-btn" id="qtStopLimitBbo">BBO</button>
+              </div>
+              <p class="qt-help">Triggers a limit order at the limit price once the stop price is reached.</p>
+            </div>
+
+            <div class="qt-tab-panel" data-tab-panel="trailingStop" id="qtTabPanel-trailingStop">
+              <label class="label-sm">Trailing Delta</label>
+              <div class="qty-row" style="margin-bottom:0;">
+                <div class="price-stepper">
+                  <input type="text" id="qtTrailDelta" value="1">
+                  <span class="qty-unit">%</span>
+                </div>
+                <div class="qt-pct-quick-row">
+                  <button type="button" class="qt-side-btn" data-trail-pct="1">1%</button>
+                  <button type="button" class="qt-side-btn" data-trail-pct="2">2%</button>
+                </div>
+              </div>
+              <label class="label-sm" style="margin-top:12px;">Limit</label>
+              <div class="qty-row" style="margin-bottom:0;">
+                <div class="price-stepper">
+                  <input type="text" id="qtTrailLimit" placeholder="Limit price" value="4,500.25">
+                  <div class="price-stepper-arrows">
+                    <button type="button" class="ps-up" data-target="qtTrailLimit">▲</button>
+                    <button type="button" class="ps-down" data-target="qtTrailLimit">▼</button>
+                  </div>
+                </div>
+                <button type="button" class="qt-side-btn" id="qtTrailMarketToggle">Market</button>
+              </div>
+              <p class="qt-help">Trails the market by the delta and triggers once price reverses by that amount.</p>
+              <label class="tpsl-checkbox-row" id="qtTrailActivationToggle">
+                <span class="chk-box" id="qtTrailActivationCheckbox"><span
+                    class="material-symbols-outlined">check</span></span>
+                <span>Activation Price</span>
+              </label>
+              <div class="price-stepper" id="qtTrailActivationBlock" style="display:none;margin-top:10px;">
+                <input type="text" id="qtTrailActivationPrice" placeholder="Activation price" value="4,510.00">
+                <span class="qty-unit">USDC</span>
+                <div class="price-stepper-arrows">
+                  <button type="button" class="ps-up" data-target="qtTrailActivationPrice">▲</button>
+                  <button type="button" class="ps-down" data-target="qtTrailActivationPrice">▼</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="qt-tab-panel" data-tab-panel="mit" id="qtTabPanel-mit">
+              <label class="label-sm">Trigger</label>
+              <div class="price-stepper">
+                <input type="text" id="qtMitTrigger" placeholder="Trigger price" value="4,498.50">
+                <span class="qty-unit">USDC</span>
+                <div class="price-stepper-arrows">
+                  <button type="button" class="ps-up" data-target="qtMitTrigger">▲</button>
+                  <button type="button" class="ps-down" data-target="qtMitTrigger">▼</button>
+                </div>
+              </div>
+              <label class="label-sm" style="margin-top:12px;">Price</label>
+              <div class="text-input-qt info qt-disabled-row"><span>Market Price</span></div>
+              <p class="qt-help">Becomes a market order the moment price touches the trigger — useful for entering at
+                a more favorable price than the current market without watching the chart.</p>
+              <label class="label-sm">Slippage Tolerance</label>
+              <div class="price-stepper">
+                <input type="text" id="qtMitSlippage" value="0.1" style="text-align:left;padding-left:0;">
+                <span class="qty-unit">% &nbsp;&nbsp;Minimum 0.1</span>
+              </div>
             </div>
 
             <div class="qt-sep"></div>
@@ -5225,6 +5455,26 @@
     </button>
   </div>
 
+  <!-- ===================== QUICK TRADE: ADVANCED ORDER TYPE DROPDOWN ===================== -->
+  <div class="pop-menu" id="qtAdvancedTypeMenu" style="width:200px;">
+    <button class="pop-item selected" data-adv-type="stopMarket">
+      <span class="pop-text"><span class="pt-title">Stop Market</span><span class="pt-sub">Trigger a market order at
+          a stop price</span></span>
+    </button>
+    <button class="pop-item" data-adv-type="stopLimit">
+      <span class="pop-text"><span class="pt-title">Stop Limit</span><span class="pt-sub">Trigger a limit order at a
+          stop price</span></span>
+    </button>
+    <button class="pop-item" data-adv-type="trailingStop">
+      <span class="pop-text"><span class="pt-title">Trailing Stop</span><span class="pt-sub">Trail the market by a
+          delta</span></span>
+    </button>
+    <button class="pop-item" data-adv-type="mit">
+      <span class="pop-text"><span class="pt-title">MIT</span><span class="pt-sub">Market order once price is
+          touched</span></span>
+    </button>
+  </div>
+
   <!-- ===================== QUICK TRADE: AMOUNT TYPE DROPDOWN ===================== -->
   <div class="pop-menu" id="qtAmountTypeMenu" style="width:180px;">
     <button class="pop-item selected" data-amount-type="Quantity">
@@ -5263,11 +5513,17 @@
 
   <!-- ===================== SL GEAR MENU ===================== -->
   <div class="pop-menu" id="slGearMenu">
-    <button class="pop-item" id="slBreakeven">
+    <button class="pop-item settings-acc-row" id="slBeToggle">
       <span class="pop-icon"><span class="material-symbols-outlined">vertical_align_center</span></span>
-      <span class="pop-text"><span class="pt-title">Move SL to Breakeven</span><span class="pt-sub">Move stop loss to
-          entry price</span></span>
+      <span class="pop-text"><span class="pt-title">Move to Break Even</span><span class="pt-sub"
+          id="slBeSub">Move SL to entry once a TP is hit</span></span>
+      <span class="settings-acc-right"><span class="material-symbols-outlined settings-chevron">expand_more</span></span>
     </button>
+    <div class="settings-subpanel" id="slBePanel">
+      <div class="pop-menu-label">Trigger On</div>
+      <div id="slBeTpList"></div>
+    </div>
+    <div class="pop-sep"></div>
     <button class="pop-item" id="slTrail">
       <span class="pop-icon"><span class="material-symbols-outlined">trending_down</span></span>
       <span class="pop-text"><span class="pt-title">Trailing Stop</span><span class="pt-sub">Trail stop loss as price
@@ -6031,7 +6287,7 @@
           sizeMode: 'contracts',
           sizeValues: { dollar: 5000, percent: 25, risk: 500 },
           tps: [{ id: 'tp' + (tpCounter++), price: tpPrice, pct: 100, trailing: false }],
-          sl: { price: roundTick(entry - dir * tpDist), trailing: false, atr: false }
+          sl: { price: roundTick(entry - dir * tpDist), trailing: false, atr: false, beTpId: null, beActive: false }
         };
         orderHistory.unshift({ symbol: 'ETHUSD', side, qty: order.qty, price: order.entry, status: 'placed', time: nowTimeStr() });
         render();
@@ -6047,24 +6303,86 @@
         return lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
       }
 
-      /* ---------- order type tabs (Market / Limit / Stop) ---------- */
+      /* ---------- order type tabs (Limit / Market / advanced dropdown) ---------- */
       const qtOrderTabs = document.getElementById('qtOrderTabs');
       const qtBuyBtn = document.getElementById('qtBuyBtn');
       const qtSellBtn = document.getElementById('qtSellBtn');
-      const QT_TAB_LABELS = { limit: 'Limit', market: 'Market', stop: 'Stop' };
+      const QT_TAB_LABELS = { limit: 'Limit', market: 'Market' };
+      const QT_ADVANCED_LABELS = { stopMarket: 'Stop Market', stopLimit: 'Stop Limit', trailingStop: 'Trailing Stop', mit: 'MIT' };
+      let qtAdvancedType = 'stopMarket';
       function qtSetActiveTab(tabName) {
+        const panelName = tabName === 'advanced' ? qtAdvancedType : tabName;
         qtOrderTabs.querySelectorAll('.qt-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
         document.querySelectorAll('.qt-tab-panel').forEach(p => {
-          p.classList.toggle('active', p.dataset.tabPanel === tabName);
+          p.classList.toggle('active', p.dataset.tabPanel === panelName);
         });
-        const lbl = QT_TAB_LABELS[tabName] || 'Market';
+        const lbl = QT_TAB_LABELS[tabName] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market';
         qtBuyBtn.querySelector('.bs-lbl').textContent = 'Buy ' + lbl;
         qtSellBtn.querySelector('.bs-lbl').textContent = 'Sell ' + lbl;
       }
-      qtOrderTabs.querySelectorAll('.qt-tab').forEach(tab => {
+      qtOrderTabs.querySelectorAll('.qt-tab:not(.qt-tab-dropdown)').forEach(tab => {
         tab.addEventListener('click', () => qtSetActiveTab(tab.dataset.tab));
       });
       qtSetActiveTab('limit');
+
+      /* ---------- advanced order type dropdown (Stop Limit / Stop Market / Trailing Stop / MIT) ---------- */
+      const qtAdvancedTab = document.getElementById('qtAdvancedTab');
+      const qtAdvancedTabLabel = document.getElementById('qtAdvancedTabLabel');
+      const qtAdvancedTypeMenu = document.getElementById('qtAdvancedTypeMenu');
+      qtAdvancedTab.addEventListener('click', (e) => {
+        e.stopPropagation();
+        qtAdvancedTypeMenu.querySelectorAll('.pop-item').forEach(it => {
+          it.classList.toggle('selected', it.dataset.advType === qtAdvancedType);
+        });
+        openNear(qtAdvancedTypeMenu, qtAdvancedTab.getBoundingClientRect(), 'right', qtAdvancedTab);
+      });
+      qtAdvancedTypeMenu.querySelectorAll('.pop-item').forEach(it => {
+        it.addEventListener('click', () => {
+          qtAdvancedType = it.dataset.advType;
+          qtAdvancedTabLabel.textContent = QT_ADVANCED_LABELS[qtAdvancedType];
+          closeAllPopovers();
+          qtSetActiveTab('advanced');
+        });
+      });
+
+      /* ---------- generic price stepper arrows (Stop / Limit / Trailing Delta / Trigger / Activation fields) ---------- */
+      document.querySelectorAll('.price-stepper-arrows .ps-up, .price-stepper-arrows .ps-down').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const input = document.getElementById(btn.dataset.target);
+          if (!input || input.disabled) return;
+          const step = input.id === 'qtTrailDelta' ? 0.1 : 0.25;
+          const cur = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
+          const next = btn.classList.contains('ps-up') ? cur + step : Math.max(0, cur - step);
+          input.value = input.id === 'qtTrailDelta' ? next.toFixed(1) : fmt(next);
+        });
+      });
+
+      /* ---------- Stop Limit: BBO (best bid/offer) shortcut ---------- */
+      document.getElementById('qtStopLimitBbo').addEventListener('click', () => {
+        document.getElementById('qtStopLimitPrice').value = fmt(qtCurrentPrice());
+      });
+
+      /* ---------- Trailing Stop: quick delta %, Limit/Market toggle, Activation Price ---------- */
+      document.querySelectorAll('[data-trail-pct]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('qtTrailDelta').value = btn.dataset.trailPct;
+        });
+      });
+      const qtTrailMarketToggle = document.getElementById('qtTrailMarketToggle');
+      const qtTrailLimitInput = document.getElementById('qtTrailLimit');
+      qtTrailMarketToggle.addEventListener('click', () => {
+        const active = qtTrailMarketToggle.classList.toggle('active');
+        qtTrailLimitInput.disabled = active;
+        qtTrailLimitInput.placeholder = active ? 'Market' : 'Limit price';
+        if (active) qtTrailLimitInput.value = '';
+      });
+      const qtTrailActivationToggle = document.getElementById('qtTrailActivationToggle');
+      const qtTrailActivationCheckbox = document.getElementById('qtTrailActivationCheckbox');
+      const qtTrailActivationBlock = document.getElementById('qtTrailActivationBlock');
+      qtTrailActivationToggle.addEventListener('click', () => {
+        const enabled = qtTrailActivationCheckbox.classList.toggle('checked');
+        qtTrailActivationBlock.style.display = enabled ? 'flex' : 'none';
+      });
 
       function qtMakePriceEditable(spanId) {
         const span = document.getElementById(spanId);
@@ -6098,7 +6416,6 @@
         wrap.addEventListener('click', startEdit);
       }
       qtMakePriceEditable('qtLimitPrice');
-      qtMakePriceEditable('qtStopPrice');
 
       /* ---------- Limit tab: TP/SL toggle ---------- */
       const qtTpslToggle = document.getElementById('qtTpslToggle');
@@ -6127,10 +6444,16 @@
         const active = qtOrderTabs.querySelector('.qt-tab.active');
         return active ? active.dataset.tab : 'market';
       }
+      const QT_ADVANCED_TRIGGER_IDS = { stopMarket: 'qtStopMarketTrigger', stopLimit: 'qtStopLimitTrigger', trailingStop: 'qtTrailLimit', mit: 'qtMitTrigger' };
       function qtActivePrice() {
         const tab = qtActiveTab();
         if (tab === 'limit') return parseFloat(document.getElementById('qtLimitPrice').textContent.replace(/,/g, ''));
-        if (tab === 'stop') return parseFloat(document.getElementById('qtStopPrice').textContent.replace(/,/g, ''));
+        if (tab === 'advanced') {
+          const inputId = QT_ADVANCED_TRIGGER_IDS[qtAdvancedType];
+          const input = document.getElementById(inputId);
+          const val = input && !input.disabled ? parseFloat((input.value || '').replace(/,/g, '')) : NaN;
+          return isNaN(val) ? qtCurrentPrice() : val;
+        }
         return qtCurrentPrice();
       }
       qtBuyBtn.addEventListener('click', () => qtPlaceOrder('buy', qtActivePrice()));
@@ -6262,6 +6585,9 @@
       function removeTp(id) {
         if (!order) return;
         order.tps = order.tps.filter(t => t.id !== id);
+        if (order.sl && !order.sl.beActive && (order.tps.length < 2 || order.sl.beTpId === id)) {
+          order.sl.beTpId = null;
+        }
         render();
       }
       function removeSl() {
@@ -6272,7 +6598,31 @@
       function addDefaultSL() {
         if (!order) return;
         const dir = order.side === 'buy' ? 1 : -1;
-        order.sl = { price: roundTick(order.entry - dir * 2.5), trailing: false, atr: false };
+        order.sl = { price: roundTick(order.entry - dir * 2.5), trailing: false, atr: false, beTpId: null, beActive: false };
+        render();
+      }
+      /* ---------- TP fill detection (drives "Move to Break Even" once the chosen TP is hit) ---------- */
+      function checkTpFills(prevPrice, currentPrice) {
+        if (!order || !order.tps.length) return;
+        const dir = order.side === 'buy' ? 1 : -1;
+        const hitTps = order.tps.filter(tp => dir === 1
+          ? (prevPrice < tp.price && currentPrice >= tp.price)
+          : (prevPrice > tp.price && currentPrice <= tp.price));
+        if (!hitTps.length) return;
+        hitTps.forEach(tp => {
+          const idx = order.tps.indexOf(tp);
+          const closingSide = order.side === 'buy' ? 'sell' : 'buy';
+          const tpQty = Math.max(1, Math.round(order.qty * tp.pct / 100));
+          orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: tp.price, status: 'filled', time: nowTimeStr() });
+          showToast('TP' + (idx + 1) + ' hit at ' + fmt(tp.price), 'check_circle');
+          if (order.sl && order.sl.beTpId === tp.id && !order.sl.beActive) {
+            order.sl.price = order.entry;
+            order.sl.beActive = true;
+            syncQtyFromRisk();
+            showToast('Stop loss moved to breakeven', 'vertical_align_center');
+          }
+        });
+        order.tps = order.tps.filter(tp => !hitTps.includes(tp));
         render();
       }
       function addDefaultTP() {
@@ -6846,6 +7196,7 @@
           lastBar.high = Math.max(lastBar.high, last);
           lastBar.low = Math.min(lastBar.low, last);
           scheduleDrawPriceChart();
+          checkTpFills(prevLast, last);
 
           let alertsChanged = false;
           alerts.forEach(a => {
@@ -6995,7 +7346,7 @@
           row.className = 'ol-side-row';
           row.style.top = y + 'px';
           row.innerHTML =
-            '<span class="ol-chip sl"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>SL' + (order.sl.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + (order.sl.atr ? '<span class="ol-badge atr">ATR</span>' : '') + '</span>' +
+            '<span class="ol-chip sl"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>SL' + (order.sl.beTpId ? '<span class="ol-badge be">SL → BE</span>' : '') + (order.sl.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + (order.sl.atr ? '<span class="ol-badge atr">ATR</span>' : '') + '</span>' +
             '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
             '<span class="ol-rmult">-1.0R</span>' +
             '<span class="ol-pct-chip">100%</span>' +
@@ -7328,18 +7679,56 @@
 
       /* ---------- SL gear menu ---------- */
       const slGearMenu = document.getElementById('slGearMenu');
+      const slBeToggle = document.getElementById('slBeToggle');
+      const slBePanel = document.getElementById('slBePanel');
+      const slBeSub = document.getElementById('slBeSub');
+      const slBeTpList = document.getElementById('slBeTpList');
+      function renderSlGearMenu() {
+        if (!order || !order.sl) return;
+        const tooFewTps = order.tps.length < 2;
+        if (tooFewTps && !order.sl.beActive) { order.sl.beTpId = null; }
+        const locked = order.sl.beActive || (tooFewTps && !order.sl.beTpId);
+        slBeToggle.classList.toggle('disabled', locked);
+        if (locked) { slBeToggle.classList.remove('open'); slBePanel.classList.remove('open'); }
+        slBeSub.textContent = order.sl.beActive
+          ? 'Active — SL moved to entry'
+          : tooFewTps ? 'Requires 2+ take profits'
+            : order.sl.beTpId ? 'Triggers on TP' + (order.tps.findIndex(t => t.id === order.sl.beTpId) + 1)
+              : 'Off';
+        slBeTpList.innerHTML = locked ? '' : (
+          '<button class="pop-item' + (!order.sl.beTpId ? ' selected' : '') + '" data-be-tp="">' +
+          '<span class="pop-text"><span class="pt-title">Off</span></span></button>' +
+          order.tps.map((tp, idx) =>
+            '<button class="pop-item' + (order.sl.beTpId === tp.id ? ' selected' : '') + '" data-be-tp="' + tp.id + '">' +
+            '<span class="pop-text"><span class="pt-title">TP' + (idx + 1) + '</span></span></button>'
+          ).join('')
+        );
+        slBeTpList.querySelectorAll('[data-be-tp]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!order || !order.sl) return;
+            order.sl.beTpId = btn.dataset.beTp || null;
+            order.sl.beActive = false;
+            renderSlGearMenu();
+            render();
+          });
+        });
+      }
+      slBeToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (slBeToggle.classList.contains('disabled')) return;
+        const willOpen = !slBePanel.classList.contains('open');
+        slBeToggle.classList.toggle('open', willOpen);
+        slBePanel.classList.toggle('open', willOpen);
+      });
       function openSlGearMenu(anchorRect, trigger) {
         if (trigger && slGearMenu.classList.contains('show') && slGearMenu._openTrigger === trigger) {
           closeAllPopovers();
           return;
         }
+        renderSlGearMenu();
         openNear(slGearMenu, anchorRect, 'right', trigger);
       }
-      document.getElementById('slBreakeven').addEventListener('click', () => {
-        if (order.sl) { order.sl.price = order.entry; syncQtyFromRisk(); }
-        closeAllPopovers(); render();
-        showToast('Stop loss moved to breakeven', 'vertical_align_center');
-      });
       document.getElementById('slTrail').addEventListener('click', () => {
         if (order.sl) order.sl.trailing = !order.sl.trailing;
         closeAllPopovers(); render();
