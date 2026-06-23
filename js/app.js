@@ -224,11 +224,18 @@
       openNear(posActionsMenu, el.getBoundingClientRect(), 'right');
     });
   });
-  document.getElementById('posActionsClose').addEventListener('click', () => {
-    if (!activeClosePosSym) return;
-    const row = document.querySelector('[data-pos-row="' + activeClosePosSym + '"]');
-    if (row) row.remove();
-    showToast(activeClosePosSym + ' position closed', 'check_circle');
+  posActionsMenu.querySelectorAll('[data-close-pct]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!activeClosePosSym || !window.closePositionPct(activeClosePosSym, parseInt(btn.dataset.closePct, 10))) { activeClosePosSym = null; closeAllPopovers(); return; }
+      const pct = parseInt(btn.dataset.closePct, 10);
+      showToast(activeClosePosSym + ' position ' + (pct >= 100 ? 'closed' : 'reduced by ' + pct + '%'), 'check_circle');
+      closeAllPopovers();
+      activeClosePosSym = null;
+    });
+  });
+  document.getElementById('posActionsReverse').addEventListener('click', () => {
+    if (!activeClosePosSym || !window.reversePosition(activeClosePosSym)) { activeClosePosSym = null; closeAllPopovers(); return; }
+    showToast(activeClosePosSym + ' position reversed', 'sync_alt');
     closeAllPopovers();
     activeClosePosSym = null;
   });

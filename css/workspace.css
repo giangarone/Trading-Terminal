@@ -126,9 +126,9 @@
 
 .opp-strength .dot,
 .strength-dots .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+  width: 8px;
+  height: 3px;
+  border-radius: 999px;
   background: var(--line-2);
   display: inline-block;
 }

@@ -75,7 +75,7 @@
 
 .ms-metric-lbl {
   font-size: var(--fs-label);
-  font-weight: var(--fw-semi);
+  font-weight: var(--fw-mid);
   letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-500);
@@ -197,7 +197,7 @@
   align-items: center;
   gap: 6px;
   font-size: var(--fs-label);
-  font-weight: var(--fw-semi);
+  font-weight: var(--fw-mid);
   letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-300);
@@ -411,7 +411,7 @@ table.ms-scan-table tbody tr:hover {
 }
 
 .ms-sym-name {
-  font-weight: 700;
+  font-weight: 600;
   font-size: 12.5px;
 }
 

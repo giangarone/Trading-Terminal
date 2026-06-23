@@ -944,8 +944,8 @@
               <tbody>
                 <tr data-pos-row="ETHUSD">
                   <td><span class="sym-cell">ETHUSD</span></td>
-                  <td>2</td>
-                  <td>4,486.50</td>
+                  <td id="posQty-ETHUSD">2</td>
+                  <td id="posAvg-ETHUSD">4,486.50</td>
                   <td id="posMark-ETHUSD">4,500.25</td>
                   <td class="up" id="posPnlOpen-ETHUSD">+2,750.00</td>
                   <td class="up" id="posPnlDay-ETHUSD">+1,950.00</td>
@@ -955,8 +955,8 @@
                 </tr>
                 <tr data-pos-row="NQU5">
                   <td><span class="sym-cell">NQU5</span></td>
-                  <td>1</td>
-                  <td>18,480.00</td>
+                  <td id="posQty-NQU5">1</td>
+                  <td id="posAvg-NQU5">18,480.00</td>
                   <td id="posMark-NQU5">18,624.50</td>
                   <td class="up" id="posPnlOpen-NQU5">+1,445.00</td>
                   <td class="up" id="posPnlDay-NQU5">+980.00</td>
@@ -1413,8 +1413,15 @@
 
   <!-- ===================== POSITION ROW ACTIONS DROPDOWN ===================== -->
   <div class="ctx-menu" id="posActionsMenu">
-    <button class="ctx-item short" id="posActionsClose"><span class="material-symbols-outlined">close</span>Close
-      Trade</button>
+    <button class="ctx-item" data-close-pct="25"><span class="material-symbols-outlined">percent</span>Close
+      25%</button>
+    <button class="ctx-item" data-close-pct="50"><span class="material-symbols-outlined">percent</span>Close
+      50%</button>
+    <button class="ctx-item short" data-close-pct="100"><span class="material-symbols-outlined">close</span>Close
+      100%</button>
+    <div class="ctx-sep"></div>
+    <button class="ctx-item" id="posActionsReverse"><span class="material-symbols-outlined">sync_alt</span>Reverse
+      Position</button>
   </div>
 
   <!-- ===================== MORE TIMEFRAMES DROPDOWN ===================== -->
@@ -1592,11 +1599,7 @@
 
     <!-- Top Opportunities -->
     <div class="ms-opps-wrap">
-      <div class="ms-opps-head">
-        <span class="material-symbols-outlined">bolt</span>
-        Top Opportunities
-        <span class="ms-opps-head-sub">3 high-conviction setups</span>
-      </div>
+      <div class="ms-opps-head">Top Opportunities</div>
       <div class="ms-opps">
 
         <div class="ms-opp-card long">
@@ -1639,18 +1642,18 @@
           </div>
         </div>
 
-        <div class="ms-opp-card watch">
+        <div class="ms-opp-card short">
           <div class="ms-opp-accent-bar"></div>
           <div class="ms-opp-body">
             <div class="ms-opp-row1">
               <span class="ms-opp-sym">GCQ5</span>
-              <span class="signal-badge neutral">Watch</span>
+              <span class="signal-badge sell">Sell</span>
             </div>
             <div class="ms-opp-price-row">
               <span class="ms-opp-price">2,346.30</span>
-              <span class="ms-opp-chg up">+0.18%</span>
+              <span class="ms-opp-chg down">-0.18%</span>
             </div>
-            <div class="ms-opp-setup">Near Support &middot; Pullback</div>
+            <div class="ms-opp-setup">Near Resistance &middot; Rejection</div>
             <div class="ms-opp-foot">
               <span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
                   class="dot"></span></span>

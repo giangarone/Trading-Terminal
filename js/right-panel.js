@@ -60,8 +60,11 @@
      so the simulation continues smoothly from the values shown at page load */
   function makePosition(sym, qty, avgPrice, mark0, pnlOpen0, pnlDay0, pct0) {
     const pv = pnlOpen0 / ((mark0 - avgPrice) * qty); // implied $ per point for this mock position
+    const unitBase = pct0 !== 0 ? pnlOpen0 / pct0 : 1; // $ per 1% move, scales with position size
     return {
-      sym, qty, avgPrice, mark: mark0, pv, pnlOpen0, pnlDay0, pct0, mark0,
+      sym, qty, avgPrice, mark: mark0, pv, pnlOpen0, pnlDay0, unitBase, mark0,
+      elQty: document.getElementById('posQty-' + sym),
+      elAvg: document.getElementById('posAvg-' + sym),
       elMark: document.getElementById('posMark-' + sym),
       elPnlOpen: document.getElementById('posPnlOpen-' + sym),
       elPnlDay: document.getElementById('posPnlDay-' + sym),
@@ -75,6 +78,42 @@
   const totPnlOpenEl = document.getElementById('totPnlOpen');
   const totPnlDayEl = document.getElementById('totPnlDay');
   const totPctEl = document.getElementById('totPct');
+
+  function fmtQty(q) {
+    let s = q.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
+    return s === '' || s === '-' ? '0' : s;
+  }
+
+  /* ---------- position row quick actions: partial/full close & reverse ---------- */
+  window.closePositionPct = function (sym, pct) {
+    const p = positions.find(x => x.sym === sym);
+    if (!p) return false;
+    if (pct >= 100) {
+      positions.splice(positions.indexOf(p), 1);
+      const row = document.querySelector('[data-pos-row="' + sym + '"]');
+      if (row) row.remove();
+      return true;
+    }
+    const remainFrac = 1 - pct / 100;
+    p.qty *= remainFrac;
+    p.pnlOpen0 *= remainFrac;
+    p.pnlDay0 *= remainFrac;
+    p.unitBase *= remainFrac;
+    if (p.elQty) p.elQty.textContent = fmtQty(p.qty);
+    return true;
+  };
+
+  window.reversePosition = function (sym) {
+    const p = positions.find(x => x.sym === sym);
+    if (!p) return false;
+    p.pv = -p.pv;
+    p.avgPrice = p.mark;
+    p.mark0 = p.mark;
+    p.pnlDay0 += p.pnlOpen0;
+    p.pnlOpen0 = 0;
+    if (p.elAvg) p.elAvg.textContent = fmt(p.avgPrice);
+    return true;
+  };
 
   function tick() {
     watchSyms.forEach(s => {
@@ -104,7 +143,7 @@
       const deltaPnl = deltaMark * p.qty * p.pv;
       const pnlOpen = p.pnlOpen0 + deltaPnl;
       const pnlDay = p.pnlDay0 + deltaPnl;
-      const pct = p.pnlOpen0 !== 0 ? p.pct0 * (pnlOpen / p.pnlOpen0) : p.pct0;
+      const pct = p.unitBase !== 0 ? pnlOpen / p.unitBase : 0;
       p.elMark.textContent = fmt(p.mark);
       p.elPnlOpen.textContent = (pnlOpen >= 0 ? '+' : '') + fmt(pnlOpen);
       p.elPnlDay.textContent = (pnlDay >= 0 ? '+' : '') + fmt(pnlDay);
@@ -112,7 +151,7 @@
       setUpDown(p.elPnlOpen, pnlOpen >= 0);
       setUpDown(p.elPnlDay, pnlDay >= 0);
       setUpDown(p.elPct, pct >= 0);
-      sumPnlOpen += pnlOpen; sumPnlDay += pnlDay; sumBase += (p.pnlOpen0 / p.pct0);
+      sumPnlOpen += pnlOpen; sumPnlDay += pnlDay; sumBase += p.unitBase;
     });
     const totPct = sumBase !== 0 ? sumPnlOpen / sumBase : 0;
     totPnlOpenEl.textContent = (sumPnlOpen >= 0 ? '+' : '') + fmt(sumPnlOpen);
