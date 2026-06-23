@@ -193,9 +193,9 @@
 }
 
 .jc-dow {
-  font-size: 10px;
+  font-size: var(--fs-label);
   color: var(--paper-500);
-  letter-spacing: .05em;
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   text-align: center;
   padding-bottom: 4px;
@@ -549,11 +549,11 @@ table.bp-table {
 
 table.bp-table th {
   text-align: right;
-  font-size: 9.5px;
-  letter-spacing: .06em;
+  font-size: var(--fs-label);
+  letter-spacing: var(--ls-label);
   color: var(--paper-500);
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: var(--fw-mid);
   padding: 9px 16px;
   position: sticky;
   top: 0;
@@ -597,4 +597,3 @@ table.bp-table tr.total-row td {
   color: var(--paper-500);
   cursor: pointer;
 }
-

@@ -129,7 +129,7 @@
 
 .tpsl-field-input:focus {
   outline: none;
-  border-color: var(--line-3);
+  border-color: var(--accent);
 }
 
 .tpsl-offset-field {
@@ -146,7 +146,7 @@
 }
 
 .tpsl-offset-field:focus-within {
-  border-color: var(--line-3);
+  border-color: var(--accent);
 }
 
 .tpsl-offset-field input {
@@ -472,7 +472,7 @@
 }
 
 .ai-ask-field:focus-within {
-  border-color: var(--accent);
+  border-color: var(--line-3);
 }
 
 .ai-ask-field .material-symbols-outlined {
@@ -683,4 +683,3 @@
 .mh-rows {
   margin-top: 8px;
 }
-

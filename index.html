@@ -65,7 +65,7 @@
             style="font-size:15px;">expand_more</span></button>
         <button class="ct-action-btn" id="replayToggle"><span class="material-symbols-outlined"
             style="font-size:15px;">fast_rewind</span>Replay</button>
-        <button class="ct-action-btn" id="marketScannerTrigger"><span class="material-symbols-outlined"
+        <button class="ct-action-btn pop-trigger" id="marketScannerTrigger"><span class="material-symbols-outlined"
             style="font-size:15px;">radar</span>Market Scanner</button>
         <button class="ct-action-btn" id="newsToggle"><span class="material-symbols-outlined"
             style="font-size:15px;">article</span>News Overlay</button>
@@ -1562,23 +1562,20 @@
   </div>
 
   <!-- ===================== MARKET SCANNER MODAL ===================== -->
-  <div class="scanner-modal" id="marketScannerPopup">
+  <div class="pop-menu ind-modal scanner-modal" id="marketScannerPopup">
 
     <!-- Header -->
-    <div class="ms-head">
-      <div class="ms-head-left">
-        <span class="material-symbols-outlined" style="font-size:16px;color:var(--accent);">manage_search</span>
-        <span class="ms-head-title">Market Scanner</span>
-        <div class="ms-live-pill"><span class="ms-live-dot"></span>Live</div>
-      </div>
-      <div class="ms-head-right">
-        <button class="ct-icon" id="marketScannerRefresh" style="width:26px;height:26px;" title="Refresh">
-          <span class="material-symbols-outlined" style="font-size:15px;">refresh</span>
-        </button>
-        <button class="chart-popup-close" id="marketScannerClose">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
+    <div class="ind-modal-header">
+      <span class="ind-modal-title"><span class="material-symbols-outlined"
+          style="font-size:14px;vertical-align:-2px;">manage_search</span> Market Scanner</span>
+      <div class="ms-live-pill"><span class="ms-live-dot"></span>Live</div>
+      <div class="ms-head-spacer"></div>
+      <button class="ct-icon" id="marketScannerRefresh" style="width:26px;height:26px;" title="Refresh">
+        <span class="material-symbols-outlined" style="font-size:15px;">refresh</span>
+      </button>
+      <button class="ind-modal-close" id="marketScannerClose">
+        <span class="material-symbols-outlined">close</span>
+      </button>
     </div>
 
     <!-- Market Overview Strip -->

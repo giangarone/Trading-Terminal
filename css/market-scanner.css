@@ -1,46 +1,18 @@
 /* ===== MARKET SCANNER MODAL ===== */
-.scanner-modal {
-  position: fixed;
-  width: 920px;
+/* shares position/display/header styling with .ind-modal (Indicators / L2 Indicators); only the
+   width/height and the scanner-specific body below need their own rules. */
+.ind-modal.scanner-modal {
+  width: 1040px;
   max-height: 86vh;
-  background: var(--ink-850);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-lg);
-  box-shadow: 0 32px 80px rgba(0, 0, 0, .8);
-  display: none;
-  flex-direction: column;
-  z-index: 1100;
-  overflow: hidden;
-  cursor: default;
 }
 
-.scanner-modal.show {
-  display: flex;
-}
-
-/* ---- Header ---- */
-.ms-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px 0 14px;
-  height: 44px;
-  border-bottom: 1px solid var(--line-1);
+.scanner-modal .ind-modal-header {
   cursor: move;
   user-select: none;
-  flex-shrink: 0;
 }
 
-.ms-head-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ms-head-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--paper-100);
+.ms-head-spacer {
+  flex: 1;
 }
 
 .ms-live-pill {
@@ -78,12 +50,6 @@
   }
 }
 
-.ms-head-right {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
 /* ---- Overview strip ---- */
 .ms-overview {
   display: flex;
@@ -108,9 +74,9 @@
 }
 
 .ms-metric-lbl {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: .07em;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-ui);
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-500);
 }
@@ -177,9 +143,9 @@
 }
 
 .ms-sectors-lbl {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: .07em;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-ui);
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-500);
 }
@@ -230,9 +196,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .07em;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-ui);
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-300);
   margin-bottom: 12px;
@@ -366,9 +332,9 @@
 }
 
 .ms-filter-lbl {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .07em;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-ui);
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-500);
   white-space: nowrap;
@@ -409,11 +375,11 @@ table.ms-scan-table {
 
 table.ms-scan-table th {
   text-align: right;
-  font-size: 9px;
-  letter-spacing: .05em;
+  font-size: var(--fs-label);
+  letter-spacing: var(--ls-label);
   color: var(--paper-500);
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: var(--fw-ui);
   padding: 12px 14px 10px;
   position: sticky;
   top: 0;
@@ -1108,9 +1074,9 @@ table.ms-scan-table tr[data-tags].hide-row {
 }
 
 .pop-menu-label {
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: .036em;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-ui);
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-500);
   padding: 4px 9px 6px;
@@ -1220,7 +1186,7 @@ table.ms-scan-table tr[data-tags].hide-row {
   align-items: center;
   gap: 10px;
   padding: 8px 9px;
-  border-radius: 9px;
+  border-radius: var(--r-sm);
   cursor: pointer;
   background: transparent;
   width: 100%;

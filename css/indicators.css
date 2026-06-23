@@ -173,9 +173,9 @@
 }
 
 .ind-group-label {
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: .05em;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-ui);
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-500);
   padding: 10px 14px 4px;
@@ -300,7 +300,7 @@
   display: flex;
   gap: 3px;
   background: var(--ink-800);
-  border-radius: 9px;
+  border-radius: var(--r-sm);
   padding: 3px;
   margin-bottom: 11px;
 }
@@ -308,13 +308,13 @@
 .sm-tab {
   flex: 1;
   text-align: center;
-  font-size: 9.5px;
-  font-weight: 700;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-ui);
   padding: 7px 2px;
-  border-radius: 7px;
+  border-radius: var(--r-xs);
   color: var(--paper-300);
   background: transparent;
-  letter-spacing: .01em;
+  letter-spacing: var(--ls-ui);
   border: none;
   cursor: pointer;
 }
@@ -382,8 +382,8 @@
 }
 
 .sm-amount-lbl {
-  font-size: 9px;
-  letter-spacing: .08em;
+  font-size: var(--fs-label);
+  letter-spacing: var(--ls-label);
   color: var(--paper-500);
   text-transform: uppercase;
   margin-bottom: 7px;
@@ -571,8 +571,8 @@
 }
 
 .sm-options-lbl {
-  font-size: 9px;
-  letter-spacing: .1em;
+  font-size: var(--fs-label);
+  letter-spacing: var(--ls-label);
   color: var(--paper-500);
   text-transform: uppercase;
   margin-bottom: 2px;
@@ -646,8 +646,8 @@
 }
 
 .modal-label {
-  font-size: 9.5px;
-  letter-spacing: .1em;
+  font-size: var(--fs-label);
+  letter-spacing: var(--ls-label);
   color: var(--paper-500);
   text-transform: uppercase;
   margin-bottom: 9px;
@@ -783,4 +783,3 @@
 .modal-actions .btn-cancel:hover {
   color: var(--paper-100);
 }
-

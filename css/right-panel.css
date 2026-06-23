@@ -62,9 +62,9 @@
 }
 
 .label-sm {
-  font-size: 9.5px;
+  font-size: var(--fs-label);
   color: var(--paper-500);
-  letter-spacing: .06em;
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   margin-bottom: 6px;
   display: block;
@@ -206,11 +206,11 @@
 
 .ghost-btn {
   flex: 1;
-  border-radius: 7px;
+  border-radius: var(--r-sm);
   padding: 8px 0;
   text-align: center;
-  font-size: 11.5px;
-  font-weight: 500;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-ui);
   background: var(--ink-800);
   border: 1px solid var(--line-2);
   color: var(--paper-300);

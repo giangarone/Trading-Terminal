@@ -56,13 +56,13 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--paper-300);
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   border: 1px solid var(--line-2);
   background: var(--ink-850);
-  font-weight: 500;
+  font-weight: var(--fw-mid);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -110,35 +110,37 @@
 .tb-account {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   height: 30px;
   padding: 0 10px;
-  border-radius: 7px;
+  border-radius: var(--r-sm);
   border: 1px solid var(--line-2);
   background: var(--ink-850);
+  color: var(--paper-300);
   cursor: pointer;
 }
 
 .tb-account:hover {
+  color: var(--paper-100);
   border-color: var(--line-3);
 }
 
 .tb-account .material-symbols-outlined:first-child {
   font-size: 15px;
-  color: var(--paper-300);
+  color: inherit;
 }
 
 .tb-account-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--paper-100);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-mid);
+  color: inherit;
   font-family: var(--sans);
 }
 
 .tb-account-balance {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--paper-300);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-mid);
+  color: inherit;
   font-family: var(--sans);
   padding-left: 7px;
   border-left: 1px solid var(--line-2);
@@ -472,4 +474,3 @@
   border-color: rgba(227, 160, 57, .4);
   background: var(--accent-dim);
 }
-

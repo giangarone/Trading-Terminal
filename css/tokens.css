@@ -28,7 +28,50 @@
   --r-sm: 7px;
   --r-md: 10px;
   --r-lg: 14px;
+  --r-pill: 999px;
   --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+
+  /* ── Type scale ──────────────────────────────────────────── */
+  --fs-label: 10px;
+  /* uppercase eyebrow labels & table headers  */
+  --fs-sm: 11.5px;
+  /* secondary buttons, badges, helper text    */
+  --fs-body: 12.5px;
+  /* body text: nav items, list rows, popups   */
+  --fs-data: 13px;
+  /* data-entry inputs & numeric values        */
+
+  /* ── Font weights ────────────────────────────────────────── */
+  --fw-mid: 500;
+  /* secondary / descriptive text              */
+  --fw-ui: 600;
+  /* buttons, labels, interactive elements     */
+  --fw-strong: 700;
+  /* data values, titles                       */
+
+  /* ── Letter spacing ──────────────────────────────────────── */
+  --ls-label: .06em;
+  /* uppercase labels paired with --fs-label   */
+  --ls-ui: .02em;
+  /* subtle tracking for symbols/codes         */
+
+  /* ── Icons ───────────────────────────────────────────────── */
+  --ic-sm: 15px;
+  /* inline / compact icons                    */
+  --ic-md: 17px;
+  /* action button icons                       */
+
+  /* ── Components ──────────────────────────────────────────── */
+  --h-input: 34px;
+  /* standard single-line input height         */
+  --h-btn-sm: 28px;
+  /* compact icon-only button size             */
+
+  /* ── Transitions ─────────────────────────────────────────── */
+  --t-ui: .12s ease;
+  /* hover / interactive state changes         */
+  --t-mid: .2s ease;
+  /* panel reveals, menus                      */
 }
 
 * {
@@ -152,4 +195,3 @@ input {
   display: flex;
   flex-direction: column;
 }
-

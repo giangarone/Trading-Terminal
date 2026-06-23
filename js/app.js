@@ -82,7 +82,6 @@
   let panXInitialized = false; // on first draw, panX is set to push candles left, leaving more empty space on the right
   let crosshair = null; // {x,y} in CSS px relative to chart, within plot bounds, or null when not hovering
   let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | 'tp-add' | 'sl-add' | null — which order-line handle is currently hovered
-  let hoveringChartPopup = false; // true while the cursor is over a draggable chart popup (AI Assistance, Market Scanner)
   let isDraggingOrderLine = false; // true for the duration of any order-line drag — blocks the price-tick auto-render from wiping live drag visuals
   function priceToY(price, h) { const ih = h - AXIS_BOTTOM_H; return ih / 2 - (price - BASE_PRICE - panY) * PX_PER_POINT; }
   function yToPrice(y, h) { const ih = h - AXIS_BOTTOM_H; return BASE_PRICE + panY - (y - ih / 2) / PX_PER_POINT; }
@@ -135,6 +134,9 @@
   function closeAllPopoversExcept(...keep) {
     document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => { if (!keep.includes(m)) m.classList.remove('show'); });
   }
+  /* exposed so overlays.js (loaded before this script) can share the same popover engine */
+  window.openNear = openNear;
+  window.closeAllPopovers = closeAllPopovers;
   document.addEventListener('click', (e) => {
     if (e.target.closest('.pop-trigger') || e.target.closest('.pop-menu') || e.target.closest('.ctx-menu')) return;
     closeAllPopovers();
@@ -1207,7 +1209,7 @@
   let panStart = { x: 0, y: 0, panX: 0, panY: 0 };
   chart.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
-    if (e.target.closest('.ol-entry-bar, .ol-side-row, .ol-alert-hit, .pop-menu, .ctx-menu, .chart-popup')) return;
+    if (e.target.closest('.ol-entry-bar, .ol-side-row, .ol-alert-hit, .pop-menu, .ctx-menu')) return;
     isPanning = true;
     chart.classList.add('panning');
     panStart = { x: e.clientX, y: e.clientY, panX, panY };
@@ -1231,7 +1233,7 @@
     const rect = chart.getBoundingClientRect();
     const x = e.clientX - rect.left, y = e.clientY - rect.top;
     const plotW = rect.width - AXIS_RIGHT_W, ih = rect.height - AXIS_BOTTOM_H;
-    if (isPanning || hoveringNewsMarker || hoveredHandle || hoveringChartPopup || x < 0 || x > plotW || y < 0 || y > ih) {
+    if (isPanning || hoveringNewsMarker || hoveredHandle || x < 0 || x > plotW || y < 0 || y > ih) {
       if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
       return;
     }
@@ -1242,17 +1244,6 @@
     if (!crosshair) return;
     crosshair = null;
     scheduleDrawPriceChart();
-  });
-
-  /* ---------- suppress crosshair while hovering a chart popup (AI Assistance, Market Scanner) ---------- */
-  chart.querySelectorAll('.chart-popup').forEach(popup => {
-    popup.addEventListener('mouseenter', () => {
-      hoveringChartPopup = true;
-      if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
-    });
-    popup.addEventListener('mouseleave', () => {
-      hoveringChartPopup = false;
-    });
   });
 
   /* ---------- live price simulation: primary symbol (ETH) ---------- */

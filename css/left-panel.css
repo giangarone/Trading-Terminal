@@ -27,9 +27,9 @@
 }
 
 .card-title {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: .03em;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-ui);
+  letter-spacing: var(--ls-label);
   color: var(--paper-300);
   text-transform: uppercase;
 }
@@ -58,9 +58,9 @@
   display: grid;
   grid-template-columns: minmax(36px, 1fr) 64px 56px;
   gap: 4px;
-  font-size: 9.5px;
+  font-size: var(--fs-label);
   color: var(--paper-500);
-  letter-spacing: .05em;
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   padding: 0 6px 6px;
   min-width: 0;
@@ -164,9 +164,13 @@
   gap: 6px;
   background: var(--ink-800);
   border: 1px solid var(--line-2);
-  border-radius: 7px;
+  border-radius: var(--r-sm);
   padding: 6px 9px;
   margin-bottom: 10px;
+}
+
+.wl-search:focus-within {
+  border-color: var(--line-3);
 }
 
 .wl-search .material-symbols-outlined {

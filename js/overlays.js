@@ -1,35 +1,56 @@
-/* ---------- Market Scanner modal (fixed position, viewport-level) ---------- */
+/* ---------- Market Scanner popover (same open/close model as Indicators / L2 Indicators, but ---------- */
+/* ---------- opens horizontally centered and can be dragged around by its header)         ---------- */
 const marketScannerTrigger = document.getElementById('marketScannerTrigger');
 const marketScannerPopup = document.getElementById('marketScannerPopup');
 const marketScannerClose = document.getElementById('marketScannerClose');
-function closeMarketScannerPopup() {
-  marketScannerPopup.classList.remove('show');
-  marketScannerTrigger.classList.remove('active');
-}
 if (marketScannerTrigger) marketScannerTrigger.addEventListener('click', (e) => {
   e.stopPropagation();
-  const willShow = !marketScannerPopup.classList.contains('show');
-  if (willShow) {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const popW = 920;
-    const estH = Math.min(Math.round(vh * 0.86), 720);
-    const left = Math.max(8, Math.round((vw - popW) / 2));
-    const top  = Math.max(8, Math.round((vh - estH) / 2));
-    marketScannerPopup.style.right = 'auto';
-    marketScannerPopup.style.left = left + 'px';
-    marketScannerPopup.style.top  = top + 'px';
+  if (marketScannerPopup.classList.contains('show') && marketScannerPopup._openTrigger === marketScannerTrigger) {
+    window.closeAllPopovers();
+    return;
   }
-  marketScannerPopup.classList.toggle('show', willShow);
-  marketScannerTrigger.classList.toggle('active', willShow);
+  window.openNear(marketScannerPopup, marketScannerTrigger.getBoundingClientRect(), 'left', marketScannerTrigger);
+  const left = Math.max(8, Math.round((window.innerWidth - marketScannerPopup.offsetWidth) / 2));
+  marketScannerPopup.style.left = left + 'px';
 });
 if (marketScannerClose) marketScannerClose.addEventListener('click', (e) => {
   e.stopPropagation();
-  closeMarketScannerPopup();
+  window.closeAllPopovers();
 });
 const marketScannerRefresh = document.getElementById('marketScannerRefresh');
 if (marketScannerRefresh) marketScannerRefresh.addEventListener('click', (e) => e.stopPropagation());
-makeDraggableFixed(marketScannerPopup);
+
+/* keeps the trigger's .active state in sync with the popup regardless of how it closes
+   (close button, outside click, Escape, or another pop-menu trigger taking over) */
+new MutationObserver(() => {
+  marketScannerTrigger.classList.toggle('active', marketScannerPopup.classList.contains('show'));
+}).observe(marketScannerPopup, { attributes: true, attributeFilter: ['class'] });
+
+/* drag the popup around by its header, like the legacy chart-popups used to */
+(function enableMarketScannerDrag() {
+  const head = marketScannerPopup.querySelector('.ind-modal-header');
+  if (!head) return;
+  let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+  head.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.ind-modal-close, .ct-icon')) return;
+    dragging = true;
+    const rect = marketScannerPopup.getBoundingClientRect();
+    startX = e.clientX; startY = e.clientY;
+    startLeft = rect.left; startTop = rect.top;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let left = startLeft + (e.clientX - startX);
+    let top = startTop + (e.clientY - startY);
+    left = Math.min(Math.max(0, left), vw - marketScannerPopup.offsetWidth);
+    top = Math.min(Math.max(0, top), vh - marketScannerPopup.offsetHeight);
+    marketScannerPopup.style.left = left + 'px';
+    marketScannerPopup.style.top = top + 'px';
+  });
+  document.addEventListener('mouseup', () => { dragging = false; });
+})();
 
 /* ---------- chart news visibility toggle ---------- */
 const newsToggle = document.getElementById('newsToggle');
