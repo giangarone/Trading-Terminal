@@ -3372,6 +3372,49 @@
       color: var(--short);
     }
 
+    .ol-chip.ghost.drag-source {
+      opacity: .35;
+      pointer-events: none;
+    }
+
+    .ol-drag-float {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      z-index: 7;
+      pointer-events: none;
+      white-space: nowrap;
+      transition: box-shadow .1s ease;
+    }
+
+    .ol-drag-float-label {
+      font-weight: 700;
+    }
+
+    .ol-drag-float-amt {
+      font-family: var(--sans);
+      font-weight: 700;
+    }
+
+    .ol-drag-float-warn {
+      display: none;
+      font-size: 14px !important;
+      color: var(--accent);
+    }
+
+    .ol-drag-float.invalid {
+      background: var(--short-dim);
+      color: var(--short);
+      box-shadow: 0 0 0 1px var(--short);
+    }
+
+    .ol-drag-float.invalid .ol-drag-float-amt {
+      display: none;
+    }
+
+    .ol-drag-float.invalid .ol-drag-float-warn {
+      display: inline-flex;
+    }
+
     .ol-chip.entry {
       background: rgba(59, 130, 246, 0.16);
       color: #3b82f6;
@@ -8252,49 +8295,69 @@
       }
       /* ---------- TP/SL "add" handles next to the entry: drag away from entry to create a TP or SL at that price ---------- */
       function makeAddHandleDraggable(handle, kind) {
+        handle.title = kind === 'tp' ? 'Drag to create TP' : 'Drag to create SL';
         handle.addEventListener('mousedown', (e) => {
           e.preventDefault(); e.stopPropagation();
           closeAllPopovers();
           const rect = chart.getBoundingClientRect();
           const dir = order.side === 'buy' ? 1 : -1;
           const minDist = 0.25;
-          function clampToValidSide(rawPrice) {
+          const handleRect = handle.getBoundingClientRect();
+          const originX = handleRect.left - rect.left + handleRect.width / 2;
+
+          handle.classList.add('drag-source');
+
+          const guideLine = document.createElement('div');
+          guideLine.className = 'ol-line ' + kind;
+          layer.appendChild(guideLine);
+
+          const floatChip = document.createElement('div');
+          floatChip.className = 'ol-chip ' + kind + ' ol-drag-float';
+          floatChip.style.left = originX + 'px';
+          floatChip.innerHTML =
+            '<span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>' +
+            '<span class="ol-drag-float-label">' + kind.toUpperCase() + '</span>' +
+            '<span class="ol-drag-float-amt"></span>' +
+            '<span class="material-symbols-outlined ol-drag-float-warn">warning</span>';
+          layer.appendChild(floatChip);
+          const amtEl = floatChip.querySelector('.ol-drag-float-amt');
+
+          function isValid(rawPrice) {
             const signedDist = kind === 'tp' ? dir * (rawPrice - order.entry) : dir * (order.entry - rawPrice);
-            if (signedDist < minDist) {
-              return kind === 'tp' ? roundTick(order.entry + dir * minDist) : roundTick(order.entry - dir * minDist);
-            }
-            return roundTick(rawPrice);
+            return signedDist >= minDist;
           }
-          const previewLine = document.createElement('div');
-          previewLine.className = 'ol-line ghost';
-          layer.appendChild(previewLine);
-          const previewRow = document.createElement('div');
-          previewRow.className = 'ol-side-row';
-          previewRow.innerHTML = '<span class="ol-chip ' + kind + '"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>New ' + kind.toUpperCase() + '</span>';
-          layer.appendChild(previewRow);
-          function priceFromEvent(ev) {
-            const y = clamp(ev.clientY - rect.top, 10, rect.height - 10);
-            return clampToValidSide(yToPrice(y, rect.height));
-          }
-          function reposition(price) {
+          function update(clientY) {
+            const y = clamp(clientY - rect.top, 10, rect.height - 10);
+            const rawPrice = yToPrice(y, rect.height);
+            const price = roundTick(rawPrice);
+            const valid = isValid(rawPrice);
             const py = clamp(priceToY(price, rect.height), 10, rect.height - 10);
-            previewLine.style.top = py + 'px';
-            previewRow.style.top = py + 'px';
+            guideLine.style.top = py + 'px';
+            floatChip.style.top = py + 'px';
+            floatChip.classList.toggle('invalid', !valid);
+            if (valid) {
+              const pts = dir * (kind === 'tp' ? (price - order.entry) : (order.entry - price));
+              const amount = pts * POINT_VALUE * order.qty;
+              amtEl.textContent = (kind === 'tp' ? '+' : '-') + fmtMoney(Math.abs(amount));
+            }
+            return { price, valid };
           }
-          reposition(clampToValidSide(yToPrice(clamp(e.clientY - rect.top, 10, rect.height - 10), rect.height)));
-          function move(ev) { reposition(priceFromEvent(ev)); }
-          function up(ev) {
+
+          let last = update(e.clientY);
+          function move(ev) { last = update(ev.clientY); }
+          function up() {
             document.removeEventListener('mousemove', move);
             document.removeEventListener('mouseup', up);
-            const price = priceFromEvent(ev);
-            previewLine.remove();
-            previewRow.remove();
+            guideLine.remove();
+            floatChip.remove();
+            handle.classList.remove('drag-source');
+            if (!last.valid) return; // invalid side: cancel — handle snaps back, nothing is created
             if (kind === 'tp') {
               const newId = 'tp' + (tpCounter++);
-              order.tps.push({ id: newId, price, pct: 100, trailing: false });
+              order.tps.push({ id: newId, price: last.price, pct: 100, trailing: false });
               rebalanceTpAllocations(newId);
             } else {
-              order.sl = { price, trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
+              order.sl = { price: last.price, trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
               order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
               syncQtyFromRisk();
             }
