@@ -3357,6 +3357,21 @@
       border: 1px dashed var(--line-3);
     }
 
+    .ol-chip.ghost.tp-add,
+    .ol-chip.ghost.sl-add {
+      cursor: ns-resize;
+    }
+
+    .ol-chip.ghost.tp-add:hover {
+      border-color: var(--long);
+      color: var(--long);
+    }
+
+    .ol-chip.ghost.sl-add:hover {
+      border-color: var(--short);
+      color: var(--short);
+    }
+
     .ol-chip.entry {
       background: rgba(59, 130, 246, 0.16);
       color: #3b82f6;
@@ -4709,7 +4724,7 @@
       background: transparent;
       color: var(--paper-300);
       font-size: 11.5px;
-      font-weight: 700;
+      font-weight: 600;
       cursor: pointer;
       font-family: var(--sans);
     }
@@ -7986,13 +8001,6 @@
         order.sl = null;
         render();
       }
-      function addDefaultSL() {
-        if (!order) return;
-        const dir = order.side === 'buy' ? 1 : -1;
-        order.sl = { price: roundTick(order.entry - dir * 2.5), trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
-        order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
-        render();
-      }
       /* ---------- TP fill detection (drives "Move to Break Even" once the chosen TP is hit) ---------- */
       function checkTpFills(prevPrice, currentPrice) {
         if (!order || !order.filled || !order.tps.length) return;
@@ -8084,12 +8092,6 @@
           const improvement = dir * (candidate - tp.price);
           if (improvement >= minStepPrice) { tp.price = candidate; }
         });
-      }
-      function addDefaultTP() {
-        if (!order) return;
-        const dir = order.side === 'buy' ? 1 : -1;
-        order.tps.push({ id: 'tp' + (tpCounter++), price: roundTick(order.entry + dir * 2.5), pct: 100, trailing: false });
-        render();
       }
       /* ---------- auto-balance TP allocations so they always sum to exactly 100% ---------- */
       function rebalanceTpAllocations(newTpId) {
@@ -8243,6 +8245,60 @@
             document.removeEventListener('mouseup', up);
             const y = clamp(ev.clientY - rect.top, 10, rect.height - 10);
             onDrop(y, rect.height);
+          }
+          document.addEventListener('mousemove', move);
+          document.addEventListener('mouseup', up);
+        });
+      }
+      /* ---------- TP/SL "add" handles next to the entry: drag away from entry to create a TP or SL at that price ---------- */
+      function makeAddHandleDraggable(handle, kind) {
+        handle.addEventListener('mousedown', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          closeAllPopovers();
+          const rect = chart.getBoundingClientRect();
+          const dir = order.side === 'buy' ? 1 : -1;
+          const minDist = 0.25;
+          function clampToValidSide(rawPrice) {
+            const signedDist = kind === 'tp' ? dir * (rawPrice - order.entry) : dir * (order.entry - rawPrice);
+            if (signedDist < minDist) {
+              return kind === 'tp' ? roundTick(order.entry + dir * minDist) : roundTick(order.entry - dir * minDist);
+            }
+            return roundTick(rawPrice);
+          }
+          const previewLine = document.createElement('div');
+          previewLine.className = 'ol-line ghost';
+          layer.appendChild(previewLine);
+          const previewRow = document.createElement('div');
+          previewRow.className = 'ol-side-row';
+          previewRow.innerHTML = '<span class="ol-chip ' + kind + '"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>New ' + kind.toUpperCase() + '</span>';
+          layer.appendChild(previewRow);
+          function priceFromEvent(ev) {
+            const y = clamp(ev.clientY - rect.top, 10, rect.height - 10);
+            return clampToValidSide(yToPrice(y, rect.height));
+          }
+          function reposition(price) {
+            const py = clamp(priceToY(price, rect.height), 10, rect.height - 10);
+            previewLine.style.top = py + 'px';
+            previewRow.style.top = py + 'px';
+          }
+          reposition(clampToValidSide(yToPrice(clamp(e.clientY - rect.top, 10, rect.height - 10), rect.height)));
+          function move(ev) { reposition(priceFromEvent(ev)); }
+          function up(ev) {
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', up);
+            const price = priceFromEvent(ev);
+            previewLine.remove();
+            previewRow.remove();
+            if (kind === 'tp') {
+              const newId = 'tp' + (tpCounter++);
+              order.tps.push({ id: newId, price, pct: 100, trailing: false });
+              rebalanceTpAllocations(newId);
+            } else {
+              order.sl = { price, trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
+              order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
+              syncQtyFromRisk();
+            }
+            render();
           }
           document.addEventListener('mousemove', move);
           document.addEventListener('mouseup', up);
@@ -8756,8 +8812,9 @@
         const fullEdit = !order.filled || order.editing;
 
         if (fullEdit) {
-          // ---- TP lines (stack sorted by price; furthest from entry rendered correctly via actual price->Y) ----
-          order.tps.slice().forEach((tp, idx) => {
+          // ---- TP lines (sorted nearest-to-entry first, so labels renumber TP1, TP2, TP3... by proximity) ----
+          const tpSortDir = order.side === 'buy' ? 1 : -1;
+          order.tps.slice().sort((a, b) => tpSortDir * (a.price - b.price)).forEach((tp, idx) => {
             const y = clamp(priceToY(tp.price, H), 10, H - 10);
             const line = document.createElement('div');
             line.className = 'ol-line tp';
@@ -8818,16 +8875,6 @@
             });
           });
 
-          if (order.tps.length === 0) {
-            const y = clamp(priceToY(order.entry + (order.side === 'buy' ? 1 : -1) * 2.5, H), 10, H - 10);
-            const row = document.createElement('div');
-            row.className = 'ol-side-row ghost-row';
-            row.style.top = y + 'px';
-            row.innerHTML = '<span class="ol-chip ghost"><span class="material-symbols-outlined" style="font-size:13px;">add</span>Set Take Profit</span>';
-            row.addEventListener('click', addDefaultTP);
-            layer.appendChild(row);
-          }
-
           // ---- SL line ----
           if (order.sl) {
             const y = clamp(priceToY(order.sl.price, H), 10, H - 10);
@@ -8875,14 +8922,6 @@
               e.stopPropagation();
               openSlGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
             });
-          } else {
-            const y = clamp(priceToY(order.entry - (order.side === 'buy' ? 1 : -1) * 2.5, H), 10, H - 10);
-            const row = document.createElement('div');
-            row.className = 'ol-side-row ghost-row';
-            row.style.top = y + 'px';
-            row.innerHTML = '<span class="ol-chip ghost"><span class="material-symbols-outlined" style="font-size:13px;">add</span>Set Stop Loss</span>';
-            row.addEventListener('click', addDefaultSL);
-            layer.appendChild(row);
           }
         }
 
@@ -8913,13 +8952,16 @@
           bar.className = 'ol-entry-bar' + (!fullEdit ? ' reveal' : '');
           bar.style.top = y + 'px';
 
+          const tpAddHandleHtml = '<span class="ol-chip ghost tp-add" id="tpAddHandle"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>TP</span>';
+          const slAddHandleHtml = !order.sl ? '<span class="ol-chip ghost sl-add" id="slAddHandle"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>SL</span>' : '';
           if (!order.filled) {
             const sizeLabel = order.sizeMode === 'contracts' ? String(order.qty)
               : order.sizeMode === 'dollar' ? '$' + fmt(order.sizeValues.dollar, 0)
                 : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
                   : '$' + fmt(order.sizeValues.risk, 0) + ' risk';
             bar.innerHTML =
-              '<span class="ol-chip entry" id="entryPriceHandle"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>ENTRY</span>' +
+              '<span class="ol-chip entry" id="entryPriceHandle"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>' + (order.side === 'buy' ? 'BUY' : 'SELL') + '</span>' +
+              tpAddHandleHtml + slAddHandleHtml +
               '<span class="ol-pill neutral tag pop-trigger" id="sizePillTrigger">' + sizeLabel + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
               '<span class="ol-pill neutral tag pop-trigger" id="typePillTrigger">' + order.orderType + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
               '<span class="ol-check" id="confirmOrderBtn" title="Execute Trade"><span class="material-symbols-outlined">check</span></span>' +
@@ -8927,6 +8969,7 @@
           } else if (order.editing) {
             bar.innerHTML =
               '<span class="ol-chip entry" id="entryPriceHandle"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>' + (order.side === 'buy' ? 'LONG' : 'SHORT') + '</span>' +
+              tpAddHandleHtml + slAddHandleHtml +
               '<span class="ol-pill neutral tag pop-trigger" id="sizePillTrigger">' + order.qty + ' ' + QT_INSTRUMENT_UNIT + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
               '<span class="ol-check" id="doneEditingBtn" title="Done Editing"><span class="material-symbols-outlined">check</span></span>' +
               '<span class="ol-x" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
@@ -8937,6 +8980,11 @@
               '<span class="ol-x" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
           }
           entryHost.appendChild(bar);
+
+          const tpAddHandle = bar.querySelector('#tpAddHandle');
+          if (tpAddHandle) makeAddHandleDraggable(tpAddHandle, 'tp');
+          const slAddHandle = bar.querySelector('#slAddHandle');
+          if (slAddHandle) makeAddHandleDraggable(slAddHandle, 'sl');
 
           const entryPriceHandle = bar.querySelector('#entryPriceHandle');
           bindHandleHover(entryPriceHandle, 'entry');
