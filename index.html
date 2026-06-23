@@ -1062,13 +1062,11 @@
                       class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
-              <p class="qt-help">Fills only at this price or better.</p>
             </div>
 
             <div class="qt-tab-panel" data-tab-panel="market" id="qtTabPanel-market">
               <label class="label-sm" style="margin-top:12px;">Price</label>
               <div class="text-input-qt info qt-disabled-row"><span>Market Price</span></div>
-              <p class="qt-help">Fills immediately at the best available price.</p>
             </div>
 
             <div class="qt-tab-panel" data-tab-panel="stopMarket" id="qtTabPanel-stopMarket">
@@ -1085,8 +1083,7 @@
               </div>
               <label class="label-sm" style="margin-top:12px;">Price</label>
               <div class="text-input-qt info qt-disabled-row"><span>Market Price</span></div>
-              <p class="qt-help">Triggers a market order once the last price reaches the stop price.</p>
-              <label class="label-sm">Slippage Tolerance</label>
+              <label class="label-sm" style="margin-top:12px;">Slippage Tolerance</label>
               <div class="price-stepper">
                 <input type="text" id="qtStopMarketSlippage" value="0.10">
                 <span class="qty-unit">%</span>
@@ -1097,7 +1094,6 @@
                       class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
-              <p class="qt-help">Minimum 0.1%</p>
             </div>
 
             <div class="qt-tab-panel" data-tab-panel="stopLimit" id="qtTabPanel-stopLimit">
@@ -1123,7 +1119,6 @@
                       class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
-              <p class="qt-help">Triggers a limit order at the limit price once the stop price is reached.</p>
             </div>
 
             <div class="qt-tab-panel" data-tab-panel="trailingStop" id="qtTabPanel-trailingStop">
@@ -1151,7 +1146,6 @@
                 </div>
                 <button type="button" class="qt-side-btn" id="qtTrailMarketToggle">Market</button>
               </div>
-              <p class="qt-help">Trails the market by the delta and triggers once price reverses by that amount.</p>
               <label class="tpsl-checkbox-row" id="qtTrailActivationToggle">
                 <span class="chk-box" id="qtTrailActivationCheckbox"><span
                     class="material-symbols-outlined">check</span></span>
@@ -1183,9 +1177,7 @@
               </div>
               <label class="label-sm" style="margin-top:12px;">Price</label>
               <div class="text-input-qt info qt-disabled-row"><span>Market Price</span></div>
-              <p class="qt-help">Becomes a market order the moment price touches the trigger — useful for entering at
-                a more favorable price than the current market without watching the chart.</p>
-              <label class="label-sm">Slippage Tolerance</label>
+              <label class="label-sm" style="margin-top:12px;">Slippage Tolerance</label>
               <div class="price-stepper">
                 <input type="text" id="qtMitSlippage" value="0.10">
                 <span class="qty-unit">%</span>
@@ -1196,10 +1188,7 @@
                       class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
-              <p class="qt-help">Minimum 0.1%</p>
             </div>
-
-            <div class="qt-sep"></div>
 
             <div class="qt-split-row">
               <div class="qt-col">
@@ -1224,22 +1213,9 @@
               </div>
             </div>
 
-            <div class="qt-hotkeys-row">
-              <label class="label-sm">Amount Hot Keys</label>
-              <div class="qt-hotkeys" id="qtHotkeys">
-                <button data-amt="1">1</button>
-                <button data-amt="5">5</button>
-                <button data-amt="10">10</button>
-                <button data-amt="20">20</button>
-                <button data-amt="50">50</button>
-                <button data-amt="max">Max</button>
-              </div>
-            </div>
-
             <div class="qt-slider-block">
-              <label class="label-sm">Amount Slider</label>
               <input type="range" class="qt-slider" id="qtSlider" min="0" max="100" step="1" value="25">
-              <div class="qt-tick-row"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+              <div class="qt-tick-row" id="qtSliderTicks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
               </div>
             </div>
 

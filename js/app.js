@@ -429,16 +429,16 @@
   });
   /* ---------- amount type (Quantity / USD / % of Balance) ---------- */
   const QT_MODES = {
-    Quantity: { unit: QT_INSTRUMENT_UNIT, label: 'Quantity', step: 1, hotkeys: [1, 5, 10, 20, 50], default: '1' },
-    USD: { unit: 'USD', label: 'USD Amount', step: 50, hotkeys: [100, 500, 1000, 5000], default: '100' },
-    '% of Balance': { unit: '%', label: 'Percent of Balance', step: 5, hotkeys: [5, 10, 25, 50, 75], default: '10' },
+    Quantity: { unit: QT_INSTRUMENT_UNIT, label: 'Quantity', step: 1, default: '1' },
+    USD: { unit: 'USD', label: 'USD Amount', step: 50, default: '100' },
+    '% of Balance': { unit: '%', label: 'Percent of Balance', step: 5, default: '10' },
   };
   let qtAmountMode = 'Quantity';
   const qtAmountInput = document.getElementById('qtAmountInput');
   const qtAmountLabel = document.getElementById('qtAmountLabel');
   const qtQtyUnit = document.getElementById('qtQtyUnit');
-  const qtHotkeysEl = document.getElementById('qtHotkeys');
   const qtSlider = document.getElementById('qtSlider');
+  const qtSliderTicks = document.getElementById('qtSliderTicks');
   const qtEstSize = document.getElementById('qtEstSize');
   const qtEstValue = document.getElementById('qtEstValue');
   const qtEstFees = document.getElementById('qtEstFees');
@@ -465,12 +465,15 @@
   function qtSliderFill(pct) {
     qtSlider.style.background = 'linear-gradient(to right, var(--purple) 0%, var(--purple) ' + pct + '%, var(--line-2) ' + pct + '%, var(--line-2) 100%)';
   }
-  function qtBindHotkeys() {
-    qtHotkeysEl.querySelectorAll('button').forEach(b => {
-      b.addEventListener('click', () => {
-        qtAmountInput.value = b.dataset.amt === 'max' ? qtModeMax(qtAmountMode) : b.dataset.amt;
-        qtUpdateEstimates();
-      });
+  function qtSliderTickLabel(val) {
+    if (qtAmountMode === 'Quantity') return qtFmtQty(val) + ' ' + QT_INSTRUMENT_UNIT;
+    if (qtAmountMode === 'USD') return '$' + fmt(val, 0);
+    return Math.round(val) + '%';
+  }
+  function qtUpdateSliderTicks() {
+    const max = qtModeMax(qtAmountMode) || 0;
+    qtSliderTicks.querySelectorAll('span').forEach((span, i) => {
+      span.textContent = qtSliderTickLabel(max * i / 4);
     });
   }
   function qtUpdateEstimates(syncSlider) {
@@ -485,6 +488,7 @@
       qtSlider.value = Math.min(100, Math.round(amt / max * 100));
     }
     qtSliderFill(parseInt(qtSlider.value, 10));
+    qtUpdateSliderTicks();
   }
   function qtSetAmountMode(mode) {
     qtAmountMode = mode;
@@ -492,9 +496,6 @@
     qtAmountLabel.textContent = cfg.label;
     qtQtyUnit.textContent = cfg.unit;
     qtAmountInput.value = cfg.default;
-    qtHotkeysEl.innerHTML = cfg.hotkeys.map(v => '<button data-amt="' + v + '">' + v + '</button>').join('') +
-      '<button data-amt="max">Max</button>';
-    qtBindHotkeys();
     qtUpdateEstimates();
   }
 
@@ -533,7 +534,6 @@
     qtAmountInput.value = Math.max(0, Math.round(pct / 100 * max));
     qtUpdateEstimates(false);
   });
-  qtBindHotkeys();
   qtUpdateEstimates();
 
   function cancelOrder() {
