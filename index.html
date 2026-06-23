@@ -274,7 +274,7 @@
                 <div class="cs-col">
 
                   <div class="cs-card">
-                    <div class="cs-card-head"><span class="material-symbols-outlined">vertical_align_center</span>
+                    <div class="cs-card-head">
                       <span class="cs-card-title">Move SL To Breakeven</span>
                     </div>
                     <div class="cs-fields-row">
@@ -320,7 +320,7 @@
                   </div>
 
                   <div class="cs-card">
-                    <div class="cs-card-head"><span class="material-symbols-outlined">trending_down</span>
+                    <div class="cs-card-head">
                       <span class="cs-card-title">Trailing Stop</span>
                     </div>
                     <div class="cs-fields-row">
@@ -399,7 +399,7 @@
                   </div>
 
                   <div class="cs-card">
-                    <div class="cs-card-head"><span class="material-symbols-outlined">ssid_chart</span>
+                    <div class="cs-card-head">
                       <span class="cs-card-title">ATR Stop</span>
                     </div>
                     <div class="cs-fields-row">
@@ -459,7 +459,7 @@
                   </div>
 
                   <div class="cs-card">
-                    <div class="cs-card-head"><span class="material-symbols-outlined">trending_up</span>
+                    <div class="cs-card-head">
                       <span class="cs-card-title">Trailing Take Profit</span>
                     </div>
                     <div class="cs-fields-row">
@@ -544,8 +544,7 @@
                 <div class="cs-col">
 
                   <div class="cs-card">
-                    <div class="cs-card-head"><span class="material-symbols-outlined" style="color:var(--accent);">
-                        star</span>
+                    <div class="cs-card-head">
                       <span class="cs-card-title">Default TP/SL Behavior</span>
                     </div>
                     <div class="cs-field" style="margin-bottom:14px;">
@@ -570,7 +569,6 @@
                       the chart.</div>
 
                     <div class="cs-field" id="csTargetTableWrap" style="display:none; margin-top:14px;">
-                      <label>Default Targets</label>
                       <div class="cs-target-table">
                         <div class="cs-target-row cs-target-head">
                           <span>Target</span><span>%</span><span>Risk</span><span>Type</span><span></span>
@@ -581,7 +579,7 @@
                   </div>
 
                   <div class="cs-card">
-                    <div class="cs-card-head"><span class="material-symbols-outlined">settings</span>
+                    <div class="cs-card-head">
                       <span class="cs-card-title">Global Behavior</span>
                     </div>
                     <label class="cs-checkbox-row"><span class="chk-box" id="csGbCancelOnClose"><span
@@ -1215,7 +1213,8 @@
 
             <div class="qt-slider-block">
               <input type="range" class="qt-slider" id="qtSlider" min="0" max="100" step="1" value="25">
-              <div class="qt-tick-row" id="qtSliderTicks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+              <div class="qt-tick-row" id="qtSliderTicks">
+                <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
               </div>
             </div>
 
@@ -1863,8 +1862,8 @@
   <!-- ===================== QUICK TRADE: ADVANCED ORDER TYPE DROPDOWN ===================== -->
   <div class="pop-menu" id="qtAdvancedTypeMenu" style="width:200px;">
     <button class="pop-item selected" data-adv-type="stopMarket">
-      <span class="pop-text"><span class="pt-title">Stop Market</span><span class="pt-sub">Trigger a market order at
-          a stop price</span></span>
+      <span class="pop-text"><span class="pt-title">Stop Market</span><span class="pt-sub">Triggers market order at stop
+          price</span></span>
     </button>
     <button class="pop-item" data-adv-type="stopLimit">
       <span class="pop-text"><span class="pt-title">Stop Limit</span><span class="pt-sub">Trigger a limit order at a

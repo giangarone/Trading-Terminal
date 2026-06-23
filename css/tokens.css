@@ -44,10 +44,8 @@
   /* ── Font weights ────────────────────────────────────────── */
   --fw-mid: 500;
   /* secondary / descriptive text              */
-  --fw-ui: 600;
+  --fw-semi: 600;
   /* buttons, labels, interactive elements     */
-  --fw-strong: 700;
-  /* data values, titles                       */
 
   /* ── Letter spacing ──────────────────────────────────────── */
   --ls-label: .06em;

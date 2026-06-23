@@ -210,7 +210,7 @@
   padding: 8px 0;
   text-align: center;
   font-size: var(--fs-sm);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   background: var(--ink-800);
   border: 1px solid var(--line-2);
   color: var(--paper-300);
@@ -220,4 +220,3 @@
   color: var(--paper-100);
   border-color: var(--line-3);
 }
-

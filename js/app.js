@@ -1910,7 +1910,7 @@
     }
     if (csSlDraft) {
       html += '<div class="cs-target-row">' +
-        '<span class="cs-target-label sl">Stop Loss</span>' +
+        '<span class="cs-target-label sl">SL</span>' +
         '<input type="text" class="cs-target-input" value="100%" disabled>' +
         '<input type="text" class="cs-target-input" id="csSlDraftR" value="' + csSlDraft.r.toFixed(1) + 'R">' +
         '<div class="select-input pop-trigger cs-dd-trigger" data-target="csSlDraftType"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div><select id="csSlDraftType" style="display:none;">' +

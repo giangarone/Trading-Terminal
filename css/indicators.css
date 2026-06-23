@@ -174,7 +174,7 @@
 
 .ind-group-label {
   font-size: var(--fs-label);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-500);
@@ -309,7 +309,7 @@
   flex: 1;
   text-align: center;
   font-size: var(--fs-sm);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   padding: 7px 2px;
   border-radius: var(--r-xs);
   color: var(--paper-300);

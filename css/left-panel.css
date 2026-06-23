@@ -28,7 +28,7 @@
 
 .card-title {
   font-size: var(--fs-label);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   letter-spacing: var(--ls-label);
   color: var(--paper-300);
   text-transform: uppercase;

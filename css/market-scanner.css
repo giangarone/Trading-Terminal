@@ -75,7 +75,7 @@
 
 .ms-metric-lbl {
   font-size: var(--fs-label);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-500);
@@ -144,7 +144,7 @@
 
 .ms-sectors-lbl {
   font-size: var(--fs-label);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-500);
@@ -197,7 +197,7 @@
   align-items: center;
   gap: 6px;
   font-size: var(--fs-label);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-300);
@@ -333,7 +333,7 @@
 
 .ms-filter-lbl {
   font-size: var(--fs-label);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-500);
@@ -379,7 +379,7 @@ table.ms-scan-table th {
   letter-spacing: var(--ls-label);
   color: var(--paper-500);
   text-transform: uppercase;
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   padding: 12px 14px 10px;
   position: sticky;
   top: 0;
@@ -558,9 +558,11 @@ table.ms-scan-table tr[data-tags].hide-row {
 .ol-line.entry {
   border-top-style: dotted;
 }
+
 .ol-line.entry.buy {
   border-color: rgba(43, 212, 126, .55);
 }
+
 .ol-line.entry.sell {
   border-color: rgba(242, 73, 92, .55);
 }
@@ -1075,7 +1077,7 @@ table.ms-scan-table tr[data-tags].hide-row {
 
 .pop-menu-label {
   font-size: var(--fs-label);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--paper-500);

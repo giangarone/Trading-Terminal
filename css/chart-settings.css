@@ -182,7 +182,7 @@
   background: var(--ink-850);
   color: var(--paper-300);
   font-size: var(--fs-sm);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   font-family: var(--sans);
   cursor: pointer;
 }
@@ -265,18 +265,12 @@
 .cs-card-head {
   display: flex;
   align-items: center;
-  gap: 9px;
   margin-bottom: 14px;
-}
-
-.cs-card-head .material-symbols-outlined {
-  font-size: 17px;
-  color: var(--accent);
 }
 
 .cs-card-title {
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--paper-100);
 }
 
@@ -331,7 +325,7 @@
   padding: 0 10px;
   font-family: var(--sans);
   font-size: var(--fs-data);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   color: var(--paper-100);
 }
 
@@ -403,7 +397,7 @@
 #csTargetRows {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .cs-target-row {
@@ -421,15 +415,25 @@
 }
 
 .cs-target-label {
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 6px;
+  font-size: 10.5px;
   font-weight: 700;
+  letter-spacing: .02em;
 }
 
 .cs-target-label.tp {
+  background: #102B1E;
   color: var(--long);
 }
 
 .cs-target-label.sl {
+  background: #2D1518;
   color: var(--short);
 }
 
@@ -442,7 +446,7 @@
   padding: 0 8px;
   font-family: var(--sans);
   font-size: var(--fs-data);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   color: var(--paper-100);
 }
 
@@ -561,7 +565,7 @@
   padding: 9px 18px;
   border-radius: var(--r-sm);
   font-size: var(--fs-body);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   border: none;
   cursor: pointer;
   font-family: var(--sans);

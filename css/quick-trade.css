@@ -374,7 +374,7 @@
 
 .qt-est-val {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--paper-100);
   font-family: var(--sans);
 }
@@ -608,7 +608,7 @@
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   font-family: var(--sans);
 }
 
