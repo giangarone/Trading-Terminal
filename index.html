@@ -3232,44 +3232,29 @@
       opacity: 1;
     }
 
-    .ol-x {
-      width: 30px;
-      height: 30px;
-      border-radius: 7px;
-      background: var(--ink-800);
-      border: 1px solid var(--line-2);
+    .ol-pill.combo {
+      padding: 0;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .ol-pill-seg {
       display: flex;
       align-items: center;
-      justify-content: center;
-      color: var(--paper-300);
+      height: 100%;
+      padding: 0 11px;
       cursor: pointer;
+    }
+
+    .ol-pill-seg:hover {
+      background: var(--ink-750);
+    }
+
+    .ol-pill-divider {
+      width: 1px;
+      height: 16px;
+      background: var(--line-2);
       flex-shrink: 0;
-    }
-
-    .ol-x:hover {
-      color: var(--short);
-      border-color: rgba(242, 73, 92, .4);
-      background: var(--short-dim);
-    }
-
-    .ol-check {
-      width: 30px;
-      height: 30px;
-      border-radius: 7px;
-      background: var(--ink-800);
-      border: 1px solid var(--line-2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--paper-300);
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .ol-check:hover {
-      color: var(--long);
-      border-color: rgba(43, 212, 126, .4);
-      background: var(--long-dim);
     }
 
     /* Filled position: subtle entry line by default, full TP/SL/edit controls reveal on hover */
@@ -3340,13 +3325,13 @@
     }
 
     .ol-chip.tp {
-      background: rgba(43, 212, 126, .16);
+      background: #102B1E;
       color: var(--long);
       cursor: ns-resize;
     }
 
     .ol-chip.sl {
-      background: rgba(242, 73, 92, .16);
+      background: #2D1518;
       color: var(--short);
       cursor: ns-resize;
     }
@@ -3395,30 +3380,10 @@
       font-weight: 700;
     }
 
-    .ol-drag-float-warn {
-      display: none;
-      font-size: 14px !important;
-      color: var(--accent);
-    }
-
-    .ol-drag-float.invalid {
-      background: var(--short-dim);
-      color: var(--short);
-      box-shadow: 0 0 0 1px var(--short);
-    }
-
-    .ol-drag-float.invalid .ol-drag-float-amt {
-      display: none;
-    }
-
-    .ol-drag-float.invalid .ol-drag-float-warn {
-      display: inline-flex;
-    }
-
     .ol-chip.entry {
-      background: rgba(59, 130, 246, 0.16);
+      background: #101D30;
       color: #3b82f6;
-      cursor: ns-resize;
+      cursor: default;
     }
 
     .ol-chip.entry.locked {
@@ -3427,6 +3392,10 @@
 
     .ol-chip.entry:hover {
       filter: brightness(1.08);
+    }
+
+    .ol-chip.entry.buy-sell-btn {
+      cursor: pointer;
     }
 
     .ol-drag-ic {
@@ -3486,6 +3455,16 @@
     .ol-gear:hover {
       color: var(--paper-100);
       background: var(--ink-750);
+    }
+
+    .ol-gear.ol-danger:hover {
+      color: var(--short);
+      background: var(--short-dim);
+    }
+
+    .ol-gear.ol-success:hover {
+      color: var(--long);
+      background: var(--long-dim);
     }
 
     .ol-gear .material-symbols-outlined {
@@ -3695,11 +3674,6 @@
 
     .sl-override-panel {
       padding: 4px 9px 6px;
-    }
-
-    .sl-override-use-row {
-      padding: 5px 0;
-      font-size: 11.5px;
     }
 
     .sl-override-fields {
@@ -6765,9 +6739,7 @@
           class="material-symbols-outlined">tune</span></button>
     </div>
     <div class="settings-subpanel sl-override-panel" id="slBeOverridePanel">
-      <label class="cs-checkbox-row sl-override-use-row"><span class="chk-box" id="slBeOverrideEnabled"><span
-            class="material-symbols-outlined">check</span></span>Custom settings for this stop loss</label>
-      <div class="sl-override-fields" id="slBeOverrideFields" style="display:none;">
+      <div class="sl-override-fields" id="slBeOverrideFields">
         <div class="cs-field">
           <label>Trigger</label>
           <div class="select-input pop-trigger cs-dd-trigger" data-target="slBeOvTrigger"><span
@@ -6801,7 +6773,6 @@
         </div>
       </div>
     </div>
-    <div class="pop-sep"></div>
     <div class="sl-override-row">
       <button class="pop-item" id="slTrail">
         <span class="pop-icon"><span class="material-symbols-outlined">trending_down</span></span>
@@ -6812,9 +6783,7 @@
           class="material-symbols-outlined">tune</span></button>
     </div>
     <div class="settings-subpanel sl-override-panel" id="slTrailOverridePanel">
-      <label class="cs-checkbox-row sl-override-use-row"><span class="chk-box" id="slTrailOverrideEnabled"><span
-            class="material-symbols-outlined">check</span></span>Custom settings for this stop loss</label>
-      <div class="sl-override-fields" id="slTrailOverrideFields" style="display:none;">
+      <div class="sl-override-fields" id="slTrailOverrideFields">
         <div class="cs-field">
           <label>Method</label>
           <div class="select-input pop-trigger cs-dd-trigger" data-target="slTrailOvMethod"><span
@@ -6887,9 +6856,7 @@
           class="material-symbols-outlined">tune</span></button>
     </div>
     <div class="settings-subpanel sl-override-panel" id="slAtrOverridePanel">
-      <label class="cs-checkbox-row sl-override-use-row"><span class="chk-box" id="slAtrOverrideEnabled"><span
-            class="material-symbols-outlined">check</span></span>Custom settings for this stop loss</label>
-      <div class="sl-override-fields" id="slAtrOverrideFields" style="display:none;">
+      <div class="sl-override-fields" id="slAtrOverrideFields">
         <div class="cs-fields-row">
           <div class="cs-field">
             <label>ATR Length</label>
@@ -7574,8 +7541,9 @@
       let panX = 0, panY = 0; // panX: px shift of candles; panY: price shift applied to whole scale
       let panXInitialized = false; // on first draw, panX is set to push candles left, leaving more empty space on the right
       let crosshair = null; // {x,y} in CSS px relative to chart, within plot bounds, or null when not hovering
-      let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | null — which order-line handle is currently hovered
+      let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | 'tp-add' | 'sl-add' | null — which order-line handle is currently hovered
       let hoveringChartPopup = false; // true while the cursor is over a draggable chart popup (AI Assistance, Market Scanner)
+      let isDraggingOrderLine = false; // true for the duration of any order-line drag — blocks the price-tick auto-render from wiping live drag visuals
       function priceToY(price, h) { const ih = h - AXIS_BOTTOM_H; return ih / 2 - (price - BASE_PRICE - panY) * PX_PER_POINT; }
       function yToPrice(y, h) { const ih = h - AXIS_BOTTOM_H; return BASE_PRICE + panY - (y - ih / 2) / PX_PER_POINT; }
       function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
@@ -7607,7 +7575,10 @@
           closeAllPopovers();
           return;
         }
-        closeAllPopoversExcept(el);
+        /* if this popover was triggered from inside another already-open popover (e.g. a dropdown */
+        /* nested in the SL gear menu), keep that parent open instead of closing it out from under the user */
+        const parentMenu = trigger ? trigger.closest('.pop-menu, .ctx-menu') : null;
+        closeAllPopoversExcept(el, parentMenu);
         el.classList.add('show');
         el._openTrigger = trigger || null;
         const vw = window.innerWidth, vh = window.innerHeight;
@@ -7620,8 +7591,8 @@
         el.style.left = x + 'px';
         el.style.top = y + 'px';
       }
-      function closeAllPopoversExcept(keep) {
-        document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => { if (m !== keep) m.classList.remove('show'); });
+      function closeAllPopoversExcept(...keep) {
+        document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => { if (!keep.includes(m)) m.classList.remove('show'); });
       }
       document.addEventListener('click', (e) => {
         if (e.target.closest('.pop-trigger') || e.target.closest('.pop-menu') || e.target.closest('.ctx-menu')) return;
@@ -7658,8 +7629,10 @@
         e.stopPropagation();
         const select = document.getElementById(trigger.dataset.target);
         if (!select) return;
+        /* a dropdown nested inside another popover (e.g. the SL gear menu) shouldn't take that parent down with it */
+        const parentMenu = trigger.closest('.pop-menu, .ctx-menu');
         if (csDropdownMenu.classList.contains('show') && csDropdownMenu._openTrigger === trigger) {
-          closeAllPopovers();
+          csDropdownMenu.classList.remove('show');
           return;
         }
         csDropdownMenu.innerHTML = Array.from(select.options).map((opt) =>
@@ -7672,7 +7645,7 @@
             select.value = btn.dataset.value;
             select.dispatchEvent(new Event('change', { bubbles: true }));
             refreshCsDropdownTriggerLabel(trigger);
-            closeAllPopovers();
+            closeAllPopoversExcept(parentMenu);
           });
         });
         openNear(csDropdownMenu, trigger.getBoundingClientRect(), 'left', trigger);
@@ -7752,9 +7725,7 @@
           tps, sl, tpsHitCount: 0,
           initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null
         };
-        orderHistory.unshift({ symbol: 'ETHUSD', side, qty: order.qty, price: order.entry, status: 'placed', time: nowTimeStr() });
         render();
-        showToast((side === 'buy' ? 'Long' : 'Short') + ' order placed at ' + fmt(order.entry), side === 'buy' ? 'north_east' : 'south_east');
       }
 
       /* ---------- Quick Trade panel ---------- */
@@ -7881,6 +7852,7 @@
         const prevVal = qtyInput.value;
         qtyInput.value = Math.max(1, Math.round(qty));
         createOrder(side, price);
+        confirmOrderFill();
         qtyInput.value = prevVal;
       }
       function qtActiveTab() {
@@ -8028,6 +8000,7 @@
       function confirmOrderFill() {
         if (!order || order.filled) return;
         order.filled = true;
+        orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'filled', time: nowTimeStr() });
         render();
         showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
       }
@@ -8198,7 +8171,7 @@
         const body = document.getElementById('bpBody-orders');
         if (!body) return;
         const rows = [];
-        if (order) {
+        if (order && order.filled) {
           const dir = order.side === 'buy' ? 1 : -1;
           const closingSide = order.side === 'buy' ? 'Sell' : 'Buy';
           rows.push(
@@ -8208,7 +8181,7 @@
             '<td>' + order.orderType + '</td>' +
             '<td>' + order.qty + '</td>' +
             '<td>' + fmt(order.entry) + '</td>' +
-            '<td>' + (order.filled ? '<span class="bp-status filled">Filled</span>' : '<span class="bp-status working">Working</span>') + '</td>' +
+            '<td><span class="bp-status filled">Filled</span></td>' +
             '<td><span class="bp-action-icon" data-cancel-entry="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
             '</tr>'
           );
@@ -8274,18 +8247,36 @@
       }
 
       /* ---------- drag behaviour ---------- */
+      /* snap a TP/SL to the valid side of the entry, 25px above/below it on screen */
+      function snappedSidePrice(kind, h) {
+        const dir = order.side === 'buy' ? 1 : -1;
+        const yDir = kind === 'tp' ? -dir : dir;
+        const entryY = priceToY(order.entry, h);
+        return roundTick(yToPrice(clamp(entryY + yDir * 25, 10, h - 10), h));
+      }
+      /* a plain click (no movement) on the handle falls through to its own click listener instead of dragging — */
+      /* lets a handle double as both a drag target and a menu/edit trigger (e.g. the size/type pills, .ol-amt) */
       function makeDraggable(handle, onDrag, onDrop) {
         handle.addEventListener('mousedown', (e) => {
           e.preventDefault(); e.stopPropagation();
           closeAllPopovers();
+          isDraggingOrderLine = true;
           const rect = chart.getBoundingClientRect();
+          const startX = e.clientX, startY = e.clientY;
+          let dragging = false;
           function move(ev) {
+            if (!dragging) {
+              if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) return;
+              dragging = true;
+            }
             const y = clamp(ev.clientY - rect.top, 10, rect.height - 10);
             onDrag(y, rect.height);
           }
           function up(ev) {
             document.removeEventListener('mousemove', move);
             document.removeEventListener('mouseup', up);
+            isDraggingOrderLine = false;
+            if (!dragging) return;
             const y = clamp(ev.clientY - rect.top, 10, rect.height - 10);
             onDrop(y, rect.height);
           }
@@ -8299,6 +8290,10 @@
         handle.addEventListener('mousedown', (e) => {
           e.preventDefault(); e.stopPropagation();
           closeAllPopovers();
+          isDraggingOrderLine = true;
+          hoveredHandle = kind + '-add';
+          if (crosshair) crosshair = null;
+          scheduleDrawPriceChart();
           const rect = chart.getBoundingClientRect();
           const dir = order.side === 'buy' ? 1 : -1;
           const minDist = 0.25;
@@ -8315,10 +8310,8 @@
           floatChip.className = 'ol-chip ' + kind + ' ol-drag-float';
           floatChip.style.left = originX + 'px';
           floatChip.innerHTML =
-            '<span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>' +
             '<span class="ol-drag-float-label">' + kind.toUpperCase() + '</span>' +
-            '<span class="ol-drag-float-amt"></span>' +
-            '<span class="material-symbols-outlined ol-drag-float-warn">warning</span>';
+            '<span class="ol-drag-float-amt"></span>';
           layer.appendChild(floatChip);
           const amtEl = floatChip.querySelector('.ol-drag-float-amt');
 
@@ -8334,12 +8327,9 @@
             const py = clamp(priceToY(price, rect.height), 10, rect.height - 10);
             guideLine.style.top = py + 'px';
             floatChip.style.top = py + 'px';
-            floatChip.classList.toggle('invalid', !valid);
-            if (valid) {
-              const pts = dir * (kind === 'tp' ? (price - order.entry) : (order.entry - price));
-              const amount = pts * POINT_VALUE * order.qty;
-              amtEl.textContent = (kind === 'tp' ? '+' : '-') + fmtMoney(Math.abs(amount));
-            }
+            const pts = dir * (kind === 'tp' ? (price - order.entry) : (order.entry - price));
+            const amount = pts * POINT_VALUE * order.qty;
+            amtEl.textContent = (amount >= 0 ? '+' : '-') + fmtMoney(Math.abs(amount));
             return { price, valid };
           }
 
@@ -8348,16 +8338,18 @@
           function up() {
             document.removeEventListener('mousemove', move);
             document.removeEventListener('mouseup', up);
+            isDraggingOrderLine = false;
+            hoveredHandle = null;
             guideLine.remove();
             floatChip.remove();
             handle.classList.remove('drag-source');
-            if (!last.valid) return; // invalid side: cancel — handle snaps back, nothing is created
+            const finalPrice = last.valid ? last.price : snappedSidePrice(kind, rect.height);
             if (kind === 'tp') {
               const newId = 'tp' + (tpCounter++);
-              order.tps.push({ id: newId, price: last.price, pct: 100, trailing: false });
+              order.tps.push({ id: newId, price: finalPrice, pct: 100, trailing: false });
               rebalanceTpAllocations(newId);
             } else {
-              order.sl = { price: last.price, trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
+              order.sl = { price: finalPrice, trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
               order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
               syncQtyFromRisk();
             }
@@ -8802,7 +8794,7 @@
           applyTrailingStop(last);
           applyAtrDynamicStop(last, isNewBarTick);
           applyTrailingTp(last);
-          if (order && order.filled) render();
+          if (order && order.filled && !isDraggingOrderLine) render();
 
           let alertsChanged = false;
           alerts.forEach(a => {
@@ -8886,7 +8878,7 @@
 
             const dir = order.side === 'buy' ? 1 : -1;
             const pts = dir * (tp.price - order.entry);
-            const contracts = Math.round(order.qty * tp.pct / 100);
+            const contracts = Math.max(1, Math.round(order.qty * tp.pct / 100));
             const profit = pts * POINT_VALUE * contracts;
             const riskPerContractTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
             const rMultiple = riskPerContractTotal ? (pts * POINT_VALUE / riskPerContractTotal) : null;
@@ -8895,11 +8887,11 @@
             row.className = 'ol-side-row';
             row.style.top = y + 'px';
             row.innerHTML =
-              '<span class="ol-chip tp"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '</span>' +
-              '<span class="ol-amt up" data-edit-tp="' + tp.id + '">+' + fmtMoney(profit) + '</span>' +
+              '<span class="ol-chip tp">TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '<span class="ol-amt up" data-edit-tp="' + tp.id + '">+' + fmtMoney(profit) + '</span></span>' +
               '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
               '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
-              '<span class="ol-gear" data-gear-tp="' + tp.id + '"><span class="material-symbols-outlined">settings</span></span>';
+              '<span class="ol-gear" data-gear-tp="' + tp.id + '"><span class="material-symbols-outlined">settings</span></span>' +
+              '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" title="Remove TP"><span class="material-symbols-outlined">delete</span></span>';
             layer.appendChild(row);
 
             const tpAmtEl = row.querySelector('.ol-amt');
@@ -8919,7 +8911,7 @@
               (cy, h) => {
                 tp.price = roundTick(yToPrice(cy, h));
                 const dir2 = order.side === 'buy' ? 1 : -1;
-                if (dir2 * (tp.price - order.entry) < 0.25) tp.price = roundTick(order.entry + dir2 * 0.25);
+                if (dir2 * (tp.price - order.entry) < 0.25) tp.price = snappedSidePrice('tp', h);
                 render();
               });
 
@@ -8935,6 +8927,10 @@
               e.stopPropagation();
               activeGearTpId = tp.id;
               openTpGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+            });
+            row.querySelector('[data-remove-tp]').addEventListener('click', (e) => {
+              e.stopPropagation();
+              removeTp(tp.id);
             });
           });
 
@@ -8954,11 +8950,11 @@
             row.className = 'ol-side-row';
             row.style.top = y + 'px';
             row.innerHTML =
-              '<span class="ol-chip sl"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>SL' + (order.sl.beTpId ? '<span class="ol-badge be">SL → BE</span>' : '') + (order.sl.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + (order.sl.atr ? '<span class="ol-badge atr">ATR</span>' : '') + '</span>' +
-              '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
+              '<span class="ol-chip sl">SL' + (order.sl.beTpId ? '<span class="ol-badge be">SL → BE</span>' : '') + (order.sl.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + (order.sl.atr ? '<span class="ol-badge atr">ATR</span>' : '') + '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span></span>' +
               '<span class="ol-rmult">-1.0R</span>' +
               '<span class="ol-pct-chip">100%</span>' +
-              '<span class="ol-gear" id="slGearTrigger"><span class="material-symbols-outlined">settings</span></span>';
+              '<span class="ol-gear" id="slGearTrigger"><span class="material-symbols-outlined">settings</span></span>' +
+              '<span class="ol-gear ol-danger" id="slDeleteTrigger" title="Remove SL"><span class="material-symbols-outlined">delete</span></span>';
             layer.appendChild(row);
 
             const slAmtEl = row.querySelector('.ol-amt');
@@ -8976,7 +8972,7 @@
               (cy, h) => {
                 order.sl.price = roundTick(yToPrice(cy, h));
                 const dir2 = order.side === 'buy' ? 1 : -1;
-                if (dir2 * (order.entry - order.sl.price) < 0.25) order.sl.price = roundTick(order.entry - dir2 * 0.25);
+                if (dir2 * (order.entry - order.sl.price) < 0.25) order.sl.price = snappedSidePrice('sl', h);
                 syncQtyFromRisk();
                 render();
               });
@@ -8984,6 +8980,10 @@
             row.querySelector('#slGearTrigger').addEventListener('click', (e) => {
               e.stopPropagation();
               openSlGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+            });
+            row.querySelector('#slDeleteTrigger').addEventListener('click', (e) => {
+              e.stopPropagation();
+              removeSl();
             });
           }
         }
@@ -9015,44 +9015,52 @@
           bar.className = 'ol-entry-bar' + (!fullEdit ? ' reveal' : '');
           bar.style.top = y + 'px';
 
-          const tpAddHandleHtml = '<span class="ol-chip ghost tp-add" id="tpAddHandle"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>TP</span>';
-          const slAddHandleHtml = !order.sl ? '<span class="ol-chip ghost sl-add" id="slAddHandle"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>SL</span>' : '';
+          const tpAddHandleHtml = '<span class="ol-chip ghost tp-add" id="tpAddHandle">TP</span>';
+          const slAddHandleHtml = !order.sl ? '<span class="ol-chip ghost sl-add" id="slAddHandle">SL</span>' : '';
           if (!order.filled) {
             const sizeLabel = order.sizeMode === 'contracts' ? String(order.qty)
               : order.sizeMode === 'dollar' ? '$' + fmt(order.sizeValues.dollar, 0)
                 : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
                   : '$' + fmt(order.sizeValues.risk, 0) + ' risk';
             bar.innerHTML =
-              '<span class="ol-chip entry" id="entryPriceHandle"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>' + (order.side === 'buy' ? 'BUY' : 'SELL') + '</span>' +
+              '<span class="ol-chip entry buy-sell-btn" id="entryPriceHandle" title="Place Order">' + (order.side === 'buy' ? 'BUY' : 'SELL') + '</span>' +
               tpAddHandleHtml + slAddHandleHtml +
-              '<span class="ol-pill neutral tag pop-trigger" id="sizePillTrigger">' + sizeLabel + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
-              '<span class="ol-pill neutral tag pop-trigger" id="typePillTrigger">' + order.orderType + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
-              '<span class="ol-check" id="confirmOrderBtn" title="Execute Trade"><span class="material-symbols-outlined">check</span></span>' +
-              '<span class="ol-x" id="cancelOrderBtn" title="Cancel Order"><span class="material-symbols-outlined">delete</span></span>';
+              '<span class="ol-pill neutral combo" id="orderConfigPill" title="Drag to move entry">' +
+              '<span class="ol-pill-seg" id="sizePillTrigger">' + sizeLabel + '</span>' +
+              '<span class="ol-pill-divider"></span>' +
+              '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
+              '</span>' +
+              '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Cancel Order"><span class="material-symbols-outlined">delete</span></span>';
           } else if (order.editing) {
             bar.innerHTML =
-              '<span class="ol-chip entry" id="entryPriceHandle"><span class="material-symbols-outlined ol-drag-ic">drag_indicator</span>' + (order.side === 'buy' ? 'LONG' : 'SHORT') + '</span>' +
+              '<span class="ol-chip entry" id="entryPriceHandle">' + (order.side === 'buy' ? 'BUY' : 'SELL') + '</span>' +
               tpAddHandleHtml + slAddHandleHtml +
-              '<span class="ol-pill neutral tag pop-trigger" id="sizePillTrigger">' + order.qty + ' ' + QT_INSTRUMENT_UNIT + '<span class="material-symbols-outlined ol-gear-ic">expand_more</span></span>' +
-              '<span class="ol-check" id="doneEditingBtn" title="Done Editing"><span class="material-symbols-outlined">check</span></span>' +
-              '<span class="ol-x" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
+              '<span class="ol-pill neutral combo" id="orderConfigPill" title="Drag to move entry">' +
+              '<span class="ol-pill-seg" id="sizePillTrigger">' + order.qty + ' ' + QT_INSTRUMENT_UNIT + '</span>' +
+              '<span class="ol-pill-divider"></span>' +
+              '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
+              '</span>' +
+              '<span class="ol-gear ol-success" id="doneEditingBtn" title="Done Editing"><span class="material-symbols-outlined">check</span></span>' +
+              '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
           } else {
             bar.innerHTML =
-              '<span class="ol-chip entry locked" id="entryPriceHandle">' + (order.side === 'buy' ? 'LONG' : 'SHORT') + '</span>' +
+              '<span class="ol-chip entry locked" id="entryPriceHandle">' + (order.side === 'buy' ? 'BUY' : 'SELL') + '</span>' +
               '<span class="ol-gear" id="entryEditTrigger" title="Edit Trade"><span class="material-symbols-outlined">tune</span></span>' +
-              '<span class="ol-x" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
+              '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
           }
           entryHost.appendChild(bar);
 
           const tpAddHandle = bar.querySelector('#tpAddHandle');
-          if (tpAddHandle) makeAddHandleDraggable(tpAddHandle, 'tp');
+          if (tpAddHandle) { makeAddHandleDraggable(tpAddHandle, 'tp'); bindHandleHover(tpAddHandle, 'tp-add'); }
           const slAddHandle = bar.querySelector('#slAddHandle');
-          if (slAddHandle) makeAddHandleDraggable(slAddHandle, 'sl');
+          if (slAddHandle) { makeAddHandleDraggable(slAddHandle, 'sl'); bindHandleHover(slAddHandle, 'sl-add'); }
 
           const entryPriceHandle = bar.querySelector('#entryPriceHandle');
           bindHandleHover(entryPriceHandle, 'entry');
-          if (fullEdit) {
-            makeDraggable(entryPriceHandle,
+          const entryDragTarget = bar.querySelector('#orderConfigPill') || bar.querySelector('#sizePillTrigger');
+          if (entryDragTarget) {
+            bindHandleHover(entryDragTarget, 'entry');
+            makeDraggable(entryDragTarget,
               (cy, h) => {
                 bar.style.top = cy + 'px'; line.style.top = cy + 'px';
                 order.entry = roundTick(yToPrice(cy, h));
@@ -9068,10 +9076,13 @@
             bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
               e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
             });
-            bar.querySelector('#confirmOrderBtn').addEventListener('click', (e) => { e.stopPropagation(); confirmOrderFill(); });
+            bar.querySelector('#entryPriceHandle').addEventListener('click', (e) => { e.stopPropagation(); confirmOrderFill(); });
           } else if (order.editing) {
             bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
               e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+            });
+            bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
+              e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
             });
             bar.querySelector('#doneEditingBtn').addEventListener('click', (e) => {
               e.stopPropagation(); order.editing = false; render();
@@ -9622,7 +9633,7 @@
       }
       function renderSlGearMenu() {
         if (!order || !order.sl) return;
-        const noTps = order.tps.length === 0;
+        const noTps = order.tps.length < 2; // breakeven needs at least 2 TPs set
         const trailActive = !!order.sl.trailing;
         const atrActive = !!order.sl.atr;
         if (noTps && !order.sl.beActive) { order.sl.beTpId = null; }
@@ -9632,7 +9643,7 @@
         slBeToggle.classList.toggle('selected', beArmed);
         slBeSub.textContent = order.sl.beActive
           ? 'Active — SL moved to entry'
-          : noTps ? 'Requires a take profit'
+          : noTps ? 'Requires at least 2 take profits'
             : beArmed ? 'Triggers on TP' + (order.tps.findIndex(t => t.id === order.sl.beTpId) + 1)
               : 'Move SL to entry once a TP is hit';
         slTrailBtn.classList.toggle('selected', trailActive);
@@ -9698,6 +9709,7 @@
           e.stopPropagation();
           if (!order || !order.sl) return;
           const willOpen = !panel.classList.contains('open');
+          document.querySelectorAll('.sl-override-panel').forEach(p => p.classList.remove('open'));
           panel.classList.toggle('open', willOpen);
         });
       }
@@ -9720,46 +9732,38 @@
       }
 
       /* -- Move to Break Even override -- */
-      const slBeOverrideEnabled = document.getElementById('slBeOverrideEnabled');
-      const slBeOverrideFields = document.getElementById('slBeOverrideFields');
       const slBeOvTrigger = document.getElementById('slBeOvTrigger');
       const slBeOvOffsetValue = document.getElementById('slBeOvOffsetValue');
       const slBeOvOffsetUnit = document.getElementById('slBeOvOffsetUnit');
+      /* every SL gets its own editable settings, seeded from the global Chart Settings default on first view */
+      function ensureBeOverride() {
+        if (!order || !order.sl) return null;
+        if (!order.sl.beOverride) {
+          const base = chartSettings.moveSlToBreakeven;
+          order.sl.beOverride = { trigger: base.trigger, customR: base.customR, offsetValue: base.offsetValue, offsetUnit: base.offsetUnit };
+        }
+        return order.sl.beOverride;
+      }
       function populateBeOverrideForm() {
         if (!order || !order.sl) return;
-        const cfg = order.sl.beOverride || chartSettings.moveSlToBreakeven;
-        const enabled = !!order.sl.beOverride;
-        slBeOverrideEnabled.classList.toggle('checked', enabled);
-        slBeOverrideFields.style.display = enabled ? '' : 'none';
+        const cfg = ensureBeOverride();
         slBeOvTrigger.value = cfg.trigger;
         slBeOvOffsetValue.value = cfg.offsetValue;
         slBeOvOffsetUnit.value = cfg.offsetUnit;
         refreshAllCsDropdownLabels(document.getElementById('slBeOverridePanel'));
       }
       document.getElementById('slBeOverrideTune').addEventListener('click', () => { if (order && order.sl) populateBeOverrideForm(); });
-      slBeOverrideEnabled.closest('.cs-checkbox-row').addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (!order || !order.sl) return;
-        const willEnable = !slBeOverrideEnabled.classList.contains('checked');
-        slBeOverrideEnabled.classList.toggle('checked', willEnable);
-        slBeOverrideFields.style.display = willEnable ? '' : 'none';
-        order.sl.beOverride = willEnable
-          ? { trigger: slBeOvTrigger.value, customR: chartSettings.moveSlToBreakeven.customR, offsetValue: parseFloat(slBeOvOffsetValue.value) || 0, offsetUnit: slBeOvOffsetUnit.value }
-          : null;
-        renderSlGearMenu();
-      });
       [slBeOvTrigger, slBeOvOffsetUnit].forEach(el => el.addEventListener('change', (e) => {
         e.stopPropagation();
-        if (order && order.sl && order.sl.beOverride) {
-          order.sl.beOverride.trigger = slBeOvTrigger.value;
-          order.sl.beOverride.offsetUnit = slBeOvOffsetUnit.value;
+        const ov = ensureBeOverride();
+        if (ov) {
+          ov.trigger = slBeOvTrigger.value;
+          ov.offsetUnit = slBeOvOffsetUnit.value;
         }
       }));
       bindSlOverrideStepper('slBeOvOffset', 0, 200, 1, 'beOverride', 'offsetValue');
 
       /* -- Trailing Stop override -- */
-      const slTrailOverrideEnabled = document.getElementById('slTrailOverrideEnabled');
-      const slTrailOverrideFields = document.getElementById('slTrailOverrideFields');
       const slTrailOvMethod = document.getElementById('slTrailOvMethod');
       const slTrailOvDistanceValue = document.getElementById('slTrailOvDistanceValue');
       const slTrailOvDistanceUnit = document.getElementById('slTrailOvDistanceUnit');
@@ -9769,12 +9773,21 @@
       function updateSlTrailOvConditional() {
         document.getElementById('slTrailOvDistanceWrap').style.display = slTrailOvMethod.value === 'atr' ? 'none' : '';
       }
+      function ensureTrailOverride() {
+        if (!order || !order.sl) return null;
+        if (!order.sl.trailOverride) {
+          const base = chartSettings.trailingStop;
+          order.sl.trailOverride = {
+            method: base.method, distanceValue: base.distanceValue, distanceUnit: base.distanceUnit,
+            start: base.start, startCustomR: base.startCustomR,
+            minStepValue: base.minStepValue, minStepUnit: base.minStepUnit
+          };
+        }
+        return order.sl.trailOverride;
+      }
       function populateTrailOverrideForm() {
         if (!order || !order.sl) return;
-        const cfg = order.sl.trailOverride || chartSettings.trailingStop;
-        const enabled = !!order.sl.trailOverride;
-        slTrailOverrideEnabled.classList.toggle('checked', enabled);
-        slTrailOverrideFields.style.display = enabled ? '' : 'none';
+        const cfg = ensureTrailOverride();
         slTrailOvMethod.value = cfg.method;
         slTrailOvDistanceValue.value = cfg.distanceValue;
         slTrailOvDistanceUnit.value = cfg.distanceUnit;
@@ -9785,72 +9798,52 @@
         refreshAllCsDropdownLabels(document.getElementById('slTrailOverridePanel'));
       }
       document.getElementById('slTrailOverrideTune').addEventListener('click', () => { if (order && order.sl) populateTrailOverrideForm(); });
-      slTrailOverrideEnabled.closest('.cs-checkbox-row').addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (!order || !order.sl) return;
-        const willEnable = !slTrailOverrideEnabled.classList.contains('checked');
-        slTrailOverrideEnabled.classList.toggle('checked', willEnable);
-        slTrailOverrideFields.style.display = willEnable ? '' : 'none';
-        order.sl.trailOverride = willEnable
-          ? {
-            method: slTrailOvMethod.value, distanceValue: parseFloat(slTrailOvDistanceValue.value) || 1, distanceUnit: slTrailOvDistanceUnit.value,
-            start: slTrailOvStart.value, startCustomR: chartSettings.trailingStop.startCustomR,
-            minStepValue: parseFloat(slTrailOvMinStepValue.value) || 1, minStepUnit: slTrailOvMinStepUnit.value
-          }
-          : null;
-        renderSlGearMenu();
-      });
       [slTrailOvMethod, slTrailOvDistanceUnit, slTrailOvStart, slTrailOvMinStepUnit].forEach(el => el.addEventListener('change', (e) => {
         e.stopPropagation();
         if (el === slTrailOvMethod) updateSlTrailOvConditional();
-        if (order && order.sl && order.sl.trailOverride) {
-          order.sl.trailOverride.method = slTrailOvMethod.value;
-          order.sl.trailOverride.distanceUnit = slTrailOvDistanceUnit.value;
-          order.sl.trailOverride.start = slTrailOvStart.value;
-          order.sl.trailOverride.minStepUnit = slTrailOvMinStepUnit.value;
+        const ov = ensureTrailOverride();
+        if (ov) {
+          ov.method = slTrailOvMethod.value;
+          ov.distanceUnit = slTrailOvDistanceUnit.value;
+          ov.start = slTrailOvStart.value;
+          ov.minStepUnit = slTrailOvMinStepUnit.value;
         }
       }));
       bindSlOverrideStepper('slTrailOvDistance', 1, 2000, 5, 'trailOverride', 'distanceValue');
       bindSlOverrideStepper('slTrailOvMinStep', 1, 200, 1, 'trailOverride', 'minStepValue');
 
       /* -- ATR Stop override -- */
-      const slAtrOverrideEnabled = document.getElementById('slAtrOverrideEnabled');
-      const slAtrOverrideFields = document.getElementById('slAtrOverrideFields');
       const slAtrOvLength = document.getElementById('slAtrOvLength');
       const slAtrOvMultiplier = document.getElementById('slAtrOvMultiplier');
       const slAtrOvUpdateFreq = document.getElementById('slAtrOvUpdateFreq');
+      function ensureAtrOverride() {
+        if (!order || !order.sl) return null;
+        if (!order.sl.atrOverride) {
+          const base = chartSettings.atrStop;
+          order.sl.atrOverride = { length: base.length, multiplier: base.multiplier, timeframe: base.timeframe, updateFreq: base.updateFreq, dynamic: true };
+        }
+        return order.sl.atrOverride;
+      }
       function populateAtrOverrideForm() {
         if (!order || !order.sl) return;
-        const cfg = order.sl.atrOverride || chartSettings.atrStop;
-        const enabled = !!order.sl.atrOverride;
-        slAtrOverrideEnabled.classList.toggle('checked', enabled);
-        slAtrOverrideFields.style.display = enabled ? '' : 'none';
+        const cfg = ensureAtrOverride();
         slAtrOvLength.value = cfg.length;
         slAtrOvMultiplier.value = cfg.multiplier;
         slAtrOvUpdateFreq.value = cfg.updateFreq;
         refreshAllCsDropdownLabels(document.getElementById('slAtrOverridePanel'));
       }
       document.getElementById('slAtrOverrideTune').addEventListener('click', () => { if (order && order.sl) populateAtrOverrideForm(); });
-      slAtrOverrideEnabled.closest('.cs-checkbox-row').addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (!order || !order.sl) return;
-        const willEnable = !slAtrOverrideEnabled.classList.contains('checked');
-        slAtrOverrideEnabled.classList.toggle('checked', willEnable);
-        slAtrOverrideFields.style.display = willEnable ? '' : 'none';
-        order.sl.atrOverride = willEnable
-          ? { length: parseInt(slAtrOvLength.value) || 14, multiplier: parseFloat(slAtrOvMultiplier.value) || 2, timeframe: chartSettings.atrStop.timeframe, updateFreq: slAtrOvUpdateFreq.value, dynamic: true }
-          : null;
-        renderSlGearMenu();
-      });
       slAtrOvUpdateFreq.addEventListener('change', (e) => {
         e.stopPropagation();
-        if (order && order.sl && order.sl.atrOverride) order.sl.atrOverride.updateFreq = slAtrOvUpdateFreq.value;
+        const ov = ensureAtrOverride();
+        if (ov) ov.updateFreq = slAtrOvUpdateFreq.value;
       });
       [slAtrOvLength, slAtrOvMultiplier].forEach(el => el.addEventListener('change', (e) => {
         e.stopPropagation();
-        if (order && order.sl && order.sl.atrOverride) {
-          order.sl.atrOverride.length = parseInt(slAtrOvLength.value) || 14;
-          order.sl.atrOverride.multiplier = parseFloat(slAtrOvMultiplier.value) || 2;
+        const ov = ensureAtrOverride();
+        if (ov) {
+          ov.length = parseInt(slAtrOvLength.value) || 14;
+          ov.multiplier = parseFloat(slAtrOvMultiplier.value) || 2;
         }
       }));
 
