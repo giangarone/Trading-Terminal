@@ -43,7 +43,6 @@
       --r-md: 10px;
       --r-lg: 14px;
       --sans: 'IBM Plex Sans', -apple-system, sans-serif;
-      --display: 'Space Grotesk', var(--sans);
     }
 
     * {
@@ -265,7 +264,7 @@
     }
 
     .stat .val.hero {
-      font-family: var(--display);
+      font-family: var(--sans);
       font-size: 19px;
       font-weight: 600;
       letter-spacing: -.01em;
@@ -421,6 +420,11 @@
       cursor: pointer;
       min-width: 0;
       border-left: 2px solid transparent;
+    }
+
+    #wlRows {
+      max-height: 300px;
+      overflow: auto;
     }
 
     .wl-row:hover {
@@ -732,6 +736,66 @@
       background: var(--ink-850);
       border-color: var(--line-2);
       color: var(--paper-100);
+    }
+
+    .tb-account {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 7px;
+      border: 1px solid var(--line-2);
+      background: var(--ink-850);
+      cursor: pointer;
+    }
+
+    .tb-account:hover {
+      border-color: var(--line-3);
+    }
+
+    .tb-account .material-symbols-outlined:first-child {
+      font-size: 15px;
+      color: var(--paper-500);
+    }
+
+    .tb-account-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--paper-100);
+      font-family: var(--sans);
+    }
+
+    .tb-account-balance {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--paper-300);
+      font-family: var(--sans);
+      padding-left: 7px;
+      border-left: 1px solid var(--line-2);
+    }
+
+    .tb-account-caret {
+      font-size: 15px;
+      color: var(--paper-500);
+    }
+
+    .account-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .account-item-balance {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--paper-300);
+      font-family: var(--sans);
+    }
+
+    .account-connect-item .pt-title,
+    .account-connect-item .pop-icon .material-symbols-outlined {
+      color: var(--purple);
     }
 
     .ohlc-row {
@@ -2024,7 +2088,7 @@
       width: 100%;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       background: var(--ink-800);
       border: 1px solid var(--line-2);
       border-radius: 7px;
@@ -2113,16 +2177,6 @@
       color: var(--paper-50);
       background: var(--ink-750);
       border-color: var(--line-3);
-    }
-
-    .qt-pct-quick-row {
-      display: flex;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .qt-pct-quick-row .qt-side-btn {
-      padding: 0 11px;
     }
 
     .qt-disabled-row {
@@ -3542,6 +3596,61 @@
       display: block;
     }
 
+    .sl-override-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .sl-override-row .pop-item {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sl-override-tune {
+      width: 30px;
+      height: 30px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--paper-500);
+      cursor: pointer;
+    }
+
+    .sl-override-tune .material-symbols-outlined {
+      font-size: 17px;
+    }
+
+    .sl-override-tune:hover {
+      color: var(--paper-100);
+      background: var(--ink-800);
+      border-color: var(--line-2);
+    }
+
+    .sl-override-tune.active {
+      color: var(--accent);
+    }
+
+    .sl-override-panel {
+      padding: 4px 9px 6px;
+    }
+
+    .sl-override-use-row {
+      padding: 5px 0;
+      font-size: 11.5px;
+    }
+
+    .sl-override-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 4px 2px 6px;
+    }
+
     .pop-item {
       display: flex;
       align-items: center;
@@ -4223,6 +4332,573 @@
       color: var(--paper-100);
     }
 
+    /* ====== Chart Settings modal ====== */
+    .cs-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 6, 8, .72);
+      backdrop-filter: blur(2px);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cs-backdrop.show {
+      display: flex;
+    }
+
+    .cs-modal {
+      width: min(1080px, 94vw);
+      height: min(760px, 88vh);
+      background: var(--ink-900);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-lg);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .cs-titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--line-1);
+      flex-shrink: 0;
+    }
+
+    .cs-title {
+      font-family: var(--sans);
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      color: var(--paper-100);
+      text-transform: uppercase;
+    }
+
+    .cs-close {
+      color: var(--paper-500);
+      cursor: pointer;
+      display: flex;
+      padding: 4px;
+      border-radius: 6px;
+    }
+
+    .cs-close:hover {
+      color: var(--paper-100);
+      background: var(--ink-800);
+    }
+
+    .cs-body {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    .cs-sidebar {
+      width: 226px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--line-1);
+      padding: 14px 10px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cs-search {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--ink-850);
+      border: 1px solid var(--line-2);
+      border-radius: 8px;
+      padding: 7px 10px;
+      margin: 0 4px 14px;
+    }
+
+    .cs-search .material-symbols-outlined {
+      font-size: 16px;
+      color: var(--paper-500);
+    }
+
+    .cs-search input {
+      flex: 1;
+      width: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--paper-100);
+      font-size: 12px;
+      font-family: var(--sans);
+    }
+
+    .cs-search input::placeholder {
+      color: var(--paper-500);
+    }
+
+    .cs-kbd {
+      font-size: 9.5px;
+      color: var(--paper-500);
+      border: 1px solid var(--line-2);
+      border-radius: 4px;
+      padding: 1px 5px;
+      flex-shrink: 0;
+    }
+
+    .cs-nav-group {
+      margin-bottom: 6px;
+    }
+
+    .cs-nav-label {
+      font-size: 9.5px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--paper-500);
+      padding: 6px 10px 6px;
+    }
+
+    .cs-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: var(--paper-300);
+      font-size: 12.5px;
+      font-weight: 500;
+      font-family: var(--sans);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .cs-nav-item .material-symbols-outlined {
+      font-size: 17px;
+      color: var(--paper-500);
+    }
+
+    .cs-nav-item:hover {
+      background: var(--ink-800);
+      color: var(--paper-100);
+    }
+
+    .cs-nav-item.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .cs-nav-item.active .material-symbols-outlined {
+      color: var(--accent);
+    }
+
+    .cs-sidebar-footer {
+      margin-top: auto;
+      padding-top: 10px;
+    }
+
+    .cs-reset-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 9px 0;
+      border-radius: 8px;
+      border: 1px solid var(--line-2);
+      background: var(--ink-850);
+      color: var(--paper-300);
+      font-size: 11.5px;
+      font-weight: 600;
+      font-family: var(--sans);
+      cursor: pointer;
+    }
+
+    .cs-reset-btn .material-symbols-outlined {
+      font-size: 15px;
+    }
+
+    .cs-reset-btn:hover {
+      color: var(--paper-100);
+      border-color: var(--line-3);
+    }
+
+    .cs-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 22px 26px;
+    }
+
+    .cs-pane {
+      display: none;
+    }
+
+    .cs-pane.active {
+      display: block;
+    }
+
+    .cs-pane-head {
+      margin-bottom: 18px;
+    }
+
+    .cs-pane-head h2 {
+      margin: 0 0 4px;
+      font-family: var(--sans);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--paper-100);
+    }
+
+    .cs-pane-head p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--paper-500);
+      line-height: 1.5;
+    }
+
+    .cs-empty {
+      color: var(--paper-500);
+      font-size: 12.5px;
+      padding: 60px 0;
+      text-align: center;
+    }
+
+    .cs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 880px) {
+      .cs-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .cs-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .cs-card {
+      background: var(--ink-850);
+      border: 1px solid var(--line-1);
+      border-radius: var(--r-lg);
+      padding: 16px 18px;
+    }
+
+    .cs-card-head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 14px;
+    }
+
+    .cs-card-head .material-symbols-outlined {
+      font-size: 17px;
+      color: var(--accent);
+    }
+
+    .cs-card-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--paper-100);
+    }
+
+    .cs-fields-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .cs-field {
+      min-width: 0;
+    }
+
+    .cs-field label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--paper-500);
+      margin-bottom: 6px;
+    }
+
+    .cs-unit-pair {
+      display: flex;
+      gap: 6px;
+    }
+
+    .cs-unit-pair .cs-price-stepper {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cs-unit-pair .cs-dd-trigger {
+      width: 84px;
+      flex-shrink: 0;
+    }
+
+    .cs-dd-trigger .cs-select-label {
+      color: var(--paper-100);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cs-num-input {
+      width: 100%;
+      height: 34px;
+      background: var(--ink-800);
+      border: 1px solid var(--line-2);
+      border-radius: 7px;
+      padding: 0 10px;
+      font-family: var(--sans);
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--paper-100);
+    }
+
+    .cs-num-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .cs-helper {
+      font-size: 10.5px;
+      color: var(--paper-500);
+      line-height: 1.5;
+      margin-top: 2px;
+    }
+
+    .cs-checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12px;
+      color: var(--paper-300);
+      padding: 7px 0;
+      cursor: pointer;
+    }
+
+    .cs-checkbox-row .chk-box {
+      flex-shrink: 0;
+    }
+
+    .cs-segmented {
+      display: flex;
+      background: var(--ink-800);
+      border: 1px solid var(--line-2);
+      border-radius: 9px;
+      padding: 3px;
+      gap: 3px;
+      margin-bottom: 14px;
+    }
+
+    .cs-seg-btn {
+      flex: 1;
+      padding: 9px 0;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: var(--paper-300);
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--sans);
+    }
+
+    .cs-seg-btn.active {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
+
+    .cs-seg-btn:hover:not(.active) {
+      color: var(--paper-100);
+    }
+
+    .cs-target-table {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    #csTargetRows {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .cs-target-row {
+      display: grid;
+      grid-template-columns: 64px 1fr 1fr 100px 26px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .cs-target-head {
+      font-size: 9px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--paper-500);
+    }
+
+    .cs-target-label {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .cs-target-label.tp {
+      color: var(--long);
+    }
+
+    .cs-target-label.sl {
+      color: var(--short);
+    }
+
+    .cs-target-input {
+      width: 100%;
+      height: 32px;
+      background: var(--ink-800);
+      border: 1px solid var(--line-2);
+      border-radius: 7px;
+      padding: 0 8px;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--paper-100);
+    }
+
+    .cs-target-input:disabled {
+      color: var(--paper-500);
+      cursor: not-allowed;
+    }
+
+    .cs-target-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .cs-target-row .cs-dd-trigger {
+      width: 100%;
+      height: 32px;
+      font-size: 11.5px;
+      padding: 0 8px;
+    }
+
+    .cs-target-del {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: var(--paper-500);
+      cursor: pointer;
+    }
+
+    .cs-target-del .material-symbols-outlined {
+      font-size: 16px;
+    }
+
+    .cs-target-del:hover {
+      color: var(--short);
+      background: var(--short-dim);
+    }
+
+    .cs-add-target-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: transparent;
+      border: none;
+      color: var(--purple);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--sans);
+      cursor: pointer;
+      padding: 4px 0;
+    }
+
+    .cs-add-target-btn .material-symbols-outlined {
+      font-size: 16px;
+    }
+
+    .cs-add-target-btn:hover {
+      filter: brightness(1.2);
+    }
+
+    .cs-info-box {
+      display: flex;
+      gap: 10px;
+      background: var(--ink-800);
+      border: 1px solid var(--line-1);
+      border-radius: var(--r-lg);
+      padding: 14px 16px;
+      font-size: 11.5px;
+      color: var(--paper-300);
+      line-height: 1.65;
+    }
+
+    .cs-info-box .material-symbols-outlined {
+      color: var(--intel);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .cs-info-box a,
+    .cs-info-box .cs-info-path {
+      color: var(--paper-100);
+      font-weight: 600;
+    }
+
+    .cs-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 22px;
+      border-top: 1px solid var(--line-1);
+      flex-shrink: 0;
+    }
+
+    .cs-footer button {
+      padding: 9px 18px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      font-family: var(--sans);
+    }
+
+    .cs-btn-save {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
+
+    .cs-btn-save:hover {
+      filter: brightness(1.1);
+    }
+
+    .cs-btn-cancel {
+      background: var(--ink-800);
+      border: 1px solid var(--line-2);
+      color: var(--paper-300);
+    }
+
+    .cs-btn-cancel:hover {
+      color: var(--paper-100);
+    }
+
     /* Toasts */
     .toast-stack {
       position: fixed;
@@ -4334,6 +5010,12 @@
       </div>
 
       <div class="tb-right">
+        <div class="tb-account pop-trigger" id="accountSelectTrigger">
+          <span class="material-symbols-outlined">account_balance</span>
+          <span class="tb-account-name" id="accountSelectName">BloFin</span>
+          <span class="tb-account-balance" id="accountSelectBalance">$52,430.00</span>
+          <span class="material-symbols-outlined tb-account-caret">expand_more</span>
+        </div>
         <button class="ct-icon pop-trigger" id="alertsTrigger"><span
             class="material-symbols-outlined">notifications</span></button>
         <button class="ct-icon pop-trigger" id="settingsTrigger"><span
@@ -4341,32 +5023,542 @@
       </div>
     </header>
 
+    <div class="pop-menu" id="accountSelectMenu" style="width:250px;">
+      <div class="pop-menu-label">Accounts</div>
+      <div id="accountSelectList"></div>
+      <div class="pop-sep"></div>
+      <button class="pop-item account-connect-item" id="accountConnectNew">
+        <span class="pop-icon"><span class="material-symbols-outlined">add</span></span>
+        <span class="pop-text"><span class="pt-title">Connect New Account</span></span>
+      </button>
+    </div>
+
     <div class="pop-menu" id="alertsTopbarMenu" style="width:220px;">
       <div class="pop-menu-label">Alerts</div>
       <div class="alerts-empty">No alerts</div>
     </div>
 
-    <div class="pop-menu" id="settingsMenu" style="width:220px;">
-      <div class="pop-menu-label">Settings</div>
+    <!-- ===================== CHART SETTINGS MODAL ===================== -->
+    <div class="cs-backdrop" id="chartSettingsBackdrop">
+      <div class="cs-modal">
+        <div class="cs-titlebar">
+          <span class="cs-title">Settings</span>
+          <span class="cs-close" id="csCloseBtn"><span class="material-symbols-outlined">close</span></span>
+        </div>
+        <div class="cs-body">
+          <nav class="cs-sidebar">
+            <div class="cs-search">
+              <span class="material-symbols-outlined">search</span>
+              <input type="text" id="csSearchInput" placeholder="Search settings">
+              <span class="cs-kbd">⌘K</span>
+            </div>
 
-      <button class="pop-item settings-acc-row" id="settingsAccountToggle">
-        <span class="pop-text"><span class="pt-title">Account</span></span>
-        <span class="settings-acc-right"><span class="settings-subval" id="settingsAccountVal">BloFin</span><span
-            class="material-symbols-outlined settings-chevron">expand_more</span></span>
-      </button>
-      <div class="settings-subpanel" id="settingsAccountPanel">
-        <button class="pop-item selected" data-account="BloFin">
-          <span class="pop-icon"><span class="material-symbols-outlined">account_balance</span></span>
-          <span class="pop-text"><span class="pt-title">BloFin</span></span>
-        </button>
-        <button class="pop-item" data-account="TradeStation">
-          <span class="pop-icon"><span class="material-symbols-outlined">account_balance</span></span>
-          <span class="pop-text"><span class="pt-title">TradeStation</span></span>
-        </button>
-        <button class="pop-item" data-account="Bitget">
-          <span class="pop-icon"><span class="material-symbols-outlined">account_balance</span></span>
-          <span class="pop-text"><span class="pt-title">Bitget</span></span>
-        </button>
+            <div class="cs-nav-group">
+              <div class="cs-nav-label">General</div>
+              <button class="cs-nav-item" data-cs-tab="general"><span
+                  class="material-symbols-outlined">tune</span>General</button>
+              <button class="cs-nav-item" data-cs-tab="appearance"><span
+                  class="material-symbols-outlined">palette</span>Appearance</button>
+              <button class="cs-nav-item" data-cs-tab="chart"><span
+                  class="material-symbols-outlined">show_chart</span>Chart</button>
+              <button class="cs-nav-item" data-cs-tab="data"><span class="material-symbols-outlined">sync</span>Data &
+                Updates</button>
+              <button class="cs-nav-item" data-cs-tab="alerts"><span
+                  class="material-symbols-outlined">notifications</span>Alerts</button>
+              <button class="cs-nav-item" data-cs-tab="hotkeys"><span
+                  class="material-symbols-outlined">keyboard</span>Hotkeys</button>
+            </div>
+
+            <div class="cs-nav-group">
+              <div class="cs-nav-label">Trading</div>
+              <button class="cs-nav-item" data-cs-tab="trademgmt"><span
+                  class="material-symbols-outlined">shield</span>Trade Management</button>
+              <button class="cs-nav-item" data-cs-tab="orderdefaults"><span
+                  class="material-symbols-outlined">receipt_long</span>Order Defaults</button>
+              <button class="cs-nav-item" data-cs-tab="positiondefaults"><span
+                  class="material-symbols-outlined">account_tree</span>Position Defaults</button>
+              <button class="cs-nav-item" data-cs-tab="risk"><span class="material-symbols-outlined">balance</span>Risk
+                & Money Management</button>
+            </div>
+
+            <div class="cs-nav-group">
+              <div class="cs-nav-label">Connections</div>
+              <button class="cs-nav-item" data-cs-tab="broker"><span
+                  class="material-symbols-outlined">account_balance</span>Broker Connections</button>
+              <button class="cs-nav-item" data-cs-tab="marketdata"><span
+                  class="material-symbols-outlined">monitoring</span>Market Data</button>
+              <button class="cs-nav-item" data-cs-tab="webhooks"><span
+                  class="material-symbols-outlined">webhook</span>Webhooks</button>
+            </div>
+
+            <div class="cs-nav-group">
+              <div class="cs-nav-label">Advanced</div>
+              <button class="cs-nav-item" data-cs-tab="remotesync"><span
+                  class="material-symbols-outlined">cloud_sync</span>Remote Sync</button>
+              <button class="cs-nav-item" data-cs-tab="developer"><span
+                  class="material-symbols-outlined">code</span>Developer</button>
+            </div>
+
+            <div class="cs-sidebar-footer">
+              <button class="cs-reset-btn" id="csResetBtn"><span
+                  class="material-symbols-outlined">restart_alt</span>Reset to Defaults</button>
+            </div>
+          </nav>
+
+          <div class="cs-content">
+
+            <div class="cs-pane" data-cs-pane="general">
+              <div class="cs-pane-head">
+                <h2>General</h2>
+                <p>General chart preferences.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+
+            <div class="cs-pane" data-cs-pane="appearance">
+              <div class="cs-pane-head">
+                <h2>Appearance</h2>
+                <p>Theme and visual preferences.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+            <div class="cs-pane" data-cs-pane="chart">
+              <div class="cs-pane-head">
+                <h2>Chart</h2>
+                <p>Candle style, gridlines, and chart defaults.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+            <div class="cs-pane" data-cs-pane="data">
+              <div class="cs-pane-head">
+                <h2>Data & Updates</h2>
+                <p>Data feed and refresh behavior.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+            <div class="cs-pane" data-cs-pane="alerts">
+              <div class="cs-pane-head">
+                <h2>Alerts</h2>
+                <p>Default alert behavior and notifications.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+            <div class="cs-pane" data-cs-pane="hotkeys">
+              <div class="cs-pane-head">
+                <h2>Hotkeys</h2>
+                <p>Keyboard shortcuts.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+
+            <div class="cs-pane active" data-cs-pane="trademgmt">
+              <div class="cs-pane-head">
+                <h2>Trade Management</h2>
+                <p>Configure global automation defaults. These values are used when you enable a tool on a trade.</p>
+              </div>
+
+              <div class="cs-grid">
+                <div class="cs-col">
+
+                  <div class="cs-card">
+                    <div class="cs-card-head"><span class="material-symbols-outlined">vertical_align_center</span>
+                      <span class="cs-card-title">Move SL To Breakeven</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Trigger</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csBeTrigger"><span
+                            class="cs-select-label">After TP1 Hit</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="csBeTrigger"
+                          style="display:none;">
+                          <option value="tp1">After TP1 Hit</option>
+                          <option value="tp2">After TP2 Hit</option>
+                          <option value="tp3">After TP3 Hit</option>
+                          <option value="customR">Custom R Multiple</option>
+                        </select>
+                      </div>
+                      <div class="cs-field" id="csBeCustomRWrap" style="display:none;">
+                        <label>Custom R Multiple</label>
+                        <input type="number" class="cs-num-input" id="csBeCustomRValue" step="0.1" min="0.1" value="1">
+                      </div>
+                      <div class="cs-field">
+                        <label>Breakeven Offset</label>
+                        <div class="cs-unit-pair">
+                          <div class="price-stepper cs-price-stepper">
+                            <input type="text" id="csBeOffsetValue" readonly value="1">
+                            <div class="price-stepper-arrows">
+                              <button type="button" id="csBeOffsetInc"><span
+                                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                              <button type="button" id="csBeOffsetDec"><span
+                                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            </div>
+                          </div>
+                          <div class="select-input pop-trigger cs-dd-trigger" data-target="csBeOffsetUnit"><span
+                              class="cs-select-label">Ticks</span><span
+                              class="material-symbols-outlined">expand_more</span></div><select id="csBeOffsetUnit"
+                            style="display:none;">
+                            <option value="ticks">Ticks</option>
+                            <option value="points">Points</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-helper">Offset is added to entry price when moving SL to breakeven.</div>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head"><span class="material-symbols-outlined">trending_down</span>
+                      <span class="cs-card-title">Trailing Stop</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Method</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csTsMethod"><span
+                            class="cs-select-label">Fixed Distance</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="csTsMethod"
+                          style="display:none;">
+                          <option value="fixed">Fixed Distance</option>
+                          <option value="atr">ATR Based</option>
+                        </select>
+                      </div>
+                      <div class="cs-field" id="csTsDistanceWrap">
+                        <label>Distance</label>
+                        <div class="cs-unit-pair">
+                          <div class="price-stepper cs-price-stepper">
+                            <input type="text" id="csTsDistanceValue" readonly value="20">
+                            <div class="price-stepper-arrows">
+                              <button type="button" id="csTsDistanceInc"><span
+                                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                              <button type="button" id="csTsDistanceDec"><span
+                                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            </div>
+                          </div>
+                          <div class="select-input pop-trigger cs-dd-trigger" data-target="csTsDistanceUnit"><span
+                              class="cs-select-label">Ticks</span><span
+                              class="material-symbols-outlined">expand_more</span></div><select id="csTsDistanceUnit"
+                            style="display:none;">
+                            <option value="ticks">Ticks</option>
+                            <option value="points">Points</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Start Trailing</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csTsStart"><span
+                            class="cs-select-label">After TP1 Hit</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="csTsStart"
+                          style="display:none;">
+                          <option value="tp1">After TP1 Hit</option>
+                          <option value="tp2">After TP2 Hit</option>
+                          <option value="tp3">After TP3 Hit</option>
+                          <option value="customR">Custom R Multiple</option>
+                        </select>
+                      </div>
+                      <div class="cs-field" id="csTsStartCustomRWrap" style="display:none;">
+                        <label>Custom R Multiple</label>
+                        <input type="number" class="cs-num-input" id="csTsStartCustomRValue" step="0.1" min="0.1"
+                          value="1">
+                      </div>
+                      <div class="cs-field">
+                        <label>Minimum Trail Step</label>
+                        <div class="cs-unit-pair">
+                          <div class="price-stepper cs-price-stepper">
+                            <input type="text" id="csTsMinStepValue" readonly value="1">
+                            <div class="price-stepper-arrows">
+                              <button type="button" id="csTsMinStepInc"><span
+                                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                              <button type="button" id="csTsMinStepDec"><span
+                                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            </div>
+                          </div>
+                          <div class="select-input pop-trigger cs-dd-trigger" data-target="csTsMinStepUnit"><span
+                              class="cs-select-label">Tick</span><span
+                              class="material-symbols-outlined">expand_more</span></div><select id="csTsMinStepUnit"
+                            style="display:none;">
+                            <option value="ticks">Tick</option>
+                            <option value="points">Point</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head"><span class="material-symbols-outlined">ssid_chart</span>
+                      <span class="cs-card-title">ATR Stop</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>ATR Length</label>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="csAtrLength" readonly value="14">
+                          <div class="price-stepper-arrows">
+                            <button type="button" id="csAtrLengthInc"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" id="csAtrLengthDec"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="cs-field">
+                        <label>ATR Multiplier</label>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="csAtrMultiplier" readonly value="2.0">
+                          <div class="price-stepper-arrows">
+                            <button type="button" id="csAtrMultiplierInc"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" id="csAtrMultiplierDec"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="cs-field">
+                        <label>Timeframe</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csAtrTimeframe"><span
+                            class="cs-select-label">Current</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="csAtrTimeframe"
+                          style="display:none;">
+                          <option value="current">Current</option>
+                          <option value="1m">1m</option>
+                          <option value="5m">5m</option>
+                          <option value="15m">15m</option>
+                          <option value="1h">1h</option>
+                          <option value="4h">4h</option>
+                          <option value="D">D</option>
+                        </select>
+                      </div>
+                      <div class="cs-field">
+                        <label>Update Frequency</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csAtrUpdateFreq"><span
+                            class="cs-select-label">Every Tick</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="csAtrUpdateFreq"
+                          style="display:none;">
+                          <option value="tick">Every Tick</option>
+                          <option value="newbar">On New Bar</option>
+                        </select>
+                      </div>
+                    </div>
+                    <label class="cs-checkbox-row"><span class="chk-box" id="csAtrDynamic"><span
+                          class="material-symbols-outlined">check</span></span>Update stop dynamically
+                      as ATR changes</label>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head"><span class="material-symbols-outlined">trending_up</span>
+                      <span class="cs-card-title">Trailing Take Profit</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Activation</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csTtpActivation"><span
+                            class="cs-select-label">After TP1 Hit</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="csTtpActivation"
+                          style="display:none;">
+                          <option value="tp1">After TP1 Hit</option>
+                          <option value="tp2">After TP2 Hit</option>
+                          <option value="tp3">After TP3 Hit</option>
+                          <option value="customR">Custom R Multiple</option>
+                        </select>
+                      </div>
+                      <div class="cs-field" id="csTtpActivationCustomRWrap" style="display:none;">
+                        <label>Custom R Multiple</label>
+                        <input type="number" class="cs-num-input" id="csTtpActivationCustomRValue" step="0.1" min="0.1"
+                          value="1">
+                      </div>
+                      <div class="cs-field">
+                        <label>Method</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csTtpMethod"><span
+                            class="cs-select-label">Fixed Distance</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="csTtpMethod"
+                          style="display:none;">
+                          <option value="fixed">Fixed Distance</option>
+                          <option value="atr">ATR Based</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field" id="csTtpDistanceWrap">
+                        <label>Trail Distance</label>
+                        <div class="cs-unit-pair">
+                          <div class="price-stepper cs-price-stepper">
+                            <input type="text" id="csTtpDistanceValue" readonly value="20">
+                            <div class="price-stepper-arrows">
+                              <button type="button" id="csTtpDistanceInc"><span
+                                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                              <button type="button" id="csTtpDistanceDec"><span
+                                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            </div>
+                          </div>
+                          <div class="select-input pop-trigger cs-dd-trigger" data-target="csTtpDistanceUnit"><span
+                              class="cs-select-label">Ticks</span><span
+                              class="material-symbols-outlined">expand_more</span></div><select id="csTtpDistanceUnit"
+                            style="display:none;">
+                            <option value="ticks">Ticks</option>
+                            <option value="points">Points</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="cs-field">
+                        <label>Minimum Trail Step</label>
+                        <div class="cs-unit-pair">
+                          <div class="price-stepper cs-price-stepper">
+                            <input type="text" id="csTtpMinStepValue" readonly value="1">
+                            <div class="price-stepper-arrows">
+                              <button type="button" id="csTtpMinStepInc"><span
+                                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                              <button type="button" id="csTtpMinStepDec"><span
+                                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            </div>
+                          </div>
+                          <div class="select-input pop-trigger cs-dd-trigger" data-target="csTtpMinStepUnit"><span
+                              class="cs-select-label">Tick</span><span
+                              class="material-symbols-outlined">expand_more</span></div><select id="csTtpMinStepUnit"
+                            style="display:none;">
+                            <option value="ticks">Tick</option>
+                            <option value="points">Point</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-helper">When activated, the trailing TP will manage the remaining position until
+                      exit.</div>
+                  </div>
+
+                </div>
+
+                <div class="cs-col">
+
+                  <div class="cs-card">
+                    <div class="cs-card-head"><span class="material-symbols-outlined" style="color:var(--accent);">
+                        star</span>
+                      <span class="cs-card-title">Default TP/SL Behavior</span>
+                    </div>
+                    <div class="cs-field" style="margin-bottom:14px;">
+                      <label>TP/SL Display Mode</label>
+                      <div class="cs-segmented" id="csDisplayModeGroup">
+                        <button type="button" class="cs-seg-btn active" data-mode="condensed">Condensed</button>
+                        <button type="button" class="cs-seg-btn" data-mode="expanded">Expanded</button>
+                      </div>
+                    </div>
+                    <div class="cs-field">
+                      <label>Default Profile</label>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="csDefaultProfile"><span
+                          class="cs-select-label">Scalp</span><span class="material-symbols-outlined">expand_more</span>
+                      </div><select id="csDefaultProfile" style="display:none;">
+                        <option value="scalp">Scalp</option>
+                        <option value="swing">Swing</option>
+                        <option value="position">Position</option>
+                      </select>
+                    </div>
+                    <div class="cs-helper">In Expanded mode, take profits and a stop loss are added automatically
+                      when you place an entry, using the targets below. In Condensed mode, you add them manually from
+                      the chart.</div>
+
+                    <div class="cs-field" id="csTargetTableWrap" style="display:none; margin-top:14px;">
+                      <label>Default Targets</label>
+                      <div class="cs-target-table">
+                        <div class="cs-target-row cs-target-head">
+                          <span>Target</span><span>%</span><span>Risk</span><span>Type</span><span></span>
+                        </div>
+                        <div id="csTargetRows"></div>
+                      </div>
+                      <button type="button" class="cs-add-target-btn" id="csAddTargetBtn"><span
+                          class="material-symbols-outlined">add</span>Add Target</button>
+                    </div>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head"><span class="material-symbols-outlined">settings</span>
+                      <span class="cs-card-title">Global Behavior</span>
+                    </div>
+                    <label class="cs-checkbox-row"><span class="chk-box" id="csGbCancelOnClose"><span
+                          class="material-symbols-outlined">check</span></span>Cancel all pending
+                      exit orders when position is closed manually</label>
+                    <label class="cs-checkbox-row"><span class="chk-box" id="csGbRecalc"><span
+                          class="material-symbols-outlined">check</span></span>Recalculate targets and
+                      stops on position size change</label>
+                    <label class="cs-checkbox-row"><span class="chk-box" id="csGbPersist"><span
+                          class="material-symbols-outlined">check</span></span>Persist trade management
+                      settings on charts and layouts</label>
+                  </div>
+
+                  <div class="cs-info-box">
+                    <span class="material-symbols-outlined">info</span>
+                    <span>These settings define the default behavior for your trade management tools. You can
+                      override them per trade from the TP/SL gear menus on the chart.<br><br>
+                      <span class="cs-info-path">Click the settings icon in the top bar, or right-click the chart →
+                        Settings</span>, then go to Trade Management.</span>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <div class="cs-pane" data-cs-pane="orderdefaults">
+              <div class="cs-pane-head">
+                <h2>Order Defaults</h2>
+                <p>Default order type and size for new entries.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+            <div class="cs-pane" data-cs-pane="positiondefaults">
+              <div class="cs-pane-head">
+                <h2>Position Defaults</h2>
+                <p>Default behavior for new positions.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+            <div class="cs-pane" data-cs-pane="risk">
+              <div class="cs-pane-head">
+                <h2>Risk & Money Management</h2>
+                <p>Account-wide risk limits.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+            <div class="cs-pane" data-cs-pane="broker">
+              <div class="cs-pane-head">
+                <h2>Broker Connections</h2>
+                <p>Connected brokers and accounts.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+            <div class="cs-pane" data-cs-pane="marketdata">
+              <div class="cs-pane-head">
+                <h2>Market Data</h2>
+                <p>Data provider and feed settings.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+            <div class="cs-pane" data-cs-pane="webhooks">
+              <div class="cs-pane-head">
+                <h2>Webhooks</h2>
+                <p>Outbound webhook integrations.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+            <div class="cs-pane" data-cs-pane="remotesync">
+              <div class="cs-pane-head">
+                <h2>Remote Sync</h2>
+                <p>Sync settings across devices.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+            <div class="cs-pane" data-cs-pane="developer">
+              <div class="cs-pane-head">
+                <h2>Developer</h2>
+                <p>Advanced and experimental options.</p>
+              </div>
+              <div class="cs-empty">No settings here yet</div>
+            </div>
+
+          </div>
+        </div>
+        <div class="cs-footer">
+          <button class="cs-btn-cancel" id="csCancelBtn">Cancel</button>
+          <button class="cs-btn-save" id="csSaveBtn">Save Settings</button>
+        </div>
       </div>
     </div>
 
@@ -4385,7 +5577,8 @@
             </div>
           </div>
           <div class="wl-tabs" id="wlTabs">
-            <button class="wl-tab active" data-cat="crypto">Crypto</button>
+            <button class="wl-tab active" data-cat="all">All</button>
+            <button class="wl-tab" data-cat="crypto">Crypto</button>
             <button class="wl-tab" data-cat="stocks">Stocks</button>
             <button class="wl-tab" data-cat="futures">Futures</button>
             <button class="wl-tab" data-cat="forex">Forex</button>
@@ -4927,8 +6120,16 @@
 
             <div class="qt-tab-panel active" data-tab-panel="limit" id="qtTabPanel-limit">
               <label class="label-sm">Limit Price</label>
-              <div class="text-input-qt" id="qtLimitPriceWrap"><span id="qtLimitPrice">4,500.25</span><span
-                  class="material-symbols-outlined">edit</span></div>
+              <div class="price-stepper">
+                <input type="text" id="qtLimitPrice" value="4,500.25">
+                <span class="qty-unit">USD</span>
+                <div class="price-stepper-arrows">
+                  <button type="button" class="ps-up" data-target="qtLimitPrice"><span
+                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtLimitPrice"><span
+                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                </div>
+              </div>
               <p class="qt-help">Fills only at this price or better.</p>
             </div>
 
@@ -4995,14 +6196,14 @@
 
             <div class="qt-tab-panel" data-tab-panel="trailingStop" id="qtTabPanel-trailingStop">
               <label class="label-sm">Trailing Delta</label>
-              <div class="qty-row" style="margin-bottom:0;">
-                <div class="price-stepper">
-                  <input type="text" id="qtTrailDelta" value="1">
-                  <span class="qty-unit">%</span>
-                </div>
-                <div class="qt-pct-quick-row">
-                  <button type="button" class="qt-side-btn" data-trail-pct="1">1%</button>
-                  <button type="button" class="qt-side-btn" data-trail-pct="2">2%</button>
+              <div class="price-stepper">
+                <input type="text" id="qtTrailDelta" value="1">
+                <span class="qty-unit">%</span>
+                <div class="price-stepper-arrows">
+                  <button type="button" class="ps-up" data-target="qtTrailDelta"><span
+                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtTrailDelta"><span
+                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
               <label class="label-sm" style="margin-top:12px;">Limit</label>
@@ -5300,7 +6501,8 @@
   <!-- ===================== SYMBOL SELECTOR DROPDOWN ===================== -->
   <div class="pop-menu sym-select-menu" id="symSelectMenu" style="width:280px;">
     <div class="wl-tabs" id="symSelectTabs">
-      <button class="wl-tab active" data-cat="crypto">Crypto</button>
+      <button class="wl-tab active" data-cat="all">All</button>
+      <button class="wl-tab" data-cat="crypto">Crypto</button>
       <button class="wl-tab" data-cat="stocks">Stocks</button>
       <button class="wl-tab" data-cat="futures">Futures</button>
       <button class="wl-tab" data-cat="forex">Forex</button>
@@ -5472,6 +6674,9 @@
     </button>
   </div>
 
+  <!-- ===================== SHARED CUSTOM DROPDOWN (Chart Settings / SL override selects) ===================== -->
+  <div class="pop-menu" id="csDropdownMenu" style="width:220px;z-index:2100;"></div>
+
   <!-- ===================== TP GEAR MENU ===================== -->
   <div class="pop-menu" id="tpGearMenu">
     <button class="pop-item add" id="tpAdd">
@@ -5491,29 +6696,179 @@
   </div>
 
   <!-- ===================== SL GEAR MENU ===================== -->
-  <div class="pop-menu" id="slGearMenu">
-    <button class="pop-item settings-acc-row" id="slBeToggle">
-      <span class="pop-icon"><span class="material-symbols-outlined">vertical_align_center</span></span>
-      <span class="pop-text"><span class="pt-title">Move to Break Even</span><span class="pt-sub" id="slBeSub">Move SL
-          to entry once a TP is hit</span></span>
-      <span class="settings-acc-right"><span
-          class="material-symbols-outlined settings-chevron">expand_more</span></span>
-    </button>
-    <div class="settings-subpanel" id="slBePanel">
-      <div class="pop-menu-label">Trigger On</div>
-      <div id="slBeTpList"></div>
+  <div class="pop-menu sl-gear-menu" id="slGearMenu" style="width:300px;">
+    <div class="sl-override-row">
+      <button class="pop-item" id="slBeToggle">
+        <span class="pop-icon"><span class="material-symbols-outlined">vertical_align_center</span></span>
+        <span class="pop-text"><span class="pt-title">Move to Break Even</span><span class="pt-sub" id="slBeSub">Move SL
+            to entry once a TP is hit</span></span>
+      </button>
+      <button class="sl-override-tune" id="slBeOverrideTune" title="Override for this stop loss"><span
+          class="material-symbols-outlined">tune</span></button>
+    </div>
+    <div class="settings-subpanel sl-override-panel" id="slBeOverridePanel">
+      <label class="cs-checkbox-row sl-override-use-row"><span class="chk-box" id="slBeOverrideEnabled"><span
+            class="material-symbols-outlined">check</span></span>Custom settings for this stop loss</label>
+      <div class="sl-override-fields" id="slBeOverrideFields" style="display:none;">
+        <div class="cs-field">
+          <label>Trigger</label>
+          <div class="select-input pop-trigger cs-dd-trigger" data-target="slBeOvTrigger"><span
+              class="cs-select-label">After TP1 Hit</span><span class="material-symbols-outlined">expand_more</span>
+          </div><select id="slBeOvTrigger" style="display:none;">
+            <option value="tp1">After TP1 Hit</option>
+            <option value="tp2">After TP2 Hit</option>
+            <option value="tp3">After TP3 Hit</option>
+            <option value="customR">Custom R Multiple</option>
+          </select>
+        </div>
+        <div class="cs-field">
+          <label>Breakeven Offset</label>
+          <div class="cs-unit-pair">
+            <div class="price-stepper cs-price-stepper">
+              <input type="text" id="slBeOvOffsetValue" readonly value="1">
+              <div class="price-stepper-arrows">
+                <button type="button" id="slBeOvOffsetInc"><span
+                    class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                <button type="button" id="slBeOvOffsetDec"><span
+                    class="material-symbols-outlined">keyboard_arrow_down</span></button>
+              </div>
+            </div>
+            <div class="select-input pop-trigger cs-dd-trigger" data-target="slBeOvOffsetUnit"><span
+                class="cs-select-label">Ticks</span><span class="material-symbols-outlined">expand_more</span></div>
+            <select id="slBeOvOffsetUnit" style="display:none;">
+              <option value="ticks">Ticks</option>
+              <option value="points">Points</option>
+            </select>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="pop-sep"></div>
-    <button class="pop-item" id="slTrail">
-      <span class="pop-icon"><span class="material-symbols-outlined">trending_down</span></span>
-      <span class="pop-text"><span class="pt-title">Trailing Stop</span><span class="pt-sub" id="slTrailSub">Trail stop
-          loss as price moves</span></span>
-    </button>
-    <button class="pop-item" id="slAtr">
-      <span class="pop-icon"><span class="material-symbols-outlined">ssid_chart</span></span>
-      <span class="pop-text"><span class="pt-title">ATR Stop</span><span class="pt-sub" id="slAtrSub">Use ATR based
-          stop loss</span></span>
-    </button>
+    <div class="sl-override-row">
+      <button class="pop-item" id="slTrail">
+        <span class="pop-icon"><span class="material-symbols-outlined">trending_down</span></span>
+        <span class="pop-text"><span class="pt-title">Trailing Stop</span><span class="pt-sub" id="slTrailSub">Trail
+            stop loss as price moves</span></span>
+      </button>
+      <button class="sl-override-tune" id="slTrailOverrideTune" title="Override for this stop loss"><span
+          class="material-symbols-outlined">tune</span></button>
+    </div>
+    <div class="settings-subpanel sl-override-panel" id="slTrailOverridePanel">
+      <label class="cs-checkbox-row sl-override-use-row"><span class="chk-box" id="slTrailOverrideEnabled"><span
+            class="material-symbols-outlined">check</span></span>Custom settings for this stop loss</label>
+      <div class="sl-override-fields" id="slTrailOverrideFields" style="display:none;">
+        <div class="cs-field">
+          <label>Method</label>
+          <div class="select-input pop-trigger cs-dd-trigger" data-target="slTrailOvMethod"><span
+              class="cs-select-label">Fixed Distance</span><span class="material-symbols-outlined">expand_more</span>
+          </div><select id="slTrailOvMethod" style="display:none;">
+            <option value="fixed">Fixed Distance</option>
+            <option value="atr">ATR Based</option>
+          </select>
+        </div>
+        <div class="cs-field" id="slTrailOvDistanceWrap">
+          <label>Distance</label>
+          <div class="cs-unit-pair">
+            <div class="price-stepper cs-price-stepper">
+              <input type="text" id="slTrailOvDistanceValue" readonly value="20">
+              <div class="price-stepper-arrows">
+                <button type="button" id="slTrailOvDistanceInc"><span
+                    class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                <button type="button" id="slTrailOvDistanceDec"><span
+                    class="material-symbols-outlined">keyboard_arrow_down</span></button>
+              </div>
+            </div>
+            <div class="select-input pop-trigger cs-dd-trigger" data-target="slTrailOvDistanceUnit"><span
+                class="cs-select-label">Ticks</span><span class="material-symbols-outlined">expand_more</span></div>
+            <select id="slTrailOvDistanceUnit" style="display:none;">
+              <option value="ticks">Ticks</option>
+              <option value="points">Points</option>
+            </select>
+          </div>
+        </div>
+        <div class="cs-field">
+          <label>Start Trailing</label>
+          <div class="select-input pop-trigger cs-dd-trigger" data-target="slTrailOvStart"><span
+              class="cs-select-label">After TP1 Hit</span><span class="material-symbols-outlined">expand_more</span>
+          </div><select id="slTrailOvStart" style="display:none;">
+            <option value="tp1">After TP1 Hit</option>
+            <option value="tp2">After TP2 Hit</option>
+            <option value="tp3">After TP3 Hit</option>
+            <option value="customR">Custom R Multiple</option>
+          </select>
+        </div>
+        <div class="cs-field">
+          <label>Minimum Trail Step</label>
+          <div class="cs-unit-pair">
+            <div class="price-stepper cs-price-stepper">
+              <input type="text" id="slTrailOvMinStepValue" readonly value="1">
+              <div class="price-stepper-arrows">
+                <button type="button" id="slTrailOvMinStepInc"><span
+                    class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                <button type="button" id="slTrailOvMinStepDec"><span
+                    class="material-symbols-outlined">keyboard_arrow_down</span></button>
+              </div>
+            </div>
+            <div class="select-input pop-trigger cs-dd-trigger" data-target="slTrailOvMinStepUnit"><span
+                class="cs-select-label">Tick</span><span class="material-symbols-outlined">expand_more</span></div>
+            <select id="slTrailOvMinStepUnit" style="display:none;">
+              <option value="ticks">Tick</option>
+              <option value="points">Point</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sl-override-row">
+      <button class="pop-item" id="slAtr">
+        <span class="pop-icon"><span class="material-symbols-outlined">ssid_chart</span></span>
+        <span class="pop-text"><span class="pt-title">ATR Stop</span><span class="pt-sub" id="slAtrSub">Use ATR based
+            stop loss</span></span>
+      </button>
+      <button class="sl-override-tune" id="slAtrOverrideTune" title="Override for this stop loss"><span
+          class="material-symbols-outlined">tune</span></button>
+    </div>
+    <div class="settings-subpanel sl-override-panel" id="slAtrOverridePanel">
+      <label class="cs-checkbox-row sl-override-use-row"><span class="chk-box" id="slAtrOverrideEnabled"><span
+            class="material-symbols-outlined">check</span></span>Custom settings for this stop loss</label>
+      <div class="sl-override-fields" id="slAtrOverrideFields" style="display:none;">
+        <div class="cs-fields-row">
+          <div class="cs-field">
+            <label>ATR Length</label>
+            <div class="price-stepper cs-price-stepper">
+              <input type="text" id="slAtrOvLength" readonly value="14">
+              <div class="price-stepper-arrows">
+                <button type="button" id="slAtrOvLengthInc"><span
+                    class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                <button type="button" id="slAtrOvLengthDec"><span
+                    class="material-symbols-outlined">keyboard_arrow_down</span></button>
+              </div>
+            </div>
+          </div>
+          <div class="cs-field">
+            <label>ATR Multiplier</label>
+            <div class="price-stepper cs-price-stepper">
+              <input type="text" id="slAtrOvMultiplier" readonly value="2.0">
+              <div class="price-stepper-arrows">
+                <button type="button" id="slAtrOvMultiplierInc"><span
+                    class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                <button type="button" id="slAtrOvMultiplierDec"><span
+                    class="material-symbols-outlined">keyboard_arrow_down</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cs-field">
+          <label>Update Frequency</label>
+          <div class="select-input pop-trigger cs-dd-trigger" data-target="slAtrOvUpdateFreq"><span
+              class="cs-select-label">Every Tick</span><span class="material-symbols-outlined">expand_more</span></div>
+          <select id="slAtrOvUpdateFreq" style="display:none;">
+            <option value="tick">Every Tick</option>
+            <option value="newbar">On New Bar</option>
+          </select>
+        </div>
+      </div>
+    </div>
     <div class="pop-sep"></div>
     <button class="pop-item danger" id="slRemove">
       <span class="pop-icon"><span class="material-symbols-outlined">delete</span></span>
@@ -6052,12 +7407,12 @@
       const rows = document.querySelectorAll('#wlRows .wl-row');
       const searchInput = document.getElementById('wlSearchInput');
       const emptyMsg = document.getElementById('wlEmpty');
-      let activeCat = 'crypto';
+      let activeCat = 'all';
       function applyFilter() {
         const q = searchInput.value.trim().toUpperCase();
         let visibleCount = 0;
         rows.forEach(row => {
-          const matchesCat = row.dataset.cat === activeCat;
+          const matchesCat = activeCat === 'all' || row.dataset.cat === activeCat;
           const matchesSearch = !q || row.dataset.sym.toUpperCase().includes(q);
           const show = matchesCat && matchesSearch;
           row.style.display = show ? '' : 'none';
@@ -6106,6 +7461,36 @@
       let pendingClickPrice = BASE_PRICE;
       let activeGearTpId = null;          // which TP a gear-menu / modal call refers to
       let exitModal = null;                // {tpId, mode, pct}
+
+      /* ---------- Chart Settings: Trade Management defaults ---------- */
+      const CS_DEFAULTS = {
+        tpSlDisplayMode: 'condensed',      // 'condensed' = manual TP/SL (default), 'expanded' = auto-add using defaultTargets/defaultStopLoss
+        defaultProfile: 'scalp',
+        defaultTargets: [
+          { pct: 50, r: 1.0, type: 'limit' },
+          { pct: 25, r: 2.0, type: 'limit' },
+          { pct: 25, r: 4.0, type: 'limit' }
+        ],
+        defaultStopLoss: { r: 1.0, type: 'stopMarket' },
+        moveSlToBreakeven: { trigger: 'tp1', customR: 1, offsetValue: 1, offsetUnit: 'ticks' },
+        trailingStop: { method: 'fixed', distanceValue: 20, distanceUnit: 'ticks', start: 'tp1', startCustomR: 1, minStepValue: 1, minStepUnit: 'ticks' },
+        atrStop: { length: 14, multiplier: 2.0, timeframe: 'current', updateFreq: 'newbar', dynamic: true },
+        trailingTp: { activation: 'tp1', activationCustomR: 1, method: 'fixed', distanceValue: 20, distanceUnit: 'ticks', minStepValue: 1, minStepUnit: 'ticks' },
+        globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true }
+      };
+      function cloneCsDefaults() { return JSON.parse(JSON.stringify(CS_DEFAULTS)); }
+      function loadChartSettings() {
+        try {
+          const raw = localStorage.getItem('tt_chartSettings');
+          if (raw) return Object.assign(cloneCsDefaults(), JSON.parse(raw));
+        } catch (e) { /* ignore corrupt storage */ }
+        return cloneCsDefaults();
+      }
+      let chartSettings = loadChartSettings();
+      function persistChartSettingsIfEnabled() {
+        if (!chartSettings.globalBehavior.persist) return;
+        try { localStorage.setItem('tt_chartSettings', JSON.stringify(chartSettings)); } catch (e) { /* storage unavailable */ }
+      }
 
       /* ---------- order history & alerts state ---------- */
       let alertCounter = 1;
@@ -6184,7 +7569,56 @@
         if (e.target.closest('.pop-trigger') || e.target.closest('.pop-menu') || e.target.closest('.ctx-menu')) return;
         closeAllPopovers();
       });
-      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAllPopovers(); });
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const csEl = document.getElementById('chartSettingsBackdrop');
+        if (csEl && csEl.classList.contains('show')) { closeChartSettings(false); }
+        else { closeAllPopovers(); }
+      });
+
+      /* ---------- generic custom dropdown engine (used by Chart Settings / SL override selects) ----------
+         Each "select" is a hidden native <select> (the value/options source of truth, still readable via
+         .value and still fires real 'change' events) paired with a .cs-dd-trigger element styled like the
+         trade panel's .select-input dropdowns. One shared popover is repopulated per open. */
+      const csDropdownMenu = document.getElementById('csDropdownMenu');
+      function csDropdownLabelFor(select) {
+        const opt = select.options[select.selectedIndex];
+        return opt ? opt.textContent : '';
+      }
+      function refreshCsDropdownTriggerLabel(trigger) {
+        const select = document.getElementById(trigger.dataset.target);
+        const label = trigger.querySelector('.cs-select-label');
+        if (select && label) label.textContent = csDropdownLabelFor(select);
+      }
+      function refreshAllCsDropdownLabels(root) {
+        (root || document).querySelectorAll('.cs-dd-trigger').forEach(refreshCsDropdownTriggerLabel);
+      }
+      refreshAllCsDropdownLabels();
+      document.addEventListener('click', (e) => {
+        const trigger = e.target.closest('.cs-dd-trigger');
+        if (!trigger) return;
+        e.stopPropagation();
+        const select = document.getElementById(trigger.dataset.target);
+        if (!select) return;
+        if (csDropdownMenu.classList.contains('show') && csDropdownMenu._openTrigger === trigger) {
+          closeAllPopovers();
+          return;
+        }
+        csDropdownMenu.innerHTML = Array.from(select.options).map((opt) =>
+          '<button type="button" class="pop-item' + (opt.value === select.value ? ' selected' : '') + '" data-value="' + opt.value.replace(/"/g, '&quot;') + '">' +
+          '<span class="pop-text"><span class="pt-title">' + opt.textContent + '</span></span></button>'
+        ).join('');
+        csDropdownMenu.querySelectorAll('[data-value]').forEach(btn => {
+          btn.addEventListener('click', (e2) => {
+            e2.stopPropagation();
+            select.value = btn.dataset.value;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            refreshCsDropdownTriggerLabel(trigger);
+            closeAllPopovers();
+          });
+        });
+        openNear(csDropdownMenu, trigger.getBoundingClientRect(), 'left', trigger);
+      });
 
       /* ---------- context menu ---------- */
       const ctxMenu = document.getElementById('ctxMenu');
@@ -6232,20 +7666,33 @@
         showToast('Chart view reset', 'restart_alt');
         closeAllPopovers();
       });
-      document.getElementById('ctxSettings').addEventListener('click', () => { showToast('Opening chart settings…', 'settings'); closeAllPopovers(); });
+      document.getElementById('ctxSettings').addEventListener('click', () => { closeAllPopovers(); openChartSettings('trademgmt'); });
 
       /* ---------- order lifecycle ---------- */
       function createOrder(side, entryPrice) {
         const dir = side === 'buy' ? 1 : -1;
         const entry = roundTick(entryPrice);
-        const tpPrice = roundTick(entry + dir * 2);
-        const tpDist = Math.abs(tpPrice - entry);
+        const expanded = chartSettings.tpSlDisplayMode === 'expanded';
+        let tps = [];
+        let sl = null;
+        if (expanded) {
+          const baseR = 2; // price distance representing 1.0R, used to price default targets/SL from their R Multiple
+          tps = (chartSettings.defaultTargets || []).map(t => ({
+            id: 'tp' + (tpCounter++),
+            price: roundTick(entry + dir * t.r * baseR),
+            pct: t.pct,
+            trailing: false
+          }));
+          if (chartSettings.defaultStopLoss) {
+            sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
+          }
+        }
         order = {
           side, entry, qty: parseInt(qtyInput.value || '1'), orderType: 'Limit',
           sizeMode: 'contracts', filled: false, editing: false,
           sizeValues: { dollar: 5000, percent: 25, risk: 500 },
-          tps: [{ id: 'tp' + (tpCounter++), price: tpPrice, pct: 100, trailing: false }],
-          sl: { price: roundTick(entry - dir * tpDist), trailing: false, atr: false, beTpId: null, beActive: false }
+          tps, sl, tpsHitCount: 0,
+          initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null
         };
         orderHistory.unshift({ symbol: 'ETHUSD', side, qty: order.qty, price: order.entry, status: 'placed', time: nowTimeStr() });
         render();
@@ -6277,6 +7724,12 @@
         const lbl = QT_TAB_LABELS[tabName] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market';
         qtBuyBtn.querySelector('.bs-lbl').textContent = 'Buy ' + lbl;
         qtSellBtn.querySelector('.bs-lbl').textContent = 'Sell ' + lbl;
+        const isLimit = panelName === 'limit';
+        const tpslToggleEl = document.getElementById('qtTpslToggle');
+        const tpslBlockEl = document.getElementById('qtTpslBlock');
+        const tpslCheckboxEl = document.getElementById('qtTpslCheckbox');
+        tpslToggleEl.style.display = isLimit ? '' : 'none';
+        tpslBlockEl.style.display = (isLimit && tpslCheckboxEl.classList.contains('checked')) ? 'block' : 'none';
       }
       qtOrderTabs.querySelectorAll('.qt-tab:not(.qt-tab-dropdown)').forEach(tab => {
         tab.addEventListener('click', () => qtSetActiveTab(tab.dataset.tab));
@@ -6332,12 +7785,7 @@
         });
       });
 
-      /* ---------- Trailing Stop: quick delta %, Limit/Market toggle, Activation Price ---------- */
-      document.querySelectorAll('[data-trail-pct]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.getElementById('qtTrailDelta').value = btn.dataset.trailPct;
-        });
-      });
+      /* ---------- Trailing Stop: Limit/Market toggle, Activation Price ---------- */
       const qtTrailMarketToggle = document.getElementById('qtTrailMarketToggle');
       const qtTrailLimitInput = document.getElementById('qtTrailLimit');
       qtTrailMarketToggle.addEventListener('click', () => {
@@ -6353,39 +7801,6 @@
         const enabled = qtTrailActivationCheckbox.classList.toggle('checked');
         qtTrailActivationBlock.style.display = enabled ? 'flex' : 'none';
       });
-
-      function qtMakePriceEditable(spanId) {
-        const span = document.getElementById(spanId);
-        const wrap = span.closest('.text-input-qt');
-        function startEdit() {
-          if (wrap.querySelector('.price-edit-input')) return;
-          const current = span.textContent.replace(/,/g, '');
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.className = 'price-edit-input';
-          input.value = current;
-          wrap.insertBefore(input, span);
-          span.style.display = 'none';
-          input.focus();
-          input.select();
-          let committed = false;
-          function commit(cancel) {
-            if (committed) return;
-            committed = true;
-            const val = parseFloat(input.value);
-            if (!cancel && !isNaN(val) && val > 0) span.textContent = fmt(val);
-            input.remove();
-            span.style.display = '';
-          }
-          input.addEventListener('blur', () => commit(false));
-          input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') commit(false);
-            else if (e.key === 'Escape') commit(true);
-          });
-        }
-        wrap.addEventListener('click', startEdit);
-      }
-      qtMakePriceEditable('qtLimitPrice');
 
       /* ---------- Limit tab: TP/SL toggle ---------- */
       const qtTpslToggle = document.getElementById('qtTpslToggle');
@@ -6417,7 +7832,7 @@
       const QT_ADVANCED_TRIGGER_IDS = { stopMarket: 'qtStopMarketTrigger', stopLimit: 'qtStopLimitTrigger', trailingStop: 'qtTrailLimit', mit: 'qtMitTrigger' };
       function qtActivePrice() {
         const tab = qtActiveTab();
-        if (tab === 'limit') return parseFloat(document.getElementById('qtLimitPrice').textContent.replace(/,/g, ''));
+        if (tab === 'limit') return parseFloat(document.getElementById('qtLimitPrice').value.replace(/,/g, ''));
         if (tab === 'advanced') {
           const inputId = QT_ADVANCED_TRIGGER_IDS[qtAdvancedType];
           const input = document.getElementById(inputId);
@@ -6574,7 +7989,8 @@
       function addDefaultSL() {
         if (!order) return;
         const dir = order.side === 'buy' ? 1 : -1;
-        order.sl = { price: roundTick(order.entry - dir * 2.5), trailing: false, atr: false, beTpId: null, beActive: false };
+        order.sl = { price: roundTick(order.entry - dir * 2.5), trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
+        order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
         render();
       }
       /* ---------- TP fill detection (drives "Move to Break Even" once the chosen TP is hit) ---------- */
@@ -6592,14 +8008,82 @@
           orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: tp.price, status: 'filled', time: nowTimeStr() });
           showToast('TP' + (idx + 1) + ' hit at ' + fmt(tp.price), 'check_circle');
           if (order.sl && order.sl.beTpId === tp.id && !order.sl.beActive) {
-            order.sl.price = order.entry;
+            const beCfg = getEffectiveBeConfig();
+            const offsetPrice = beCfg.offsetUnit === 'points' ? beCfg.offsetValue : beCfg.offsetValue * TICK;
+            order.sl.price = roundTick(order.entry + dir * offsetPrice);
             order.sl.beActive = true;
             syncQtyFromRisk();
             showToast('Stop loss moved to breakeven', 'vertical_align_center');
           }
         });
+        order.tpsHitCount = (order.tpsHitCount || 0) + hitTps.length;
         order.tps = order.tps.filter(tp => !hitTps.includes(tp));
         render();
+      }
+      /* ---------- shared trigger-condition resolver for breakeven / trailing-stop / trailing-TP ---------- */
+      function currentRMultiple(currentPrice) {
+        if (!order || !order.initialRisk) return null;
+        const dir = order.side === 'buy' ? 1 : -1;
+        const pts = dir * (currentPrice - order.entry);
+        return (pts * POINT_VALUE) / order.initialRisk;
+      }
+      function meetsTriggerCondition(triggerKey, customRValue, currentPrice) {
+        if (!order) return false;
+        if (triggerKey === 'tp1') return (order.tpsHitCount || 0) >= 1;
+        if (triggerKey === 'tp2') return (order.tpsHitCount || 0) >= 2;
+        if (triggerKey === 'tp3') return (order.tpsHitCount || 0) >= 3;
+        if (triggerKey === 'customR') {
+          const r = currentRMultiple(currentPrice);
+          return r !== null && r >= customRValue;
+        }
+        return false;
+      }
+      /* effective config = this SL's own override if set, otherwise the global Chart Settings default */
+      function getEffectiveBeConfig() { return (order && order.sl && order.sl.beOverride) || chartSettings.moveSlToBreakeven; }
+      function getEffectiveTrailConfig() { return (order && order.sl && order.sl.trailOverride) || chartSettings.trailingStop; }
+      function getEffectiveAtrConfig() { return (order && order.sl && order.sl.atrOverride) || chartSettings.atrStop; }
+      function atrStopDistance(cfg) {
+        cfg = cfg || getEffectiveAtrConfig();
+        return 7.5 * (cfg.multiplier / 2);
+      }
+      let simTickCounter = 0;
+      function applyTrailingStop(currentPrice) {
+        if (!order || !order.sl || !order.sl.trailing || !order.filled) return;
+        const cfg = getEffectiveTrailConfig();
+        if (!meetsTriggerCondition(cfg.start, cfg.startCustomR, currentPrice)) return;
+        const dir = order.side === 'buy' ? 1 : -1;
+        const distPrice = cfg.method === 'atr' ? atrStopDistance() : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
+        const minStepPrice = cfg.minStepValue * (cfg.minStepUnit === 'points' ? 1 : TICK);
+        const candidate = roundTick(currentPrice - dir * distPrice);
+        const improvement = dir * (candidate - order.sl.price);
+        if (improvement >= minStepPrice) {
+          order.sl.price = candidate;
+          syncQtyFromRisk();
+        }
+      }
+      function applyAtrDynamicStop(currentPrice, isNewBarTick) {
+        if (!order || !order.sl || !order.sl.atr || !order.filled) return;
+        const cfg = getEffectiveAtrConfig();
+        if (!cfg.dynamic) return;
+        if (cfg.updateFreq === 'newbar' && !isNewBarTick) return;
+        const dir = order.side === 'buy' ? 1 : -1;
+        const candidate = roundTick(currentPrice - dir * atrStopDistance(cfg));
+        const improvement = dir * (candidate - order.sl.price);
+        if (improvement > 0) { order.sl.price = candidate; syncQtyFromRisk(); }
+      }
+      function applyTrailingTp(currentPrice) {
+        if (!order || !order.filled || !order.tps.length) return;
+        const cfg = chartSettings.trailingTp;
+        const dir = order.side === 'buy' ? 1 : -1;
+        order.tps.forEach(tp => {
+          if (!tp.trailing) return;
+          if (!meetsTriggerCondition(cfg.activation, cfg.activationCustomR, currentPrice)) return;
+          const distPrice = cfg.method === 'atr' ? atrStopDistance() : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
+          const minStepPrice = cfg.minStepValue * (cfg.minStepUnit === 'points' ? 1 : TICK);
+          const candidate = roundTick(currentPrice + dir * distPrice);
+          const improvement = dir * (candidate - tp.price);
+          if (improvement >= minStepPrice) { tp.price = candidate; }
+        });
       }
       function addDefaultTP() {
         if (!order) return;
@@ -7194,6 +8678,12 @@
           lastBar.low = Math.min(lastBar.low, last);
           scheduleDrawPriceChart();
           checkTpFills(prevLast, last);
+          simTickCounter++;
+          const isNewBarTick = (simTickCounter % 10 === 0);
+          applyTrailingStop(last);
+          applyAtrDynamicStop(last, isNewBarTick);
+          applyTrailingTp(last);
+          if (order && order.filled) render();
 
           let alertsChanged = false;
           alerts.forEach(a => {
@@ -7494,31 +8984,294 @@
         openNear(alertsTopbarMenu, alertsTrigger.getBoundingClientRect(), 'left', alertsTrigger);
       });
 
-      /* ---------- settings menu (account, candle type, ...) ---------- */
+      /* ---------- settings gear → Chart Settings modal ---------- */
       const settingsTrigger = document.getElementById('settingsTrigger');
-      const settingsMenu = document.getElementById('settingsMenu');
       settingsTrigger.addEventListener('click', (e) => {
         e.stopPropagation();
-        openNear(settingsMenu, settingsTrigger.getBoundingClientRect(), 'left', settingsTrigger);
+        openChartSettings('trademgmt');
       });
-      function setupSettingsAccordion(toggleId, panelId) {
-        const toggle = document.getElementById(toggleId);
-        const panel = document.getElementById(panelId);
-        toggle.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const willOpen = !panel.classList.contains('open');
-          toggle.classList.toggle('open', willOpen);
-          panel.classList.toggle('open', willOpen);
+
+      /* ---------- topbar account selector ---------- */
+      const ACCOUNTS = [
+        { id: 'BloFin', balance: 52430.00 },
+        { id: 'TradeStation', balance: 128940.55 },
+        { id: 'Bitget', balance: 76210.30 }
+      ];
+      let selectedAccountId = 'BloFin';
+      const accountSelectTrigger = document.getElementById('accountSelectTrigger');
+      const accountSelectMenu = document.getElementById('accountSelectMenu');
+      const accountSelectList = document.getElementById('accountSelectList');
+      function renderAccountSelect() {
+        const acct = ACCOUNTS.find(a => a.id === selectedAccountId);
+        document.getElementById('accountSelectName').textContent = acct.id;
+        document.getElementById('accountSelectBalance').textContent = fmtMoney(acct.balance);
+        accountSelectList.innerHTML = ACCOUNTS.map(a =>
+          '<button class="pop-item account-item' + (a.id === selectedAccountId ? ' selected' : '') + '" data-account="' + a.id + '">' +
+          '<span class="pop-text"><span class="pt-title">' + a.id + '</span></span>' +
+          '<span class="account-item-balance">' + fmtMoney(a.balance) + '</span>' +
+          '</button>'
+        ).join('');
+        accountSelectList.querySelectorAll('[data-account]').forEach(it => {
+          it.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectedAccountId = it.dataset.account;
+            renderAccountSelect();
+            closeAllPopovers();
+            showToast('Switched to ' + selectedAccountId, 'account_balance');
+          });
         });
       }
-      setupSettingsAccordion('settingsAccountToggle', 'settingsAccountPanel');
-      settingsMenu.querySelectorAll('.pop-item[data-account]').forEach(it => {
-        it.addEventListener('click', () => {
-          settingsMenu.querySelectorAll('.pop-item[data-account]').forEach(i => i.classList.remove('selected'));
-          it.classList.add('selected');
-          document.getElementById('settingsAccountVal').textContent = it.dataset.account;
-          showToast('Switched to ' + it.dataset.account, 'account_balance');
+      renderAccountSelect();
+      accountSelectTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openNear(accountSelectMenu, accountSelectTrigger.getBoundingClientRect(), 'left', accountSelectTrigger);
+      });
+      document.getElementById('accountConnectNew').addEventListener('click', (e) => e.stopPropagation());
+
+      /* ---------- Chart Settings modal ---------- */
+      const csBackdrop = document.getElementById('chartSettingsBackdrop');
+      let csDraftSnapshot = null;
+      function setCsTab(tab) {
+        document.querySelectorAll('.cs-nav-item').forEach(b => b.classList.toggle('active', b.dataset.csTab === tab));
+        document.querySelectorAll('.cs-pane').forEach(p => p.classList.toggle('active', p.dataset.csPane === tab));
+        const activePane = document.querySelector('.cs-pane.active');
+        if (activePane) activePane.scrollIntoView({ block: 'nearest' });
+      }
+      document.querySelectorAll('.cs-nav-item').forEach(btn => {
+        btn.addEventListener('click', () => setCsTab(btn.dataset.csTab));
+      });
+      document.getElementById('csSearchInput').addEventListener('input', (e) => {
+        const q = e.target.value.trim().toLowerCase();
+        document.querySelectorAll('.cs-nav-item').forEach(b => {
+          b.style.display = (!q || b.textContent.toLowerCase().includes(q)) ? '' : 'none';
         });
+      });
+      function csUpdateConditionalFields() {
+        document.getElementById('csBeCustomRWrap').style.display = document.getElementById('csBeTrigger').value === 'customR' ? '' : 'none';
+        document.getElementById('csTsDistanceWrap').style.display = document.getElementById('csTsMethod').value === 'atr' ? 'none' : '';
+        document.getElementById('csTsStartCustomRWrap').style.display = document.getElementById('csTsStart').value === 'customR' ? '' : 'none';
+        document.getElementById('csTtpDistanceWrap').style.display = document.getElementById('csTtpMethod').value === 'atr' ? 'none' : '';
+        document.getElementById('csTtpActivationCustomRWrap').style.display = document.getElementById('csTtpActivation').value === 'customR' ? '' : 'none';
+      }
+      ['csBeTrigger', 'csTsMethod', 'csTsStart', 'csTtpMethod', 'csTtpActivation'].forEach(id => {
+        document.getElementById(id).addEventListener('change', csUpdateConditionalFields);
+      });
+      function bindCsStepper(prefix, min, max, step) {
+        const input = document.getElementById(prefix + 'Value');
+        const dec = document.getElementById(prefix + 'Dec');
+        const inc = document.getElementById(prefix + 'Inc');
+        function clampVal(v) {
+          v = Math.round(v / step) * step;
+          if (Number.isInteger(step)) v = Math.round(v); else v = +v.toFixed(2);
+          return Math.min(max, Math.max(min, v));
+        }
+        dec.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') - step); });
+        inc.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') + step); });
+      }
+      bindCsStepper('csBeOffset', 0, 200, 1);
+      bindCsStepper('csTsDistance', 1, 2000, 5);
+      bindCsStepper('csTsMinStep', 1, 200, 1);
+      bindCsStepper('csTtpDistance', 1, 2000, 5);
+      bindCsStepper('csTtpMinStep', 1, 200, 1);
+      function bindPlainStepper(valueId, min, max, step, onChange) {
+        const input = document.getElementById(valueId);
+        const dec = document.getElementById(valueId + 'Dec');
+        const inc = document.getElementById(valueId + 'Inc');
+        function clampVal(v) {
+          v = Math.round(v / step) * step;
+          v = Number.isInteger(step) ? Math.round(v) : +v.toFixed(2);
+          return Math.min(max, Math.max(min, v));
+        }
+        function set(v) { input.value = clampVal(v); if (onChange) onChange(); }
+        dec.addEventListener('click', (e) => { e.stopPropagation(); set(parseFloat(input.value || '0') - step); });
+        inc.addEventListener('click', (e) => { e.stopPropagation(); set(parseFloat(input.value || '0') + step); });
+      }
+      bindPlainStepper('csAtrLength', 1, 200, 1);
+      bindPlainStepper('csAtrMultiplier', 0.1, 20, 0.1);
+      bindPlainStepper('slAtrOvLength', 1, 200, 1, () => { if (order && order.sl && order.sl.atrOverride) order.sl.atrOverride.length = parseInt(document.getElementById('slAtrOvLength').value) || 14; });
+      bindPlainStepper('slAtrOvMultiplier', 0.1, 20, 0.1, () => { if (order && order.sl && order.sl.atrOverride) order.sl.atrOverride.multiplier = parseFloat(document.getElementById('slAtrOvMultiplier').value) || 2; });
+      document.querySelectorAll('#chartSettingsBackdrop .cs-checkbox-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+          e.preventDefault();
+          row.querySelector('.chk-box').classList.toggle('checked');
+        });
+      });
+      function csUpdateTargetTableVisibility() {
+        const mode = document.querySelector('#csDisplayModeGroup .cs-seg-btn.active').dataset.mode;
+        document.getElementById('csTargetTableWrap').style.display = mode === 'expanded' ? '' : 'none';
+      }
+      document.querySelectorAll('#csDisplayModeGroup .cs-seg-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          document.querySelectorAll('#csDisplayModeGroup .cs-seg-btn').forEach(x => x.classList.remove('active'));
+          b.classList.add('active');
+          csUpdateTargetTableVisibility();
+        });
+      });
+      /* ---------- default targets / stop loss table (Expanded mode entry defaults) ---------- */
+      let csTargetsDraft = [];
+      let csSlDraft = null;
+      function renderTargetsTable() {
+        const rowsEl = document.getElementById('csTargetRows');
+        let html = csTargetsDraft.map((t, i) =>
+          '<div class="cs-target-row" data-idx="' + i + '">' +
+          '<span class="cs-target-label tp">TP' + (i + 1) + '</span>' +
+          '<input type="text" class="cs-target-input" data-field="pct" value="' + t.pct + '%">' +
+          '<input type="text" class="cs-target-input" data-field="r" value="' + t.r.toFixed(1) + 'R">' +
+          '<div class="select-input pop-trigger cs-dd-trigger" data-target="csTargetType' + i + '"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>' +
+          '<select id="csTargetType' + i + '" data-field="type" style="display:none;">' +
+          '<option value="limit"' + (t.type === 'limit' ? ' selected' : '') + '>Limit</option>' +
+          '<option value="market"' + (t.type === 'market' ? ' selected' : '') + '>Market</option>' +
+          '</select>' +
+          '<button type="button" class="cs-target-del" data-idx="' + i + '"><span class="material-symbols-outlined">delete</span></button>' +
+          '</div>'
+        ).join('');
+        if (csSlDraft) {
+          html += '<div class="cs-target-row">' +
+            '<span class="cs-target-label sl">Stop Loss</span>' +
+            '<input type="text" class="cs-target-input" value="100%" disabled>' +
+            '<input type="text" class="cs-target-input" id="csSlDraftR" value="' + csSlDraft.r.toFixed(1) + 'R">' +
+            '<div class="select-input pop-trigger cs-dd-trigger" data-target="csSlDraftType"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div><select id="csSlDraftType" style="display:none;">' +
+            '<option value="stopMarket"' + (csSlDraft.type === 'stopMarket' ? ' selected' : '') + '>Stop Market</option>' +
+            '<option value="stopLimit"' + (csSlDraft.type === 'stopLimit' ? ' selected' : '') + '>Stop Limit</option>' +
+            '</select>' +
+            '<button type="button" class="cs-target-del" id="csSlDraftDel"><span class="material-symbols-outlined">delete</span></button>' +
+            '</div>';
+        }
+        rowsEl.innerHTML = html;
+        refreshAllCsDropdownLabels(rowsEl);
+        rowsEl.querySelectorAll('.cs-target-row[data-idx]').forEach(row => {
+          const idx = parseInt(row.dataset.idx);
+          row.querySelector('[data-field="pct"]').addEventListener('change', (e) => { csTargetsDraft[idx].pct = parseFloat(e.target.value) || 0; e.target.value = csTargetsDraft[idx].pct + '%'; });
+          row.querySelector('[data-field="r"]').addEventListener('change', (e) => { csTargetsDraft[idx].r = parseFloat(e.target.value) || 0; e.target.value = csTargetsDraft[idx].r.toFixed(1) + 'R'; });
+          row.querySelector('[data-field="type"]').addEventListener('change', (e) => { csTargetsDraft[idx].type = e.target.value; });
+        });
+        rowsEl.querySelectorAll('.cs-target-del[data-idx]').forEach(btn => {
+          btn.addEventListener('click', () => { csTargetsDraft.splice(parseInt(btn.dataset.idx), 1); renderTargetsTable(); });
+        });
+        const slR = document.getElementById('csSlDraftR');
+        if (slR) slR.addEventListener('change', (e) => { csSlDraft.r = parseFloat(e.target.value) || 0; e.target.value = csSlDraft.r.toFixed(1) + 'R'; });
+        const slType = document.getElementById('csSlDraftType');
+        if (slType) slType.addEventListener('change', (e) => { csSlDraft.type = e.target.value; });
+        const slDel = document.getElementById('csSlDraftDel');
+        if (slDel) slDel.addEventListener('click', () => { csSlDraft = null; renderTargetsTable(); });
+      }
+      document.getElementById('csAddTargetBtn').addEventListener('click', () => {
+        const maxR = csTargetsDraft.reduce((m, t) => Math.max(m, t.r), 0);
+        csTargetsDraft.push({ pct: 0, r: Math.round((maxR + 1) * 10) / 10, type: 'limit' });
+        renderTargetsTable();
+      });
+      function populateChartSettingsForm() {
+        const s = chartSettings;
+        document.getElementById('csBeTrigger').value = s.moveSlToBreakeven.trigger;
+        document.getElementById('csBeCustomRValue').value = s.moveSlToBreakeven.customR;
+        document.getElementById('csBeOffsetValue').value = s.moveSlToBreakeven.offsetValue;
+        document.getElementById('csBeOffsetUnit').value = s.moveSlToBreakeven.offsetUnit;
+
+        document.getElementById('csTsMethod').value = s.trailingStop.method;
+        document.getElementById('csTsDistanceValue').value = s.trailingStop.distanceValue;
+        document.getElementById('csTsDistanceUnit').value = s.trailingStop.distanceUnit;
+        document.getElementById('csTsStart').value = s.trailingStop.start;
+        document.getElementById('csTsStartCustomRValue').value = s.trailingStop.startCustomR;
+        document.getElementById('csTsMinStepValue').value = s.trailingStop.minStepValue;
+        document.getElementById('csTsMinStepUnit').value = s.trailingStop.minStepUnit;
+
+        document.getElementById('csAtrLength').value = s.atrStop.length;
+        document.getElementById('csAtrMultiplier').value = s.atrStop.multiplier;
+        document.getElementById('csAtrTimeframe').value = s.atrStop.timeframe;
+        document.getElementById('csAtrUpdateFreq').value = s.atrStop.updateFreq;
+        document.getElementById('csAtrDynamic').classList.toggle('checked', s.atrStop.dynamic);
+
+        document.getElementById('csTtpActivation').value = s.trailingTp.activation;
+        document.getElementById('csTtpActivationCustomRValue').value = s.trailingTp.activationCustomR;
+        document.getElementById('csTtpMethod').value = s.trailingTp.method;
+        document.getElementById('csTtpDistanceValue').value = s.trailingTp.distanceValue;
+        document.getElementById('csTtpDistanceUnit').value = s.trailingTp.distanceUnit;
+        document.getElementById('csTtpMinStepValue').value = s.trailingTp.minStepValue;
+        document.getElementById('csTtpMinStepUnit').value = s.trailingTp.minStepUnit;
+
+        document.querySelectorAll('#csDisplayModeGroup .cs-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === s.tpSlDisplayMode));
+        document.getElementById('csDefaultProfile').value = s.defaultProfile;
+        csTargetsDraft = JSON.parse(JSON.stringify(s.defaultTargets || []));
+        csSlDraft = s.defaultStopLoss ? JSON.parse(JSON.stringify(s.defaultStopLoss)) : null;
+        renderTargetsTable();
+        csUpdateTargetTableVisibility();
+
+        document.getElementById('csGbCancelOnClose').classList.toggle('checked', s.globalBehavior.cancelOnManualClose);
+        document.getElementById('csGbRecalc').classList.toggle('checked', s.globalBehavior.recalcOnSizeChange);
+        document.getElementById('csGbPersist').classList.toggle('checked', s.globalBehavior.persist);
+
+        csUpdateConditionalFields();
+        refreshAllCsDropdownLabels(document.getElementById('chartSettingsBackdrop'));
+      }
+      function collectChartSettingsForm() {
+        chartSettings = {
+          tpSlDisplayMode: document.querySelector('#csDisplayModeGroup .cs-seg-btn.active').dataset.mode,
+          defaultProfile: document.getElementById('csDefaultProfile').value,
+          defaultTargets: csTargetsDraft,
+          defaultStopLoss: csSlDraft,
+          moveSlToBreakeven: {
+            trigger: document.getElementById('csBeTrigger').value,
+            customR: parseFloat(document.getElementById('csBeCustomRValue').value) || 1,
+            offsetValue: parseFloat(document.getElementById('csBeOffsetValue').value) || 0,
+            offsetUnit: document.getElementById('csBeOffsetUnit').value,
+          },
+          trailingStop: {
+            method: document.getElementById('csTsMethod').value,
+            distanceValue: parseFloat(document.getElementById('csTsDistanceValue').value) || 1,
+            distanceUnit: document.getElementById('csTsDistanceUnit').value,
+            start: document.getElementById('csTsStart').value,
+            startCustomR: parseFloat(document.getElementById('csTsStartCustomRValue').value) || 1,
+            minStepValue: parseFloat(document.getElementById('csTsMinStepValue').value) || 1,
+            minStepUnit: document.getElementById('csTsMinStepUnit').value,
+          },
+          atrStop: {
+            length: parseInt(document.getElementById('csAtrLength').value) || 14,
+            multiplier: parseFloat(document.getElementById('csAtrMultiplier').value) || 2,
+            timeframe: document.getElementById('csAtrTimeframe').value,
+            updateFreq: document.getElementById('csAtrUpdateFreq').value,
+            dynamic: document.getElementById('csAtrDynamic').classList.contains('checked'),
+          },
+          trailingTp: {
+            activation: document.getElementById('csTtpActivation').value,
+            activationCustomR: parseFloat(document.getElementById('csTtpActivationCustomRValue').value) || 1,
+            method: document.getElementById('csTtpMethod').value,
+            distanceValue: parseFloat(document.getElementById('csTtpDistanceValue').value) || 1,
+            distanceUnit: document.getElementById('csTtpDistanceUnit').value,
+            minStepValue: parseFloat(document.getElementById('csTtpMinStepValue').value) || 1,
+            minStepUnit: document.getElementById('csTtpMinStepUnit').value,
+          },
+          globalBehavior: {
+            cancelOnManualClose: document.getElementById('csGbCancelOnClose').classList.contains('checked'),
+            recalcOnSizeChange: document.getElementById('csGbRecalc').classList.contains('checked'),
+            persist: document.getElementById('csGbPersist').classList.contains('checked'),
+          }
+        };
+        persistChartSettingsIfEnabled();
+      }
+      function openChartSettings(initialTab) {
+        csDraftSnapshot = JSON.stringify(chartSettings);
+        populateChartSettingsForm();
+        setCsTab(initialTab || 'trademgmt');
+        closeAllPopovers();
+        csBackdrop.classList.add('show');
+      }
+      function closeChartSettings(commit) {
+        if (!commit && csDraftSnapshot) { chartSettings = JSON.parse(csDraftSnapshot); }
+        csDraftSnapshot = null;
+        csBackdrop.classList.remove('show');
+      }
+      document.getElementById('csSaveBtn').addEventListener('click', () => {
+        collectChartSettingsForm();
+        closeChartSettings(true);
+        showToast('Trade management settings saved', 'check_circle');
+      });
+      document.getElementById('csCancelBtn').addEventListener('click', () => closeChartSettings(false));
+      document.getElementById('csCloseBtn').addEventListener('click', () => closeChartSettings(false));
+      csBackdrop.addEventListener('click', (e) => { if (e.target === csBackdrop) closeChartSettings(false); });
+      document.getElementById('csResetBtn').addEventListener('click', () => {
+        chartSettings = cloneCsDefaults();
+        populateChartSettingsForm();
+        showToast('Reset to defaults', 'restart_alt');
       });
 
       /* ---------- candle type dropdown (topbar) ---------- */
@@ -7594,10 +9347,10 @@
       const symSelectList = document.getElementById('symSelectList');
       const symSelectLabel = document.getElementById('symSelectLabel');
       const symSelectTabs = document.querySelectorAll('#symSelectTabs .wl-tab');
-      let symSelectCat = 'crypto';
+      let symSelectCat = 'all';
       function renderSymSelectList(filter) {
         const q = (filter || '').trim().toUpperCase();
-        const items = SYMBOL_LIST.filter(s => s.cat === symSelectCat && (!q || s.sym.includes(q)));
+        const items = SYMBOL_LIST.filter(s => (symSelectCat === 'all' || s.cat === symSelectCat) && (!q || s.sym.includes(q)));
         symSelectList.innerHTML = items.length
           ? items.map(s => '<button class="sym-select-item" data-sym="' + s.sym + '">' + s.sym + '</button>').join('')
           : '<div class="sym-select-empty">No symbols found</div>';
@@ -7730,59 +9483,71 @@
       /* ---------- SL gear menu ---------- */
       const slGearMenu = document.getElementById('slGearMenu');
       const slBeToggle = document.getElementById('slBeToggle');
-      const slBePanel = document.getElementById('slBePanel');
       const slBeSub = document.getElementById('slBeSub');
-      const slBeTpList = document.getElementById('slBeTpList');
       const slTrailBtn = document.getElementById('slTrail');
       const slTrailSub = document.getElementById('slTrailSub');
       const slAtrBtn = document.getElementById('slAtr');
       const slAtrSub = document.getElementById('slAtrSub');
+      /* resolves which TP arms breakeven, using the global default set in Chart Settings > Trade Management */
+      function resolveBreakevenTpId() {
+        if (!order || !order.tps.length) return null;
+        const cfg = getEffectiveBeConfig();
+        if (cfg.trigger === 'tp1') return order.tps[0].id;
+        if (cfg.trigger === 'tp2') return (order.tps[1] || order.tps[order.tps.length - 1]).id;
+        if (cfg.trigger === 'tp3') return (order.tps[2] || order.tps[order.tps.length - 1]).id;
+        if (cfg.trigger === 'customR') {
+          const dir = order.side === 'buy' ? 1 : -1;
+          const riskTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
+          if (riskTotal) {
+            const match = order.tps.find(tp => {
+              const pts = dir * (tp.price - order.entry);
+              return (pts * POINT_VALUE) / riskTotal >= cfg.customR;
+            });
+            if (match) return match.id;
+          }
+          return order.tps[order.tps.length - 1].id;
+        }
+        return order.tps[0].id;
+      }
       function renderSlGearMenu() {
         if (!order || !order.sl) return;
-        const tooFewTps = order.tps.length < 2;
+        const noTps = order.tps.length === 0;
         const trailActive = !!order.sl.trailing;
         const atrActive = !!order.sl.atr;
-        if (tooFewTps && !order.sl.beActive) { order.sl.beTpId = null; }
+        if (noTps && !order.sl.beActive) { order.sl.beTpId = null; }
         const beArmed = !!order.sl.beTpId || order.sl.beActive;
-        const beLocked = tooFewTps && !order.sl.beTpId && !order.sl.beActive;
+        const beLocked = noTps && !order.sl.beActive;
         slBeToggle.classList.toggle('disabled', beLocked);
         slBeToggle.classList.toggle('selected', beArmed);
-        if (beLocked) { slBeToggle.classList.remove('open'); slBePanel.classList.remove('open'); }
         slBeSub.textContent = order.sl.beActive
           ? 'Active — SL moved to entry'
-          : tooFewTps ? 'Requires 2+ take profits'
-            : order.sl.beTpId ? 'Triggers on TP' + (order.tps.findIndex(t => t.id === order.sl.beTpId) + 1)
-              : 'Off';
-        slBeTpList.innerHTML = beLocked ? '' : (
-          '<button class="pop-item' + (!order.sl.beTpId ? ' selected' : '') + '" data-be-tp="">' +
-          '<span class="pop-text"><span class="pt-title">Off</span></span></button>' +
-          order.tps.map((tp, idx) =>
-            '<button class="pop-item' + (order.sl.beTpId === tp.id ? ' selected' : '') + '" data-be-tp="' + tp.id + '">' +
-            '<span class="pop-text"><span class="pt-title">TP' + (idx + 1) + '</span></span></button>'
-          ).join('')
-        );
-        slBeTpList.querySelectorAll('[data-be-tp]').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!order || !order.sl) return;
-            order.sl.beTpId = btn.dataset.beTp || null;
-            order.sl.beActive = false;
-            if (order.sl.beTpId) { order.sl.trailing = false; order.sl.atr = false; }
-            renderSlGearMenu();
-            render();
-          });
-        });
+          : noTps ? 'Requires a take profit'
+            : beArmed ? 'Triggers on TP' + (order.tps.findIndex(t => t.id === order.sl.beTpId) + 1)
+              : 'Move SL to entry once a TP is hit';
         slTrailBtn.classList.toggle('selected', trailActive);
         slTrailSub.textContent = 'Trail stop loss as price moves';
         slAtrBtn.classList.toggle('selected', atrActive);
         slAtrSub.textContent = 'Use ATR based stop loss';
+        document.getElementById('slBeOverrideTune').classList.toggle('active', !!order.sl.beOverride);
+        document.getElementById('slTrailOverrideTune').classList.toggle('active', !!order.sl.trailOverride);
+        document.getElementById('slAtrOverrideTune').classList.toggle('active', !!order.sl.atrOverride);
       }
       slBeToggle.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (!order || !order.sl) return;
         if (slBeToggle.classList.contains('disabled')) return;
-        const willOpen = !slBePanel.classList.contains('open');
-        slBeToggle.classList.toggle('open', willOpen);
-        slBePanel.classList.toggle('open', willOpen);
+        if (order.sl.beTpId || order.sl.beActive) {
+          order.sl.beTpId = null;
+          order.sl.beActive = false;
+        } else {
+          const resolvedTpId = resolveBreakevenTpId();
+          if (!resolvedTpId) return;
+          order.sl.beTpId = resolvedTpId;
+          order.sl.trailing = false;
+          order.sl.atr = false;
+        }
+        renderSlGearMenu();
+        render();
       });
       function openSlGearMenu(anchorRect, trigger) {
         if (trigger && slGearMenu.classList.contains('show') && slGearMenu._openTrigger === trigger) {
@@ -7807,12 +9572,177 @@
           if (order.sl.atr) {
             order.sl.beTpId = null; order.sl.beActive = false; order.sl.trailing = false;
             const dir = order.side === 'buy' ? 1 : -1;
-            order.sl.price = roundTick(order.entry - dir * 7.5);
+            order.sl.price = roundTick(order.entry - dir * atrStopDistance());
             syncQtyFromRisk();
           }
         }
         renderSlGearMenu(); render();
       });
+
+      /* ---------- per-SL override panels (override the global Trade Management defaults for this stop loss only) ---------- */
+      function bindSlOverrideAccordion(tuneId, panelId) {
+        const tune = document.getElementById(tuneId);
+        const panel = document.getElementById(panelId);
+        tune.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!order || !order.sl) return;
+          const willOpen = !panel.classList.contains('open');
+          panel.classList.toggle('open', willOpen);
+        });
+      }
+      bindSlOverrideAccordion('slBeOverrideTune', 'slBeOverridePanel');
+      bindSlOverrideAccordion('slTrailOverrideTune', 'slTrailOverridePanel');
+      bindSlOverrideAccordion('slAtrOverrideTune', 'slAtrOverridePanel');
+
+      function bindSlOverrideStepper(prefix, min, max, step, overrideKey, field) {
+        const input = document.getElementById(prefix + 'Value');
+        const dec = document.getElementById(prefix + 'Dec');
+        const inc = document.getElementById(prefix + 'Inc');
+        function clampVal(v) {
+          v = Math.round(v / step) * step;
+          v = Number.isInteger(step) ? Math.round(v) : +v.toFixed(2);
+          return Math.min(max, Math.max(min, v));
+        }
+        function commit() { if (order && order.sl && order.sl[overrideKey]) order.sl[overrideKey][field] = parseFloat(input.value) || 0; }
+        dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') - step); commit(); });
+        inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') + step); commit(); });
+      }
+
+      /* -- Move to Break Even override -- */
+      const slBeOverrideEnabled = document.getElementById('slBeOverrideEnabled');
+      const slBeOverrideFields = document.getElementById('slBeOverrideFields');
+      const slBeOvTrigger = document.getElementById('slBeOvTrigger');
+      const slBeOvOffsetValue = document.getElementById('slBeOvOffsetValue');
+      const slBeOvOffsetUnit = document.getElementById('slBeOvOffsetUnit');
+      function populateBeOverrideForm() {
+        if (!order || !order.sl) return;
+        const cfg = order.sl.beOverride || chartSettings.moveSlToBreakeven;
+        const enabled = !!order.sl.beOverride;
+        slBeOverrideEnabled.classList.toggle('checked', enabled);
+        slBeOverrideFields.style.display = enabled ? '' : 'none';
+        slBeOvTrigger.value = cfg.trigger;
+        slBeOvOffsetValue.value = cfg.offsetValue;
+        slBeOvOffsetUnit.value = cfg.offsetUnit;
+        refreshAllCsDropdownLabels(document.getElementById('slBeOverridePanel'));
+      }
+      document.getElementById('slBeOverrideTune').addEventListener('click', () => { if (order && order.sl) populateBeOverrideForm(); });
+      slBeOverrideEnabled.closest('.cs-checkbox-row').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!order || !order.sl) return;
+        const willEnable = !slBeOverrideEnabled.classList.contains('checked');
+        slBeOverrideEnabled.classList.toggle('checked', willEnable);
+        slBeOverrideFields.style.display = willEnable ? '' : 'none';
+        order.sl.beOverride = willEnable
+          ? { trigger: slBeOvTrigger.value, customR: chartSettings.moveSlToBreakeven.customR, offsetValue: parseFloat(slBeOvOffsetValue.value) || 0, offsetUnit: slBeOvOffsetUnit.value }
+          : null;
+        renderSlGearMenu();
+      });
+      [slBeOvTrigger, slBeOvOffsetUnit].forEach(el => el.addEventListener('change', (e) => {
+        e.stopPropagation();
+        if (order && order.sl && order.sl.beOverride) {
+          order.sl.beOverride.trigger = slBeOvTrigger.value;
+          order.sl.beOverride.offsetUnit = slBeOvOffsetUnit.value;
+        }
+      }));
+      bindSlOverrideStepper('slBeOvOffset', 0, 200, 1, 'beOverride', 'offsetValue');
+
+      /* -- Trailing Stop override -- */
+      const slTrailOverrideEnabled = document.getElementById('slTrailOverrideEnabled');
+      const slTrailOverrideFields = document.getElementById('slTrailOverrideFields');
+      const slTrailOvMethod = document.getElementById('slTrailOvMethod');
+      const slTrailOvDistanceValue = document.getElementById('slTrailOvDistanceValue');
+      const slTrailOvDistanceUnit = document.getElementById('slTrailOvDistanceUnit');
+      const slTrailOvStart = document.getElementById('slTrailOvStart');
+      const slTrailOvMinStepValue = document.getElementById('slTrailOvMinStepValue');
+      const slTrailOvMinStepUnit = document.getElementById('slTrailOvMinStepUnit');
+      function updateSlTrailOvConditional() {
+        document.getElementById('slTrailOvDistanceWrap').style.display = slTrailOvMethod.value === 'atr' ? 'none' : '';
+      }
+      function populateTrailOverrideForm() {
+        if (!order || !order.sl) return;
+        const cfg = order.sl.trailOverride || chartSettings.trailingStop;
+        const enabled = !!order.sl.trailOverride;
+        slTrailOverrideEnabled.classList.toggle('checked', enabled);
+        slTrailOverrideFields.style.display = enabled ? '' : 'none';
+        slTrailOvMethod.value = cfg.method;
+        slTrailOvDistanceValue.value = cfg.distanceValue;
+        slTrailOvDistanceUnit.value = cfg.distanceUnit;
+        slTrailOvStart.value = cfg.start;
+        slTrailOvMinStepValue.value = cfg.minStepValue;
+        slTrailOvMinStepUnit.value = cfg.minStepUnit;
+        updateSlTrailOvConditional();
+        refreshAllCsDropdownLabels(document.getElementById('slTrailOverridePanel'));
+      }
+      document.getElementById('slTrailOverrideTune').addEventListener('click', () => { if (order && order.sl) populateTrailOverrideForm(); });
+      slTrailOverrideEnabled.closest('.cs-checkbox-row').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!order || !order.sl) return;
+        const willEnable = !slTrailOverrideEnabled.classList.contains('checked');
+        slTrailOverrideEnabled.classList.toggle('checked', willEnable);
+        slTrailOverrideFields.style.display = willEnable ? '' : 'none';
+        order.sl.trailOverride = willEnable
+          ? {
+            method: slTrailOvMethod.value, distanceValue: parseFloat(slTrailOvDistanceValue.value) || 1, distanceUnit: slTrailOvDistanceUnit.value,
+            start: slTrailOvStart.value, startCustomR: chartSettings.trailingStop.startCustomR,
+            minStepValue: parseFloat(slTrailOvMinStepValue.value) || 1, minStepUnit: slTrailOvMinStepUnit.value
+          }
+          : null;
+        renderSlGearMenu();
+      });
+      [slTrailOvMethod, slTrailOvDistanceUnit, slTrailOvStart, slTrailOvMinStepUnit].forEach(el => el.addEventListener('change', (e) => {
+        e.stopPropagation();
+        if (el === slTrailOvMethod) updateSlTrailOvConditional();
+        if (order && order.sl && order.sl.trailOverride) {
+          order.sl.trailOverride.method = slTrailOvMethod.value;
+          order.sl.trailOverride.distanceUnit = slTrailOvDistanceUnit.value;
+          order.sl.trailOverride.start = slTrailOvStart.value;
+          order.sl.trailOverride.minStepUnit = slTrailOvMinStepUnit.value;
+        }
+      }));
+      bindSlOverrideStepper('slTrailOvDistance', 1, 2000, 5, 'trailOverride', 'distanceValue');
+      bindSlOverrideStepper('slTrailOvMinStep', 1, 200, 1, 'trailOverride', 'minStepValue');
+
+      /* -- ATR Stop override -- */
+      const slAtrOverrideEnabled = document.getElementById('slAtrOverrideEnabled');
+      const slAtrOverrideFields = document.getElementById('slAtrOverrideFields');
+      const slAtrOvLength = document.getElementById('slAtrOvLength');
+      const slAtrOvMultiplier = document.getElementById('slAtrOvMultiplier');
+      const slAtrOvUpdateFreq = document.getElementById('slAtrOvUpdateFreq');
+      function populateAtrOverrideForm() {
+        if (!order || !order.sl) return;
+        const cfg = order.sl.atrOverride || chartSettings.atrStop;
+        const enabled = !!order.sl.atrOverride;
+        slAtrOverrideEnabled.classList.toggle('checked', enabled);
+        slAtrOverrideFields.style.display = enabled ? '' : 'none';
+        slAtrOvLength.value = cfg.length;
+        slAtrOvMultiplier.value = cfg.multiplier;
+        slAtrOvUpdateFreq.value = cfg.updateFreq;
+        refreshAllCsDropdownLabels(document.getElementById('slAtrOverridePanel'));
+      }
+      document.getElementById('slAtrOverrideTune').addEventListener('click', () => { if (order && order.sl) populateAtrOverrideForm(); });
+      slAtrOverrideEnabled.closest('.cs-checkbox-row').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!order || !order.sl) return;
+        const willEnable = !slAtrOverrideEnabled.classList.contains('checked');
+        slAtrOverrideEnabled.classList.toggle('checked', willEnable);
+        slAtrOverrideFields.style.display = willEnable ? '' : 'none';
+        order.sl.atrOverride = willEnable
+          ? { length: parseInt(slAtrOvLength.value) || 14, multiplier: parseFloat(slAtrOvMultiplier.value) || 2, timeframe: chartSettings.atrStop.timeframe, updateFreq: slAtrOvUpdateFreq.value, dynamic: true }
+          : null;
+        renderSlGearMenu();
+      });
+      slAtrOvUpdateFreq.addEventListener('change', (e) => {
+        e.stopPropagation();
+        if (order && order.sl && order.sl.atrOverride) order.sl.atrOverride.updateFreq = slAtrOvUpdateFreq.value;
+      });
+      [slAtrOvLength, slAtrOvMultiplier].forEach(el => el.addEventListener('change', (e) => {
+        e.stopPropagation();
+        if (order && order.sl && order.sl.atrOverride) {
+          order.sl.atrOverride.length = parseInt(slAtrOvLength.value) || 14;
+          order.sl.atrOverride.multiplier = parseFloat(slAtrOvMultiplier.value) || 2;
+        }
+      }));
+
       document.getElementById('slRemove').addEventListener('click', () => {
         order.sl = null;
         closeAllPopovers(); render();
