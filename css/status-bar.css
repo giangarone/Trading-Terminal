@@ -1,0 +1,55 @@
+/* ====== Status bar ====== */
+.statusbar {
+  height: 26px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: var(--ink-900);
+  border-top: 1px solid var(--line-1);
+  font-size: 11px;
+  color: var(--paper-500);
+}
+
+.sb-left,
+.sb-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sb-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--long);
+  box-shadow: 0 0 0 2px var(--long-dim);
+}
+
+.live-pill {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--long);
+  background: var(--long-dim);
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: .04em;
+}
+
+@media (max-width:1300px) {
+  .left-panel {
+    width: 310px;
+  }
+
+  .right-panel {
+    width: 296px;
+  }
+}
+

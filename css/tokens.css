@@ -1,0 +1,155 @@
+/* ====== Tokens ====== */
+:root {
+  --ink-950: #07090b;
+  --ink-900: #0c1014;
+  --ink-850: #11161a;
+  --ink-800: #161d22;
+  --ink-750: #1c2429;
+  --line-1: #1b2227;
+  --line-2: #262e35;
+  --line-3: #36414b;
+  --paper-100: #e9edf0;
+  --paper-300: #98a4ac;
+  --paper-500: #5c6770;
+  --long: #2bd47e;
+  --long-dim: rgba(43, 212, 126, .14);
+  --short: #f2495c;
+  --short-dim: rgba(242, 73, 92, .14);
+  --accent: #e3a039;
+  --accent-dim: rgba(227, 160, 57, .14);
+  --intel: #2bb8c9;
+  --intel-dim: rgba(43, 184, 201, .14);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167, 139, 250, .14);
+  --purple-guide: rgba(167, 139, 250, .55);
+  --on-accent: #1d1406;
+  --on-signal: #0b0f10;
+  --r-xs: 5px;
+  --r-sm: 7px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--ink-900);
+  color: var(--paper-100);
+  font-family: var(--sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--accent-dim);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-3) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line-3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f4d59;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 18px;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
+  user-select: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  color: inherit;
+  border: none;
+  outline: none;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+input {
+  font-family: inherit;
+  color: inherit;
+}
+
+.up {
+  color: var(--long);
+}
+
+.down {
+  color: var(--short);
+}
+
+.muted {
+  color: var(--paper-300);
+}
+
+.faint {
+  color: var(--paper-500);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .flash-up,
+  .flash-down {
+    animation: none !important;
+  }
+
+  .toast {
+    transition: none !important;
+  }
+
+  .switch::after {
+    transition: none !important;
+  }
+}
+
+.app {
+  height: calc(100vh - 2px);
+  display: flex;
+  flex-direction: column;
+}
+

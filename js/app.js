@@ -1,0 +1,3019 @@
+/* ================================================================
+   ORDER MANAGEMENT ENGINE
+   ================================================================ */
+(function () {
+  const POINT_VALUE = 50;          // $ per point per contract (ES)
+  let TICK = 0.25;
+  const PX_PER_POINT = 22;         // vertical px per 1.0 point
+  const BASE_PRICE = 4500.25;      // anchors chart's vertical price scale
+  const AXIS_RIGHT_W = 68;         // width reserved for the price axis gutter
+  const AXIS_BOTTOM_H = 24;        // height reserved for the time axis gutter
+  const BAR_INTERVAL_MIN = 15;     // minutes per candle, matches the active "15m" timeframe
+  const FUTURE_BARS = 24;          // empty bar-slots reserved on the right so the time axis continues past "now"
+  const VISIBLE_BARS = 90;         // default on-screen candle density; older bars sit off to the left, reachable by panning
+  const MARGIN_PER_CONTRACT = 13200; // mock margin / contract (ballpark ES futures margin)
+  const BUYING_POWER = 87643.20;   // matches Order Entry panel
+  const ACCOUNT_BALANCE = 20000;   // mock, used for % of Account mode
+
+  const chart = document.getElementById('chartPlaceholder');
+  const layer = document.getElementById('orderLineLayer');
+  const newsMarkerLayer = document.getElementById('newsMarkerLayer');
+  const toastStack = document.getElementById('toastStack');
+  const priceCanvas = document.getElementById('priceChartCanvas');
+
+  let order = null;
+  let tpCounter = 1;
+  let pendingClickPrice = BASE_PRICE;
+  let activeGearTpId = null;          // which TP a gear-menu / modal call refers to
+  let exitModal = null;                // {tpId, mode, pct}
+
+  /* ---------- Chart Settings: Trade Management defaults ---------- */
+  const CS_DEFAULTS = {
+    tpSlDisplayMode: 'condensed',      // 'condensed' = manual TP/SL (default), 'expanded' = auto-add using defaultTargets/defaultStopLoss
+    defaultProfile: 'scalp',
+    defaultTargets: [
+      { pct: 50, r: 1.0, type: 'limit' },
+      { pct: 25, r: 2.0, type: 'limit' },
+      { pct: 25, r: 4.0, type: 'limit' }
+    ],
+    defaultStopLoss: { r: 1.0, type: 'stopMarket' },
+    moveSlToBreakeven: { trigger: 'tp1', customR: 1, offsetValue: 1, offsetUnit: 'ticks' },
+    trailingStop: { method: 'fixed', distanceValue: 20, distanceUnit: 'ticks', start: 'tp1', startCustomR: 1, minStepValue: 1, minStepUnit: 'ticks' },
+    atrStop: { length: 14, multiplier: 2.0, timeframe: 'current', updateFreq: 'newbar', dynamic: true },
+    trailingTp: { activation: 'tp1', activationCustomR: 1, method: 'fixed', distanceValue: 20, distanceUnit: 'ticks', minStepValue: 1, minStepUnit: 'ticks' },
+    globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true }
+  };
+  function cloneCsDefaults() { return JSON.parse(JSON.stringify(CS_DEFAULTS)); }
+  function loadChartSettings() {
+    try {
+      const raw = localStorage.getItem('tt_chartSettings');
+      if (raw) return Object.assign(cloneCsDefaults(), JSON.parse(raw));
+    } catch (e) { /* ignore corrupt storage */ }
+    return cloneCsDefaults();
+  }
+  let chartSettings = loadChartSettings();
+  function persistChartSettingsIfEnabled() {
+    if (!chartSettings.globalBehavior.persist) return;
+    try { localStorage.setItem('tt_chartSettings', JSON.stringify(chartSettings)); } catch (e) { /* storage unavailable */ }
+  }
+
+  /* ---------- order history & alerts state ---------- */
+  let alertCounter = 1;
+  let alerts = [];
+  function nowTimeStr() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+  let orderHistory = [
+    { symbol: 'ETHUSD', side: 'buy', qty: 2, price: 4486.50, status: 'filled', time: '09:15:32 AM' },
+    { symbol: 'NQU5', side: 'buy', qty: 1, price: 18480.00, status: 'filled', time: '09:18:47 AM' },
+    { symbol: 'RTYU5', side: 'buy', qty: 3, price: 2070.00, status: 'cancelled', time: '08:55:10 AM' },
+  ];
+
+  /* ---------- helpers ---------- */
+  function fmt(n, dec) {
+    dec = dec === undefined ? 2 : dec;
+    const neg = n < 0; n = Math.abs(n);
+    const parts = n.toFixed(dec).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return (neg ? '-' : '') + parts.join('.');
+  }
+  function fmtMoney(n) { return (n < 0 ? '-$' : '$') + fmt(Math.abs(n)); }
+  function roundTick(p) { return Math.round(p / TICK) * TICK; }
+  function rectH() { return chart.getBoundingClientRect().height; }
+  let panX = 0, panY = 0; // panX: px shift of candles; panY: price shift applied to whole scale
+  let panXInitialized = false; // on first draw, panX is set to push candles left, leaving more empty space on the right
+  let crosshair = null; // {x,y} in CSS px relative to chart, within plot bounds, or null when not hovering
+  let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | 'tp-add' | 'sl-add' | null — which order-line handle is currently hovered
+  let hoveringChartPopup = false; // true while the cursor is over a draggable chart popup (AI Assistance, Market Scanner)
+  let isDraggingOrderLine = false; // true for the duration of any order-line drag — blocks the price-tick auto-render from wiping live drag visuals
+  function priceToY(price, h) { const ih = h - AXIS_BOTTOM_H; return ih / 2 - (price - BASE_PRICE - panY) * PX_PER_POINT; }
+  function yToPrice(y, h) { const ih = h - AXIS_BOTTOM_H; return BASE_PRICE + panY - (y - ih / 2) / PX_PER_POINT; }
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function showToast(msg, icon) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = '<span class="material-symbols-outlined">' + (icon || 'info') + '</span><span>' + msg + '</span>';
+    toastStack.appendChild(t);
+    setTimeout(() => t.classList.add('show'), 10);
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2600);
+  }
+
+  /* ---------- popover positioning ---------- */
+  function closeAllPopovers() {
+    document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => m.classList.remove('show'));
+  }
+  function openAt(el, x, y) {
+    closeAllPopovers();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    el.classList.add('show');
+    const w = el.offsetWidth, h = el.offsetHeight;
+    if (x + w > vw - 12) x = vw - w - 12;
+    if (y + h > vh - 12) y = vh - h - 12;
+    el.style.left = Math.max(8, x) + 'px';
+    el.style.top = Math.max(8, y) + 'px';
+  }
+  function openNear(el, anchorRect, align, trigger) {
+    if (trigger && el.classList.contains('show') && el._openTrigger === trigger) {
+      closeAllPopovers();
+      return;
+    }
+    /* if this popover was triggered from inside another already-open popover (e.g. a dropdown */
+    /* nested in the SL gear menu), keep that parent open instead of closing it out from under the user */
+    const parentMenu = trigger ? trigger.closest('.pop-menu, .ctx-menu') : null;
+    closeAllPopoversExcept(el, parentMenu);
+    el.classList.add('show');
+    el._openTrigger = trigger || null;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const w = el.offsetWidth, h = el.offsetHeight;
+    let x = align === 'right' ? anchorRect.right - w : anchorRect.left;
+    let y = anchorRect.bottom + 8;
+    if (y + h > vh - 12) y = anchorRect.top - h - 8;
+    if (x + w > vw - 12) x = vw - w - 12;
+    if (x < 8) x = 8;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+  }
+  function closeAllPopoversExcept(...keep) {
+    document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => { if (!keep.includes(m)) m.classList.remove('show'); });
+  }
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.pop-trigger') || e.target.closest('.pop-menu') || e.target.closest('.ctx-menu')) return;
+    closeAllPopovers();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const csEl = document.getElementById('chartSettingsBackdrop');
+    if (csEl && csEl.classList.contains('show')) { closeChartSettings(false); }
+    else { closeAllPopovers(); }
+  });
+
+  /* ---------- generic custom dropdown engine (used by Chart Settings / SL override selects) ----------
+     Each "select" is a hidden native <select> (the value/options source of truth, still readable via
+     .value and still fires real 'change' events) paired with a .cs-dd-trigger element styled like the
+     trade panel's .select-input dropdowns. One shared popover is repopulated per open. */
+  const csDropdownMenu = document.getElementById('csDropdownMenu');
+  function csDropdownLabelFor(select) {
+    const opt = select.options[select.selectedIndex];
+    return opt ? opt.textContent : '';
+  }
+  function refreshCsDropdownTriggerLabel(trigger) {
+    const select = document.getElementById(trigger.dataset.target);
+    const label = trigger.querySelector('.cs-select-label');
+    if (select && label) label.textContent = csDropdownLabelFor(select);
+  }
+  function refreshAllCsDropdownLabels(root) {
+    (root || document).querySelectorAll('.cs-dd-trigger').forEach(refreshCsDropdownTriggerLabel);
+  }
+  refreshAllCsDropdownLabels();
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest('.cs-dd-trigger');
+    if (!trigger) return;
+    e.stopPropagation();
+    const select = document.getElementById(trigger.dataset.target);
+    if (!select) return;
+    /* a dropdown nested inside another popover (e.g. the SL gear menu) shouldn't take that parent down with it */
+    const parentMenu = trigger.closest('.pop-menu, .ctx-menu');
+    if (csDropdownMenu.classList.contains('show') && csDropdownMenu._openTrigger === trigger) {
+      csDropdownMenu.classList.remove('show');
+      return;
+    }
+    csDropdownMenu.innerHTML = Array.from(select.options).map((opt) =>
+      '<button type="button" class="pop-item' + (opt.value === select.value ? ' selected' : '') + '" data-value="' + opt.value.replace(/"/g, '&quot;') + '">' +
+      '<span class="pop-text"><span class="pt-title">' + opt.textContent + '</span></span></button>'
+    ).join('');
+    csDropdownMenu.querySelectorAll('[data-value]').forEach(btn => {
+      btn.addEventListener('click', (e2) => {
+        e2.stopPropagation();
+        select.value = btn.dataset.value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        refreshCsDropdownTriggerLabel(trigger);
+        closeAllPopoversExcept(parentMenu);
+      });
+    });
+    openNear(csDropdownMenu, trigger.getBoundingClientRect(), 'left', trigger);
+  });
+
+  /* ---------- context menu ---------- */
+  const ctxMenu = document.getElementById('ctxMenu');
+  const ctxLongLbl = document.getElementById('ctxLongLbl');
+  const ctxShortLbl = document.getElementById('ctxShortLbl');
+  chart.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    const rect = chart.getBoundingClientRect();
+    pendingClickPrice = roundTick(yToPrice(e.clientY - rect.top, rect.height));
+    const qty = parseInt(qtyInput.value || '1');
+    const lastEl = document.getElementById('hdrLast');
+    const currentPrice = lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
+    const below = pendingClickPrice < currentPrice;
+    const priceStr = fmt(pendingClickPrice);
+    ctxLongLbl.textContent = 'Buy ' + qty + ' ETH @ ' + priceStr + ' ' + (below ? 'limit' : 'stop');
+    ctxShortLbl.textContent = 'Sell ' + qty + ' ETH @ ' + priceStr + ' ' + (below ? 'stop' : 'limit');
+    openAt(ctxMenu, e.clientX, e.clientY);
+  });
+  document.getElementById('ctxLong').addEventListener('click', () => { createOrder('buy', pendingClickPrice); closeAllPopovers(); });
+  document.getElementById('ctxShort').addEventListener('click', () => { createOrder('sell', pendingClickPrice); closeAllPopovers(); });
+
+  /* ---------- position row actions dropdown ---------- */
+  const posActionsMenu = document.getElementById('posActionsMenu');
+  let activeClosePosSym = null;
+  document.querySelectorAll('[data-pos-actions]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      activeClosePosSym = el.dataset.posActions;
+      openNear(posActionsMenu, el.getBoundingClientRect(), 'right');
+    });
+  });
+  document.getElementById('posActionsClose').addEventListener('click', () => {
+    if (!activeClosePosSym) return;
+    const row = document.querySelector('[data-pos-row="' + activeClosePosSym + '"]');
+    if (row) row.remove();
+    showToast(activeClosePosSym + ' position closed', 'check_circle');
+    closeAllPopovers();
+    activeClosePosSym = null;
+  });
+  document.getElementById('ctxAlert').addEventListener('click', () => { addAlert(pendingClickPrice); closeAllPopovers(); });
+  document.getElementById('ctxReset').addEventListener('click', () => {
+    panX = 0; panY = 0; panXInitialized = false;
+    crosshair = null;
+    scheduleDrawPriceChart();
+    showToast('Chart view reset', 'restart_alt');
+    closeAllPopovers();
+  });
+  document.getElementById('ctxSettings').addEventListener('click', () => { closeAllPopovers(); openChartSettings('trademgmt'); });
+
+  /* ---------- order lifecycle ---------- */
+  function createOrder(side, entryPrice) {
+    const dir = side === 'buy' ? 1 : -1;
+    const entry = roundTick(entryPrice);
+    const expanded = chartSettings.tpSlDisplayMode === 'expanded';
+    let tps = [];
+    let sl = null;
+    if (expanded) {
+      const baseR = 2; // price distance representing 1.0R, used to price default targets/SL from their R Multiple
+      tps = (chartSettings.defaultTargets || []).map(t => ({
+        id: 'tp' + (tpCounter++),
+        price: roundTick(entry + dir * t.r * baseR),
+        pct: t.pct,
+        trailing: false
+      }));
+      if (chartSettings.defaultStopLoss) {
+        sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
+      }
+    }
+    order = {
+      side, entry, qty: parseInt(qtyInput.value || '1'), orderType: 'Limit',
+      sizeMode: 'contracts', filled: false, editing: false,
+      sizeValues: { dollar: 5000, percent: 25, risk: 500 },
+      tps, sl, tpsHitCount: 0,
+      initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null
+    };
+    render();
+  }
+
+  /* ---------- Quick Trade panel ---------- */
+  const QT_INSTRUMENT_UNIT = 'ETH';      // default instrument for the Quick Trade panel
+  const QT_AVAILABLE_BALANCE = 52430.00;
+  const QT_FEE_PER_CONTRACT = 1.25;
+  function qtCurrentPrice() {
+    const lastEl = document.getElementById('hdrLast');
+    return lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
+  }
+
+  /* ---------- order type tabs (Limit / Market / advanced dropdown) ---------- */
+  const qtOrderTabs = document.getElementById('qtOrderTabs');
+  const qtBuyBtn = document.getElementById('qtBuyBtn');
+  const qtSellBtn = document.getElementById('qtSellBtn');
+  const QT_TAB_LABELS = { limit: 'Limit', market: 'Market' };
+  const QT_ADVANCED_LABELS = { stopMarket: 'Stop Market', stopLimit: 'Stop Limit', trailingStop: 'Trailing Stop', mit: 'MIT' };
+  let qtAdvancedType = 'stopMarket';
+  function qtSetActiveTab(tabName) {
+    const panelName = tabName === 'advanced' ? qtAdvancedType : tabName;
+    qtOrderTabs.querySelectorAll('.qt-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+    document.querySelectorAll('.qt-tab-panel').forEach(p => {
+      p.classList.toggle('active', p.dataset.tabPanel === panelName);
+    });
+    const lbl = QT_TAB_LABELS[tabName] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market';
+    qtBuyBtn.querySelector('.bs-lbl').textContent = 'Buy ' + lbl;
+    qtSellBtn.querySelector('.bs-lbl').textContent = 'Sell ' + lbl;
+    const isLimit = panelName === 'limit';
+    const tpslToggleEl = document.getElementById('qtTpslToggle');
+    const tpslBlockEl = document.getElementById('qtTpslBlock');
+    const tpslCheckboxEl = document.getElementById('qtTpslCheckbox');
+    tpslToggleEl.style.display = isLimit ? '' : 'none';
+    tpslBlockEl.style.display = (isLimit && tpslCheckboxEl.classList.contains('checked')) ? 'block' : 'none';
+  }
+  qtOrderTabs.querySelectorAll('.qt-tab:not(.qt-tab-dropdown)').forEach(tab => {
+    tab.addEventListener('click', () => qtSetActiveTab(tab.dataset.tab));
+  });
+  qtSetActiveTab('limit');
+
+  /* ---------- advanced order type dropdown (Stop Limit / Stop Market / Trailing Stop / MIT) ---------- */
+  const qtAdvancedTab = document.getElementById('qtAdvancedTab');
+  const qtAdvancedTabLabel = document.getElementById('qtAdvancedTabLabel');
+  const qtAdvancedTypeMenu = document.getElementById('qtAdvancedTypeMenu');
+  let qtAdvHoverTimer = null;
+  function qtOpenAdvMenu() {
+    clearTimeout(qtAdvHoverTimer);
+    qtAdvancedTypeMenu.querySelectorAll('.pop-item').forEach(it => {
+      it.classList.toggle('selected', it.dataset.advType === qtAdvancedType);
+    });
+    openNear(qtAdvancedTypeMenu, qtAdvancedTab.getBoundingClientRect(), 'right', qtAdvancedTab);
+  }
+  function qtScheduleCloseAdvMenu() {
+    clearTimeout(qtAdvHoverTimer);
+    qtAdvHoverTimer = setTimeout(() => closeAllPopovers(), 150);
+  }
+  qtAdvancedTab.addEventListener('mouseenter', qtOpenAdvMenu);
+  qtAdvancedTab.addEventListener('mouseleave', qtScheduleCloseAdvMenu);
+  qtAdvancedTypeMenu.addEventListener('mouseenter', () => clearTimeout(qtAdvHoverTimer));
+  qtAdvancedTypeMenu.addEventListener('mouseleave', qtScheduleCloseAdvMenu);
+  qtAdvancedTab.addEventListener('click', (e) => {
+    e.stopPropagation();
+    qtSetActiveTab('advanced');
+    closeAllPopovers();
+  });
+  qtAdvancedTypeMenu.querySelectorAll('.pop-item').forEach(it => {
+    it.addEventListener('click', () => {
+      qtAdvancedType = it.dataset.advType;
+      qtAdvancedTabLabel.textContent = QT_ADVANCED_LABELS[qtAdvancedType];
+      closeAllPopovers();
+      qtSetActiveTab('advanced');
+    });
+  });
+
+  /* ---------- generic price stepper arrows (Stop / Limit / Trailing Delta / Trigger / Activation fields) ---------- */
+  const QT_SLIPPAGE_IDS = ['qtStopMarketSlippage', 'qtMitSlippage'];
+  document.querySelectorAll('.price-stepper-arrows .ps-up, .price-stepper-arrows .ps-down').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.target);
+      if (!input || input.disabled) return;
+      const isSlippage = QT_SLIPPAGE_IDS.includes(input.id);
+      const step = input.id === 'qtTrailDelta' ? 0.1 : isSlippage ? 0.05 : 0.25;
+      const min = isSlippage ? 0.1 : 0;
+      const cur = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
+      const next = btn.classList.contains('ps-up') ? cur + step : Math.max(min, cur - step);
+      input.value = input.id === 'qtTrailDelta' ? next.toFixed(1) : isSlippage ? next.toFixed(2) : fmt(next);
+    });
+  });
+
+  /* ---------- Trailing Stop: Limit/Market toggle, Activation Price ---------- */
+  const qtTrailMarketToggle = document.getElementById('qtTrailMarketToggle');
+  const qtTrailLimitInput = document.getElementById('qtTrailLimit');
+  qtTrailMarketToggle.addEventListener('click', () => {
+    const active = qtTrailMarketToggle.classList.toggle('active');
+    qtTrailLimitInput.disabled = active;
+    qtTrailLimitInput.placeholder = active ? 'Market' : 'Limit price';
+    if (active) qtTrailLimitInput.value = '';
+  });
+  const qtTrailActivationToggle = document.getElementById('qtTrailActivationToggle');
+  const qtTrailActivationCheckbox = document.getElementById('qtTrailActivationCheckbox');
+  const qtTrailActivationBlock = document.getElementById('qtTrailActivationBlock');
+  qtTrailActivationToggle.addEventListener('click', () => {
+    const enabled = qtTrailActivationCheckbox.classList.toggle('checked');
+    qtTrailActivationBlock.style.display = enabled ? 'flex' : 'none';
+  });
+
+  /* ---------- Limit tab: TP/SL toggle ---------- */
+  const qtTpslToggle = document.getElementById('qtTpslToggle');
+  const qtTpslCheckbox = document.getElementById('qtTpslCheckbox');
+  const qtTpslBlock = document.getElementById('qtTpslBlock');
+  qtTpslToggle.addEventListener('click', () => {
+    const enabled = qtTpslCheckbox.classList.toggle('checked');
+    qtTpslBlock.style.display = enabled ? 'block' : 'none';
+  });
+  document.querySelectorAll('#qtTpslBlock .tpsl-offset-unit').forEach(unit => {
+    unit.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isPct = unit.textContent.trim().startsWith('%');
+      unit.innerHTML = (isPct ? 'pts' : '%') + '<span class="material-symbols-outlined">expand_more</span>';
+    });
+  });
+
+  function qtPlaceOrder(side, price) {
+    const { qty } = qtComputeAmount();
+    const prevVal = qtyInput.value;
+    qtyInput.value = Math.max(1, Math.round(qty));
+    createOrder(side, price);
+    confirmOrderFill();
+    qtyInput.value = prevVal;
+  }
+  function qtActiveTab() {
+    const active = qtOrderTabs.querySelector('.qt-tab.active');
+    return active ? active.dataset.tab : 'market';
+  }
+  const QT_ADVANCED_TRIGGER_IDS = { stopMarket: 'qtStopMarketTrigger', stopLimit: 'qtStopLimitTrigger', trailingStop: 'qtTrailLimit', mit: 'qtMitTrigger' };
+  function qtActivePrice() {
+    const tab = qtActiveTab();
+    if (tab === 'limit') return parseFloat(document.getElementById('qtLimitPrice').value.replace(/,/g, ''));
+    if (tab === 'advanced') {
+      const inputId = QT_ADVANCED_TRIGGER_IDS[qtAdvancedType];
+      const input = document.getElementById(inputId);
+      const val = input && !input.disabled ? parseFloat((input.value || '').replace(/,/g, '')) : NaN;
+      return isNaN(val) ? qtCurrentPrice() : val;
+    }
+    return qtCurrentPrice();
+  }
+  qtBuyBtn.addEventListener('click', () => qtPlaceOrder('buy', qtActivePrice()));
+  qtSellBtn.addEventListener('click', () => qtPlaceOrder('sell', qtActivePrice()));
+  document.getElementById('qtFlatten').addEventListener('click', () => {
+    const rows = document.querySelectorAll('[data-pos-row]');
+    if (!rows.length) { showToast('No open positions to flatten', 'info'); return; }
+    rows.forEach(r => r.remove());
+    showToast('All positions flattened', 'check_circle');
+  });
+  document.getElementById('qtCancelAll').addEventListener('click', () => {
+    if (!order) { showToast('No open orders to cancel', 'info'); return; }
+    cancelOrder();
+    showToast('All orders cancelled', 'check_circle');
+  });
+  /* ---------- amount type (Quantity / USD / % of Balance) ---------- */
+  const QT_MODES = {
+    Quantity: { unit: QT_INSTRUMENT_UNIT, label: 'Quantity', step: 1, hotkeys: [1, 5, 10, 20, 50], default: '1' },
+    USD: { unit: 'USD', label: 'USD Amount', step: 50, hotkeys: [100, 500, 1000, 5000], default: '100' },
+    '% of Balance': { unit: '%', label: 'Percent of Balance', step: 5, hotkeys: [5, 10, 25, 50, 75], default: '10' },
+  };
+  let qtAmountMode = 'Quantity';
+  const qtAmountInput = document.getElementById('qtAmountInput');
+  const qtAmountLabel = document.getElementById('qtAmountLabel');
+  const qtQtyUnit = document.getElementById('qtQtyUnit');
+  const qtHotkeysEl = document.getElementById('qtHotkeys');
+  const qtSlider = document.getElementById('qtSlider');
+  const qtEstSize = document.getElementById('qtEstSize');
+  const qtEstValue = document.getElementById('qtEstValue');
+  const qtEstFees = document.getElementById('qtEstFees');
+
+  function qtModeMax(mode) {
+    const price = qtCurrentPrice() || 1;
+    if (mode === 'Quantity') return Math.max(1, Math.floor(QT_AVAILABLE_BALANCE / price));
+    if (mode === 'USD') return QT_AVAILABLE_BALANCE;
+    return 100;
+  }
+  function qtComputeAmount() {
+    const amt = Math.max(0, parseFloat(qtAmountInput.value) || 0);
+    const price = qtCurrentPrice() || 1;
+    if (qtAmountMode === 'Quantity') return { qty: amt, usdValue: amt * price };
+    if (qtAmountMode === 'USD') return { qty: amt / price, usdValue: amt };
+    const usdValue = QT_AVAILABLE_BALANCE * (amt / 100);
+    return { qty: usdValue / price, usdValue };
+  }
+  function qtFmtQty(q) {
+    let s = q.toFixed(q >= 1 ? 2 : 4);
+    s = s.replace(/0+$/, '').replace(/\.$/, '');
+    return s === '' || s === '-' ? '0' : s;
+  }
+  function qtSliderFill(pct) {
+    qtSlider.style.background = 'linear-gradient(to right, var(--purple) 0%, var(--purple) ' + pct + '%, var(--line-2) ' + pct + '%, var(--line-2) 100%)';
+  }
+  function qtBindHotkeys() {
+    qtHotkeysEl.querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => {
+        qtAmountInput.value = b.dataset.amt === 'max' ? qtModeMax(qtAmountMode) : b.dataset.amt;
+        qtUpdateEstimates();
+      });
+    });
+  }
+  function qtUpdateEstimates(syncSlider) {
+    const { qty, usdValue } = qtComputeAmount();
+    const qtyDisp = qtFmtQty(qty);
+    qtEstSize.textContent = qtyDisp + ' ' + QT_INSTRUMENT_UNIT;
+    qtEstValue.textContent = fmtMoney(usdValue) + ' USD';
+    qtEstFees.textContent = fmtMoney(Math.max(0, qty) * QT_FEE_PER_CONTRACT);
+    if (syncSlider !== false) {
+      const max = qtModeMax(qtAmountMode) || 1;
+      const amt = Math.max(0, parseFloat(qtAmountInput.value) || 0);
+      qtSlider.value = Math.min(100, Math.round(amt / max * 100));
+    }
+    qtSliderFill(parseInt(qtSlider.value, 10));
+  }
+  function qtSetAmountMode(mode) {
+    qtAmountMode = mode;
+    const cfg = QT_MODES[mode];
+    qtAmountLabel.textContent = cfg.label;
+    qtQtyUnit.textContent = cfg.unit;
+    qtAmountInput.value = cfg.default;
+    qtHotkeysEl.innerHTML = cfg.hotkeys.map(v => '<button data-amt="' + v + '">' + v + '</button>').join('') +
+      '<button data-amt="max">Max</button>';
+    qtBindHotkeys();
+    qtUpdateEstimates();
+  }
+
+  const qtAmountTypeTrigger = document.getElementById('qtAmountTypeTrigger');
+  const qtAmountTypeMenu = document.getElementById('qtAmountTypeMenu');
+  const qtAmountTypeVal = document.getElementById('qtAmountTypeVal');
+  qtAmountTypeTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    qtAmountTypeMenu.querySelectorAll('.pop-item').forEach(it => {
+      it.classList.toggle('selected', it.dataset.amountType === qtAmountTypeVal.textContent);
+    });
+    openNear(qtAmountTypeMenu, qtAmountTypeTrigger.getBoundingClientRect(), 'right', qtAmountTypeTrigger);
+  });
+  qtAmountTypeMenu.querySelectorAll('.pop-item').forEach(it => {
+    it.addEventListener('click', () => {
+      qtAmountTypeVal.textContent = it.dataset.amountType;
+      closeAllPopovers();
+      qtSetAmountMode(it.dataset.amountType);
+    });
+  });
+
+  document.querySelector('.qty-dec').addEventListener('click', () => {
+    const step = QT_MODES[qtAmountMode].step;
+    qtAmountInput.value = Math.max(0, (parseFloat(qtAmountInput.value) || 0) - step);
+    qtUpdateEstimates();
+  });
+  document.querySelector('.qty-inc').addEventListener('click', () => {
+    const step = QT_MODES[qtAmountMode].step;
+    qtAmountInput.value = (parseFloat(qtAmountInput.value) || 0) + step;
+    qtUpdateEstimates();
+  });
+  qtAmountInput.addEventListener('input', () => qtUpdateEstimates());
+  qtSlider.addEventListener('input', () => {
+    const pct = parseInt(qtSlider.value, 10);
+    const max = qtModeMax(qtAmountMode);
+    qtAmountInput.value = Math.max(0, Math.round(pct / 100 * max));
+    qtUpdateEstimates(false);
+  });
+  qtBindHotkeys();
+  qtUpdateEstimates();
+
+  function cancelOrder() {
+    if (order) orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: order.filled ? 'closed' : 'cancelled', time: nowTimeStr() });
+    order = null; render(); closeAllPopovers();
+  }
+  function confirmOrderFill() {
+    if (!order || order.filled) return;
+    order.filled = true;
+    orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'filled', time: nowTimeStr() });
+    render();
+    showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
+  }
+  function removeTp(id) {
+    if (!order) return;
+    order.tps = order.tps.filter(t => t.id !== id);
+    if (order.sl && !order.sl.beActive && (order.tps.length < 2 || order.sl.beTpId === id)) {
+      order.sl.beTpId = null;
+    }
+    render();
+  }
+  function removeSl() {
+    if (!order) return;
+    order.sl = null;
+    render();
+  }
+  /* ---------- TP fill detection (drives "Move to Break Even" once the chosen TP is hit) ---------- */
+  function checkTpFills(prevPrice, currentPrice) {
+    if (!order || !order.filled || !order.tps.length) return;
+    const dir = order.side === 'buy' ? 1 : -1;
+    const hitTps = order.tps.filter(tp => dir === 1
+      ? (prevPrice < tp.price && currentPrice >= tp.price)
+      : (prevPrice > tp.price && currentPrice <= tp.price));
+    if (!hitTps.length) return;
+    hitTps.forEach(tp => {
+      const idx = order.tps.indexOf(tp);
+      const closingSide = order.side === 'buy' ? 'sell' : 'buy';
+      const tpQty = Math.max(1, Math.round(order.qty * tp.pct / 100));
+      orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: tp.price, status: 'filled', time: nowTimeStr() });
+      showToast('TP' + (idx + 1) + ' hit at ' + fmt(tp.price), 'check_circle');
+      if (order.sl && order.sl.beTpId === tp.id && !order.sl.beActive) {
+        const beCfg = getEffectiveBeConfig();
+        const offsetPrice = beCfg.offsetUnit === 'points' ? beCfg.offsetValue : beCfg.offsetValue * TICK;
+        order.sl.price = roundTick(order.entry + dir * offsetPrice);
+        order.sl.beActive = true;
+        syncQtyFromRisk();
+        showToast('Stop loss moved to breakeven', 'vertical_align_center');
+      }
+    });
+    order.tpsHitCount = (order.tpsHitCount || 0) + hitTps.length;
+    order.tps = order.tps.filter(tp => !hitTps.includes(tp));
+    render();
+  }
+  /* ---------- shared trigger-condition resolver for breakeven / trailing-stop / trailing-TP ---------- */
+  function currentRMultiple(currentPrice) {
+    if (!order || !order.initialRisk) return null;
+    const dir = order.side === 'buy' ? 1 : -1;
+    const pts = dir * (currentPrice - order.entry);
+    return (pts * POINT_VALUE) / order.initialRisk;
+  }
+  function meetsTriggerCondition(triggerKey, customRValue, currentPrice) {
+    if (!order) return false;
+    if (triggerKey === 'tp1') return (order.tpsHitCount || 0) >= 1;
+    if (triggerKey === 'tp2') return (order.tpsHitCount || 0) >= 2;
+    if (triggerKey === 'tp3') return (order.tpsHitCount || 0) >= 3;
+    if (triggerKey === 'customR') {
+      const r = currentRMultiple(currentPrice);
+      return r !== null && r >= customRValue;
+    }
+    return false;
+  }
+  /* effective config = this SL's own override if set, otherwise the global Chart Settings default */
+  function getEffectiveBeConfig() { return (order && order.sl && order.sl.beOverride) || chartSettings.moveSlToBreakeven; }
+  function getEffectiveTrailConfig() { return (order && order.sl && order.sl.trailOverride) || chartSettings.trailingStop; }
+  function getEffectiveAtrConfig() { return (order && order.sl && order.sl.atrOverride) || chartSettings.atrStop; }
+  function atrStopDistance(cfg) {
+    cfg = cfg || getEffectiveAtrConfig();
+    return 7.5 * (cfg.multiplier / 2);
+  }
+  let simTickCounter = 0;
+  function applyTrailingStop(currentPrice) {
+    if (!order || !order.sl || !order.sl.trailing || !order.filled) return;
+    const cfg = getEffectiveTrailConfig();
+    if (!meetsTriggerCondition(cfg.start, cfg.startCustomR, currentPrice)) return;
+    const dir = order.side === 'buy' ? 1 : -1;
+    const distPrice = cfg.method === 'atr' ? atrStopDistance() : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
+    const minStepPrice = cfg.minStepValue * (cfg.minStepUnit === 'points' ? 1 : TICK);
+    const candidate = roundTick(currentPrice - dir * distPrice);
+    const improvement = dir * (candidate - order.sl.price);
+    if (improvement >= minStepPrice) {
+      order.sl.price = candidate;
+      syncQtyFromRisk();
+    }
+  }
+  function applyAtrDynamicStop(currentPrice, isNewBarTick) {
+    if (!order || !order.sl || !order.sl.atr || !order.filled) return;
+    const cfg = getEffectiveAtrConfig();
+    if (!cfg.dynamic) return;
+    if (cfg.updateFreq === 'newbar' && !isNewBarTick) return;
+    const dir = order.side === 'buy' ? 1 : -1;
+    const candidate = roundTick(currentPrice - dir * atrStopDistance(cfg));
+    const improvement = dir * (candidate - order.sl.price);
+    if (improvement > 0) { order.sl.price = candidate; syncQtyFromRisk(); }
+  }
+  function applyTrailingTp(currentPrice) {
+    if (!order || !order.filled || !order.tps.length) return;
+    const cfg = chartSettings.trailingTp;
+    const dir = order.side === 'buy' ? 1 : -1;
+    order.tps.forEach(tp => {
+      if (!tp.trailing) return;
+      if (!meetsTriggerCondition(cfg.activation, cfg.activationCustomR, currentPrice)) return;
+      const distPrice = cfg.method === 'atr' ? atrStopDistance() : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
+      const minStepPrice = cfg.minStepValue * (cfg.minStepUnit === 'points' ? 1 : TICK);
+      const candidate = roundTick(currentPrice + dir * distPrice);
+      const improvement = dir * (candidate - tp.price);
+      if (improvement >= minStepPrice) { tp.price = candidate; }
+    });
+  }
+  /* ---------- auto-balance TP allocations so they always sum to exactly 100% ---------- */
+  function rebalanceTpAllocations(newTpId) {
+    if (!order) return;
+    const n = order.tps.length;
+    if (n === 0) return;
+    if (n === 1) { order.tps[0].pct = 100; return; }
+    const newShare = Math.round(100 / n);
+    const others = order.tps.filter(t => t.id !== newTpId);
+    const remaining = 100 - newShare;
+    const othersTotalPct = others.reduce((s, t) => s + t.pct, 0) || 1;
+    let allocated = 0;
+    others.forEach((t, i) => {
+      if (i === others.length - 1) { t.pct = remaining - allocated; }
+      else { t.pct = Math.round(t.pct / othersTotalPct * remaining); allocated += t.pct; }
+    });
+    const newTp = order.tps.find(t => t.id === newTpId);
+    if (newTp) newTp.pct = newShare;
+  }
+
+  /* ---------- alerts ---------- */
+  function addAlert(price) {
+    const lastEl = document.getElementById('hdrLast');
+    const last = lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
+    const condition = price >= last ? 'Crosses Above' : 'Crosses Below';
+    alerts.unshift({ id: 'al' + (alertCounter++), symbol: 'ETHUSD', price: roundTick(price), condition, status: 'active', created: nowTimeStr() });
+    renderAlerts();
+    render();
+    showToast('Alert set: ETHUSD ' + condition.toLowerCase() + ' ' + fmt(roundTick(price)), 'notifications');
+  }
+  function removeAlert(id) {
+    alerts = alerts.filter(a => a.id !== id);
+    renderAlerts();
+    render();
+  }
+  function renderAlerts() {
+    const body = document.getElementById('bpBody-alerts');
+    if (!body) return;
+    if (alerts.length === 0) {
+      body.innerHTML = '<tr class="bp-empty-row"><td colspan="6">No alerts yet — right-click the chart and choose "Add Alert Here".</td></tr>';
+    } else {
+      body.innerHTML = alerts.map(a =>
+        '<tr>' +
+        '<td><span class="sym-cell">' + a.symbol + '</span></td>' +
+        '<td>' + a.condition + '</td>' +
+        '<td>' + fmt(a.price) + '</td>' +
+        '<td>' + a.created + '</td>' +
+        '<td><span class="bp-status ' + (a.status === 'triggered' ? 'triggered' : 'active-status') + '">' + (a.status === 'triggered' ? 'Triggered' : 'Active') + '</span></td>' +
+        '<td><span class="bp-action-icon" data-remove-alert="' + a.id + '"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
+        '</tr>'
+      ).join('');
+    }
+    body.querySelectorAll('[data-remove-alert]').forEach(el => {
+      el.addEventListener('click', () => removeAlert(el.dataset.removeAlert));
+    });
+    const activeCount = alerts.filter(a => a.status === 'active').length;
+    const countEl = document.getElementById('bpCountAlerts');
+    if (countEl) countEl.textContent = activeCount > 0 ? '(' + activeCount + ')' : '';
+  }
+  function renderOpenOrders() {
+    const body = document.getElementById('bpBody-orders');
+    if (!body) return;
+    const rows = [];
+    if (order && order.filled) {
+      const dir = order.side === 'buy' ? 1 : -1;
+      const closingSide = order.side === 'buy' ? 'Sell' : 'Buy';
+      rows.push(
+        '<tr>' +
+        '<td><span class="sym-cell">ETHUSD</span></td>' +
+        '<td class="' + (order.side === 'buy' ? 'up' : 'down') + '">' + (order.side === 'buy' ? 'Buy' : 'Sell') + '</td>' +
+        '<td>' + order.orderType + '</td>' +
+        '<td>' + order.qty + '</td>' +
+        '<td>' + fmt(order.entry) + '</td>' +
+        '<td><span class="bp-status filled">Filled</span></td>' +
+        '<td><span class="bp-action-icon" data-cancel-entry="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
+        '</tr>'
+      );
+      order.tps.forEach(tp => {
+        const tpQty = Math.max(1, Math.round(order.qty * tp.pct / 100));
+        rows.push(
+          '<tr>' +
+          '<td><span class="sym-cell">ETHUSD</span></td>' +
+          '<td class="' + (closingSide === 'Buy' ? 'up' : 'down') + '">' + closingSide + '</td>' +
+          '<td>Limit (TP)</td>' +
+          '<td>' + tpQty + '</td>' +
+          '<td>' + fmt(tp.price) + '</td>' +
+          '<td><span class="bp-status working">Working</span></td>' +
+          '<td><span class="bp-action-icon" data-cancel-tp="' + tp.id + '"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
+          '</tr>'
+        );
+      });
+      if (order.sl) {
+        rows.push(
+          '<tr>' +
+          '<td><span class="sym-cell">ETHUSD</span></td>' +
+          '<td class="' + (closingSide === 'Buy' ? 'up' : 'down') + '">' + closingSide + '</td>' +
+          '<td>Stop (SL)</td>' +
+          '<td>' + order.qty + '</td>' +
+          '<td>' + fmt(order.sl.price) + '</td>' +
+          '<td><span class="bp-status working">Working</span></td>' +
+          '<td><span class="bp-action-icon" data-cancel-sl="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
+          '</tr>'
+        );
+      }
+    }
+    body.innerHTML = rows.length ? rows.join('') : '<tr class="bp-empty-row"><td colspan="7">No open orders — right-click the chart to trade.</td></tr>';
+    body.querySelectorAll('[data-cancel-entry]').forEach(el => el.addEventListener('click', cancelOrder));
+    body.querySelectorAll('[data-cancel-tp]').forEach(el => el.addEventListener('click', () => removeTp(el.dataset.cancelTp)));
+    body.querySelectorAll('[data-cancel-sl]').forEach(el => el.addEventListener('click', removeSl));
+    const countEl = document.getElementById('bpCountOrders');
+    if (countEl) countEl.textContent = rows.length > 0 ? '(' + rows.length + ')' : '';
+  }
+  function renderOrderHistory() {
+    const body = document.getElementById('bpBody-history');
+    if (!body) return;
+    if (orderHistory.length === 0) {
+      body.innerHTML = '<tr class="bp-empty-row"><td colspan="6">No order history yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = orderHistory.map(h =>
+      '<tr>' +
+      '<td><span class="sym-cell">' + h.symbol + '</span></td>' +
+      '<td class="' + (h.side === 'buy' ? 'up' : 'down') + '">' + (h.side === 'buy' ? 'Buy' : 'Sell') + '</td>' +
+      '<td>' + h.qty + '</td>' +
+      '<td>' + fmt(h.price) + '</td>' +
+      '<td><span class="bp-status ' + h.status + '">' + h.status.charAt(0).toUpperCase() + h.status.slice(1) + '</span></td>' +
+      '<td>' + h.time + '</td>' +
+      '</tr>'
+    ).join('');
+  }
+
+  function syncQtyFromRisk() {
+    if (!order || order.sizeMode !== 'risk' || !order.sl) return;
+    const stopDist = Math.abs(order.entry - order.sl.price);
+    const riskPerContract = stopDist * POINT_VALUE;
+    if (riskPerContract > 0) { order.qty = Math.max(0, Math.floor(order.sizeValues.risk / riskPerContract)); }
+  }
+
+  /* ---------- drag behaviour ---------- */
+  /* snap a TP/SL to the valid side of the entry, 25px above/below it on screen */
+  function snappedSidePrice(kind, h) {
+    const dir = order.side === 'buy' ? 1 : -1;
+    const yDir = kind === 'tp' ? -dir : dir;
+    const entryY = priceToY(order.entry, h);
+    return roundTick(yToPrice(clamp(entryY + yDir * 25, 10, h - 10), h));
+  }
+  /* a plain click (no movement) on the handle falls through to its own click listener instead of dragging — */
+  /* lets a handle double as both a drag target and a menu/edit trigger (e.g. the size/type pills, .ol-amt) */
+  function makeDraggable(handle, onDrag, onDrop, excludeSelector) {
+    handle.addEventListener('mousedown', (e) => {
+      if (excludeSelector && e.target.closest(excludeSelector)) return;
+      e.preventDefault(); e.stopPropagation();
+      closeAllPopovers();
+      isDraggingOrderLine = true;
+      const rect = chart.getBoundingClientRect();
+      const startX = e.clientX, startY = e.clientY;
+      let dragging = false;
+      function move(ev) {
+        if (!dragging) {
+          if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) return;
+          dragging = true;
+        }
+        const y = clamp(ev.clientY - rect.top, 10, rect.height - 10);
+        onDrag(y, rect.height);
+      }
+      function up(ev) {
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+        isDraggingOrderLine = false;
+        if (!dragging) return;
+        const y = clamp(ev.clientY - rect.top, 10, rect.height - 10);
+        onDrop(y, rect.height);
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  }
+  /* ---------- TP/SL "add" handles next to the entry: drag away from entry to create a TP or SL at that price ---------- */
+  function makeAddHandleDraggable(handle, kind) {
+    handle.title = kind === 'tp' ? 'Drag to create TP' : 'Drag to create SL';
+    handle.addEventListener('mousedown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      closeAllPopovers();
+      isDraggingOrderLine = true;
+      hoveredHandle = kind + '-add';
+      if (crosshair) crosshair = null;
+      scheduleDrawPriceChart();
+      const rect = chart.getBoundingClientRect();
+      const dir = order.side === 'buy' ? 1 : -1;
+      const minDist = 0.25;
+      const handleRect = handle.getBoundingClientRect();
+      const originX = handleRect.left - rect.left + handleRect.width / 2;
+
+      handle.classList.add('drag-source');
+
+      const guideLine = document.createElement('div');
+      guideLine.className = 'ol-line ' + kind;
+      layer.appendChild(guideLine);
+
+      const floatChip = document.createElement('div');
+      floatChip.className = 'ol-chip ' + kind + ' ol-drag-float';
+      floatChip.style.left = originX + 'px';
+      floatChip.innerHTML =
+        '<span class="ol-drag-float-label">' + kind.toUpperCase() + '</span>' +
+        '<span class="ol-drag-float-amt"></span>';
+      layer.appendChild(floatChip);
+      const amtEl = floatChip.querySelector('.ol-drag-float-amt');
+
+      function isValid(rawPrice) {
+        const signedDist = kind === 'tp' ? dir * (rawPrice - order.entry) : dir * (order.entry - rawPrice);
+        return signedDist >= minDist;
+      }
+      function update(clientY) {
+        const y = clamp(clientY - rect.top, 10, rect.height - 10);
+        const rawPrice = yToPrice(y, rect.height);
+        const price = roundTick(rawPrice);
+        const valid = isValid(rawPrice);
+        const py = clamp(priceToY(price, rect.height), 10, rect.height - 10);
+        guideLine.style.top = py + 'px';
+        floatChip.style.top = py + 'px';
+        const pts = dir * (kind === 'tp' ? (price - order.entry) : (order.entry - price));
+        const amount = pts * POINT_VALUE * order.qty;
+        amtEl.textContent = (amount >= 0 ? '+' : '-') + fmtMoney(Math.abs(amount));
+        return { price, valid };
+      }
+
+      let last = update(e.clientY);
+      function move(ev) { last = update(ev.clientY); }
+      function up() {
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+        isDraggingOrderLine = false;
+        hoveredHandle = null;
+        guideLine.remove();
+        floatChip.remove();
+        handle.classList.remove('drag-source');
+        const finalPrice = last.valid ? last.price : snappedSidePrice(kind, rect.height);
+        if (kind === 'tp') {
+          const newId = 'tp' + (tpCounter++);
+          order.tps.push({ id: newId, price: finalPrice, pct: 100, trailing: false });
+          rebalanceTpAllocations(newId);
+        } else {
+          order.sl = { price: finalPrice, trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
+          order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
+          syncQtyFromRisk();
+        }
+        render();
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  }
+  function bindHandleHover(handle, key) {
+    handle.addEventListener('mouseenter', () => {
+      hoveredHandle = key;
+      if (crosshair) crosshair = null;
+      scheduleDrawPriceChart();
+    });
+    handle.addEventListener('mouseleave', () => {
+      if (hoveredHandle === key) hoveredHandle = null;
+      scheduleDrawPriceChart();
+    });
+  }
+
+  /* ---------- price chart (candlesticks) ---------- */
+  function mulberry32(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const candleBars = (function () {
+    const rand = mulberry32(42);
+    const n = 300;
+    const bars = [];
+    let price = BASE_PRICE - 14;
+    for (let i = 0; i < n; i++) {
+      const isLast = i === n - 1;
+      const open = price;
+      const drift = (rand() - 0.48) * 2.4;
+      let close = isLast ? BASE_PRICE : open + drift;
+      const wick = 0.6 + rand() * 1.8;
+      let high = Math.max(open, close) + rand() * wick;
+      let low = Math.min(open, close) - rand() * wick;
+      bars.push({ open, high, low, close });
+      price = close;
+    }
+    return bars;
+  })();
+  function newsTimeLabel(idxFromEnd) {
+    const mins = idxFromEnd * BAR_INTERVAL_MIN;
+    const hrs = Math.round(Math.abs(mins) / 60 * 10) / 10;
+    const hrsStr = hrs % 1 === 0 ? hrs.toFixed(0) : hrs.toFixed(1);
+    return mins > 0 ? hrsStr + 'h ago' : 'in ' + hrsStr + 'h';
+  }
+  const newsEvents = [
+    {
+      idxFromEnd: 14,
+      headline: 'SEC Delays Ruling on Ether ETF Options Listing',
+      description: 'The regulator pushed its decision window on the pending spot Ether ETF options proposal, citing the need for further review of market manipulation safeguards. Traders had priced in approval this week, raising the odds of near-term volatility.',
+    },
+    {
+      idxFromEnd: -8,
+      headline: 'Ethereum Foundation Sets Fusaka Upgrade Mainnet Date',
+      description: 'The Foundation confirmed a mainnet activation date for the Fusaka upgrade, which bundles several EIPs aimed at boosting blob throughput and cutting L2 data costs. Validators are expected to begin client upgrades ahead of the rollout.',
+    },
+  ].map(ev => Object.assign(ev, { timeLabel: newsTimeLabel(ev.idxFromEnd) }));
+  let newsMarkerEls = null;
+  let hoveringNewsMarker = false;
+  function buildNewsMarkers() {
+    if (!newsMarkerLayer) return [];
+    const els = newsEvents.map(ev => {
+      const el = document.createElement('div');
+      el.className = 'news-marker';
+      el.innerHTML =
+        '<div class="news-marker-guide"></div>' +
+        '<div class="news-marker-icon"><span class="material-symbols-outlined">article</span></div>' +
+        '<div class="news-marker-popup">' +
+        '<div class="news-bar"></div>' +
+        '<div class="news-main">' +
+        '<div class="news-row-top"><span class="news-src">News</span><span class="news-time">' + ev.timeLabel + '</span></div>' +
+        '<div class="news-headline">' + ev.headline + '</div>' +
+        '<div class="news-desc">' + ev.description + '</div>' +
+        '</div>' +
+        '</div>';
+      newsMarkerLayer.appendChild(el);
+      const icon = el.querySelector('.news-marker-icon');
+      icon.addEventListener('mouseenter', () => {
+        el.classList.add('hovered');
+        hoveringNewsMarker = true;
+        if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
+      });
+      icon.addEventListener('mouseleave', () => {
+        el.classList.remove('hovered');
+        hoveringNewsMarker = false;
+      });
+      icon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wasActive = el.classList.contains('active');
+        els.forEach(m => m.classList.remove('active'));
+        if (!wasActive) el.classList.add('active');
+      });
+      return el;
+    });
+    return els;
+  }
+  document.addEventListener('click', () => {
+    if (newsMarkerEls) newsMarkerEls.forEach(m => m.classList.remove('active'));
+  });
+  function renderNewsMarkers(slot, baseIndexOffset, panX, plotW, ih, n) {
+    if (!newsMarkerLayer) return;
+    if (!newsMarkerEls) newsMarkerEls = buildNewsMarkers();
+    newsEvents.forEach((ev, i) => {
+      const el = newsMarkerEls[i];
+      const barIndex = (n - 1) - ev.idxFromEnd;
+      const x = slot * (barIndex - baseIndexOffset) + slot / 2 + panX;
+      if (x < -slot || x > plotW + slot) {
+        el.style.display = 'none';
+      } else {
+        el.style.display = '';
+        el.style.left = x + 'px';
+      }
+    });
+  }
+  function niceStep(raw) {
+    const pow10 = Math.pow(10, Math.floor(Math.log10(raw)));
+    const norm = raw / pow10;
+    let step;
+    if (norm < 1.5) step = 1; else if (norm < 3) step = 2; else if (norm < 7) step = 5; else step = 10;
+    return step * pow10;
+  }
+  function fmtBarTime(idxFromEnd) {
+    const ts = Date.now() - idxFromEnd * BAR_INTERVAL_MIN * 60000;
+    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  function drawPriceChart() {
+    if (!priceCanvas) return;
+    const rect = chart.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = rect.width, h = rect.height;
+    if (w <= 0 || h <= 0) return;
+    priceCanvas.width = w * dpr; priceCanvas.height = h * dpr;
+    const ctx = priceCanvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    const plotW = Math.max(0, w - AXIS_RIGHT_W);
+    const ih = Math.max(0, h - AXIS_BOTTOM_H);
+    const upColor = '#2bd47e', downColor = '#f2495c';
+    const axisLineColor = '#262e35', labelColor = '#5c6770';
+
+    const n = candleBars.length;
+    const slotCount = VISIBLE_BARS + FUTURE_BARS;
+    const slot = plotW / slotCount;
+    const bodyW = Math.max(2, slot * 0.6);
+    const baseIndexOffset = n - VISIBLE_BARS; // shifts older bars off-screen to the left; pan to reveal them
+    if (!panXInitialized) { panX = -slot * 20; panXInitialized = true; }
+
+    /* ---- price axis labels (no gridlines — just the right-edge scale) ---- */
+    const targetPxGap = 56;
+    const priceStep = niceStep(targetPxGap / PX_PER_POINT);
+    const topPrice = yToPrice(0, h);
+    const botPrice = yToPrice(ih, h);
+    const desiredLabels = Math.max(3, Math.round(plotW / 110));
+    const stride = Math.max(1, Math.round(slotCount / desiredLabels));
+    ctx.fillStyle = labelColor;
+    ctx.font = '11px "IBM Plex Sans", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (let p = Math.ceil(botPrice / priceStep) * priceStep; p <= topPrice; p += priceStep) {
+      ctx.fillText(fmt(p), plotW + 8, priceToY(p, h));
+    }
+
+    /* ---- candles (clipped to the plot area so panning doesn't bleed into the axes) ---- */
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, plotW, ih);
+    ctx.clip();
+    ctx.lineWidth = 1;
+    candleBars.forEach((bar, i) => {
+      const cx = slot * (i - baseIndexOffset) + slot / 2 + panX;
+      if (cx < -slot || cx > plotW + slot) return;
+      const up = bar.close >= bar.open;
+      const color = up ? upColor : downColor;
+      const yO = priceToY(bar.open, h), yC = priceToY(bar.close, h);
+      const yH = priceToY(bar.high, h), yL = priceToY(bar.low, h);
+      ctx.strokeStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(cx, yH); ctx.lineTo(cx, yL);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      const top = Math.min(yO, yC), bh = Math.max(1, Math.abs(yC - yO));
+      ctx.fillRect(cx - bodyW / 2, top, bodyW, bh);
+    });
+    ctx.restore();
+
+    /* ---- time axis labels (continues past the last candle into the future) ---- */
+    ctx.fillStyle = labelColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (let vi = 0; vi < slotCount; vi += stride) {
+      const x = slot * vi + slot / 2 + panX;
+      if (x < 0 || x > plotW) continue;
+      ctx.fillText(fmtBarTime((VISIBLE_BARS - 1) - vi), x, ih + 7);
+    }
+    renderNewsMarkers(slot, baseIndexOffset, panX, plotW, ih, n);
+
+    /* ---- axis divider lines ---- */
+    ctx.strokeStyle = axisLineColor;
+    ctx.beginPath();
+    ctx.moveTo(plotW + 0.5, 0); ctx.lineTo(plotW + 0.5, h);
+    ctx.moveTo(0, ih + 0.5); ctx.lineTo(plotW, ih + 0.5);
+    ctx.stroke();
+
+    /* ---- dotted current-price line ---- */
+    const lastBar = candleBars[n - 1];
+    const lastUp = lastBar.close >= lastBar.open;
+    const tagColor = lastUp ? upColor : downColor;
+    const tagY = clamp(priceToY(lastBar.close, h), 8, h - 8);
+    ctx.save();
+    ctx.strokeStyle = tagColor;
+    ctx.globalAlpha = 0.45;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.moveTo(0, tagY); ctx.lineTo(plotW, tagY);
+    ctx.stroke();
+    ctx.restore();
+
+    /* ---- highlighted current-price tag ---- */
+    ctx.fillStyle = tagColor;
+    ctx.fillRect(plotW, tagY - 9, AXIS_RIGHT_W, 18);
+    ctx.fillStyle = '#0b0f10';
+    ctx.font = '600 11px "IBM Plex Sans", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(fmt(lastBar.close), plotW + 8, tagY + 0.5);
+
+    /* ---- order price tags (entry / TP / SL) on the right axis ---- */
+    function drawOrderAxisTagOutline(price, color, highlighted) {
+      const y = clamp(priceToY(price, h), 8, h - 8);
+      const hh = highlighted ? 20 : 18;
+      ctx.fillStyle = highlighted ? color : '#0c1014';
+      ctx.fillRect(plotW, y - hh / 2, AXIS_RIGHT_W, hh);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = highlighted ? 1.5 : 1;
+      ctx.strokeRect(plotW + 0.5, y - hh / 2 + 0.5, AXIS_RIGHT_W - 1, hh - 1);
+      ctx.fillStyle = highlighted ? '#0c1014' : color;
+      ctx.font = '600 11px "IBM Plex Sans", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(fmt(price), plotW + 8, y + 0.5);
+    }
+    if (order) {
+      const tagFullEdit = !order.filled || order.editing;
+      if (tagFullEdit) {
+        order.tps.forEach(tp => drawOrderAxisTagOutline(tp.price, '#2bd47e', hoveredHandle === 'tp:' + tp.id));
+        if (order.sl) drawOrderAxisTagOutline(order.sl.price, '#f2495c', hoveredHandle === 'sl');
+      }
+      drawOrderAxisTagOutline(order.entry, order.side === 'buy' ? '#2bd47e' : '#f2495c', hoveredHandle === 'entry');
+    }
+
+    /* ---- crosshair: dotted guide lines + axis labels at cursor ---- */
+    if (crosshair) {
+      const cx = clamp(crosshair.x, 0, plotW);
+      const cy = clamp(crosshair.y, 0, ih);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(152,164,172,.5)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(cx + 0.5, 0); ctx.lineTo(cx + 0.5, ih);
+      ctx.moveTo(0, cy + 0.5); ctx.lineTo(plotW, cy + 0.5);
+      ctx.stroke();
+      ctx.restore();
+
+      const hoverPrice = yToPrice(cy, h);
+      ctx.fillStyle = '#161d22';
+      ctx.strokeStyle = '#36414b';
+      ctx.lineWidth = 1;
+      ctx.fillRect(plotW, cy - 9, AXIS_RIGHT_W, 18);
+      ctx.strokeRect(plotW + 0.5, cy - 8.5, AXIS_RIGHT_W - 1, 17);
+      ctx.fillStyle = '#e9edf0';
+      ctx.font = '600 11px "IBM Plex Sans", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(fmt(hoverPrice), plotW + 8, cy + 0.5);
+
+      const vi = clamp(Math.round((cx - panX - slot / 2) / slot), 0, slotCount - 1);
+      const timeLabel = fmtBarTime((VISIBLE_BARS - 1) - vi);
+      ctx.font = '600 11px "IBM Plex Sans", sans-serif';
+      const tw = ctx.measureText(timeLabel).width + 16;
+      const tx = clamp(cx - tw / 2, 0, plotW - tw);
+      ctx.fillStyle = '#161d22';
+      ctx.fillRect(tx, ih, tw, AXIS_BOTTOM_H);
+      ctx.strokeRect(tx + 0.5, ih + 0.5, tw - 1, AXIS_BOTTOM_H - 1);
+      ctx.fillStyle = '#e9edf0';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(timeLabel, tx + tw / 2, ih + AXIS_BOTTOM_H / 2 + 0.5);
+    }
+  }
+  let chartResizeRaf = null;
+  function scheduleDrawPriceChart() {
+    if (chartResizeRaf) return;
+    chartResizeRaf = requestAnimationFrame(() => { chartResizeRaf = null; drawPriceChart(); });
+  }
+  new ResizeObserver(scheduleDrawPriceChart).observe(chart);
+  window.addEventListener('resize', scheduleDrawPriceChart);
+  drawPriceChart();
+
+  /* ---------- chart panning (drag to move around) ---------- */
+  let isPanning = false;
+  let panStart = { x: 0, y: 0, panX: 0, panY: 0 };
+  chart.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    if (e.target.closest('.ol-entry-bar, .ol-side-row, .ol-alert-hit, .pop-menu, .ctx-menu, .chart-popup')) return;
+    isPanning = true;
+    chart.classList.add('panning');
+    panStart = { x: e.clientX, y: e.clientY, panX, panY };
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!isPanning) return;
+    panX = panStart.panX + (e.clientX - panStart.x);
+    panY = panStart.panY + (e.clientY - panStart.y) / PX_PER_POINT;
+    scheduleDrawPriceChart();
+    render();
+  });
+  document.addEventListener('mouseup', () => {
+    if (!isPanning) return;
+    isPanning = false;
+    chart.classList.remove('panning');
+  });
+
+  /* ---------- chart crosshair (dotted guide lines + axis labels) ---------- */
+  chart.addEventListener('mousemove', (e) => {
+    const rect = chart.getBoundingClientRect();
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    const plotW = rect.width - AXIS_RIGHT_W, ih = rect.height - AXIS_BOTTOM_H;
+    if (isPanning || hoveringNewsMarker || hoveredHandle || hoveringChartPopup || x < 0 || x > plotW || y < 0 || y > ih) {
+      if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
+      return;
+    }
+    crosshair = { x, y };
+    scheduleDrawPriceChart();
+  });
+  chart.addEventListener('mouseleave', () => {
+    if (!crosshair) return;
+    crosshair = null;
+    scheduleDrawPriceChart();
+  });
+
+  /* ---------- suppress crosshair while hovering a chart popup (AI Assistance, Market Scanner) ---------- */
+  chart.querySelectorAll('.chart-popup').forEach(popup => {
+    popup.addEventListener('mouseenter', () => {
+      hoveringChartPopup = true;
+      if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
+    });
+    popup.addEventListener('mouseleave', () => {
+      hoveringChartPopup = false;
+    });
+  });
+
+  /* ---------- live price simulation: primary symbol (ETH) ---------- */
+  (function () {
+    const simRand = mulberry32(7777);
+    function noise() { let s = 0; for (let i = 0; i < 3; i++) s += simRand(); return (s - 1.5); }
+    function setUpDown(el, isUp) { el.classList.remove('up', 'down'); el.classList.add(isUp ? 'up' : 'down'); }
+    function flashEl(el, isUp) { el.classList.remove('flash-up', 'flash-down'); void el.offsetWidth; el.classList.add(isUp ? 'flash-up' : 'flash-down'); }
+    function fmtVol(v) { return v >= 1000 ? (v / 1000).toFixed(1) + 'K' : String(Math.round(v)); }
+
+    const dayOpen = 4493.50;
+    const prevClose = BASE_PRICE - 18.25; // matches the +18.25 day change shown at load
+    let last = BASE_PRICE;
+    let dayHigh = 4505.75, dayLow = 4473.25;
+    let vol = 24800;
+
+    const els = {
+      hdrLast: document.getElementById('hdrLast'),
+      hdrChg: document.getElementById('hdrChg'),
+      hdrBid: document.getElementById('hdrBid'),
+      hdrAsk: document.getElementById('hdrAsk'),
+      hdrDayHigh: document.getElementById('hdrDayHigh'),
+      hdrDayLow: document.getElementById('hdrDayLow'),
+      wlLast: document.getElementById('wlLast-ETHUSD'),
+      wlChg: document.getElementById('wlChg-ETHUSD'),
+      ohlcH: document.getElementById('ohlcH'),
+      ohlcL: document.getElementById('ohlcL'),
+      ohlcC: document.getElementById('ohlcC'),
+      ohlcChg: document.getElementById('ohlcChg'),
+      ohlcVol: document.getElementById('ohlcVol'),
+    };
+
+    function tick() {
+      const prevLast = last;
+      const reversion = (BASE_PRICE - last) * 0.04;
+      let next = roundTick(last + noise() * 0.35 + reversion);
+      if (next === last) next = roundTick(last + (simRand() < 0.5 ? -TICK : TICK));
+      last = next;
+      dayHigh = Math.max(dayHigh, last);
+      dayLow = Math.min(dayLow, last);
+      vol += 40 + simRand() * 260;
+
+      const tickUp = last > prevLast;
+      const dayChg = last - prevClose;
+      const dayChgPct = dayChg / prevClose * 100;
+      const dayUp = dayChg >= 0;
+
+      els.hdrLast.textContent = fmt(last);
+      els.hdrChg.textContent = (dayUp ? '+' : '') + fmt(dayChg) + ' (' + (dayUp ? '+' : '') + fmt(dayChgPct) + '%)';
+      setUpDown(els.hdrChg, dayUp);
+      els.hdrBid.textContent = fmt(roundTick(last - TICK));
+      els.hdrAsk.textContent = fmt(last);
+      els.hdrDayHigh.textContent = fmt(dayHigh);
+      els.hdrDayLow.textContent = fmt(dayLow);
+
+      els.wlLast.textContent = fmt(last);
+      els.wlChg.textContent = (dayUp ? '+' : '') + fmt(dayChgPct) + '%';
+      setUpDown(els.wlChg, dayUp);
+
+      els.ohlcH.textContent = fmt(dayHigh);
+      els.ohlcL.textContent = fmt(dayLow);
+      els.ohlcC.textContent = fmt(last);
+      const ohlcUp = last >= dayOpen;
+      setUpDown(els.ohlcC, ohlcUp);
+      const ohlcChg = last - dayOpen, ohlcChgPct = ohlcChg / dayOpen * 100;
+      els.ohlcChg.textContent = (ohlcUp ? '+' : '') + fmt(ohlcChg) + ' (' + (ohlcUp ? '+' : '') + fmt(ohlcChgPct) + '%)';
+      setUpDown(els.ohlcChg, ohlcUp);
+      els.ohlcVol.textContent = fmtVol(vol);
+
+      flashEl(els.hdrLast, tickUp);
+      flashEl(els.wlLast, tickUp);
+
+      const lastBar = candleBars[candleBars.length - 1];
+      lastBar.close = last;
+      lastBar.high = Math.max(lastBar.high, last);
+      lastBar.low = Math.min(lastBar.low, last);
+      scheduleDrawPriceChart();
+      checkTpFills(prevLast, last);
+      simTickCounter++;
+      const isNewBarTick = (simTickCounter % 10 === 0);
+      applyTrailingStop(last);
+      applyAtrDynamicStop(last, isNewBarTick);
+      applyTrailingTp(last);
+      if (order && order.filled && !isDraggingOrderLine) render();
+
+      let alertsChanged = false;
+      alerts.forEach(a => {
+        if (a.status !== 'active') return;
+        const hit = a.condition === 'Crosses Above' ? last >= a.price : last <= a.price;
+        if (hit) {
+          a.status = 'triggered';
+          alertsChanged = true;
+          showToast('Alert triggered: ETHUSD ' + a.condition.toLowerCase() + ' ' + fmt(a.price), 'notifications_active');
+        }
+      });
+      if (alertsChanged) renderAlerts();
+    }
+    setInterval(tick, 1200 + Math.random() * 400);
+  })();
+
+  /* ---------- main render ---------- */
+  function render() {
+    renderOpenOrders();
+    renderOrderHistory();
+    layer.innerHTML = '';
+    const H0 = rectH();
+    alerts.forEach(a => {
+      const y = clamp(priceToY(a.price, H0), 10, H0 - 10);
+      const hit = document.createElement('div');
+      hit.className = 'ol-alert-hit';
+      hit.style.top = y + 'px';
+      hit.innerHTML =
+        '<div class="ol-line alert"></div>' +
+        '<div class="ol-alert-tag"><span class="material-symbols-outlined" style="font-size:13px;">notifications</span><span class="ol-alert-price">' + fmt(a.price) + '</span>' +
+        '<span class="ol-alert-del" data-del-alert="' + a.id + '"><span class="material-symbols-outlined" style="font-size:13px;">close</span></span>' +
+        '</div>';
+      layer.appendChild(hit);
+      hit.querySelector('[data-del-alert]').addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeAlert(a.id);
+      });
+      const alertTagEl = hit.querySelector('.ol-alert-tag');
+      const alertPriceEl = hit.querySelector('.ol-alert-price');
+      alertTagEl.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.ol-alert-del')) return;
+        e.preventDefault(); e.stopPropagation();
+        closeAllPopovers();
+        hit.classList.add('dragging');
+        const rect = chart.getBoundingClientRect();
+        function move(ev) {
+          const cy = clamp(ev.clientY - rect.top, 10, rect.height - 10);
+          hit.style.top = cy + 'px';
+          a.price = roundTick(yToPrice(cy, rect.height));
+          alertPriceEl.textContent = fmt(a.price);
+          drawPriceChart();
+        }
+        function up(ev) {
+          document.removeEventListener('mousemove', move);
+          document.removeEventListener('mouseup', up);
+          hit.classList.remove('dragging');
+          const cy = clamp(ev.clientY - rect.top, 10, rect.height - 10);
+          a.price = roundTick(yToPrice(cy, rect.height));
+          render();
+        }
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+      });
+    });
+    if (!order) { return; }
+    const H = rectH();
+
+    // ---- Once filled & not in edit mode: only the entry shows (subtle line, hover reveals its bar). ----
+    // ---- TP/SL stay fully hidden until "full edit mode" is entered via the entry's settings icon.   ----
+    const fullEdit = !order.filled || order.editing;
+
+    if (fullEdit) {
+      // ---- TP lines (sorted nearest-to-entry first, so labels renumber TP1, TP2, TP3... by proximity) ----
+      const tpSortDir = order.side === 'buy' ? 1 : -1;
+      order.tps.slice().sort((a, b) => tpSortDir * (a.price - b.price)).forEach((tp, idx) => {
+        const y = clamp(priceToY(tp.price, H), 10, H - 10);
+        const line = document.createElement('div');
+        line.className = 'ol-line tp';
+        line.style.top = y + 'px';
+        layer.appendChild(line);
+
+        const dir = order.side === 'buy' ? 1 : -1;
+        const pts = dir * (tp.price - order.entry);
+        const contracts = Math.max(1, Math.round(order.qty * tp.pct / 100));
+        const profit = pts * POINT_VALUE * contracts;
+        const riskPerContractTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
+        const rMultiple = riskPerContractTotal ? (pts * POINT_VALUE / riskPerContractTotal) : null;
+
+        const row = document.createElement('div');
+        row.className = 'ol-side-row';
+        row.style.top = y + 'px';
+        row.innerHTML =
+          '<span class="ol-chip tp">TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '<span class="ol-amt up" data-edit-tp="' + tp.id + '">+' + fmtMoney(profit) + '</span></span>' +
+          '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
+          '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
+          '<span class="ol-gear" data-gear-tp="' + tp.id + '"><span class="material-symbols-outlined">settings</span></span>' +
+          '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" title="Remove TP"><span class="material-symbols-outlined">delete</span></span>';
+        layer.appendChild(row);
+
+        const tpAmtEl = row.querySelector('.ol-amt');
+        bindHandleHover(row.querySelector('.ol-chip'), 'tp:' + tp.id);
+        makeDraggable(row.querySelector('.ol-chip'),
+          (cy, h) => {
+            row.style.top = cy + 'px'; line.style.top = cy + 'px';
+            tp.price = roundTick(yToPrice(cy, h));
+            const liveDir = order.side === 'buy' ? 1 : -1;
+            const livePts = liveDir * (tp.price - order.entry);
+            const liveProfit = livePts * POINT_VALUE * contracts;
+            tpAmtEl.textContent = (liveProfit >= 0 ? '+' : '-') + fmtMoney(Math.abs(liveProfit));
+            tpAmtEl.classList.toggle('up', liveProfit >= 0);
+            tpAmtEl.classList.toggle('down', liveProfit < 0);
+            drawPriceChart();
+          },
+          (cy, h) => {
+            tp.price = roundTick(yToPrice(cy, h));
+            const dir2 = order.side === 'buy' ? 1 : -1;
+            if (dir2 * (tp.price - order.entry) < 0.25) tp.price = snappedSidePrice('tp', h);
+            render();
+          });
+
+        row.querySelector('[data-edit-tp]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditExitModal(tp.id, e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+        row.querySelector('[data-pct-tp]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditExitModal(tp.id, e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+        row.querySelector('[data-gear-tp]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          activeGearTpId = tp.id;
+          openTpGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+        row.querySelector('[data-remove-tp]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeTp(tp.id);
+        });
+      });
+
+      // ---- SL line ----
+      if (order.sl) {
+        const y = clamp(priceToY(order.sl.price, H), 10, H - 10);
+        const line = document.createElement('div');
+        line.className = 'ol-line sl';
+        line.style.top = y + 'px';
+        layer.appendChild(line);
+
+        const dir = order.side === 'buy' ? 1 : -1;
+        const pts = dir * (order.entry - order.sl.price);
+        const loss = pts * POINT_VALUE * order.qty;
+
+        const row = document.createElement('div');
+        row.className = 'ol-side-row';
+        row.style.top = y + 'px';
+        row.innerHTML =
+          '<span class="ol-chip sl">SL' + (order.sl.beTpId ? '<span class="ol-badge be">SL → BE</span>' : '') + (order.sl.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + (order.sl.atr ? '<span class="ol-badge atr">ATR</span>' : '') + '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span></span>' +
+          '<span class="ol-rmult">-1.0R</span>' +
+          '<span class="ol-pct-chip">100%</span>' +
+          '<span class="ol-gear" id="slGearTrigger"><span class="material-symbols-outlined">settings</span></span>' +
+          '<span class="ol-gear ol-danger" id="slDeleteTrigger" title="Remove SL"><span class="material-symbols-outlined">delete</span></span>';
+        layer.appendChild(row);
+
+        const slAmtEl = row.querySelector('.ol-amt');
+        bindHandleHover(row.querySelector('.ol-chip'), 'sl');
+        makeDraggable(row.querySelector('.ol-chip'),
+          (cy, h) => {
+            row.style.top = cy + 'px'; line.style.top = cy + 'px';
+            order.sl.price = roundTick(yToPrice(cy, h));
+            const liveDir = order.side === 'buy' ? 1 : -1;
+            const livePts = liveDir * (order.entry - order.sl.price);
+            const liveLoss = livePts * POINT_VALUE * order.qty;
+            slAmtEl.textContent = '-' + fmtMoney(Math.abs(liveLoss));
+            drawPriceChart();
+          },
+          (cy, h) => {
+            order.sl.price = roundTick(yToPrice(cy, h));
+            const dir2 = order.side === 'buy' ? 1 : -1;
+            if (dir2 * (order.entry - order.sl.price) < 0.25) order.sl.price = snappedSidePrice('sl', h);
+            syncQtyFromRisk();
+            render();
+          });
+
+        row.querySelector('#slGearTrigger').addEventListener('click', (e) => {
+          e.stopPropagation();
+          openSlGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+        row.querySelector('#slDeleteTrigger').addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeSl();
+        });
+      }
+    }
+
+    // ---- Entry line + control bar ----
+    // Pending or in full-edit mode: entry renders directly, always visible, fully interactive.
+    // Filled & not editing: entry renders inside a hover group — line stays subtle, bar reveals on hover.
+    {
+      const y = clamp(priceToY(order.entry, H), 10, H - 10);
+      let entryHost = layer;
+      if (!fullEdit) {
+        const group = document.createElement('div');
+        group.className = 'ol-position-group';
+        layer.appendChild(group);
+        const zone = document.createElement('div');
+        zone.className = 'ol-hover-zone';
+        zone.style.top = (y - 14) + 'px';
+        zone.style.height = '28px';
+        group.appendChild(zone);
+        entryHost = group;
+      }
+
+      const line = document.createElement('div');
+      line.className = 'ol-line entry ' + order.side + (!fullEdit ? ' subtle' : '');
+      line.style.top = y + 'px';
+      entryHost.appendChild(line);
+
+      const bar = document.createElement('div');
+      bar.className = 'ol-entry-bar' + (!fullEdit ? ' reveal' : '');
+      bar.style.top = y + 'px';
+
+      const side = order.side;
+      const sideLabel = side === 'buy' ? 'BUY' : 'SELL';
+      const confirmBtn = '<span class="ol-entry-confirm" id="entryConfirmBtn" title="Place Order"><span class="material-symbols-outlined">check</span></span>';
+      const doneBtn    = '<span class="ol-entry-confirm" id="doneEditingBtn"   title="Done Editing"><span class="material-symbols-outlined">check</span></span>';
+      const tpAddHandleHtml = '<span class="ol-chip ghost tp-add" id="tpAddHandle">TP</span>';
+      const slAddHandleHtml = !order.sl ? '<span class="ol-chip ghost sl-add" id="slAddHandle">SL</span>' : '';
+
+      if (!order.filled) {
+        const sizeLabel = order.sizeMode === 'contracts' ? String(order.qty)
+          : order.sizeMode === 'dollar' ? '$' + fmt(order.sizeValues.dollar, 0)
+            : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
+              : '$' + fmt(order.sizeValues.risk, 0) + ' risk';
+        bar.innerHTML =
+          '<span class="ol-chip entry ' + side + '" id="entryPriceHandle" title="Drag to move entry">' + sideLabel + confirmBtn + '</span>' +
+          tpAddHandleHtml + slAddHandleHtml +
+          '<span class="ol-pill neutral combo" id="orderConfigPill">' +
+          '<span class="ol-pill-seg" id="sizePillTrigger">' + sizeLabel + '</span>' +
+          '<span class="ol-pill-divider"></span>' +
+          '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
+          '</span>' +
+          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Cancel Order"><span class="material-symbols-outlined">delete</span></span>';
+      } else if (order.editing) {
+        bar.innerHTML =
+          '<span class="ol-chip entry ' + side + '" id="entryPriceHandle" title="Drag to move entry">' + sideLabel + doneBtn + '</span>' +
+          tpAddHandleHtml + slAddHandleHtml +
+          '<span class="ol-pill neutral combo" id="orderConfigPill">' +
+          '<span class="ol-pill-seg" id="sizePillTrigger">' + order.qty + ' ' + QT_INSTRUMENT_UNIT + '</span>' +
+          '<span class="ol-pill-divider"></span>' +
+          '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
+          '</span>' +
+          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
+      } else {
+        bar.innerHTML =
+          '<span class="ol-chip entry locked ' + side + '" id="entryPriceHandle">' + sideLabel + '</span>' +
+          '<span class="ol-gear" id="entryEditTrigger" title="Edit Trade"><span class="material-symbols-outlined">tune</span></span>' +
+          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
+      }
+      entryHost.appendChild(bar);
+
+      const tpAddHandle = bar.querySelector('#tpAddHandle');
+      if (tpAddHandle) { makeAddHandleDraggable(tpAddHandle, 'tp'); bindHandleHover(tpAddHandle, 'tp-add'); }
+      const slAddHandle = bar.querySelector('#slAddHandle');
+      if (slAddHandle) { makeAddHandleDraggable(slAddHandle, 'sl'); bindHandleHover(slAddHandle, 'sl-add'); }
+
+      const entryPriceHandle = bar.querySelector('#entryPriceHandle');
+      if (entryPriceHandle) {
+        bindHandleHover(entryPriceHandle, 'entry');
+        if (!order.filled || order.editing) {
+          makeDraggable(entryPriceHandle,
+            (cy, h) => {
+              bar.style.top = cy + 'px'; line.style.top = cy + 'px';
+              order.entry = roundTick(yToPrice(cy, h));
+              drawPriceChart();
+            },
+            (cy, h) => { order.entry = roundTick(yToPrice(cy, h)); syncQtyFromRisk(); render(); },
+            '.ol-entry-confirm');
+        }
+      }
+
+      if (!order.filled) {
+        bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
+          e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+        bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
+          e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+        bar.querySelector('#entryConfirmBtn').addEventListener('click', (e) => { e.stopPropagation(); confirmOrderFill(); });
+      } else if (order.editing) {
+        bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
+          e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+        bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
+          e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+        bar.querySelector('#doneEditingBtn').addEventListener('click', (e) => {
+          e.stopPropagation(); order.editing = false; render();
+        });
+      } else {
+        bar.querySelector('#entryEditTrigger').addEventListener('click', (e) => {
+          e.stopPropagation(); order.editing = true; render();
+        });
+      }
+      bar.querySelector('#cancelOrderBtn').addEventListener('click', (e) => { e.stopPropagation(); cancelOrder(); });
+    }
+
+    drawPriceChart();
+  }
+
+  /* ---------- topbar alerts menu ---------- */
+  const alertsTrigger = document.getElementById('alertsTrigger');
+  const alertsTopbarMenu = document.getElementById('alertsTopbarMenu');
+  alertsTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openNear(alertsTopbarMenu, alertsTrigger.getBoundingClientRect(), 'left', alertsTrigger);
+  });
+
+  /* ---------- settings gear → Chart Settings modal ---------- */
+  const settingsTrigger = document.getElementById('settingsTrigger');
+  settingsTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openChartSettings('trademgmt');
+  });
+
+  /* ---------- topbar account selector ---------- */
+  const ACCOUNTS = [
+    { id: 'BloFin', balance: 52430.00 },
+    { id: 'TradeStation', balance: 128940.55 },
+    { id: 'Bitget', balance: 76210.30 }
+  ];
+  let selectedAccountId = 'BloFin';
+  const accountSelectTrigger = document.getElementById('accountSelectTrigger');
+  const accountSelectMenu = document.getElementById('accountSelectMenu');
+  const accountSelectList = document.getElementById('accountSelectList');
+  function renderAccountSelect() {
+    const acct = ACCOUNTS.find(a => a.id === selectedAccountId);
+    document.getElementById('accountSelectName').textContent = acct.id;
+    document.getElementById('accountSelectBalance').textContent = fmtMoney(acct.balance);
+    accountSelectList.innerHTML = ACCOUNTS.map(a =>
+      '<button class="pop-item account-item' + (a.id === selectedAccountId ? ' selected' : '') + '" data-account="' + a.id + '">' +
+      '<span class="pop-text"><span class="pt-title">' + a.id + '</span></span>' +
+      '<span class="account-item-balance">' + fmtMoney(a.balance) + '</span>' +
+      '</button>'
+    ).join('');
+    accountSelectList.querySelectorAll('[data-account]').forEach(it => {
+      it.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectedAccountId = it.dataset.account;
+        renderAccountSelect();
+        closeAllPopovers();
+        showToast('Switched to ' + selectedAccountId, 'account_balance');
+      });
+    });
+  }
+  renderAccountSelect();
+  accountSelectTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openNear(accountSelectMenu, accountSelectTrigger.getBoundingClientRect(), 'left', accountSelectTrigger);
+  });
+  document.getElementById('accountConnectNew').addEventListener('click', (e) => e.stopPropagation());
+
+  /* ---------- trade templates selector (UI-only — no settings are actually applied) ---------- */
+  let templates = [
+    { id: 'tpl1', name: 'Scalping' },
+    { id: 'tpl2', name: 'Swing Trading' }
+  ];
+  let selectedTemplateId = 'tpl1';
+  let templateIdCounter = 3;
+  let templateNameMode = null; // 'save' | 'rename'
+  let templateRenameTargetId = null;
+  const templatesSelectTrigger = document.getElementById('templatesSelectTrigger');
+  const templatesSelectMenu = document.getElementById('templatesSelectMenu');
+  const templatesSelectList = document.getElementById('templatesSelectList');
+  const templateNameMenu = document.getElementById('templateNameMenu');
+  const templateNameMenuTitle = document.getElementById('templateNameMenuTitle');
+  const templateNameInput = document.getElementById('templateNameInput');
+  const templateNameSaveBtn = document.getElementById('templateNameSave');
+  function renderTemplatesSelect() {
+    const active = templates.find(t => t.id === selectedTemplateId) || templates[0];
+    document.getElementById('templatesSelectName').textContent = active ? active.name : 'Templates';
+    const canDelete = templates.length > 1;
+    templatesSelectList.innerHTML = templates.map(t => {
+      const isSelected = t.id === selectedTemplateId;
+      return '<div class="pop-item template-item' + (isSelected ? ' selected' : '') + '" data-template-id="' + t.id + '">' +
+        '<span class="pop-text"><span class="pt-title">' + escapeHtml(t.name) + '</span></span>' +
+        '<span class="template-item-right">' +
+        '' +
+        '<span class="template-item-actions">' +
+        '<button type="button" class="template-action-btn" data-action="rename" data-template-id="' + t.id + '" title="Rename"><span class="material-symbols-outlined">edit</span></button>' +
+        '<button type="button" class="template-action-btn danger' + (canDelete ? '' : ' disabled') + '" data-action="delete" data-template-id="' + t.id + '" title="' + (canDelete ? 'Delete' : 'At least one template is required') + '"><span class="material-symbols-outlined">delete</span></button>' +
+        '</span>' +
+        '</span>' +
+        '</div>';
+    }).join('');
+    templatesSelectList.querySelectorAll('.template-item').forEach(row => {
+      row.addEventListener('click', () => {
+        const id = row.dataset.templateId;
+        if (id !== selectedTemplateId) {
+          selectedTemplateId = id;
+          renderTemplatesSelect();
+          const t = templates.find(x => x.id === id);
+          showToast('Switched to "' + t.name + '" template', 'style');
+        }
+        closeAllPopovers();
+      });
+    });
+    templatesSelectList.querySelectorAll('[data-action="rename"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openTemplateNamePrompt('rename', btn.dataset.templateId, btn.getBoundingClientRect(), btn);
+      });
+    });
+    templatesSelectList.querySelectorAll('[data-action="delete"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (templates.length <= 1) return;
+        const id = btn.dataset.templateId;
+        const t = templates.find(x => x.id === id);
+        templates = templates.filter(x => x.id !== id);
+        if (selectedTemplateId === id) selectedTemplateId = templates[0].id;
+        renderTemplatesSelect();
+        showToast('"' + t.name + '" template deleted', 'delete');
+      });
+    });
+  }
+  function openTemplateNamePrompt(mode, targetId, anchorRect, trigger) {
+    templateNameMode = mode;
+    templateRenameTargetId = targetId;
+    if (mode === 'save') {
+      templateNameMenuTitle.textContent = 'Save Current as Template';
+      templateNameInput.value = '';
+      templateNameSaveBtn.textContent = 'Save';
+    } else {
+      const t = templates.find(x => x.id === targetId);
+      templateNameMenuTitle.textContent = 'Rename Template';
+      templateNameInput.value = t ? t.name : '';
+      templateNameSaveBtn.textContent = 'Rename';
+    }
+    openNear(templateNameMenu, anchorRect, 'left', trigger);
+    templateNameInput.focus();
+    templateNameInput.select();
+  }
+  function closeTemplateNamePrompt() { closeAllPopoversExcept(templatesSelectMenu); }
+  function commitTemplateName() {
+    const name = templateNameInput.value.trim();
+    if (!name) { templateNameInput.focus(); return; }
+    if (templateNameMode === 'save') {
+      const id = 'tpl' + (templateIdCounter++);
+      templates.push({ id, name });
+      selectedTemplateId = id;
+      showToast('Template "' + name + '" saved', 'bookmark_added');
+    } else if (templateNameMode === 'rename') {
+      const t = templates.find(x => x.id === templateRenameTargetId);
+      if (t) { t.name = name; showToast('Template renamed to "' + name + '"', 'edit'); }
+    }
+    closeTemplateNamePrompt();
+    renderTemplatesSelect();
+  }
+  renderTemplatesSelect();
+  templatesSelectTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openNear(templatesSelectMenu, templatesSelectTrigger.getBoundingClientRect(), 'left', templatesSelectTrigger);
+  });
+  document.getElementById('templateSaveCurrent').addEventListener('click', (e) => {
+    e.stopPropagation();
+    openTemplateNamePrompt('save', null, e.currentTarget.getBoundingClientRect(), e.currentTarget);
+  });
+  templateNameSaveBtn.addEventListener('click', (e) => { e.stopPropagation(); commitTemplateName(); });
+  document.getElementById('templateNameCancel').addEventListener('click', (e) => { e.stopPropagation(); closeTemplateNamePrompt(); });
+  document.getElementById('templateNameMenuClose').addEventListener('click', (e) => { e.stopPropagation(); closeTemplateNamePrompt(); });
+  templateNameInput.addEventListener('click', (e) => e.stopPropagation());
+  templateNameInput.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') { e.preventDefault(); commitTemplateName(); }
+    if (e.key === 'Escape') { e.preventDefault(); closeTemplateNamePrompt(); }
+  });
+
+  /* ---------- Chart Settings modal ---------- */
+  const csBackdrop = document.getElementById('chartSettingsBackdrop');
+  let csDraftSnapshot = null;
+  function setCsTab(tab) {
+    document.querySelectorAll('.cs-nav-item').forEach(b => b.classList.toggle('active', b.dataset.csTab === tab));
+    document.querySelectorAll('.cs-pane').forEach(p => p.classList.toggle('active', p.dataset.csPane === tab));
+    const activePane = document.querySelector('.cs-pane.active');
+    if (activePane) activePane.scrollIntoView({ block: 'nearest' });
+  }
+  document.querySelectorAll('.cs-nav-item').forEach(btn => {
+    btn.addEventListener('click', () => setCsTab(btn.dataset.csTab));
+  });
+  document.getElementById('csSearchInput').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('.cs-nav-item').forEach(b => {
+      b.style.display = (!q || b.textContent.toLowerCase().includes(q)) ? '' : 'none';
+    });
+  });
+  function csUpdateConditionalFields() {
+    document.getElementById('csBeCustomRWrap').style.display = document.getElementById('csBeTrigger').value === 'customR' ? '' : 'none';
+    document.getElementById('csTsDistanceWrap').style.display = document.getElementById('csTsMethod').value === 'atr' ? 'none' : '';
+    document.getElementById('csTsStartCustomRWrap').style.display = document.getElementById('csTsStart').value === 'customR' ? '' : 'none';
+    document.getElementById('csTtpDistanceWrap').style.display = document.getElementById('csTtpMethod').value === 'atr' ? 'none' : '';
+    document.getElementById('csTtpActivationCustomRWrap').style.display = document.getElementById('csTtpActivation').value === 'customR' ? '' : 'none';
+  }
+  ['csBeTrigger', 'csTsMethod', 'csTsStart', 'csTtpMethod', 'csTtpActivation'].forEach(id => {
+    document.getElementById(id).addEventListener('change', csUpdateConditionalFields);
+  });
+  function bindCsStepper(prefix, min, max, step) {
+    const input = document.getElementById(prefix + 'Value');
+    const dec = document.getElementById(prefix + 'Dec');
+    const inc = document.getElementById(prefix + 'Inc');
+    function clampVal(v) {
+      v = Math.round(v / step) * step;
+      if (Number.isInteger(step)) v = Math.round(v); else v = +v.toFixed(2);
+      return Math.min(max, Math.max(min, v));
+    }
+    dec.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') - step); });
+    inc.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') + step); });
+  }
+  bindCsStepper('csBeOffset', 0, 200, 1);
+  bindCsStepper('csTsDistance', 1, 2000, 5);
+  bindCsStepper('csTsMinStep', 1, 200, 1);
+  bindCsStepper('csTtpDistance', 1, 2000, 5);
+  bindCsStepper('csTtpMinStep', 1, 200, 1);
+  function bindPlainStepper(valueId, min, max, step, onChange) {
+    const input = document.getElementById(valueId);
+    const dec = document.getElementById(valueId + 'Dec');
+    const inc = document.getElementById(valueId + 'Inc');
+    function clampVal(v) {
+      v = Math.round(v / step) * step;
+      v = Number.isInteger(step) ? Math.round(v) : +v.toFixed(2);
+      return Math.min(max, Math.max(min, v));
+    }
+    function set(v) { input.value = clampVal(v); if (onChange) onChange(); }
+    dec.addEventListener('click', (e) => { e.stopPropagation(); set(parseFloat(input.value || '0') - step); });
+    inc.addEventListener('click', (e) => { e.stopPropagation(); set(parseFloat(input.value || '0') + step); });
+  }
+  bindPlainStepper('csAtrLength', 1, 200, 1);
+  bindPlainStepper('csAtrMultiplier', 0.1, 20, 0.1);
+  bindPlainStepper('slAtrOvLength', 1, 200, 1, () => { if (order && order.sl && order.sl.atrOverride) order.sl.atrOverride.length = parseInt(document.getElementById('slAtrOvLength').value) || 14; });
+  bindPlainStepper('slAtrOvMultiplier', 0.1, 20, 0.1, () => { if (order && order.sl && order.sl.atrOverride) order.sl.atrOverride.multiplier = parseFloat(document.getElementById('slAtrOvMultiplier').value) || 2; });
+  document.querySelectorAll('#chartSettingsBackdrop .cs-checkbox-row').forEach(row => {
+    row.addEventListener('click', (e) => {
+      e.preventDefault();
+      row.querySelector('.chk-box').classList.toggle('checked');
+    });
+  });
+  function csUpdateTargetTableVisibility() {
+    const mode = document.querySelector('#csDisplayModeGroup .cs-seg-btn.active').dataset.mode;
+    document.getElementById('csTargetTableWrap').style.display = mode === 'expanded' ? '' : 'none';
+  }
+  document.querySelectorAll('#csDisplayModeGroup .cs-seg-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#csDisplayModeGroup .cs-seg-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      csUpdateTargetTableVisibility();
+    });
+  });
+  /* ---------- default targets / stop loss table (Expanded mode entry defaults) ---------- */
+  let csTargetsDraft = [];
+  let csSlDraft = null;
+  const CS_MAX_TARGETS = 5;
+  function renderTargetsTable() {
+    const rowsEl = document.getElementById('csTargetRows');
+    /* layout top-to-bottom: [Add TP] -> highest TP ... TP1 -> SL row or [Add SL] -- new rows land exactly where their add button was */
+    let html = csTargetsDraft.length < CS_MAX_TARGETS
+      ? '<button type="button" class="cs-add-target-btn tp" id="csAddTpBtn"><span class="material-symbols-outlined">add</span>Add TP</button>'
+      : '';
+    for (let i = csTargetsDraft.length - 1; i >= 0; i--) {
+      const t = csTargetsDraft[i];
+      html +=
+        '<div class="cs-target-row" data-idx="' + i + '">' +
+        '<span class="cs-target-label tp">TP' + (i + 1) + '</span>' +
+        '<input type="text" class="cs-target-input" data-field="pct" value="' + t.pct + '%">' +
+        '<input type="text" class="cs-target-input" data-field="r" value="' + t.r.toFixed(1) + 'R">' +
+        '<div class="select-input pop-trigger cs-dd-trigger" data-target="csTargetType' + i + '"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>' +
+        '<select id="csTargetType' + i + '" data-field="type" style="display:none;">' +
+        '<option value="limit"' + (t.type === 'limit' ? ' selected' : '') + '>Limit</option>' +
+        '<option value="market"' + (t.type === 'market' ? ' selected' : '') + '>Market</option>' +
+        '</select>' +
+        '<button type="button" class="cs-target-del" data-idx="' + i + '"><span class="material-symbols-outlined">delete</span></button>' +
+        '</div>';
+    }
+    if (csSlDraft) {
+      html += '<div class="cs-target-row">' +
+        '<span class="cs-target-label sl">Stop Loss</span>' +
+        '<input type="text" class="cs-target-input" value="100%" disabled>' +
+        '<input type="text" class="cs-target-input" id="csSlDraftR" value="' + csSlDraft.r.toFixed(1) + 'R">' +
+        '<div class="select-input pop-trigger cs-dd-trigger" data-target="csSlDraftType"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div><select id="csSlDraftType" style="display:none;">' +
+        '<option value="stopMarket"' + (csSlDraft.type === 'stopMarket' ? ' selected' : '') + '>Stop Market</option>' +
+        '<option value="stopLimit"' + (csSlDraft.type === 'stopLimit' ? ' selected' : '') + '>Stop Limit</option>' +
+        '</select>' +
+        '<button type="button" class="cs-target-del" id="csSlDraftDel"><span class="material-symbols-outlined">delete</span></button>' +
+        '</div>';
+    } else {
+      html += '<button type="button" class="cs-add-target-btn sl" id="csAddSlBtn"><span class="material-symbols-outlined">add</span>Add SL</button>';
+    }
+    rowsEl.innerHTML = html;
+    refreshAllCsDropdownLabels(rowsEl);
+    rowsEl.querySelectorAll('.cs-target-row[data-idx]').forEach(row => {
+      const idx = parseInt(row.dataset.idx);
+      row.querySelector('[data-field="pct"]').addEventListener('change', (e) => { csTargetsDraft[idx].pct = parseFloat(e.target.value) || 0; e.target.value = csTargetsDraft[idx].pct + '%'; });
+      row.querySelector('[data-field="r"]').addEventListener('change', (e) => { csTargetsDraft[idx].r = parseFloat(e.target.value) || 0; e.target.value = csTargetsDraft[idx].r.toFixed(1) + 'R'; });
+      row.querySelector('[data-field="type"]').addEventListener('change', (e) => { csTargetsDraft[idx].type = e.target.value; });
+    });
+    rowsEl.querySelectorAll('.cs-target-del[data-idx]').forEach(btn => {
+      btn.addEventListener('click', () => { csTargetsDraft.splice(parseInt(btn.dataset.idx), 1); renderTargetsTable(); });
+    });
+    const slR = document.getElementById('csSlDraftR');
+    if (slR) slR.addEventListener('change', (e) => { csSlDraft.r = parseFloat(e.target.value) || 0; e.target.value = csSlDraft.r.toFixed(1) + 'R'; });
+    const slType = document.getElementById('csSlDraftType');
+    if (slType) slType.addEventListener('change', (e) => { csSlDraft.type = e.target.value; });
+    const slDel = document.getElementById('csSlDraftDel');
+    if (slDel) slDel.addEventListener('click', () => { csSlDraft = null; renderTargetsTable(); });
+    const addTpBtn = document.getElementById('csAddTpBtn');
+    if (addTpBtn) addTpBtn.addEventListener('click', () => {
+      const maxR = csTargetsDraft.reduce((m, t) => Math.max(m, t.r), 0);
+      csTargetsDraft.push({ pct: 0, r: Math.round((maxR + 1) * 10) / 10, type: 'limit' });
+      renderTargetsTable();
+    });
+    const addSlBtn = document.getElementById('csAddSlBtn');
+    if (addSlBtn) addSlBtn.addEventListener('click', () => {
+      csSlDraft = { r: 1.0, type: 'stopMarket' };
+      renderTargetsTable();
+    });
+  }
+  function populateChartSettingsForm() {
+    const s = chartSettings;
+    document.getElementById('csBeTrigger').value = s.moveSlToBreakeven.trigger;
+    document.getElementById('csBeCustomRValue').value = s.moveSlToBreakeven.customR;
+    document.getElementById('csBeOffsetValue').value = s.moveSlToBreakeven.offsetValue;
+    document.getElementById('csBeOffsetUnit').value = s.moveSlToBreakeven.offsetUnit;
+
+    document.getElementById('csTsMethod').value = s.trailingStop.method;
+    document.getElementById('csTsDistanceValue').value = s.trailingStop.distanceValue;
+    document.getElementById('csTsDistanceUnit').value = s.trailingStop.distanceUnit;
+    document.getElementById('csTsStart').value = s.trailingStop.start;
+    document.getElementById('csTsStartCustomRValue').value = s.trailingStop.startCustomR;
+    document.getElementById('csTsMinStepValue').value = s.trailingStop.minStepValue;
+    document.getElementById('csTsMinStepUnit').value = s.trailingStop.minStepUnit;
+
+    document.getElementById('csAtrLength').value = s.atrStop.length;
+    document.getElementById('csAtrMultiplier').value = s.atrStop.multiplier;
+    document.getElementById('csAtrTimeframe').value = s.atrStop.timeframe;
+    document.getElementById('csAtrUpdateFreq').value = s.atrStop.updateFreq;
+    document.getElementById('csAtrDynamic').classList.toggle('checked', s.atrStop.dynamic);
+
+    document.getElementById('csTtpActivation').value = s.trailingTp.activation;
+    document.getElementById('csTtpActivationCustomRValue').value = s.trailingTp.activationCustomR;
+    document.getElementById('csTtpMethod').value = s.trailingTp.method;
+    document.getElementById('csTtpDistanceValue').value = s.trailingTp.distanceValue;
+    document.getElementById('csTtpDistanceUnit').value = s.trailingTp.distanceUnit;
+    document.getElementById('csTtpMinStepValue').value = s.trailingTp.minStepValue;
+    document.getElementById('csTtpMinStepUnit').value = s.trailingTp.minStepUnit;
+
+    document.querySelectorAll('#csDisplayModeGroup .cs-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === s.tpSlDisplayMode));
+    document.getElementById('csDefaultProfile').value = s.defaultProfile;
+    csTargetsDraft = JSON.parse(JSON.stringify(s.defaultTargets || []));
+    csSlDraft = s.defaultStopLoss ? JSON.parse(JSON.stringify(s.defaultStopLoss)) : null;
+    renderTargetsTable();
+    csUpdateTargetTableVisibility();
+
+    document.getElementById('csGbCancelOnClose').classList.toggle('checked', s.globalBehavior.cancelOnManualClose);
+    document.getElementById('csGbRecalc').classList.toggle('checked', s.globalBehavior.recalcOnSizeChange);
+    document.getElementById('csGbPersist').classList.toggle('checked', s.globalBehavior.persist);
+
+    csUpdateConditionalFields();
+    refreshAllCsDropdownLabels(document.getElementById('chartSettingsBackdrop'));
+  }
+  function collectChartSettingsForm() {
+    chartSettings = {
+      tpSlDisplayMode: document.querySelector('#csDisplayModeGroup .cs-seg-btn.active').dataset.mode,
+      defaultProfile: document.getElementById('csDefaultProfile').value,
+      defaultTargets: csTargetsDraft,
+      defaultStopLoss: csSlDraft,
+      moveSlToBreakeven: {
+        trigger: document.getElementById('csBeTrigger').value,
+        customR: parseFloat(document.getElementById('csBeCustomRValue').value) || 1,
+        offsetValue: parseFloat(document.getElementById('csBeOffsetValue').value) || 0,
+        offsetUnit: document.getElementById('csBeOffsetUnit').value,
+      },
+      trailingStop: {
+        method: document.getElementById('csTsMethod').value,
+        distanceValue: parseFloat(document.getElementById('csTsDistanceValue').value) || 1,
+        distanceUnit: document.getElementById('csTsDistanceUnit').value,
+        start: document.getElementById('csTsStart').value,
+        startCustomR: parseFloat(document.getElementById('csTsStartCustomRValue').value) || 1,
+        minStepValue: parseFloat(document.getElementById('csTsMinStepValue').value) || 1,
+        minStepUnit: document.getElementById('csTsMinStepUnit').value,
+      },
+      atrStop: {
+        length: parseInt(document.getElementById('csAtrLength').value) || 14,
+        multiplier: parseFloat(document.getElementById('csAtrMultiplier').value) || 2,
+        timeframe: document.getElementById('csAtrTimeframe').value,
+        updateFreq: document.getElementById('csAtrUpdateFreq').value,
+        dynamic: document.getElementById('csAtrDynamic').classList.contains('checked'),
+      },
+      trailingTp: {
+        activation: document.getElementById('csTtpActivation').value,
+        activationCustomR: parseFloat(document.getElementById('csTtpActivationCustomRValue').value) || 1,
+        method: document.getElementById('csTtpMethod').value,
+        distanceValue: parseFloat(document.getElementById('csTtpDistanceValue').value) || 1,
+        distanceUnit: document.getElementById('csTtpDistanceUnit').value,
+        minStepValue: parseFloat(document.getElementById('csTtpMinStepValue').value) || 1,
+        minStepUnit: document.getElementById('csTtpMinStepUnit').value,
+      },
+      globalBehavior: {
+        cancelOnManualClose: document.getElementById('csGbCancelOnClose').classList.contains('checked'),
+        recalcOnSizeChange: document.getElementById('csGbRecalc').classList.contains('checked'),
+        persist: document.getElementById('csGbPersist').classList.contains('checked'),
+      }
+    };
+    persistChartSettingsIfEnabled();
+  }
+  function openChartSettings(initialTab) {
+    csDraftSnapshot = JSON.stringify(chartSettings);
+    populateChartSettingsForm();
+    setCsTab(initialTab || 'trademgmt');
+    closeAllPopovers();
+    csBackdrop.classList.add('show');
+  }
+  function closeChartSettings(commit) {
+    if (!commit && csDraftSnapshot) { chartSettings = JSON.parse(csDraftSnapshot); }
+    csDraftSnapshot = null;
+    csBackdrop.classList.remove('show');
+  }
+  document.getElementById('csSaveBtn').addEventListener('click', () => {
+    collectChartSettingsForm();
+    closeChartSettings(true);
+    showToast('Trade management settings saved', 'check_circle');
+  });
+  document.getElementById('csCancelBtn').addEventListener('click', () => closeChartSettings(false));
+  document.getElementById('csCloseBtn').addEventListener('click', () => closeChartSettings(false));
+  csBackdrop.addEventListener('click', (e) => { if (e.target === csBackdrop) closeChartSettings(false); });
+  document.getElementById('csResetBtn').addEventListener('click', () => {
+    chartSettings = cloneCsDefaults();
+    populateChartSettingsForm();
+    showToast('Reset to defaults', 'restart_alt');
+  });
+
+  /* ---------- candle type dropdown (topbar) ---------- */
+  const candleTypeTrigger = document.getElementById('candleTypeTrigger');
+  const candleTypeMenu = document.getElementById('candleTypeMenu');
+  const candleTypeLabel = document.getElementById('candleTypeLabel');
+  candleTypeTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openNear(candleTypeMenu, candleTypeTrigger.getBoundingClientRect(), 'left', candleTypeTrigger);
+  });
+  candleTypeMenu.querySelectorAll('.pop-item[data-candle]').forEach(it => {
+    it.addEventListener('click', () => {
+      candleTypeMenu.querySelectorAll('.pop-item[data-candle]').forEach(i => i.classList.remove('selected'));
+      it.classList.add('selected');
+      candleTypeLabel.textContent = it.dataset.candle;
+      closeAllPopovers();
+      showToast('Candle type set to ' + it.dataset.candle, 'candlestick_chart');
+    });
+  });
+
+  /* ---------- timeframe group (5 quick buttons + "more" dropdown) ---------- */
+  (function () {
+    const tfGroup = document.getElementById('tfGroup');
+    const tfMoreTrigger = document.getElementById('tfMoreTrigger');
+    const tfMoreMenu = document.getElementById('tfMoreMenu');
+    const tfMoreLabel = document.getElementById('tfMoreLabel');
+    function selectTimeframe(tf, fromMenuItem) {
+      tfGroup.querySelectorAll('.tf-btn[data-tf]').forEach(b => b.classList.remove('active'));
+      tfMoreMenu.querySelectorAll('.pop-item').forEach(b => b.classList.remove('selected'));
+      if (fromMenuItem) {
+        tfMoreTrigger.classList.add('active');
+        tfMoreLabel.textContent = tf;
+        fromMenuItem.classList.add('selected');
+      } else {
+        tfMoreTrigger.classList.remove('active');
+        tfMoreLabel.textContent = '';
+        const btn = tfGroup.querySelector('.tf-btn[data-tf="' + tf + '"]');
+        if (btn) btn.classList.add('active');
+      }
+    }
+    tfGroup.querySelectorAll('.tf-btn[data-tf]').forEach(btn => {
+      btn.addEventListener('click', () => selectTimeframe(btn.dataset.tf, null));
+    });
+    tfMoreTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openNear(tfMoreMenu, tfMoreTrigger.getBoundingClientRect(), 'left', tfMoreTrigger);
+    });
+    tfMoreMenu.querySelectorAll('.pop-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectTimeframe(item.dataset.tf, item);
+        closeAllPopovers();
+      });
+    });
+  })();
+
+  /* ---------- symbol selector dropdown ---------- */
+  const SYMBOL_LIST = [
+    ...['ETHUSD', 'BTCUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'DOGEUSD', 'ADAUSD', 'AVAXUSD', 'LINKUSD', 'MATICUSD',
+      'LTCUSD', 'DOTUSD', 'TRXUSD', 'ATOMUSD', 'NEARUSD', 'UNIUSD', 'FILUSD', 'APTUSD', 'ARBUSD', 'OPUSD',
+      'SUIUSD', 'ICPUSD', 'ETCUSD'].map(sym => ({ sym, cat: 'crypto' })),
+    ...['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'JPM',
+      'BAC', 'DIS', 'KO', 'PEP', 'WMT', 'V', 'MA', 'XOM', 'CVX', 'INTC',
+      'ORCL', 'CRM', 'ADBE'].map(sym => ({ sym, cat: 'stocks' })),
+    ...['NQU5', 'ESU5', 'YMU5', 'RTYU5', 'CLN5', 'GCQ5', 'SIN5', 'ZBU5', 'ZNU5', 'ZCU5',
+      'HGU5', 'NGU5', 'PLU5', 'KCU5', 'ZSU5', 'ZWU5', '6BU5'].map(sym => ({ sym, cat: 'futures' })),
+    ...['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD', 'USDCHF', 'EURGBP', 'EURJPY', 'GBPJPY',
+      'USDTRY', 'USDMXN', 'USDZAR', 'EURCHF', 'AUDJPY', 'CHFJPY', 'EURAUD'].map(sym => ({ sym, cat: 'forex' })),
+  ];
+  const symSelectTrigger = document.getElementById('symSelectTrigger');
+  const symSelectMenu = document.getElementById('symSelectMenu');
+  const symSelectSearch = document.getElementById('symSelectSearch');
+  const symSelectList = document.getElementById('symSelectList');
+  const symSelectLabel = document.getElementById('symSelectLabel');
+  const symSelectTabs = document.querySelectorAll('#symSelectTabs .wl-tab');
+  let symSelectCat = 'all';
+  function renderSymSelectList(filter) {
+    const q = (filter || '').trim().toUpperCase();
+    const items = SYMBOL_LIST.filter(s => (symSelectCat === 'all' || s.cat === symSelectCat) && (!q || s.sym.includes(q)));
+    symSelectList.innerHTML = items.length
+      ? items.map(s => '<button class="sym-select-item" data-sym="' + s.sym + '">' + s.sym + '</button>').join('')
+      : '<div class="sym-select-empty">No symbols found</div>';
+    symSelectList.querySelectorAll('.sym-select-item').forEach(it => {
+      it.addEventListener('click', (e) => {
+        e.stopPropagation();
+        symSelectLabel.textContent = it.dataset.sym;
+        closeAllPopovers();
+        showToast('Switched to ' + it.dataset.sym, 'sync_alt');
+      });
+    });
+  }
+  if (symSelectTrigger) symSelectTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (symSelectMenu.classList.contains('show') && symSelectMenu._openTrigger === symSelectTrigger) {
+      closeAllPopovers();
+      return;
+    }
+    openNear(symSelectMenu, symSelectTrigger.getBoundingClientRect(), 'left', symSelectTrigger);
+    symSelectSearch.value = '';
+    renderSymSelectList('');
+    symSelectSearch.focus();
+  });
+  symSelectSearch.addEventListener('input', () => renderSymSelectList(symSelectSearch.value));
+  symSelectSearch.addEventListener('click', (e) => e.stopPropagation());
+  symSelectTabs.forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      symSelectTabs.forEach(t => t.classList.toggle('active', t === tab));
+      symSelectCat = tab.dataset.cat;
+      renderSymSelectList(symSelectSearch.value);
+    });
+  });
+
+  /* ---------- indicators modal ---------- */
+  const indicatorsTrigger = document.getElementById('indicatorsTrigger');
+  const indicatorsMenu = document.getElementById('indicatorsMenu');
+  const indicatorsCount = document.getElementById('indicatorsCount');
+  const indicatorSearch = document.getElementById('indicatorSearch');
+  const indicatorSearchClear = document.getElementById('indicatorSearchClear');
+  const indicatorList = document.getElementById('indicatorList');
+  const indEmpty = document.getElementById('indEmpty');
+  const indActiveLabel = document.getElementById('indActiveLabel');
+
+  const IND_DATA = [
+    { name: 'EMA', desc: 'Exponential Moving Average — reacts faster to recent price changes than SMA', cat: 'trend' },
+    { name: 'SMA', desc: 'Simple Moving Average — average price over a defined lookback period', cat: 'trend' },
+    { name: 'WMA', desc: 'Weighted Moving Average — linearly weights recent prices more heavily', cat: 'trend' },
+    { name: 'VWAP', desc: 'Volume Weighted Average Price — daily average price weighted by volume', cat: 'trend' },
+    { name: 'Ichimoku Cloud', desc: 'Multi-component trend system showing support, resistance, and momentum', cat: 'trend' },
+    { name: 'Parabolic SAR', desc: 'Trailing stop-based trend reversal signal that follows price', cat: 'trend' },
+    { name: 'ADX', desc: 'Average Directional Index — measures trend strength regardless of direction', cat: 'trend' },
+    { name: 'DEMA', desc: 'Double EMA — reduces lag of standard EMA for faster trend signals', cat: 'trend' },
+    { name: 'TEMA', desc: 'Triple EMA — triple-smoothed moving average with minimal lag', cat: 'trend' },
+    { name: 'Supertrend', desc: 'ATR-based dynamic support/resistance trend-following line', cat: 'trend' },
+    { name: 'RSI', desc: 'Relative Strength Index — oscillator measuring overbought/oversold on 0–100 scale', cat: 'momentum' },
+    { name: 'MACD', desc: 'Moving Average Convergence Divergence — trend-following momentum indicator', cat: 'momentum' },
+    { name: 'Stochastic Oscillator', desc: 'Compares closing price to a high/low range over a set period', cat: 'momentum' },
+    { name: 'CCI', desc: 'Commodity Channel Index — measures deviation from the statistical mean price', cat: 'momentum' },
+    { name: 'Williams %R', desc: 'Momentum oscillator measuring overbought and oversold levels', cat: 'momentum' },
+    { name: 'Momentum', desc: 'Raw price change over a set period expressed as an oscillator', cat: 'momentum' },
+    { name: 'ROC', desc: 'Rate of Change — percentage price change over a defined lookback', cat: 'momentum' },
+    { name: 'Awesome Oscillator', desc: 'Difference of 5 & 34-period SMAs of bar midpoints', cat: 'momentum' },
+    { name: 'Ultimate Oscillator', desc: 'Weighted oscillator across 3 timeframes to reduce false signals', cat: 'momentum' },
+    { name: 'MFI', desc: 'Money Flow Index — RSI-variant that incorporates volume for momentum signals', cat: 'momentum' },
+    { name: 'Bollinger Bands', desc: 'Dynamic bands 2 standard deviations around a 20-period SMA', cat: 'volatility' },
+    { name: 'ATR', desc: 'Average True Range — measures market volatility over a rolling lookback', cat: 'volatility' },
+    { name: 'Keltner Channel', desc: 'ATR-based envelope around an EMA for detecting volatility breakouts', cat: 'volatility' },
+    { name: 'Donchian Channel', desc: 'Highest high / lowest low channel over a user-defined period', cat: 'volatility' },
+    { name: 'Standard Deviation', desc: 'Statistical dispersion of price from its mean over N periods', cat: 'volatility' },
+    { name: 'Historical Volatility', desc: 'Annualized standard deviation of log returns over a lookback window', cat: 'volatility' },
+    { name: 'Chaikin Volatility', desc: 'Rate of change of ATR to detect volatility expansion and contraction', cat: 'volatility' },
+    { name: 'OBV', desc: 'On Balance Volume — cumulative volume using up/down day directional logic', cat: 'volume' },
+    { name: 'Volume MA', desc: 'Moving average of volume to identify abnormal volume spikes', cat: 'volume' },
+    { name: 'Accumulation/Distribution', desc: 'Cumulative flow indicator using close position within the bar range', cat: 'volume' },
+    { name: 'Chaikin Money Flow', desc: 'Measures buying/selling pressure via volume-weighted close location', cat: 'volume' },
+    { name: 'Elder\'s Force Index', desc: 'Combines price change and volume to measure the force of moves', cat: 'volume' },
+    { name: 'VWAP Bands', desc: 'Standard deviation bands around VWAP for intraday mean reversion', cat: 'volume' },
+    { name: 'Market Oracle', desc: 'Proprietary signal combining multi-timeframe trend and momentum factors', cat: 'custom' },
+    { name: 'Market Dynamics', desc: 'Visualizes market regime shifts using adaptive volatility models', cat: 'custom' },
+    { name: 'Prime Oscillators', desc: 'Suite of composite oscillators optimized for intraday trading', cat: 'custom' },
+    { name: 'Prime Screener', desc: 'Real-time multi-symbol scan', cat: 'custom' },
+  ];
+
+  const CAT_LABELS = { trend: 'Trend', momentum: 'Momentum', volatility: 'Volatility', volume: 'Volume', custom: 'Custom' };
+  const indState = new Map(IND_DATA.map(d => [d.name, false]));
+
+  function renderIndList(query, cat) {
+    indicatorList.innerHTML = '';
+    const q = (query || '').toLowerCase().trim();
+    const showCat = cat === 'all' ? null : cat;
+    let anyVisible = false;
+    const groups = showCat ? [showCat] : ['trend', 'momentum', 'volatility', 'volume', 'custom'];
+    groups.forEach(g => {
+      const rows = IND_DATA.filter(d => {
+        if (d.cat !== g) return false;
+        if (q && !d.name.toLowerCase().includes(q) && !d.desc.toLowerCase().includes(q)) return false;
+        return true;
+      });
+      if (!rows.length) return;
+      anyVisible = true;
+      if (!showCat || groups.length > 1) {
+        const lbl = document.createElement('div');
+        lbl.className = 'ind-group-label';
+        lbl.textContent = CAT_LABELS[g];
+        indicatorList.appendChild(lbl);
+      }
+      rows.forEach(d => {
+        const row = document.createElement('div');
+        row.className = 'ind-row' + (indState.get(d.name) ? ' active' : '');
+        row.dataset.name = d.name;
+        row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ind-toggle-btn" aria-label="Toggle ${d.name}"><span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>`;
+        row.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const on = !indState.get(d.name);
+          indState.set(d.name, on);
+          row.classList.toggle('active', on);
+          updateIndicatorsCount();
+          showToast(d.name + (on ? ' enabled' : ' disabled'), 'function');
+        });
+        indicatorList.appendChild(row);
+      });
+    });
+    indEmpty.style.display = anyVisible ? 'none' : 'flex';
+  }
+
+  function updateIndicatorsCount() {
+    const n = [...indState.values()].filter(Boolean).length;
+    indicatorsCount.style.display = n > 0 ? 'inline-flex' : 'none';
+    indicatorsCount.textContent = n;
+    indActiveLabel.textContent = n + ' active';
+  }
+
+  let indActiveCat = 'all';
+  function getIndSearch() { return indicatorSearch.value; }
+
+  indicatorsTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (indicatorsMenu.classList.contains('show') && indicatorsMenu._openTrigger === indicatorsTrigger) {
+      closeAllPopovers(); return;
+    }
+    renderIndList(getIndSearch(), indActiveCat);
+    openNear(indicatorsMenu, indicatorsTrigger.getBoundingClientRect(), 'left', indicatorsTrigger);
+    indicatorSearch.focus();
+  });
+
+  document.getElementById('indicatorsModalClose').addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeAllPopovers();
+  });
+
+  indicatorSearch.addEventListener('input', () => {
+    const q = indicatorSearch.value;
+    indicatorSearchClear.style.display = q ? 'flex' : 'none';
+    renderIndList(q, indActiveCat);
+  });
+  indicatorSearch.addEventListener('click', (e) => e.stopPropagation());
+  indicatorSearchClear.addEventListener('click', (e) => {
+    e.stopPropagation();
+    indicatorSearch.value = '';
+    indicatorSearchClear.style.display = 'none';
+    renderIndList('', indActiveCat);
+    indicatorSearch.focus();
+  });
+
+  document.getElementById('indCatTabs').querySelectorAll('.ind-cat').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('indCatTabs').querySelectorAll('.ind-cat').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      indActiveCat = btn.dataset.cat;
+      renderIndList(getIndSearch(), indActiveCat);
+    });
+  });
+
+  /* ---------- L2 indicators checklist dropdown ---------- */
+  /* ---------- L2 indicators modal ---------- */
+  const l2IndicatorsTrigger = document.getElementById('l2IndicatorsTrigger');
+  const l2IndicatorsMenu = document.getElementById('l2IndicatorsMenu');
+  const l2IndicatorsCount = document.getElementById('l2IndicatorsCount');
+  const l2IndicatorSearch = document.getElementById('l2IndicatorSearch');
+  const l2IndicatorSearchClear = document.getElementById('l2IndicatorSearchClear');
+  const l2IndicatorList = document.getElementById('l2IndicatorList');
+  const l2IndEmpty = document.getElementById('l2IndEmpty');
+  const l2IndActiveLabel = document.getElementById('l2IndActiveLabel');
+
+  const L2_IND_DATA = [
+    { name:'Depth of Market', desc:'Live bid/ask ladder showing pending orders at each price level', cat:'orderbook' },
+    { name:'Order Book Heatmap', desc:'Color-coded visualization of order density across price levels', cat:'orderbook' },
+    { name:'Bid/Ask Imbalance', desc:'Real-time ratio of buy vs sell pressure visible in the order book', cat:'orderbook' },
+    { name:'Cumulative Delta', desc:'Running total of buy-initiated vs sell-initiated volume over the session', cat:'orderbook' },
+    { name:'Book Pressure', desc:'Weighted order book imbalance indicating directional market pressure', cat:'orderbook' },
+    { name:'Footprint Chart', desc:'Per-bar breakdown of volume executed at each price and direction', cat:'orderflow' },
+    { name:'Order Flow Imbalance', desc:'Detects significant buy/sell imbalance within each individual candle', cat:'orderflow' },
+    { name:'Trade Tape', desc:'Live time-and-sales stream showing each executed trade in real time', cat:'orderflow' },
+    { name:'Delta Divergence', desc:'Spots divergence between price direction and cumulative delta', cat:'orderflow' },
+    { name:'Aggressive Orders', desc:'Highlights large market orders that immediately take available liquidity', cat:'orderflow' },
+    { name:'Volume Profile', desc:'Horizontal histogram showing total volume traded at each price level', cat:'volume' },
+    { name:'VPOC', desc:'Volume Point of Control — the price level with the highest traded volume', cat:'volume' },
+    { name:'Volume by Price', desc:'Distributes total session volume across the currently visible price range', cat:'volume' },
+    { name:'TPO Profile', desc:'Time-Price-Opportunity chart showing time spent at each price level', cat:'volume' },
+    { name:'Value Area', desc:'Highlights the price range containing 70% of total session volume', cat:'volume' },
+    { name:'Liquidity Absorption', desc:'Identifies when large resting orders absorb aggressive market flow', cat:'liquidity' },
+    { name:'Iceberg Detection', desc:'Flags large hidden orders being drip-fed into the visible order book', cat:'liquidity' },
+    { name:'Stop Hunt Zones', desc:'Highlights likely stop cluster accumulation areas above and below price', cat:'liquidity' },
+    { name:'Dark Pool Levels', desc:'Estimated off-exchange print levels derived from dark pool activity', cat:'liquidity' },
+    { name:'Liquidity Map', desc:'Visual map of estimated buy and sell side liquidity across the book', cat:'liquidity' },
+  ];
+
+  const L2_CAT_LABELS = { orderbook:'Order Book', orderflow:'Order Flow', volume:'Volume', liquidity:'Liquidity' };
+  const l2IndState = new Map(L2_IND_DATA.map(d => [d.name, false]));
+
+  function renderL2IndList(query, cat) {
+    l2IndicatorList.innerHTML = '';
+    const q = (query || '').toLowerCase().trim();
+    const showCat = cat === 'all' ? null : cat;
+    let anyVisible = false;
+    const groups = showCat ? [showCat] : ['orderbook','orderflow','volume','liquidity'];
+    groups.forEach(g => {
+      const rows = L2_IND_DATA.filter(d => {
+        if (d.cat !== g) return false;
+        if (q && !d.name.toLowerCase().includes(q) && !d.desc.toLowerCase().includes(q)) return false;
+        return true;
+      });
+      if (!rows.length) return;
+      anyVisible = true;
+      if (!showCat || groups.length > 1) {
+        const lbl = document.createElement('div');
+        lbl.className = 'ind-group-label';
+        lbl.textContent = L2_CAT_LABELS[g];
+        l2IndicatorList.appendChild(lbl);
+      }
+      rows.forEach(d => {
+        const row = document.createElement('div');
+        row.className = 'ind-row' + (l2IndState.get(d.name) ? ' active' : '');
+        row.dataset.name = d.name;
+        row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ind-toggle-btn" aria-label="Toggle ${d.name}"><span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>`;
+        row.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const on = !l2IndState.get(d.name);
+          l2IndState.set(d.name, on);
+          row.classList.toggle('active', on);
+          updateL2IndicatorsCount();
+          showToast(d.name + (on ? ' enabled' : ' disabled'), 'stacked_line_chart');
+        });
+        l2IndicatorList.appendChild(row);
+      });
+    });
+    l2IndEmpty.style.display = anyVisible ? 'none' : 'flex';
+  }
+
+  function updateL2IndicatorsCount() {
+    const n = [...l2IndState.values()].filter(Boolean).length;
+    l2IndicatorsCount.style.display = n > 0 ? 'inline-flex' : 'none';
+    l2IndicatorsCount.textContent = n;
+    l2IndActiveLabel.textContent = n + ' active';
+  }
+
+  let l2ActiveCat = 'all';
+  function getL2Search() { return l2IndicatorSearch.value; }
+
+  l2IndicatorsTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (l2IndicatorsMenu.classList.contains('show') && l2IndicatorsMenu._openTrigger === l2IndicatorsTrigger) {
+      closeAllPopovers(); return;
+    }
+    renderL2IndList(getL2Search(), l2ActiveCat);
+    openNear(l2IndicatorsMenu, l2IndicatorsTrigger.getBoundingClientRect(), 'left', l2IndicatorsTrigger);
+    l2IndicatorSearch.focus();
+  });
+
+  document.getElementById('l2IndicatorsModalClose').addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeAllPopovers();
+  });
+
+  l2IndicatorSearch.addEventListener('input', () => {
+    const q = l2IndicatorSearch.value;
+    l2IndicatorSearchClear.style.display = q ? 'flex' : 'none';
+    renderL2IndList(q, l2ActiveCat);
+  });
+  l2IndicatorSearch.addEventListener('click', (e) => e.stopPropagation());
+  l2IndicatorSearchClear.addEventListener('click', (e) => {
+    e.stopPropagation();
+    l2IndicatorSearch.value = '';
+    l2IndicatorSearchClear.style.display = 'none';
+    renderL2IndList('', l2ActiveCat);
+    l2IndicatorSearch.focus();
+  });
+
+  document.getElementById('l2IndCatTabs').querySelectorAll('.ind-cat').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('l2IndCatTabs').querySelectorAll('.ind-cat').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      l2ActiveCat = btn.dataset.cat;
+      renderL2IndList(getL2Search(), l2ActiveCat);
+    });
+  });
+
+  /* ---------- order type dropdown ---------- */
+  const orderTypeMenu = document.getElementById('orderTypeMenu');
+  function openOrderTypeMenu(anchorRect, trigger) {
+    if (trigger && orderTypeMenu.classList.contains('show') && orderTypeMenu._openTrigger === trigger) {
+      closeAllPopovers();
+      return;
+    }
+    orderTypeMenu.querySelectorAll('.pop-item').forEach(it => {
+      it.classList.toggle('selected', it.dataset.type === order.orderType);
+    });
+    openNear(orderTypeMenu, anchorRect, 'left', trigger);
+  }
+  orderTypeMenu.querySelectorAll('.pop-item').forEach(it => {
+    it.addEventListener('click', () => {
+      order.orderType = it.dataset.type;
+      closeAllPopovers();
+      render();
+    });
+  });
+
+  /* ---------- TP gear menu ---------- */
+  const tpGearMenu = document.getElementById('tpGearMenu');
+  function openTpGearMenu(anchorRect, trigger) {
+    if (trigger && tpGearMenu.classList.contains('show') && tpGearMenu._openTrigger === trigger) {
+      closeAllPopovers();
+      return;
+    }
+    openNear(tpGearMenu, anchorRect, 'right', trigger);
+  }
+  document.getElementById('tpAdd').addEventListener('click', () => {
+    if (!order) return;
+    const dir = order.side === 'buy' ? 1 : -1;
+    const farthest = order.tps.reduce((m, t) => Math.max(m, dir * (t.price - order.entry)), 0);
+    const newPrice = roundTick(order.entry + dir * (farthest + 50 / PX_PER_POINT));
+    const newId = 'tp' + (tpCounter++);
+    order.tps.push({ id: newId, price: newPrice, pct: 25, trailing: false });
+    rebalanceTpAllocations(newId);
+    closeAllPopovers(); render();
+    showToast('Take profit added', 'add_circle');
+  });
+  document.getElementById('tpTrail').addEventListener('click', () => {
+    const tp = order.tps.find(t => t.id === activeGearTpId);
+    if (tp) { tp.trailing = !tp.trailing; }
+    closeAllPopovers(); render();
+  });
+  document.getElementById('tpRemove').addEventListener('click', () => {
+    order.tps = order.tps.filter(t => t.id !== activeGearTpId);
+    closeAllPopovers(); render();
+    showToast('Take profit removed', 'delete');
+  });
+
+  /* ---------- SL gear menu ---------- */
+  const slGearMenu = document.getElementById('slGearMenu');
+  const slBeToggle = document.getElementById('slBeToggle');
+  const slBeSub = document.getElementById('slBeSub');
+  const slTrailBtn = document.getElementById('slTrail');
+  const slTrailSub = document.getElementById('slTrailSub');
+  const slAtrBtn = document.getElementById('slAtr');
+  const slAtrSub = document.getElementById('slAtrSub');
+  /* resolves which TP arms breakeven, using the global default set in Chart Settings > Trade Management */
+  function resolveBreakevenTpId() {
+    if (!order || !order.tps.length) return null;
+    const cfg = getEffectiveBeConfig();
+    if (cfg.trigger === 'tp1') return order.tps[0].id;
+    if (cfg.trigger === 'tp2') return (order.tps[1] || order.tps[order.tps.length - 1]).id;
+    if (cfg.trigger === 'tp3') return (order.tps[2] || order.tps[order.tps.length - 1]).id;
+    if (cfg.trigger === 'customR') {
+      const dir = order.side === 'buy' ? 1 : -1;
+      const riskTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
+      if (riskTotal) {
+        const match = order.tps.find(tp => {
+          const pts = dir * (tp.price - order.entry);
+          return (pts * POINT_VALUE) / riskTotal >= cfg.customR;
+        });
+        if (match) return match.id;
+      }
+      return order.tps[order.tps.length - 1].id;
+    }
+    return order.tps[0].id;
+  }
+  function renderSlGearMenu() {
+    if (!order || !order.sl) return;
+    const noTps = order.tps.length < 2; // breakeven needs at least 2 TPs set
+    const trailActive = !!order.sl.trailing;
+    const atrActive = !!order.sl.atr;
+    if (noTps && !order.sl.beActive) { order.sl.beTpId = null; }
+    const beArmed = !!order.sl.beTpId || order.sl.beActive;
+    const beLocked = noTps && !order.sl.beActive;
+    slBeToggle.classList.toggle('disabled', beLocked);
+    slBeToggle.classList.toggle('selected', beArmed);
+    slBeSub.textContent = order.sl.beActive
+      ? 'Active — SL moved to entry'
+      : noTps ? 'Requires at least 2 take profits'
+        : beArmed ? 'Triggers on TP' + (order.tps.findIndex(t => t.id === order.sl.beTpId) + 1)
+          : 'Move SL to entry once a TP is hit';
+    slTrailBtn.classList.toggle('selected', trailActive);
+    slTrailSub.textContent = 'Trail stop loss as price moves';
+    slAtrBtn.classList.toggle('selected', atrActive);
+    slAtrSub.textContent = 'Use ATR based stop loss';
+    document.getElementById('slBeOverrideTune').classList.toggle('active', !!order.sl.beOverride);
+    document.getElementById('slTrailOverrideTune').classList.toggle('active', !!order.sl.trailOverride);
+    document.getElementById('slAtrOverrideTune').classList.toggle('active', !!order.sl.atrOverride);
+  }
+  slBeToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!order || !order.sl) return;
+    if (slBeToggle.classList.contains('disabled')) return;
+    if (order.sl.beTpId || order.sl.beActive) {
+      order.sl.beTpId = null;
+      order.sl.beActive = false;
+    } else {
+      const resolvedTpId = resolveBreakevenTpId();
+      if (!resolvedTpId) return;
+      order.sl.beTpId = resolvedTpId;
+      order.sl.trailing = false;
+      order.sl.atr = false;
+    }
+    renderSlGearMenu();
+    render();
+  });
+  function openSlGearMenu(anchorRect, trigger) {
+    if (trigger && slGearMenu.classList.contains('show') && slGearMenu._openTrigger === trigger) {
+      closeAllPopovers();
+      return;
+    }
+    renderSlGearMenu();
+    openNear(slGearMenu, anchorRect, 'right', trigger);
+  }
+  slTrailBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (order.sl) {
+      order.sl.trailing = !order.sl.trailing;
+      if (order.sl.trailing) { order.sl.beTpId = null; order.sl.beActive = false; order.sl.atr = false; }
+    }
+    renderSlGearMenu(); render();
+  });
+  slAtrBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (order.sl) {
+      order.sl.atr = !order.sl.atr;
+      if (order.sl.atr) {
+        order.sl.beTpId = null; order.sl.beActive = false; order.sl.trailing = false;
+        const dir = order.side === 'buy' ? 1 : -1;
+        order.sl.price = roundTick(order.entry - dir * atrStopDistance());
+        syncQtyFromRisk();
+      }
+    }
+    renderSlGearMenu(); render();
+  });
+
+  /* ---------- per-SL override panels (override the global Trade Management defaults for this stop loss only) ---------- */
+  function bindSlOverrideAccordion(tuneId, panelId) {
+    const tune = document.getElementById(tuneId);
+    const panel = document.getElementById(panelId);
+    tune.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!order || !order.sl) return;
+      const willOpen = !panel.classList.contains('open');
+      document.querySelectorAll('.sl-override-panel').forEach(p => p.classList.remove('open'));
+      panel.classList.toggle('open', willOpen);
+    });
+  }
+  bindSlOverrideAccordion('slBeOverrideTune', 'slBeOverridePanel');
+  bindSlOverrideAccordion('slTrailOverrideTune', 'slTrailOverridePanel');
+  bindSlOverrideAccordion('slAtrOverrideTune', 'slAtrOverridePanel');
+
+  function bindSlOverrideStepper(prefix, min, max, step, overrideKey, field) {
+    const input = document.getElementById(prefix + 'Value');
+    const dec = document.getElementById(prefix + 'Dec');
+    const inc = document.getElementById(prefix + 'Inc');
+    function clampVal(v) {
+      v = Math.round(v / step) * step;
+      v = Number.isInteger(step) ? Math.round(v) : +v.toFixed(2);
+      return Math.min(max, Math.max(min, v));
+    }
+    function commit() { if (order && order.sl && order.sl[overrideKey]) order.sl[overrideKey][field] = parseFloat(input.value) || 0; }
+    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') - step); commit(); });
+    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') + step); commit(); });
+  }
+
+  /* -- Move to Break Even override -- */
+  const slBeOvTrigger = document.getElementById('slBeOvTrigger');
+  const slBeOvOffsetValue = document.getElementById('slBeOvOffsetValue');
+  const slBeOvOffsetUnit = document.getElementById('slBeOvOffsetUnit');
+  /* every SL gets its own editable settings, seeded from the global Chart Settings default on first view */
+  function ensureBeOverride() {
+    if (!order || !order.sl) return null;
+    if (!order.sl.beOverride) {
+      const base = chartSettings.moveSlToBreakeven;
+      order.sl.beOverride = { trigger: base.trigger, customR: base.customR, offsetValue: base.offsetValue, offsetUnit: base.offsetUnit };
+    }
+    return order.sl.beOverride;
+  }
+  function populateBeOverrideForm() {
+    if (!order || !order.sl) return;
+    const cfg = ensureBeOverride();
+    slBeOvTrigger.value = cfg.trigger;
+    slBeOvOffsetValue.value = cfg.offsetValue;
+    slBeOvOffsetUnit.value = cfg.offsetUnit;
+    refreshAllCsDropdownLabels(document.getElementById('slBeOverridePanel'));
+  }
+  document.getElementById('slBeOverrideTune').addEventListener('click', () => { if (order && order.sl) populateBeOverrideForm(); });
+  [slBeOvTrigger, slBeOvOffsetUnit].forEach(el => el.addEventListener('change', (e) => {
+    e.stopPropagation();
+    const ov = ensureBeOverride();
+    if (ov) {
+      ov.trigger = slBeOvTrigger.value;
+      ov.offsetUnit = slBeOvOffsetUnit.value;
+    }
+  }));
+  bindSlOverrideStepper('slBeOvOffset', 0, 200, 1, 'beOverride', 'offsetValue');
+
+  /* -- Trailing Stop override -- */
+  const slTrailOvMethod = document.getElementById('slTrailOvMethod');
+  const slTrailOvDistanceValue = document.getElementById('slTrailOvDistanceValue');
+  const slTrailOvDistanceUnit = document.getElementById('slTrailOvDistanceUnit');
+  const slTrailOvStart = document.getElementById('slTrailOvStart');
+  const slTrailOvMinStepValue = document.getElementById('slTrailOvMinStepValue');
+  const slTrailOvMinStepUnit = document.getElementById('slTrailOvMinStepUnit');
+  function updateSlTrailOvConditional() {
+    document.getElementById('slTrailOvDistanceWrap').style.display = slTrailOvMethod.value === 'atr' ? 'none' : '';
+  }
+  function ensureTrailOverride() {
+    if (!order || !order.sl) return null;
+    if (!order.sl.trailOverride) {
+      const base = chartSettings.trailingStop;
+      order.sl.trailOverride = {
+        method: base.method, distanceValue: base.distanceValue, distanceUnit: base.distanceUnit,
+        start: base.start, startCustomR: base.startCustomR,
+        minStepValue: base.minStepValue, minStepUnit: base.minStepUnit
+      };
+    }
+    return order.sl.trailOverride;
+  }
+  function populateTrailOverrideForm() {
+    if (!order || !order.sl) return;
+    const cfg = ensureTrailOverride();
+    slTrailOvMethod.value = cfg.method;
+    slTrailOvDistanceValue.value = cfg.distanceValue;
+    slTrailOvDistanceUnit.value = cfg.distanceUnit;
+    slTrailOvStart.value = cfg.start;
+    slTrailOvMinStepValue.value = cfg.minStepValue;
+    slTrailOvMinStepUnit.value = cfg.minStepUnit;
+    updateSlTrailOvConditional();
+    refreshAllCsDropdownLabels(document.getElementById('slTrailOverridePanel'));
+  }
+  document.getElementById('slTrailOverrideTune').addEventListener('click', () => { if (order && order.sl) populateTrailOverrideForm(); });
+  [slTrailOvMethod, slTrailOvDistanceUnit, slTrailOvStart, slTrailOvMinStepUnit].forEach(el => el.addEventListener('change', (e) => {
+    e.stopPropagation();
+    if (el === slTrailOvMethod) updateSlTrailOvConditional();
+    const ov = ensureTrailOverride();
+    if (ov) {
+      ov.method = slTrailOvMethod.value;
+      ov.distanceUnit = slTrailOvDistanceUnit.value;
+      ov.start = slTrailOvStart.value;
+      ov.minStepUnit = slTrailOvMinStepUnit.value;
+    }
+  }));
+  bindSlOverrideStepper('slTrailOvDistance', 1, 2000, 5, 'trailOverride', 'distanceValue');
+  bindSlOverrideStepper('slTrailOvMinStep', 1, 200, 1, 'trailOverride', 'minStepValue');
+
+  /* -- ATR Stop override -- */
+  const slAtrOvLength = document.getElementById('slAtrOvLength');
+  const slAtrOvMultiplier = document.getElementById('slAtrOvMultiplier');
+  const slAtrOvUpdateFreq = document.getElementById('slAtrOvUpdateFreq');
+  function ensureAtrOverride() {
+    if (!order || !order.sl) return null;
+    if (!order.sl.atrOverride) {
+      const base = chartSettings.atrStop;
+      order.sl.atrOverride = { length: base.length, multiplier: base.multiplier, timeframe: base.timeframe, updateFreq: base.updateFreq, dynamic: true };
+    }
+    return order.sl.atrOverride;
+  }
+  function populateAtrOverrideForm() {
+    if (!order || !order.sl) return;
+    const cfg = ensureAtrOverride();
+    slAtrOvLength.value = cfg.length;
+    slAtrOvMultiplier.value = cfg.multiplier;
+    slAtrOvUpdateFreq.value = cfg.updateFreq;
+    refreshAllCsDropdownLabels(document.getElementById('slAtrOverridePanel'));
+  }
+  document.getElementById('slAtrOverrideTune').addEventListener('click', () => { if (order && order.sl) populateAtrOverrideForm(); });
+  slAtrOvUpdateFreq.addEventListener('change', (e) => {
+    e.stopPropagation();
+    const ov = ensureAtrOverride();
+    if (ov) ov.updateFreq = slAtrOvUpdateFreq.value;
+  });
+  [slAtrOvLength, slAtrOvMultiplier].forEach(el => el.addEventListener('change', (e) => {
+    e.stopPropagation();
+    const ov = ensureAtrOverride();
+    if (ov) {
+      ov.length = parseInt(slAtrOvLength.value) || 14;
+      ov.multiplier = parseFloat(slAtrOvMultiplier.value) || 2;
+    }
+  }));
+
+  document.getElementById('slRemove').addEventListener('click', () => {
+    order.sl = null;
+    closeAllPopovers(); render();
+    showToast('Stop loss removed', 'delete');
+  });
+
+  /* ---------- size & mode dropdown ---------- */
+  const sizeMenu = document.getElementById('sizeMenu');
+  const smTabs = document.getElementById('smTabs');
+  function openSizeMenu(anchorRect, trigger) {
+    if (trigger && sizeMenu.classList.contains('show') && sizeMenu._openTrigger === trigger) {
+      closeAllPopovers();
+      return;
+    }
+    smTabs.querySelectorAll('.sm-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === order.sizeMode));
+    sizeMenu.querySelectorAll('.sm-body').forEach(b => b.classList.toggle('active', b.dataset.mode === order.sizeMode));
+    refreshSizeBodies();
+    openNear(sizeMenu, anchorRect, 'left', trigger);
+  }
+  smTabs.querySelectorAll('.sm-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      order.sizeMode = tab.dataset.mode;
+      smTabs.querySelectorAll('.sm-tab').forEach(t => t.classList.toggle('active', t === tab));
+      sizeMenu.querySelectorAll('.sm-body').forEach(b => b.classList.toggle('active', b.dataset.mode === tab.dataset.mode));
+      if (tab.dataset.mode === 'risk') syncQtyFromRisk();
+      refreshSizeBodies();
+      render();
+    });
+  });
+
+  // contracts mode
+  const smQtyInput = document.getElementById('smQtyInput');
+  document.getElementById('smQtyDec').addEventListener('click', () => { order.qty = Math.max(1, order.qty - 1); smQtyInput.value = order.qty; render(); });
+  document.getElementById('smQtyInc').addEventListener('click', () => { order.qty = order.qty + 1; smQtyInput.value = order.qty; render(); });
+  document.getElementById('smQtyQuick').querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => { order.qty = parseInt(b.textContent); smQtyInput.value = order.qty; render(); });
+  });
+
+  // dollar mode
+  const smDolInput = document.getElementById('smDolInput');
+  function setDollar(v) { order.sizeValues.dollar = Math.max(500, v); refreshSizeBodies(); render(); }
+  document.getElementById('smDolDec').addEventListener('click', () => setDollar(order.sizeValues.dollar - 500));
+  document.getElementById('smDolInc').addEventListener('click', () => setDollar(order.sizeValues.dollar + 500));
+
+  // percent mode
+  const smPctSlider = document.getElementById('smPctSlider');
+  smPctSlider.addEventListener('input', () => {
+    order.sizeValues.percent = parseInt(smPctSlider.value);
+    refreshSizeBodies(); render();
+  });
+
+  function refreshSizeBodies() {
+    if (!order) return;
+    smQtyInput.value = order.qty;
+    // dollar
+    smDolInput.value = '$' + fmt(order.sizeValues.dollar, 0);
+    const dolQty = +(order.sizeValues.dollar / MARGIN_PER_CONTRACT).toFixed(2);
+    const dolMargin = +(dolQty * MARGIN_PER_CONTRACT).toFixed(2);
+    document.getElementById('smDolQty').textContent = fmt(dolQty) + ' ETH';
+    document.getElementById('smDolMargin').textContent = fmtMoney(dolMargin);
+    document.getElementById('smDolBp').textContent = fmtMoney(BUYING_POWER - dolMargin);
+
+    // percent
+    document.getElementById('smPctDisplay').textContent = order.sizeValues.percent + '%';
+    smPctSlider.value = order.sizeValues.percent;
+    const posVal = ACCOUNT_BALANCE * order.sizeValues.percent / 100;
+    const pctQty = +(posVal / MARGIN_PER_CONTRACT).toFixed(2);
+    const pctMargin = +(pctQty * MARGIN_PER_CONTRACT).toFixed(2);
+    document.getElementById('smPctBal').textContent = fmtMoney(ACCOUNT_BALANCE);
+    document.getElementById('smPctPos').textContent = fmtMoney(posVal);
+    document.getElementById('smPctQty').textContent = fmt(pctQty) + ' ETH';
+    document.getElementById('smPctMargin').textContent = fmtMoney(pctMargin);
+
+    // risk — rebuilt each time since it has 3 distinct states
+    const body = document.getElementById('smRiskBody');
+    if (!order.sl) {
+      body.innerHTML =
+        '<div class="sm-state-banner warn"><span class="material-symbols-outlined">hourglass_empty</span>Waiting for Stop Loss</div>' +
+        '<div class="sm-empty"><span class="material-symbols-outlined">south</span><br>Drag the stop loss line on the chart<br>to calculate position size.</div>';
+    } else {
+      const stopDist = Math.abs(order.entry - order.sl.price);
+      const riskPerContract = stopDist * POINT_VALUE;
+      body.innerHTML =
+        '<label class="sm-amount-lbl">Risk Amount (USD)</label>' +
+        '<div class="sm-stepper"><button id="smRiskDec">−</button><input type="text" id="smRiskInput" readonly value="$' + fmt(order.sizeValues.risk, 0) + '"><button id="smRiskInc">+</button></div>' +
+        '<div class="sm-divider"></div>' +
+        '<div class="sm-stat-row"><span class="l">Stop Distance</span><span class="v">' + fmt(stopDist, 2) + ' pts</span></div>' +
+        '<div class="sm-stat-row"><span class="l">Risk per Contract</span><span class="v">' + fmtMoney(riskPerContract) + '</span></div>' +
+        '<div id="smRiskCalcSlot"></div>';
+      const calcQty = riskPerContract > 0 ? Math.floor(order.sizeValues.risk / riskPerContract) : 0;
+      const marginReq = calcQty * MARGIN_PER_CONTRACT;
+      const sufficient = marginReq <= BUYING_POWER;
+      const slot = body.querySelector('#smRiskCalcSlot');
+      if (sufficient) {
+        slot.innerHTML =
+          '<div class="sm-stat-row"><span class="l">Calculated Quantity</span><span class="v">' + calcQty + ' ETH</span></div>' +
+          '<div class="sm-stat-row"><span class="l">Margin Required</span><span class="v">' + fmtMoney(marginReq) + '</span></div>' +
+          '<div class="sm-stat-row"><span class="l">Buying Power Available</span><span class="v up">' + fmtMoney(BUYING_POWER - marginReq) + '</span></div>' +
+          '<div class="sm-divider"></div>' +
+          '<div class="sm-state-banner ok"><span class="material-symbols-outlined">check_circle</span>Sufficient Buying Power</div>' +
+          '<div class="sm-note">Position size auto-adjusts when the stop loss is moved.</div>';
+      } else {
+        const maxQty = Math.floor(BUYING_POWER / MARGIN_PER_CONTRACT);
+        const actualRisk = maxQty * riskPerContract;
+        slot.innerHTML =
+          '<div class="sm-stat-row"><span class="l">Calculated Quantity</span><span class="v">' + calcQty + ' ETH</span></div>' +
+          '<div class="sm-stat-row"><span class="l">Max Available Quantity</span><span class="v">' + maxQty + ' ETH</span></div>' +
+          '<div class="sm-stat-row"><span class="l">Actual Risk</span><span class="v">' + fmtMoney(actualRisk) + '</span></div>' +
+          '<div class="sm-divider"></div>' +
+          '<div class="sm-state-banner bad"><span class="material-symbols-outlined">error</span>Insufficient Buying Power</div>' +
+          '<div class="sm-options">' +
+          '<span class="sm-options-lbl">Options</span>' +
+          '<button class="sm-opt-btn primary" id="smUseMax">Use Maximum Available (' + maxQty + ' ETH)</button>' +
+          '<button class="sm-opt-btn ghost" id="smReduceRisk">Reduce Risk Amount</button>' +
+          '</div>';
+      }
+      document.getElementById('smRiskDec').addEventListener('click', (e) => { e.stopPropagation(); order.sizeValues.risk = Math.max(250, order.sizeValues.risk - 250); syncQtyFromRisk(); refreshSizeBodies(); render(); });
+      document.getElementById('smRiskInc').addEventListener('click', (e) => { e.stopPropagation(); order.sizeValues.risk += 250; syncQtyFromRisk(); refreshSizeBodies(); render(); });
+      const useMax = document.getElementById('smUseMax');
+      if (useMax) useMax.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const mq = Math.floor(BUYING_POWER / MARGIN_PER_CONTRACT);
+        order.sizeValues.risk = Math.round(mq * riskPerContract);
+        syncQtyFromRisk(); refreshSizeBodies(); render();
+        showToast('Risk set to maximum available size', 'check_circle');
+      });
+      const reduceRisk = document.getElementById('smReduceRisk');
+      if (reduceRisk) reduceRisk.addEventListener('click', (e) => {
+        e.stopPropagation();
+        order.sizeValues.risk = Math.max(250, Math.round(order.sizeValues.risk / 2 / 250) * 250);
+        syncQtyFromRisk(); refreshSizeBodies(); render();
+      });
+    }
+  }
+
+  /* ---------- edit exit amount modal ---------- */
+  const editBackdrop = document.getElementById('editExitBackdrop');
+  const exitModeGroup = document.getElementById('exitModeGroup');
+  const exitPctSlider = document.getElementById('exitPctSlider');
+  const exitPctDisplay = document.getElementById('exitPctDisplay');
+  const exitBodies = editBackdrop.querySelectorAll('.sm-body');
+  const exitQtyInput = document.getElementById('exitQtyInput');
+  const exitQtyQuick = document.getElementById('exitQtyQuick');
+  const exitDolInput = document.getElementById('exitDolInput');
+  const exitDolQuick = document.getElementById('exitDolQuick');
+
+  function exitMarkPrice() {
+    const el = document.getElementById('hdrLast');
+    const v = el ? parseFloat(el.textContent.replace(/,/g, '')) : NaN;
+    return isNaN(v) ? BASE_PRICE : v;
+  }
+  function exitPositionValue() { return order.qty * exitMarkPrice(); }
+  function exitPctToQty(pct) { return Math.round(order.qty * clamp(pct, 0, 100) / 100); }
+  function exitQtyToPct(qty) { return order.qty > 0 ? clamp(Math.round(qty / order.qty * 100), 0, 100) : 0; }
+  function exitPctToDollar(pct) { return Math.round(exitPositionValue() * clamp(pct, 0, 100) / 100); }
+  function exitDollarToPct(dollar) {
+    const pv = exitPositionValue();
+    return pv > 0 ? clamp(Math.round(dollar / pv * 100), 0, 100) : 0;
+  }
+
+  function buildExitQuickButtons(container, mode) {
+    container.innerHTML = '';
+    [25, 55, 75, 100].forEach(p => {
+      const btn = document.createElement('button');
+      btn.dataset.pct = p;
+      btn.textContent = mode === 'contracts' ? exitPctToQty(p) + ' ETH' : '$' + exitPctToDollar(p).toLocaleString();
+      btn.addEventListener('click', () => {
+        exitModal.pct = p;
+        syncExitModeInputs();
+        refreshExitSummary();
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  function syncExitModeInputs() {
+    if (!exitModal) return;
+    exitPctSlider.value = exitModal.pct;
+    exitPctDisplay.textContent = exitModal.pct + '%';
+    exitQtyInput.value = exitPctToQty(exitModal.pct);
+    exitDolInput.value = '$' + exitPctToDollar(exitModal.pct).toLocaleString();
+  }
+
+  function setExitMode(mode) {
+    exitModal.mode = mode;
+    exitModeGroup.querySelectorAll('.modal-radio-row').forEach(r => {
+      r.classList.toggle('checked', r.dataset.exitmode === mode);
+      r.querySelector('.sm-radio').classList.toggle('checked', r.dataset.exitmode === mode);
+    });
+    exitBodies.forEach(b => b.classList.toggle('active', b.dataset.exitbody === mode));
+    buildExitQuickButtons(exitQtyQuick, 'contracts');
+    buildExitQuickButtons(exitDolQuick, 'dollar');
+    syncExitModeInputs();
+  }
+
+  function openEditExitModal(tpId, anchorRect, trigger) {
+    const tp = order.tps.find(t => t.id === tpId);
+    if (!tp) return;
+    const idx = order.tps.indexOf(tp);
+    exitModal = { tpId, mode: 'percent', pct: tp.pct };
+    document.getElementById('exitModalTpName').textContent = 'TP' + (idx + 1);
+    setExitMode('percent');
+    refreshExitSummary();
+    if (anchorRect) openNear(editBackdrop, anchorRect, 'right', trigger);
+    else editBackdrop.classList.add('show');
+  }
+  function closeEditExitModal() { closeAllPopovers(); exitModal = null; }
+
+  function refreshExitSummary() {
+    if (!exitModal) return;
+    const pct = clamp(exitModal.pct, 0, 100);
+    const contracts = exitPctToQty(pct);
+    const remaining = order.qty - contracts;
+    const totalOther = order.tps.filter(t => t.id !== exitModal.tpId).reduce((s, t) => s + t.pct, 0);
+    const total = totalOther + pct;
+    document.getElementById('exitCurrent').textContent = pct + '% (' + contracts + ' ETH)';
+    document.getElementById('exitThis').textContent = contracts + ' ETH';
+    document.getElementById('exitRemaining').textContent = remaining + ' ETH (' + (100 - pct) + '%)';
+    const totalEl = document.getElementById('exitTotal');
+    if (total === 100) {
+      totalEl.innerHTML = total + '% <span class="material-symbols-outlined">check_circle</span>';
+      totalEl.classList.remove('warn');
+    } else {
+      totalEl.innerHTML = total + '% <span class="material-symbols-outlined">warning</span>';
+      totalEl.classList.add('warn');
+    }
+  }
+  exitModeGroup.querySelectorAll('.modal-radio-row').forEach(row => {
+    row.addEventListener('click', () => setExitMode(row.dataset.exitmode));
+  });
+  exitPctSlider.addEventListener('input', () => {
+    exitModal.pct = parseInt(exitPctSlider.value);
+    exitPctDisplay.textContent = exitModal.pct + '%';
+    exitQtyInput.value = exitPctToQty(exitModal.pct);
+    exitDolInput.value = '$' + exitPctToDollar(exitModal.pct).toLocaleString();
+    refreshExitSummary();
+  });
+  document.getElementById('exitQtyDec').addEventListener('click', () => {
+    exitModal.pct = exitQtyToPct(clamp(exitPctToQty(exitModal.pct) - 1, 0, order.qty));
+    syncExitModeInputs(); refreshExitSummary();
+  });
+  document.getElementById('exitQtyInc').addEventListener('click', () => {
+    exitModal.pct = exitQtyToPct(clamp(exitPctToQty(exitModal.pct) + 1, 0, order.qty));
+    syncExitModeInputs(); refreshExitSummary();
+  });
+  const exitDolStep = 50;
+  document.getElementById('exitDolDec').addEventListener('click', () => {
+    const dollar = Math.max(0, exitPctToDollar(exitModal.pct) - exitDolStep);
+    exitModal.pct = exitDollarToPct(dollar);
+    syncExitModeInputs(); refreshExitSummary();
+  });
+  document.getElementById('exitDolInc').addEventListener('click', () => {
+    const dollar = Math.min(exitPositionValue(), exitPctToDollar(exitModal.pct) + exitDolStep);
+    exitModal.pct = exitDollarToPct(dollar);
+    syncExitModeInputs(); refreshExitSummary();
+  });
+  document.getElementById('exitModalClose').addEventListener('click', closeEditExitModal);
+  document.getElementById('exitCancel').addEventListener('click', closeEditExitModal);
+  document.getElementById('exitSave').addEventListener('click', () => {
+    const tp = order.tps.find(t => t.id === exitModal.tpId);
+    if (tp) { tp.pct = clamp(exitModal.pct, 0, 100); }
+    closeEditExitModal();
+    render();
+    showToast('Exit amount updated', 'check_circle');
+  });
+  renderOpenOrders();
+  renderOrderHistory();
+  renderAlerts();
+
+})();

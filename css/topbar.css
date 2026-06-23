@@ -1,0 +1,175 @@
+/* ====== Topbar ====== */
+.topbar {
+  height: 58px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: var(--ink-900);
+  border-bottom: 1px solid var(--line-1);
+  gap: 24px;
+}
+
+.tb-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tb-left::-webkit-scrollbar {
+  display: none;
+}
+
+.tb-logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tb-logo img {
+  height: 22px;
+  width: auto;
+  display: block;
+}
+
+.tb-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--line-2);
+  flex-shrink: 0;
+}
+
+.symbol-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.symbol-select {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 6px 8px;
+  margin: -6px -8px;
+  border-radius: 6px;
+  transition: background .12s ease;
+}
+
+.symbol-select:hover {
+  background: var(--ink-800);
+}
+
+.symbol-select .sym {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: .02em;
+}
+
+.tb-stats {
+  display: none;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 60px;
+}
+
+.stat .lbl {
+  font-size: 9.5px;
+  color: var(--paper-500);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.stat .val {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.stat .val.hero {
+  font-family: var(--sans);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+
+.stat .chg {
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.tb-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ====== Scrollable containers: keep scrolling, hide the scrollbar ====== */
+.left-panel,
+.right-panel,
+.bp-table-wrap {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.left-panel::-webkit-scrollbar,
+.right-panel::-webkit-scrollbar,
+.bp-table-wrap::-webkit-scrollbar {
+  display: none;
+}
+
+/* ====== Main grid ====== */
+.main-grid {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.resize-handle {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 5;
+  background: var(--line-1);
+}
+
+.resize-handle.resize-h {
+  width: 1px;
+  cursor: col-resize;
+}
+
+.resize-handle.resize-h::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  right: -3px;
+}
+
+.resize-handle.resize-v {
+  height: 1px;
+  cursor: row-resize;
+}
+
+.resize-handle.resize-v::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -3px;
+  bottom: -3px;
+}
+
+.resize-handle:hover,
+.resize-handle.dragging {
+  background: var(--accent);
+}
+
