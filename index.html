@@ -1620,7 +1620,7 @@
     .label-sm {
       font-size: 9.5px;
       color: var(--paper-500);
-      letter-spacing: .08em;
+      letter-spacing: .06em;
       text-transform: uppercase;
       margin-bottom: 6px;
       display: block;
@@ -4199,7 +4199,7 @@
       padding: 10px 0;
       border-radius: 9px;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
       border: none;
       cursor: pointer;
     }
@@ -4304,8 +4304,6 @@
             style="font-size:15px;">expand_more</span></button>
         <button class="ct-action-btn" id="replayToggle"><span class="material-symbols-outlined"
             style="font-size:15px;">fast_rewind</span>Replay</button>
-        <button class="ct-action-btn" id="aiAssistTrigger"><span class="material-symbols-outlined"
-            style="font-size:15px;">auto_awesome</span>AI Assistance</button>
         <button class="ct-action-btn" id="marketScannerTrigger"><span class="material-symbols-outlined"
             style="font-size:15px;">radar</span>Market Scanner</button>
         <button class="ct-action-btn" id="newsToggle"><span class="material-symbols-outlined"
@@ -4615,50 +4613,6 @@
               <canvas id="priceChartCanvas"></canvas>
               <div id="orderLineLayer"></div>
               <div id="newsMarkerLayer"></div>
-
-              <div class="chart-popup" id="aiAssistPopup">
-                <div class="chart-popup-head">
-                  <span class="card-title">AI Assistance</span>
-                  <button class="chart-popup-close" id="aiAssistClose"><span
-                      class="material-symbols-outlined">close</span></button>
-                </div>
-                <div class="chart-popup-body">
-                  <div class="chart-popup-top">
-                    <div class="chart-popup-gauge-wrap">
-                      <svg class="chart-popup-gauge" viewBox="0 0 72 72">
-                        <circle class="chart-popup-gauge-track" cx="36" cy="36" r="30" />
-                        <circle class="chart-popup-gauge-fill" cx="36" cy="36" r="30" stroke-dasharray="188.5"
-                          stroke-dashoffset="41.5" />
-                      </svg>
-                      <div class="chart-popup-gauge-center"><span class="chart-popup-gauge-pct">78%</span></div>
-                    </div>
-                    <div class="chart-popup-top-info">
-                      <span class="chart-popup-bias-chip bullish"><span
-                          class="material-symbols-outlined">trending_up</span>Bullish</span>
-                    </div>
-                  </div>
-                  <p class="chart-popup-summary">ETH is showing a constructive bias into the close, with structure and
-                    order
-                    flow
-                    aligned to the upside.</p>
-                  <ul class="chart-popup-reason-list">
-                    <li><span class="material-symbols-outlined">check_circle</span>Holding above key support</li>
-                    <li><span class="material-symbols-outlined">check_circle</span>Bullish order flow intact</li>
-                    <li><span class="material-symbols-outlined">check_circle</span>Liquidity above 5,325 acting as
-                      magnet
-                    </li>
-                  </ul>
-                  <div class="chart-popup-foot-row">
-                    <div class="chart-popup-foot-stat"><span class="l">Invalidation</span><span class="v down">Below
-                        5,288</span>
-                    </div>
-                    <div class="chart-popup-foot-stat"><span class="l">Target</span><span
-                        class="v up">5,318–5,325</span></div>
-                    <div class="chart-popup-foot-stat"><span class="l">R:R</span><span class="v">1:2.4</span></div>
-                  </div>
-                  <p class="chart-popup-disclaimer">AI-generated read of price action. Not investment advice.</p>
-                </div>
-              </div>
 
               <div class="chart-popup scanner-popup" id="marketScannerPopup">
                 <div class="chart-popup-head">
@@ -4979,9 +4933,8 @@
             </div>
 
             <div class="qt-tab-panel" data-tab-panel="market" id="qtTabPanel-market">
-              <label class="label-sm">Market Order</label>
-              <div class="text-input-qt info"><span class="material-symbols-outlined">bolt</span><span>Best available
-                  price</span></div>
+              <label class="label-sm" style="margin-top:12px;">Price</label>
+              <div class="text-input-qt info qt-disabled-row"><span>Market Price</span></div>
               <p class="qt-help">Fills immediately at the best available price.</p>
             </div>
 
@@ -4991,8 +4944,10 @@
                 <input type="text" id="qtStopMarketTrigger" placeholder="Stop price" value="4,505.75">
                 <span class="qty-unit">USD</span>
                 <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtStopMarketTrigger"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                  <button type="button" class="ps-down" data-target="qtStopMarketTrigger"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                  <button type="button" class="ps-up" data-target="qtStopMarketTrigger"><span
+                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtStopMarketTrigger"><span
+                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
               <label class="label-sm" style="margin-top:12px;">Price</label>
@@ -5018,8 +4973,10 @@
                 <input type="text" id="qtStopLimitTrigger" placeholder="Stop price" value="4,505.75">
                 <span class="qty-unit">USD</span>
                 <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtStopLimitTrigger"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                  <button type="button" class="ps-down" data-target="qtStopLimitTrigger"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                  <button type="button" class="ps-up" data-target="qtStopLimitTrigger"><span
+                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtStopLimitTrigger"><span
+                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
               <label class="label-sm" style="margin-top:12px;">Price</label>
@@ -5027,8 +4984,10 @@
                 <input type="text" id="qtStopLimitPrice" placeholder="Limit price" value="4,500.25">
                 <span class="qty-unit">USD</span>
                 <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtStopLimitPrice"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                  <button type="button" class="ps-down" data-target="qtStopLimitPrice"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                  <button type="button" class="ps-up" data-target="qtStopLimitPrice"><span
+                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtStopLimitPrice"><span
+                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
               <p class="qt-help">Triggers a limit order at the limit price once the stop price is reached.</p>
@@ -5051,8 +5010,10 @@
                 <div class="price-stepper">
                   <input type="text" id="qtTrailLimit" placeholder="Limit price" value="4,500.25">
                   <div class="price-stepper-arrows">
-                    <button type="button" class="ps-up" data-target="qtTrailLimit"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                    <button type="button" class="ps-down" data-target="qtTrailLimit"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                    <button type="button" class="ps-up" data-target="qtTrailLimit"><span
+                        class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                    <button type="button" class="ps-down" data-target="qtTrailLimit"><span
+                        class="material-symbols-outlined">keyboard_arrow_down</span></button>
                   </div>
                 </div>
                 <button type="button" class="qt-side-btn" id="qtTrailMarketToggle">Market</button>
@@ -5067,8 +5028,10 @@
                 <input type="text" id="qtTrailActivationPrice" placeholder="Activation price" value="4,510.00">
                 <span class="qty-unit">USD</span>
                 <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtTrailActivationPrice"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                  <button type="button" class="ps-down" data-target="qtTrailActivationPrice"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                  <button type="button" class="ps-up" data-target="qtTrailActivationPrice"><span
+                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtTrailActivationPrice"><span
+                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
             </div>
@@ -5079,8 +5042,10 @@
                 <input type="text" id="qtMitTrigger" placeholder="Trigger price" value="4,498.50">
                 <span class="qty-unit">USD</span>
                 <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtMitTrigger"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                  <button type="button" class="ps-down" data-target="qtMitTrigger"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                  <button type="button" class="ps-up" data-target="qtMitTrigger"><span
+                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="ps-down" data-target="qtMitTrigger"><span
+                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
               <label class="label-sm" style="margin-top:12px;">Price</label>
@@ -5116,8 +5081,10 @@
                     <input type="text" value="1" class="qty-input" id="qtAmountInput">
                     <span class="qty-unit" id="qtQtyUnit">ETH</span>
                     <div class="price-stepper-arrows">
-                      <button type="button" class="qty-inc"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                      <button type="button" class="qty-dec"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                      <button type="button" class="qty-inc"><span
+                          class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                      <button type="button" class="qty-dec"><span
+                          class="material-symbols-outlined">keyboard_arrow_down</span></button>
                     </div>
                   </div>
                 </div>
@@ -5210,7 +5177,6 @@
         <div class="card ai-ask-card">
           <div class="card-head">
             <span class="card-title">Ask AI</span>
-            <span class="material-symbols-outlined" style="font-size:15px;color:var(--accent);">auto_awesome</span>
           </div>
           <div class="ai-ask-row">
             <div class="ai-ask-field">
@@ -5965,26 +5931,6 @@
       }, true);
       document.addEventListener('mouseup', () => { dragging = false; });
     }
-
-    /* ---------- AI Assistance popup ---------- */
-    const aiAssistTrigger = document.getElementById('aiAssistTrigger');
-    const aiAssistPopup = document.getElementById('aiAssistPopup');
-    const aiAssistClose = document.getElementById('aiAssistClose');
-    function closeAiAssistPopup() {
-      aiAssistPopup.classList.remove('show');
-      aiAssistTrigger.classList.remove('active');
-    }
-    if (aiAssistTrigger) aiAssistTrigger.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const willShow = !aiAssistPopup.classList.contains('show');
-      aiAssistPopup.classList.toggle('show', willShow);
-      aiAssistTrigger.classList.toggle('active', willShow);
-    });
-    if (aiAssistClose) aiAssistClose.addEventListener('click', (e) => {
-      e.stopPropagation();
-      closeAiAssistPopup();
-    });
-    makeDraggablePopup(aiAssistPopup);
 
     /* ---------- Market Scanner popup ---------- */
     const marketScannerTrigger = document.getElementById('marketScannerTrigger');
