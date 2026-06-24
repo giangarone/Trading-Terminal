@@ -83,6 +83,17 @@
   let crosshair = null; // {x,y} in CSS px relative to chart, within plot bounds, or null when not hovering
   let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | 'tp-add' | 'sl-add' | null — which order-line handle is currently hovered
   let isDraggingOrderLine = false; // true for the duration of any order-line drag — blocks the price-tick auto-render from wiping live drag visuals
+  let entryGroupHovered = false; // tracks pointer-over state across re-renders so the hover-revealed entry bar doesn't flicker when a price tick rebuilds the order-line DOM mid-hover
+  let isHoveringOrderLine = false; // true while the pointer is over any order-line control (entry bar, TP/SL rows, etc.) —
+                                    // blocks the price-tick auto-render so hovered buttons/tooltips don't blink as their
+                                    // DOM nodes get destroyed and recreated underneath the still pointer every tick
+  layer.addEventListener('mouseover', (e) => {
+    if (e.target.closest('.ol-entry-bar, .ol-hover-zone, .ol-side-row')) isHoveringOrderLine = true;
+  });
+  layer.addEventListener('mouseout', (e) => {
+    const stillInside = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.ol-entry-bar, .ol-hover-zone, .ol-side-row');
+    if (!stillInside) isHoveringOrderLine = false;
+  });
   function priceToY(price, h) { const ih = h - AXIS_BOTTOM_H; return ih / 2 - (price - BASE_PRICE - panY) * PX_PER_POINT; }
   function yToPrice(y, h) { const ih = h - AXIS_BOTTOM_H; return BASE_PRICE + panY - (y - ih / 2) / PX_PER_POINT; }
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
@@ -1334,7 +1345,7 @@
       applyTrailingStop(last);
       applyAtrDynamicStop(last, isNewBarTick);
       applyTrailingTp(last);
-      if (order && order.filled && !isDraggingOrderLine) render();
+      if (order && order.filled && !isDraggingOrderLine && !isHoveringOrderLine) render();
 
       let alertsChanged = false;
       alerts.forEach(a => {
@@ -1534,16 +1545,20 @@
     {
       const y = clamp(priceToY(order.entry, H), 10, H - 10);
       let entryHost = layer;
+      let entryGroup = null;
       if (!fullEdit) {
         const group = document.createElement('div');
-        group.className = 'ol-position-group';
+        group.className = 'ol-position-group' + (entryGroupHovered ? ' force-reveal' : '');
         layer.appendChild(group);
         const zone = document.createElement('div');
         zone.className = 'ol-hover-zone';
         zone.style.top = (y - 14) + 'px';
         zone.style.height = '28px';
+        zone.addEventListener('mouseenter', () => { entryGroupHovered = true; group.classList.add('force-reveal'); });
+        zone.addEventListener('mouseleave', () => { entryGroupHovered = false; group.classList.remove('force-reveal'); });
         group.appendChild(zone);
         entryHost = group;
+        entryGroup = group;
       }
 
       const line = document.createElement('div');
@@ -1559,6 +1574,7 @@
       const sideLabel = side === 'buy' ? 'BUY' : 'SELL';
       const confirmBtn = '<span class="ol-entry-confirm" id="entryConfirmBtn" title="Place Order"><span class="material-symbols-outlined">check</span></span>';
       const doneBtn    = '<span class="ol-entry-confirm" id="doneEditingBtn"   title="Done Editing"><span class="material-symbols-outlined">check</span></span>';
+      const editBtn    = '<span class="ol-entry-confirm" id="entryEditTrigger" title="Edit Trade"><span class="material-symbols-outlined">edit</span></span>';
       const tpAddHandleHtml = '<span class="ol-chip ghost tp-add" id="tpAddHandle">TP</span>';
       const slAddHandleHtml = !order.sl ? '<span class="ol-chip ghost sl-add" id="slAddHandle">SL</span>' : '';
 
@@ -1588,11 +1604,14 @@
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
       } else {
         bar.innerHTML =
-          '<span class="ol-chip entry locked ' + side + '" id="entryPriceHandle">' + sideLabel + '</span>' +
-          '<span class="ol-gear" id="entryEditTrigger" title="Edit Trade"><span class="material-symbols-outlined">tune</span></span>' +
+          '<span class="ol-chip entry locked ' + side + '" id="entryPriceHandle">' + sideLabel + editBtn + '</span>' +
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
       }
       entryHost.appendChild(bar);
+      if (entryGroup) {
+        bar.addEventListener('mouseenter', () => { entryGroupHovered = true; entryGroup.classList.add('force-reveal'); });
+        bar.addEventListener('mouseleave', () => { entryGroupHovered = false; entryGroup.classList.remove('force-reveal'); });
+      }
 
       const tpAddHandle = bar.querySelector('#tpAddHandle');
       if (tpAddHandle) { makeAddHandleDraggable(tpAddHandle, 'tp'); bindHandleHover(tpAddHandle, 'tp-add'); }
@@ -1655,7 +1674,7 @@
   const settingsTrigger = document.getElementById('settingsTrigger');
   settingsTrigger.addEventListener('click', (e) => {
     e.stopPropagation();
-    openChartSettings('trademgmt');
+    openChartSettings('general');
   });
 
   /* ---------- topbar account selector ---------- */
@@ -1817,8 +1836,7 @@
   function setCsTab(tab) {
     document.querySelectorAll('.cs-nav-item').forEach(b => b.classList.toggle('active', b.dataset.csTab === tab));
     document.querySelectorAll('.cs-pane').forEach(p => p.classList.toggle('active', p.dataset.csPane === tab));
-    const activePane = document.querySelector('.cs-pane.active');
-    if (activePane) activePane.scrollIntoView({ block: 'nearest' });
+    document.querySelector('.cs-content').scrollTop = 0;
   }
   document.querySelectorAll('.cs-nav-item').forEach(btn => {
     btn.addEventListener('click', () => setCsTab(btn.dataset.csTab));
@@ -1878,6 +1896,56 @@
       e.preventDefault();
       row.querySelector('.chk-box').classList.toggle('checked');
     });
+  });
+
+  /* ---------- General / Appearance settings panes (visual only, no persistence) ---------- */
+  document.querySelectorAll('#chartSettingsBackdrop .cs-switch-row').forEach(row => {
+    row.addEventListener('click', () => row.classList.toggle('active'));
+  });
+  document.querySelectorAll('#chartSettingsBackdrop .cs-radio-group').forEach(group => {
+    group.querySelectorAll('.cs-radio-row').forEach(row => {
+      row.addEventListener('click', () => {
+        group.querySelectorAll('.cs-radio-row').forEach(r => r.classList.remove('active'));
+        row.classList.add('active');
+      });
+    });
+  });
+  function bindSimpleSegmented(groupId) {
+    const group = document.getElementById(groupId);
+    if (!group) return;
+    group.querySelectorAll('.cs-seg-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        group.querySelectorAll('.cs-seg-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+      });
+    });
+  }
+  bindSimpleSegmented('csTimeFormatGroup');
+  bindSimpleSegmented('csScalePositionGroup');
+
+  function bindColorSwatchMenu(triggerId, menuId, swatchId) {
+    const trigger = document.getElementById(triggerId);
+    const menu = document.getElementById(menuId);
+    const swatch = document.getElementById(swatchId);
+    if (!trigger || !menu || !swatch) return;
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openNear(menu, trigger.getBoundingClientRect(), 'right', trigger);
+    });
+    menu.querySelectorAll('.pop-item').forEach(item => {
+      item.addEventListener('click', () => {
+        menu.querySelectorAll('.pop-item').forEach(i => i.classList.remove('selected'));
+        item.classList.add('selected');
+        swatch.style.background = item.dataset.color;
+        closeAllPopovers();
+      });
+    });
+  }
+  bindColorSwatchMenu('csBullColorTrigger', 'csBullColorMenu', 'csBullColorSwatch');
+  bindColorSwatchMenu('csBearColorTrigger', 'csBearColorMenu', 'csBearColorSwatch');
+
+  document.getElementById('csManageTemplatesBtn').addEventListener('click', () => {
+    showToast('Manage templates from the dropdown in the top bar', 'bookmark');
   });
   function csUpdateTargetTableVisibility() {
     const mode = document.querySelector('#csDisplayModeGroup .cs-seg-btn.active').dataset.mode;
@@ -2046,11 +2114,22 @@
     };
     persistChartSettingsIfEnabled();
   }
+  const csSaveBtn = document.getElementById('csSaveBtn');
+  function csMarkSaved() {
+    csSaveBtn.textContent = 'Saved';
+    csSaveBtn.classList.add('saved');
+  }
+  function csMarkUnsaved() {
+    if (!csSaveBtn.classList.contains('saved')) return;
+    csSaveBtn.textContent = 'Save Settings';
+    csSaveBtn.classList.remove('saved');
+  }
   function openChartSettings(initialTab) {
     csDraftSnapshot = JSON.stringify(chartSettings);
     populateChartSettingsForm();
-    setCsTab(initialTab || 'trademgmt');
+    setCsTab(initialTab || 'general');
     closeAllPopovers();
+    csMarkUnsaved();
     csBackdrop.classList.add('show');
   }
   function closeChartSettings(commit) {
@@ -2058,14 +2137,20 @@
     csDraftSnapshot = null;
     csBackdrop.classList.remove('show');
   }
-  document.getElementById('csSaveBtn').addEventListener('click', () => {
+  csSaveBtn.addEventListener('click', () => {
     collectChartSettingsForm();
-    closeChartSettings(true);
-    showToast('Trade management settings saved', 'check_circle');
+    csDraftSnapshot = JSON.stringify(chartSettings);
+    csMarkSaved();
+    showToast('Settings saved', 'check_circle');
   });
   document.getElementById('csCancelBtn').addEventListener('click', () => closeChartSettings(false));
   document.getElementById('csCloseBtn').addEventListener('click', () => closeChartSettings(false));
   csBackdrop.addEventListener('click', (e) => { if (e.target === csBackdrop) closeChartSettings(false); });
+  csBackdrop.addEventListener('click', (e) => {
+    if (e.target.closest('#csSaveBtn, #csCancelBtn, #csCloseBtn, .cs-nav-item, .cs-search')) return;
+    csMarkUnsaved();
+  });
+  csBackdrop.addEventListener('input', csMarkUnsaved);
   document.getElementById('csResetBtn').addEventListener('click', () => {
     chartSettings = cloneCsDefaults();
     populateChartSettingsForm();

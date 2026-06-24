@@ -750,7 +750,8 @@ table.ms-scan-table tr[data-tags].hide-row {
   transition: opacity .12s ease;
 }
 
-.ol-position-group:hover .reveal {
+.ol-position-group:hover .reveal,
+.ol-position-group.force-reveal .reveal {
   opacity: 1;
   pointer-events: auto;
 }
@@ -760,7 +761,8 @@ table.ms-scan-table tr[data-tags].hide-row {
   transition: opacity .12s ease;
 }
 
-.ol-position-group:hover .ol-line.entry.subtle {
+.ol-position-group:hover .ol-line.entry.subtle,
+.ol-position-group.force-reveal .ol-line.entry.subtle {
   opacity: .95;
 }
 
@@ -872,7 +874,6 @@ table.ms-scan-table tr[data-tags].hide-row {
 
 .ol-chip.entry.locked {
   cursor: default;
-  padding-right: 9px;
 }
 
 .ol-entry-confirm {

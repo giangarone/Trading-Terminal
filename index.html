@@ -223,9 +223,215 @@
             <div class="cs-pane" data-cs-pane="general">
               <div class="cs-pane-head">
                 <h2>General</h2>
-                <p>General chart preferences.</p>
+                <p>Configure global preferences and startup behavior.</p>
               </div>
-              <div class="cs-empty">No settings here yet</div>
+
+              <div class="cs-grid">
+                <div class="cs-col">
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Localization</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Language</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csLanguage"><span
+                            class="cs-select-label">English</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="csLanguage"
+                          style="display:none;">
+                          <option value="en" selected>English</option>
+                          <option value="es">Spanish</option>
+                          <option value="fr">French</option>
+                          <option value="de">German</option>
+                          <option value="ja">Japanese</option>
+                        </select>
+                      </div>
+                      <div class="cs-field">
+                        <label>Time Zone</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csGenTimeZone"><span
+                            class="cs-select-label">Auto Detect</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="csGenTimeZone"
+                          style="display:none;">
+                          <option value="auto" selected>Auto Detect</option>
+                          <option value="exchange">Exchange Time</option>
+                          <option value="utc">UTC</option>
+                          <option value="local">Local</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Date Format</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csDateFormat"><span
+                            class="cs-select-label">MM/DD/YYYY</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="csDateFormat"
+                          style="display:none;">
+                          <option value="mdy" selected>MM/DD/YYYY</option>
+                          <option value="dmy">DD/MM/YYYY</option>
+                          <option value="ymd">YYYY-MM-DD</option>
+                        </select>
+                      </div>
+                      <div class="cs-field">
+                        <label>Time Format</label>
+                        <div class="cs-segmented" id="csTimeFormatGroup" style="margin-bottom:0;">
+                          <button type="button" class="cs-seg-btn active" data-mode="12h">12 Hour</button>
+                          <button type="button" class="cs-seg-btn" data-mode="24h">24 Hour</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Startup</span>
+                    </div>
+                    <div class="cs-field">
+                      <label>Startup Mode</label>
+                      <div class="cs-radio-group" id="csStartupModeGroup">
+                        <div class="cs-radio-row active" data-startup="restore">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text">
+                            <span class="cs-radio-title">Restore Previous Session</span>
+                            <span class="cs-radio-desc">Restore open charts, selected symbols, watchlists, and panel
+                              state from your previous session.</span>
+                          </span>
+                        </div>
+                        <div class="cs-radio-row" data-startup="template">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text">
+                            <span class="cs-radio-title">Open Default Template</span>
+                            <span class="cs-radio-desc">Open the template you select below each time you start.</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-switch-row" id="csReconnectBroker">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Reconnect Broker Automatically</span>
+                        <span class="cs-switch-desc">Automatically reconnect to your broker on startup.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Reconnect Broker Automatically"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row" id="csReconnectMarketData">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Reconnect Market Data Automatically</span>
+                        <span class="cs-switch-desc">Automatically reconnect to your market data services on
+                          startup.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn"
+                        aria-label="Toggle Reconnect Market Data Automatically"><span class="ind-toggle-track"><span
+                            class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Status</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Connected Broker</label>
+                        <div class="qt-est-val"><span class="sb-dot"></span>TradeStation</div>
+                      </div>
+                      <div class="cs-field">
+                        <label>Market Data</label>
+                        <div class="qt-est-val"><span class="sb-dot"></span>Connected</div>
+                      </div>
+                    </div>
+                    <div class="cs-fields-row" style="margin-bottom:0;">
+                      <div class="cs-field">
+                        <label>Subscription</label>
+                        <div class="qt-est-val">Prime Pro</div>
+                      </div>
+                      <div class="cs-field">
+                        <label>Version</label>
+                        <div class="qt-est-val">v1.2.4</div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div class="cs-col">
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Templates</span>
+                    </div>
+                    <div class="cs-switch-row active" id="csAutoSaveTemplates">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Auto Save Templates</span>
+                        <span class="cs-switch-desc">Automatically save your template changes.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Auto Save Templates"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csSyncTemplates">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Sync Templates Across Devices</span>
+                        <span class="cs-switch-desc">Keep your templates in sync across all your devices.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Sync Templates Across Devices"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csRememberPresets">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Remember Indicator Presets</span>
+                        <span class="cs-switch-desc">Restore your custom indicator presets on startup.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Remember Indicator Presets"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-field" style="margin-top:14px;margin-bottom:0;">
+                      <label>Default Template</label>
+                      <div class="cs-field-actions">
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csDefaultTemplate"><span
+                            class="cs-select-label">Order Flow</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="csDefaultTemplate"
+                          style="display:none;">
+                          <option value="orderflow" selected>Order Flow</option>
+                          <option value="scalping">Scalping</option>
+                          <option value="swing">Swing Trading</option>
+                        </select>
+                        <button type="button" class="ghost-btn" id="csManageTemplatesBtn">Manage Templates</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Confirmations</span>
+                    </div>
+                    <div class="cs-switch-row active" id="csConfirmMarketOrders">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Confirm Market Orders</span>
+                        <span class="cs-switch-desc">Show confirmation before sending market orders.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Confirm Market Orders"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csConfirmFlatten">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Confirm Flatten All Positions</span>
+                        <span class="cs-switch-desc">Show confirmation before flattening all positions.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Confirm Flatten All Positions"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csConfirmCancelAll">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Confirm Cancel All Orders</span>
+                        <span class="cs-switch-desc">Show confirmation before canceling all orders.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Confirm Cancel All Orders"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
             </div>
 
             <div class="cs-pane" data-cs-pane="appearance">
@@ -238,9 +444,192 @@
             <div class="cs-pane" data-cs-pane="chart">
               <div class="cs-pane-head">
                 <h2>Chart</h2>
-                <p>Candle style, gridlines, and chart defaults.</p>
+                <p>Customize the appearance, behavior and overlays of your charts.</p>
               </div>
-              <div class="cs-empty">No settings here yet</div>
+
+              <div class="cs-grid">
+                <div class="cs-col">
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Candles</span>
+                    </div>
+                    <div class="cs-field" style="margin-bottom:14px;">
+                      <label>Chart Type</label>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="csChartCandleType"><span
+                          class="cs-select-label">Candles</span><span
+                          class="material-symbols-outlined">expand_more</span></div><select
+                        id="csChartCandleType" style="display:none;">
+                        <option value="Candles" selected>Candles</option>
+                        <option value="Heikin Ashi">Heikin Ashi</option>
+                        <option value="Bars (OHLC)">Bars (OHLC)</option>
+                        <option value="Line (Close)">Line (Close)</option>
+                        <option value="Area">Area</option>
+                      </select>
+                    </div>
+                    <div class="cs-fields-row" style="margin-bottom:0;">
+                      <div class="cs-field">
+                        <label>Bullish Color</label>
+                        <div class="select-input pop-trigger" id="csBullColorTrigger"><span class="cs-color-swatch"
+                            id="csBullColorSwatch" style="background:var(--long);"></span><span
+                            class="material-symbols-outlined">expand_more</span></div>
+                      </div>
+                      <div class="cs-field">
+                        <label>Bearish Color</label>
+                        <div class="select-input pop-trigger" id="csBearColorTrigger"><span class="cs-color-swatch"
+                            id="csBearColorSwatch" style="background:var(--short);"></span><span
+                            class="material-symbols-outlined">expand_more</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Sessions</span>
+                    </div>
+                    <div class="cs-field" style="margin-bottom:14px;">
+                      <label>Time Zone</label>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="csChartTimeZone"><span
+                          class="cs-select-label">Exchange Time</span><span
+                          class="material-symbols-outlined">expand_more</span></div><select id="csChartTimeZone"
+                        style="display:none;">
+                        <option value="exchange" selected>Exchange Time</option>
+                        <option value="utc">UTC</option>
+                        <option value="local">Local</option>
+                        <option value="auto">Auto Detect</option>
+                      </select>
+                    </div>
+                    <div class="cs-switch-row active" id="csSessionBreaks">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Session Breaks</span>
+                        <span class="cs-switch-desc">Show session breaks on intraday charts.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Session Breaks"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row" id="csExtendedHours">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Extended Hours</span>
+                        <span class="cs-switch-desc">Show pre-market and after-hours data.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Extended Hours"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div class="cs-col">
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Display</span>
+                    </div>
+                    <div class="cs-switch-row active" id="csShowGridLines">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Grid Lines</span>
+                        <span class="cs-switch-desc">Show grid lines on the chart.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Grid Lines"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csShowCrosshair">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Crosshair</span>
+                        <span class="cs-switch-desc">Show crosshair on chart.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Crosshair"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csShowPriceLine">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Price Line</span>
+                        <span class="cs-switch-desc">Show last price line.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Price Line"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csShowLastPriceLabel">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Last Price Label</span>
+                        <span class="cs-switch-desc">Show price label on the right axis.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Last Price Label"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csAutoScale">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Auto Scale</span>
+                        <span class="cs-switch-desc">Automatically fit data to the screen.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Auto Scale"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-field" style="margin-top:4px;margin-bottom:0;">
+                      <label>Scale Position</label>
+                      <div class="cs-segmented" id="csScalePositionGroup" style="margin-bottom:0;">
+                        <button type="button" class="cs-seg-btn" data-mode="left">Left</button>
+                        <button type="button" class="cs-seg-btn active" data-mode="right">Right</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Trading Overlay</span>
+                    </div>
+                    <div class="cs-switch-row active" id="csShowOpenPositions">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Show Open Positions</span>
+                        <span class="cs-switch-desc">Display your open positions on chart.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Open Positions"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csShowWorkingOrders">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Show Working Orders</span>
+                        <span class="cs-switch-desc">Display working orders on chart.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Working Orders"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csShowTpSlLevels">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Show TP/SL Levels</span>
+                        <span class="cs-switch-desc">Display take profit and stop loss levels.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Show TP/SL Levels"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csShowRiskBox">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Show Risk Box</span>
+                        <span class="cs-switch-desc">Display risk/reward box on new orders.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Risk Box"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csShowEntryLabels">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Show Entry Labels</span>
+                        <span class="cs-switch-desc">Display entry price labels on filled orders.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Entry Labels"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csShowPositionLabels">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Show Position Labels</span>
+                        <span class="cs-switch-desc">Display position labels with P&amp;L.</span>
+                      </span>
+                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Position Labels"><span
+                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
             </div>
             <div class="cs-pane" data-cs-pane="data">
               <div class="cs-pane-head">
@@ -1897,6 +2286,24 @@
 
   <!-- ===================== SHARED CUSTOM DROPDOWN (Chart Settings / SL override selects) ===================== -->
   <div class="pop-menu" id="csDropdownMenu" style="width:220px;z-index:2100;"></div>
+
+  <!-- ===================== APPEARANCE: CANDLE COLOR SWATCH DROPDOWNS ===================== -->
+  <div class="pop-menu" id="csBullColorMenu" style="width:150px;z-index:2100;">
+    <button class="pop-item selected" data-color="var(--long)"><span class="cs-color-swatch"
+        style="background:var(--long);"></span><span class="pop-text"><span class="pt-title">Green</span></span></button>
+    <button class="pop-item" data-color="#14B8A6"><span class="cs-color-swatch"
+        style="background:#14B8A6;"></span><span class="pop-text"><span class="pt-title">Teal</span></span></button>
+    <button class="pop-item" data-color="#3B82F6"><span class="cs-color-swatch"
+        style="background:#3B82F6;"></span><span class="pop-text"><span class="pt-title">Blue</span></span></button>
+  </div>
+  <div class="pop-menu" id="csBearColorMenu" style="width:150px;z-index:2100;">
+    <button class="pop-item selected" data-color="var(--short)"><span class="cs-color-swatch"
+        style="background:var(--short);"></span><span class="pop-text"><span class="pt-title">Red</span></span></button>
+    <button class="pop-item" data-color="#F97316"><span class="cs-color-swatch"
+        style="background:#F97316;"></span><span class="pop-text"><span class="pt-title">Orange</span></span></button>
+    <button class="pop-item" data-color="#EC4899"><span class="cs-color-swatch"
+        style="background:#EC4899;"></span><span class="pop-text"><span class="pt-title">Pink</span></span></button>
+  </div>
 
   <!-- ===================== TP GEAR MENU ===================== -->
   <div class="pop-menu" id="tpGearMenu">

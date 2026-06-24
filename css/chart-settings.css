@@ -355,6 +355,146 @@
   flex-shrink: 0;
 }
 
+.cs-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  cursor: pointer;
+}
+
+.cs-switch-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cs-switch-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--paper-100);
+}
+
+.cs-switch-desc {
+  font-size: 10.5px;
+  color: var(--paper-500);
+  line-height: 1.4;
+}
+
+.cs-switch-row .ind-toggle-btn {
+  margin-top: 1px;
+}
+
+.cs-switch-row.active .ind-toggle-track {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.cs-switch-row.active .ind-toggle-thumb {
+  transform: translateX(16px);
+  background: var(--on-accent);
+}
+
+.cs-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.cs-radio-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.cs-radio-row:hover {
+  border-color: var(--line-3);
+}
+
+.cs-radio-row.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.cs-radio-dot {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-3);
+  position: relative;
+}
+
+.cs-radio-row.active .cs-radio-dot {
+  border-color: var(--accent);
+}
+
+.cs-radio-row.active .cs-radio-dot::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.cs-radio-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cs-radio-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--paper-100);
+}
+
+.cs-radio-desc {
+  font-size: 10.5px;
+  color: var(--paper-500);
+  line-height: 1.4;
+}
+
+.cs-color-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, .12);
+}
+
+.cs-field-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.cs-field-actions .select-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.cs-field-actions .ghost-btn {
+  flex: 0 0 auto;
+  padding: 0 14px;
+}
+
+.cs-field .sb-dot {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
 .cs-segmented {
   display: flex;
   background: var(--ink-800);
@@ -578,6 +718,17 @@
 
 .cs-btn-save:hover {
   filter: brightness(1.1);
+}
+
+.cs-btn-save.saved {
+  background: var(--ink-800);
+  border: 1px solid var(--line-2);
+  color: var(--paper-500);
+  cursor: default;
+}
+
+.cs-btn-save.saved:hover {
+  filter: none;
 }
 
 .cs-btn-cancel {
