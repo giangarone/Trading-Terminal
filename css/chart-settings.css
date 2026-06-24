@@ -377,7 +377,11 @@
   justify-content: space-between;
   gap: 12px;
   padding: 9px 0;
+}
+
+.cs-switch-row .ind-toggle-btn {
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .cs-switch-text {
@@ -687,11 +691,17 @@
 
 .cs-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 10px;
   padding: 14px 22px;
   border-top: 1px solid var(--line-1);
   flex-shrink: 0;
+}
+
+.cs-footer-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .cs-footer button {
@@ -702,6 +712,12 @@
   border: none;
   cursor: pointer;
   font-family: var(--sans);
+}
+
+.cs-footer-template-trigger {
+  width: 160px;
+  flex-shrink: 0;
+  gap: 7px;
 }
 
 .cs-btn-save {
@@ -1027,6 +1043,10 @@
 
 #templatesSelectMenu {
   z-index: 2100;
+}
+
+#templateNameMenu {
+  z-index: 2200;
 }
 
 /* ---- Market Data pane ---- */

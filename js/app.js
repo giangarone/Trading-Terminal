@@ -1732,7 +1732,10 @@
   const templateNameSaveBtn = document.getElementById('templateNameSave');
   function renderTemplatesSelect() {
     const active = templates.find(t => t.id === selectedTemplateId) || templates[0];
-    document.getElementById('templatesSelectName').textContent = active ? active.name : 'Templates';
+    const activeName = active ? active.name : 'Templates';
+    document.getElementById('templatesSelectName').textContent = activeName;
+    const footerLabel = document.getElementById('csFooterTemplateName');
+    if (footerLabel) footerLabel.textContent = activeName;
     const canDelete = templates.length > 1;
     templatesSelectList.innerHTML = templates.map(t => {
       const isSelected = t.id === selectedTemplateId;
@@ -1782,7 +1785,7 @@
     templateNameMode = mode;
     templateRenameTargetId = targetId;
     if (mode === 'save') {
-      templateNameMenuTitle.textContent = 'Save Current as Template';
+      templateNameMenuTitle.textContent = 'Save as…';
       templateNameInput.value = '';
       templateNameSaveBtn.textContent = 'Save';
     } else {
@@ -1812,13 +1815,28 @@
     renderTemplatesSelect();
   }
   renderTemplatesSelect();
+  function openTemplatesMenu(anchorRect, trigger) {
+    openNear(templatesSelectMenu, anchorRect, 'left', trigger);
+  }
   templatesSelectTrigger.addEventListener('click', (e) => {
     e.stopPropagation();
-    openNear(templatesSelectMenu, templatesSelectTrigger.getBoundingClientRect(), 'left', templatesSelectTrigger);
+    openTemplatesMenu(templatesSelectTrigger.getBoundingClientRect(), templatesSelectTrigger);
   });
+  const csFooterTemplateTrigger = document.getElementById('csFooterTemplateTrigger');
+  if (csFooterTemplateTrigger) {
+    csFooterTemplateTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openTemplatesMenu(csFooterTemplateTrigger.getBoundingClientRect(), csFooterTemplateTrigger);
+    });
+  }
   document.getElementById('templateSaveCurrent').addEventListener('click', (e) => {
     e.stopPropagation();
     openTemplateNamePrompt('save', null, e.currentTarget.getBoundingClientRect(), e.currentTarget);
+  });
+  document.getElementById('templateApplyDefaults').addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeAllPopovers();
+    showToast('Defaults applied', 'restart_alt');
   });
   templateNameSaveBtn.addEventListener('click', (e) => { e.stopPropagation(); commitTemplateName(); });
   document.getElementById('templateNameCancel').addEventListener('click', (e) => { e.stopPropagation(); closeTemplateNamePrompt(); });
@@ -1899,8 +1917,11 @@
   });
 
   /* ---------- General / Appearance settings panes (visual only, no persistence) ---------- */
-  document.querySelectorAll('#chartSettingsBackdrop .cs-switch-row').forEach(row => {
-    row.addEventListener('click', () => row.classList.toggle('active'));
+  document.querySelectorAll('#chartSettingsBackdrop .cs-switch-row .ind-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.cs-switch-row').classList.toggle('active');
+    });
   });
   document.querySelectorAll('#chartSettingsBackdrop .cs-radio-group').forEach(group => {
     group.querySelectorAll('.cs-radio-row').forEach(row => {
@@ -2056,7 +2077,6 @@
     document.getElementById('csTtpMinStepUnit').value = s.trailingTp.minStepUnit;
 
     document.querySelectorAll('#csDisplayModeGroup .cs-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === s.tpSlDisplayMode));
-    document.getElementById('csDefaultProfile').value = s.defaultProfile;
     csTargetsDraft = JSON.parse(JSON.stringify(s.defaultTargets || []));
     csSlDraft = s.defaultStopLoss ? JSON.parse(JSON.stringify(s.defaultStopLoss)) : null;
     renderTargetsTable();
@@ -2072,7 +2092,7 @@
   function collectChartSettingsForm() {
     chartSettings = {
       tpSlDisplayMode: document.querySelector('#csDisplayModeGroup .cs-seg-btn.active').dataset.mode,
-      defaultProfile: document.getElementById('csDefaultProfile').value,
+      defaultProfile: chartSettings.defaultProfile,
       defaultTargets: csTargetsDraft,
       defaultStopLoss: csSlDraft,
       moveSlToBreakeven: {

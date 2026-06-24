@@ -119,7 +119,11 @@
       <div class="pop-sep"></div>
       <button class="pop-item add" id="templateSaveCurrent">
         <span class="pop-icon"><span class="material-symbols-outlined">add</span></span>
-        <span class="pop-text"><span class="pt-title">Save Current as Template</span></span>
+        <span class="pop-text"><span class="pt-title">Save as…</span></span>
+      </button>
+      <button class="pop-item" id="templateApplyDefaults">
+        <span class="pop-icon"><span class="material-symbols-outlined">restart_alt</span></span>
+        <span class="pop-text"><span class="pt-title">Apply Defaults</span></span>
       </button>
     </div>
 
@@ -184,10 +188,10 @@
 
             <div class="cs-nav-group">
               <div class="cs-nav-label">Trading</div>
-              <button class="cs-nav-item" data-cs-tab="trademgmt"><span
-                  class="material-symbols-outlined">shield</span>Take Profits &amp; Stop Loss</button>
               <button class="cs-nav-item" data-cs-tab="orderdefaults"><span
                   class="material-symbols-outlined">receipt_long</span>Quick Trade</button>
+              <button class="cs-nav-item" data-cs-tab="trademgmt"><span
+                  class="material-symbols-outlined">shield</span>Take Profits &amp; Stop Loss</button>
               <button class="cs-nav-item" data-cs-tab="positiondefaults"><span
                   class="material-symbols-outlined">account_tree</span>Position Defaults</button>
               <button class="cs-nav-item" data-cs-tab="risk"><span class="material-symbols-outlined">balance</span>Risk
@@ -939,25 +943,11 @@
                     <div class="cs-card-head">
                       <span class="cs-card-title">Default TP/SL Behavior</span>
                     </div>
-                    <div class="cs-fields-row" style="margin-bottom:14px;">
-                      <div class="cs-field">
-                        <label>TP/SL Display Mode</label>
-                        <div class="cs-segmented" id="csDisplayModeGroup">
-                          <button type="button" class="cs-seg-btn active" data-mode="condensed">Condensed</button>
-                          <button type="button" class="cs-seg-btn" data-mode="expanded">Expanded</button>
-                        </div>
-                      </div>
-                      <div class="cs-field">
-                        <label>Default Profile</label>
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csDefaultProfile">
-                          <span class="cs-select-label">Scalp</span>
-                          <span class="material-symbols-outlined">expand_more</span>
-                        </div>
-                        <select id="csDefaultProfile" style="display:none;">
-                          <option value="scalp">Scalp</option>
-                          <option value="swing">Swing</option>
-                          <option value="position">Position</option>
-                        </select>
+                    <div class="cs-field" style="margin-bottom:14px;">
+                      <label>TP/SL Display Mode</label>
+                      <div class="cs-segmented" id="csDisplayModeGroup" style="margin-bottom:0;">
+                        <button type="button" class="cs-seg-btn active" data-mode="condensed">Condensed</button>
+                        <button type="button" class="cs-seg-btn" data-mode="expanded">Expanded</button>
                       </div>
                     </div>
                     <div class="cs-helper">In Expanded mode, take profits and a stop loss are added automatically
@@ -1572,8 +1562,15 @@
           </div>
         </div>
         <div class="cs-footer">
-          <button class="cs-btn-cancel" id="csCancelBtn">Cancel</button>
-          <button class="cs-btn-save" id="csSaveBtn">Save Settings</button>
+          <div class="select-input pop-trigger cs-footer-template-trigger" id="csFooterTemplateTrigger">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--paper-500);">bookmark</span>
+            <span class="cs-select-label" id="csFooterTemplateName">Scalping</span>
+            <span class="material-symbols-outlined">expand_more</span>
+          </div>
+          <div class="cs-footer-actions">
+            <button class="cs-btn-cancel" id="csCancelBtn">Cancel</button>
+            <button class="cs-btn-save" id="csSaveBtn">Save Settings</button>
+          </div>
         </div>
       </div>
     </div>
