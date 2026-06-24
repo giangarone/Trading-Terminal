@@ -52,7 +52,7 @@
   background: var(--ink-850);
   border: 1px solid var(--line-2);
   border-radius: 999px;
-  padding: 6px 13px;
+  padding: 6px 10px;
 }
 
 .filter-chip:hover {

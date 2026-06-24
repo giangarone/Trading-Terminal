@@ -49,9 +49,9 @@
 
   /* ── Letter spacing ──────────────────────────────────────── */
   --ls-label: .06em;
-  /* uppercase labels paired with --fs-label   */
-  --ls-ui: .02em;
-  /* subtle tracking for symbols/codes         */
+  /* uppercase labels                          */
+  --ls-ui: .03em;
+  /* subtle tracking                           */
 
   /* ── Icons ───────────────────────────────────────────────── */
   --ic-sm: 15px;

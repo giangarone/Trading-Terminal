@@ -185,9 +185,9 @@
             <div class="cs-nav-group">
               <div class="cs-nav-label">Trading</div>
               <button class="cs-nav-item" data-cs-tab="trademgmt"><span
-                  class="material-symbols-outlined">shield</span>Trade Management</button>
+                  class="material-symbols-outlined">shield</span>Take Profits &amp; Stop Loss</button>
               <button class="cs-nav-item" data-cs-tab="orderdefaults"><span
-                  class="material-symbols-outlined">receipt_long</span>Order Defaults</button>
+                  class="material-symbols-outlined">receipt_long</span>Quick Trade</button>
               <button class="cs-nav-item" data-cs-tab="positiondefaults"><span
                   class="material-symbols-outlined">account_tree</span>Position Defaults</button>
               <button class="cs-nav-item" data-cs-tab="risk"><span class="material-symbols-outlined">balance</span>Risk
@@ -311,8 +311,9 @@
                         <span class="cs-switch-title">Reconnect Broker Automatically</span>
                         <span class="cs-switch-desc">Automatically reconnect to your broker on startup.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Reconnect Broker Automatically"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ind-toggle-btn"
+                        aria-label="Toggle Reconnect Broker Automatically"><span class="ind-toggle-track"><span
+                            class="ind-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row" id="csReconnectMarketData">
                       <span class="cs-switch-text">
@@ -333,21 +334,21 @@
                     <div class="cs-fields-row">
                       <div class="cs-field">
                         <label>Connected Broker</label>
-                        <div class="qt-est-val"><span class="sb-dot"></span>TradeStation</div>
+                        <div class="cs-field-val">TradeStation</div>
                       </div>
                       <div class="cs-field">
                         <label>Market Data</label>
-                        <div class="qt-est-val"><span class="sb-dot"></span>Connected</div>
+                        <div class="cs-field-val">Connected</div>
                       </div>
                     </div>
-                    <div class="cs-fields-row" style="margin-bottom:0;">
+                    <div class="cs-fields-row">
                       <div class="cs-field">
                         <label>Subscription</label>
-                        <div class="qt-est-val">Prime Pro</div>
+                        <div class="cs-field-val">Prime Pro</div>
                       </div>
                       <div class="cs-field">
                         <label>Version</label>
-                        <div class="qt-est-val">v1.2.4</div>
+                        <div class="cs-field-val cs-field-val--muted">v1.2.4</div>
                       </div>
                     </div>
                   </div>
@@ -373,8 +374,9 @@
                         <span class="cs-switch-title">Sync Templates Across Devices</span>
                         <span class="cs-switch-desc">Keep your templates in sync across all your devices.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Sync Templates Across Devices"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ind-toggle-btn"
+                        aria-label="Toggle Sync Templates Across Devices"><span class="ind-toggle-track"><span
+                            class="ind-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csRememberPresets">
                       <span class="cs-switch-text">
@@ -417,8 +419,9 @@
                         <span class="cs-switch-title">Confirm Flatten All Positions</span>
                         <span class="cs-switch-desc">Show confirmation before flattening all positions.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Confirm Flatten All Positions"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ind-toggle-btn"
+                        aria-label="Toggle Confirm Flatten All Positions"><span class="ind-toggle-track"><span
+                            class="ind-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csConfirmCancelAll">
                       <span class="cs-switch-text">
@@ -458,8 +461,8 @@
                       <label>Chart Type</label>
                       <div class="select-input pop-trigger cs-dd-trigger" data-target="csChartCandleType"><span
                           class="cs-select-label">Candles</span><span
-                          class="material-symbols-outlined">expand_more</span></div><select
-                        id="csChartCandleType" style="display:none;">
+                          class="material-symbols-outlined">expand_more</span></div><select id="csChartCandleType"
+                        style="display:none;">
                         <option value="Candles" selected>Candles</option>
                         <option value="Heikin Ashi">Heikin Ashi</option>
                         <option value="Bars (OHLC)">Bars (OHLC)</option>
@@ -655,8 +658,8 @@
 
             <div class="cs-pane active" data-cs-pane="trademgmt">
               <div class="cs-pane-head">
-                <h2>Trade Management</h2>
-                <p>Configure global automation defaults. These values are used when you enable a tool on a trade.</p>
+                <h2>Take Profits &amp; Stop Loss</h2>
+                <p>Configure default TP and SL levels applied when you open or manage a position.</p>
               </div>
 
               <div class="cs-grid">
@@ -936,22 +939,26 @@
                     <div class="cs-card-head">
                       <span class="cs-card-title">Default TP/SL Behavior</span>
                     </div>
-                    <div class="cs-field" style="margin-bottom:14px;">
-                      <label>TP/SL Display Mode</label>
-                      <div class="cs-segmented" id="csDisplayModeGroup">
-                        <button type="button" class="cs-seg-btn active" data-mode="condensed">Condensed</button>
-                        <button type="button" class="cs-seg-btn" data-mode="expanded">Expanded</button>
+                    <div class="cs-fields-row" style="margin-bottom:14px;">
+                      <div class="cs-field">
+                        <label>TP/SL Display Mode</label>
+                        <div class="cs-segmented" id="csDisplayModeGroup">
+                          <button type="button" class="cs-seg-btn active" data-mode="condensed">Condensed</button>
+                          <button type="button" class="cs-seg-btn" data-mode="expanded">Expanded</button>
+                        </div>
                       </div>
-                    </div>
-                    <div class="cs-field">
-                      <label>Default Profile</label>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="csDefaultProfile"><span
-                          class="cs-select-label">Scalp</span><span class="material-symbols-outlined">expand_more</span>
-                      </div><select id="csDefaultProfile" style="display:none;">
-                        <option value="scalp">Scalp</option>
-                        <option value="swing">Swing</option>
-                        <option value="position">Position</option>
-                      </select>
+                      <div class="cs-field">
+                        <label>Default Profile</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csDefaultProfile">
+                          <span class="cs-select-label">Scalp</span>
+                          <span class="material-symbols-outlined">expand_more</span>
+                        </div>
+                        <select id="csDefaultProfile" style="display:none;">
+                          <option value="scalp">Scalp</option>
+                          <option value="swing">Swing</option>
+                          <option value="position">Position</option>
+                        </select>
+                      </div>
                     </div>
                     <div class="cs-helper">In Expanded mode, take profits and a stop loss are added automatically
                       when you place an entry, using the targets below. In Condensed mode, you add them manually from
@@ -981,25 +988,160 @@
                           class="material-symbols-outlined">check</span></span>Persist trade management
                       settings on charts and layouts</label>
                   </div>
-
-                  <div class="cs-info-box">
-                    <span class="material-symbols-outlined">info</span>
-                    <span>These settings define the default behavior for your trade management tools. You can
-                      override them per trade from the TP/SL gear menus on the chart.<br><br>
-                      <span class="cs-info-path">Click the settings icon in the top bar, or right-click the chart →
-                        Settings</span>, then go to Trade Management.</span>
-                  </div>
-
                 </div>
               </div>
             </div>
 
             <div class="cs-pane" data-cs-pane="orderdefaults">
               <div class="cs-pane-head">
-                <h2>Order Defaults</h2>
-                <p>Default order type and size for new entries.</p>
+                <h2>Quick Trade</h2>
+                <p>Default order type, size, and behavior for the quick trade panel.</p>
               </div>
-              <div class="cs-empty">No settings here yet</div>
+
+              <div class="cs-col">
+
+                <!-- Default Size -->
+                <div class="cs-card">
+                  <div class="cs-card-head">
+                    <span class="cs-card-title">Default Size</span>
+                  </div>
+                  <div class="cs-fields-row">
+                    <div class="cs-field">
+                      <label>Amount Type</label>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="qtsAmountType">
+                        <span class="cs-select-label">Quantity</span>
+                        <span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="qtsAmountType" style="display:none;">
+                        <option value="quantity" selected>Quantity</option>
+                        <option value="percent">% of Balance</option>
+                        <option value="usd">USD Amount</option>
+                      </select>
+                    </div>
+                    <div class="cs-field">
+                      <label>Default Quantity</label>
+                      <input type="number" id="qtsDefaultQty" class="cs-num-input" value="1" min="0.001" step="1">
+                    </div>
+                  </div>
+                  <div class="cs-field" style="margin-bottom:16px;">
+                    <label>Size Presets</label>
+                    <div class="qt-preset-group">
+                      <button class="qt-preset-btn active" data-qty="1">1</button>
+                      <button class="qt-preset-btn" data-qty="5">5</button>
+                      <button class="qt-preset-btn" data-qty="10">10</button>
+                      <button class="qt-preset-btn" data-qty="20">20</button>
+                      <button class="qt-preset-btn" data-qty="50">50</button>
+                      <button class="qt-preset-btn" data-qty="max">Max</button>
+                    </div>
+                  </div>
+                  <div class="cs-field">
+                    <label>Amount Slider</label>
+                    <input type="range" id="qtsSizeSlider" class="qt-slider" min="0" max="100" value="25">
+                    <div class="qt-tick-row" id="qtsSliderTicks">
+                      <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+                    </div>
+                    <p class="cs-helper" id="qtsSliderHelper">Controls position size as a % of available buying power.</p>
+                  </div>
+                </div>
+
+                <!-- Order Behavior -->
+                <div class="cs-card">
+                  <div class="cs-card-head">
+                    <span class="cs-card-title">Order Behavior</span>
+                  </div>
+                  <div class="cs-fields-row">
+                    <div class="cs-field">
+                      <label>Default Order Type</label>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="qtsOrderType">
+                        <span class="cs-select-label">Market</span>
+                        <span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="qtsOrderType" style="display:none;">
+                        <option value="market" selected>Market</option>
+                        <option value="limit">Limit</option>
+                        <option value="stop_market">Stop Market</option>
+                        <option value="stop_limit">Stop Limit</option>
+                      </select>
+                    </div>
+                    <div class="cs-field">
+                      <label>Time in Force</label>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="qtsTimeInForce">
+                        <span class="cs-select-label">GTC — Good Till Canceled</span>
+                        <span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="qtsTimeInForce" style="display:none;">
+                        <option value="gtc" selected>GTC — Good Till Canceled</option>
+                        <option value="gtd">GTD — Good Till Date</option>
+                        <option value="ioc">IOC — Immediate or Cancel</option>
+                        <option value="fok">FOK — Fill or Kill</option>
+                        <option value="day">DAY</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="cs-switch-row" id="qtReduceOnly">
+                    <span class="cs-switch-text">
+                      <span class="cs-switch-title">Reduce Only</span>
+                      <span class="cs-switch-desc">Orders can only reduce an existing position, never open a new one.</span>
+                    </span>
+                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Reduce Only">
+                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    </button>
+                  </div>
+                  <div class="cs-switch-row" id="qtPostOnly">
+                    <span class="cs-switch-text">
+                      <span class="cs-switch-title">Post Only</span>
+                      <span class="cs-switch-desc">Limit orders are placed as maker orders only — rejected if they'd fill immediately.</span>
+                    </span>
+                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Post Only">
+                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    </button>
+                  </div>
+                  <div class="cs-switch-row" id="qtConfirmMarket">
+                    <span class="cs-switch-text">
+                      <span class="cs-switch-title">Confirm Market Orders</span>
+                      <span class="cs-switch-desc">Show a confirmation dialog before placing a market order.</span>
+                    </span>
+                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Confirm Market Orders">
+                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Display & Calculations -->
+                <div class="cs-card">
+                  <div class="cs-card-head">
+                    <span class="cs-card-title">Display &amp; Calculations</span>
+                  </div>
+                  <div class="cs-switch-row" id="qtRiskCurrency">
+                    <span class="cs-switch-text">
+                      <span class="cs-switch-title">Risk in Account Currency</span>
+                      <span class="cs-switch-desc">Show risk and P&amp;L values in your account currency rather than percentage.</span>
+                    </span>
+                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Risk in Account Currency">
+                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    </button>
+                  </div>
+                  <div class="cs-switch-row active" id="qtShowFees">
+                    <span class="cs-switch-text">
+                      <span class="cs-switch-title">Show Estimated Fees</span>
+                      <span class="cs-switch-desc">Display the estimated trading fee before placing an order.</span>
+                    </span>
+                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Estimated Fees">
+                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    </button>
+                  </div>
+                  <div class="cs-switch-row active" id="qtShowEstVal">
+                    <span class="cs-switch-text">
+                      <span class="cs-switch-title">Show Estimated Value / Size</span>
+                      <span class="cs-switch-desc">Display the estimated order value and contract size in the panel.</span>
+                    </span>
+                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Estimated Value / Size">
+                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
             </div>
             <div class="cs-pane" data-cs-pane="positiondefaults">
               <div class="cs-pane-head">
@@ -1018,16 +1160,392 @@
             <div class="cs-pane" data-cs-pane="broker">
               <div class="cs-pane-head">
                 <h2>Broker Connections</h2>
-                <p>Connected brokers and accounts.</p>
+                <p>Manage your connected brokerage accounts.</p>
               </div>
-              <div class="cs-empty">No settings here yet</div>
+
+              <!-- Broker overflow menu (shared, repositioned per row) -->
+              <div class="pop-menu" id="bcOverflowMenu">
+                <button class="pop-item" id="bcMenuSetDefault">
+                  <span class="pop-icon"><span class="material-symbols-outlined">star</span></span>
+                  <span class="pop-text"><span class="pt-title">Set as Default</span></span>
+                </button>
+                <button class="pop-item" id="bcMenuRename">
+                  <span class="pop-icon"><span class="material-symbols-outlined">edit</span></span>
+                  <span class="pop-text"><span class="pt-title">Rename</span></span>
+                </button>
+                <div class="pop-sep"></div>
+                <span class="pop-menu-label">Permissions</span>
+                <button class="pop-item checklist checked" id="bcPermManual">
+                  <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+                  <span class="pop-text"><span class="pt-title">Manual Trading</span></span>
+                </button>
+                <button class="pop-item checklist checked" id="bcPermAI">
+                  <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+                  <span class="pop-text"><span class="pt-title">AI Trading</span></span>
+                </button>
+                <div class="pop-sep"></div>
+                <button class="pop-item danger" id="bcMenuDisconnect">
+                  <span class="pop-icon"><span class="material-symbols-outlined">link_off</span></span>
+                  <span class="pop-text"><span class="pt-title">Disconnect</span></span>
+                </button>
+                <button class="pop-item danger" id="bcMenuRemove">
+                  <span class="pop-icon"><span class="material-symbols-outlined">delete</span></span>
+                  <span class="pop-text"><span class="pt-title">Remove</span></span>
+                </button>
+              </div>
+
+              <div class="cs-col">
+
+                <!-- Connected accounts -->
+                <div class="cs-card bc-accounts-card">
+                  <div class="cs-card-head bc-accounts-head">
+                    <span class="cs-card-title">Connected Accounts</span>
+                    <span class="bc-count-badge">3</span>
+                    <button class="bc-connect-btn">
+                      <span class="material-symbols-outlined">add</span>
+                      Connect Broker
+                    </button>
+                  </div>
+
+                  <div class="bc-broker-list">
+                    <div class="bc-list-header">
+                      <span>Broker</span>
+                      <span>Type</span>
+                      <span>Status</span>
+                      <span>Equity</span>
+                      <span>Buying Power</span>
+                      <span>Manual Trading</span>
+                      <span></span>
+                    </div>
+
+                    <!-- Bitget — active -->
+                    <div class="bc-broker-row bc-row-active">
+                      <div class="bc-broker-info">
+                        <div class="bc-broker-name-row">
+                          <span class="bc-broker-name">Bitget</span>
+                          <span class="bc-account-badge bc-badge-live">LIVE</span>
+                        </div>
+                        <span class="bc-account-id">BG-938729</span>
+                      </div>
+                      <div class="bc-type-cell">Individual</div>
+                      <div class="bc-status-cell">
+                        <span class="bc-status-dot"></span>
+                        Connected
+                      </div>
+                      <div class="bc-equity-cell">$125,430.18</div>
+                      <div class="bc-buying-power-cell">$118,540.00</div>
+                      <div class="bc-active-cell">
+                        <span class="bc-active-badge">Active</span>
+                      </div>
+                      <div class="bc-actions-cell">
+                        <button class="bc-overflow-btn pop-trigger">
+                          <span class="material-symbols-outlined">more_horiz</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- TradeStation -->
+                    <div class="bc-broker-row">
+                      <div class="bc-broker-info">
+                        <div class="bc-broker-name-row">
+                          <span class="bc-broker-name">TradeStation</span>
+                          <span class="bc-account-badge bc-badge-sim">SIM</span>
+                        </div>
+                        <span class="bc-account-id">TS-849029</span>
+                      </div>
+                      <div class="bc-type-cell">Margin</div>
+                      <div class="bc-status-cell">
+                        <span class="bc-status-dot"></span>
+                        Connected
+                      </div>
+                      <div class="bc-equity-cell">$210,223.45</div>
+                      <div class="bc-buying-power-cell">$187,654.21</div>
+                      <div class="bc-active-cell">
+                        <button class="bc-set-active-btn">Set Active</button>
+                      </div>
+                      <div class="bc-actions-cell">
+                        <button class="bc-overflow-btn pop-trigger">
+                          <span class="material-symbols-outlined">more_horiz</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- BloFin -->
+                    <div class="bc-broker-row">
+                      <div class="bc-broker-info">
+                        <div class="bc-broker-name-row">
+                          <span class="bc-broker-name">BloFin</span>
+                          <span class="bc-account-badge bc-badge-live">LIVE</span>
+                        </div>
+                        <span class="bc-account-id">BF-839402</span>
+                      </div>
+                      <div class="bc-type-cell">Isolated</div>
+                      <div class="bc-status-cell">
+                        <span class="bc-status-dot"></span>
+                        Connected
+                      </div>
+                      <div class="bc-equity-cell">
+                        42.53 BTC
+                        <span class="bc-equity-sub">≈ $28,351</span>
+                      </div>
+                      <div class="bc-buying-power-cell">
+                        28.35 BTC
+                        <span class="bc-equity-sub">≈ $18,884</span>
+                      </div>
+                      <div class="bc-active-cell">
+                        <button class="bc-set-active-btn">Set Active</button>
+                      </div>
+                      <div class="bc-actions-cell">
+                        <button class="bc-overflow-btn pop-trigger">
+                          <span class="material-symbols-outlined">more_horiz</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Connection settings -->
+                <div class="cs-card">
+                  <div class="cs-card-head">
+                    <span class="cs-card-title">Connection Settings</span>
+                  </div>
+                  <div class="cs-switch-row active" id="bcAutoReconnect">
+                    <span class="cs-switch-text">
+                      <span class="cs-switch-title">Auto-Reconnect</span>
+                      <span class="cs-switch-desc">Automatically reconnect if a connection drops.</span>
+                    </span>
+                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Auto-Reconnect">
+                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    </button>
+                  </div>
+                  <div class="cs-switch-row active" id="bcShowConnectionStatus">
+                    <span class="cs-switch-text">
+                      <span class="cs-switch-title">Show Status in Status Bar</span>
+                      <span class="cs-switch-desc">Display connection status at the bottom of the terminal.</span>
+                    </span>
+                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Status in Status Bar">
+                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    </button>
+                  </div>
+                </div>
+
+              </div> <!-- end cs-col -->
             </div>
             <div class="cs-pane" data-cs-pane="marketdata">
               <div class="cs-pane-head">
                 <h2>Market Data</h2>
-                <p>Data provider and feed settings.</p>
+                <p>Exchange entitlements and data stream status for your subscription.</p>
               </div>
-              <div class="cs-empty">No settings here yet</div>
+
+              <div class="cs-card md-exchanges-card">
+
+                <!-- Tab row -->
+                <div class="md-tab-row">
+                  <div class="md-tabs" id="mdTabs">
+                    <button class="md-tab active" data-md-tab="futures"><span
+                        class="material-symbols-outlined">show_chart</span>Futures</button>
+                    <button class="md-tab" data-md-tab="commodities"><span
+                        class="material-symbols-outlined">agriculture</span>Commodities</button>
+                    <button class="md-tab" data-md-tab="usstocks"><span
+                        class="material-symbols-outlined">bar_chart</span>US Stocks</button>
+                    <button class="md-tab" data-md-tab="forex"><span
+                        class="material-symbols-outlined">currency_exchange</span>Forex</button>
+                    <button class="md-tab" data-md-tab="crypto"><span
+                        class="material-symbols-outlined">currency_bitcoin</span>Crypto</button>
+                  </div>
+                  <button class="md-compare-btn">
+                    Compare Plans
+                    <span class="material-symbols-outlined">arrow_outward</span>
+                  </button>
+                </div>
+
+                <!-- Futures -->
+                <div class="md-pane active" id="mdPane-futures">
+                  <div class="md-list-header">
+                    <span>Exchange</span>
+                    <span>Coverage</span>
+                    <span>Data Type</span>
+                    <span>Latency</span>
+                    <span>Plan</span>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">CME</span>
+                    <span class="md-exchange-desc">Rates, Indices, FX, Energy, Metals, Agricultural</span>
+                    <span class="md-data-badge md-realtime">Real-time</span>
+                    <span class="md-latency-cell">&lt; 1 sec</span>
+                    <div class="md-plan-cell"><span class="md-included-badge">Included</span></div>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">CBOT</span>
+                    <span class="md-exchange-desc">Grains, Oilseeds, Softs</span>
+                    <span class="md-data-badge md-realtime">Real-time</span>
+                    <span class="md-latency-cell">&lt; 1 sec</span>
+                    <div class="md-plan-cell"><span class="md-included-badge">Included</span></div>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">NYMEX</span>
+                    <span class="md-exchange-desc">Energy, Metals</span>
+                    <span class="md-data-badge md-realtime">Real-time</span>
+                    <span class="md-latency-cell">&lt; 1 sec</span>
+                    <div class="md-plan-cell"><span class="md-included-badge">Included</span></div>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">COMEX</span>
+                    <span class="md-exchange-desc">Precious Metals</span>
+                    <span class="md-data-badge md-realtime">Real-time</span>
+                    <span class="md-latency-cell">&lt; 1 sec</span>
+                    <div class="md-plan-cell"><span class="md-included-badge">Included</span></div>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">ICE</span>
+                    <span class="md-exchange-desc">Softs, Energy, Financials</span>
+                    <span class="md-data-badge md-delayed">Delayed</span>
+                    <span class="md-latency-cell">10–15 min</span>
+                    <div class="md-plan-cell"><button class="md-upgrade-btn">Upgrade</button></div>
+                  </div>
+                </div>
+
+                <!-- Commodities -->
+                <div class="md-pane" id="mdPane-commodities">
+                  <div class="md-list-header">
+                    <span>Exchange</span>
+                    <span>Coverage</span>
+                    <span>Data Type</span>
+                    <span>Latency</span>
+                    <span>Plan</span>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">NYMEX Spot</span>
+                    <span class="md-exchange-desc">Energy &amp; Metals Spot</span>
+                    <span class="md-data-badge md-delayed">Delayed</span>
+                    <span class="md-latency-cell">10–15 min</span>
+                    <div class="md-plan-cell"><button class="md-upgrade-btn">Upgrade</button></div>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">LME</span>
+                    <span class="md-exchange-desc">Metals (London Metal Exchange)</span>
+                    <span class="md-data-badge md-delayed">Delayed</span>
+                    <span class="md-latency-cell">10–15 min</span>
+                    <div class="md-plan-cell"><button class="md-upgrade-btn">Upgrade</button></div>
+                  </div>
+                </div>
+
+                <!-- US Stocks -->
+                <div class="md-pane" id="mdPane-usstocks">
+                  <div class="md-list-header">
+                    <span>Exchange</span>
+                    <span>Coverage</span>
+                    <span>Data Type</span>
+                    <span>Latency</span>
+                    <span>Plan</span>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">NASDAQ</span>
+                    <span class="md-exchange-desc">All Markets</span>
+                    <span class="md-data-badge md-delayed">Delayed</span>
+                    <span class="md-latency-cell">10–15 min</span>
+                    <div class="md-plan-cell"><button class="md-upgrade-btn">Upgrade</button></div>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">NYSE</span>
+                    <span class="md-exchange-desc">New York Stock Exchange</span>
+                    <span class="md-data-badge md-delayed">Delayed</span>
+                    <span class="md-latency-cell">10–15 min</span>
+                    <div class="md-plan-cell"><button class="md-upgrade-btn">Upgrade</button></div>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">NYSE Arca</span>
+                    <span class="md-exchange-desc">NYSE Arca Equities</span>
+                    <span class="md-data-badge md-delayed">Delayed</span>
+                    <span class="md-latency-cell">10–15 min</span>
+                    <div class="md-plan-cell"><button class="md-upgrade-btn">Upgrade</button></div>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">BATS</span>
+                    <span class="md-exchange-desc">BATS Global Markets</span>
+                    <span class="md-data-badge md-delayed">Delayed</span>
+                    <span class="md-latency-cell">10–15 min</span>
+                    <div class="md-plan-cell"><button class="md-upgrade-btn">Upgrade</button></div>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">IEX</span>
+                    <span class="md-exchange-desc">IEX Exchange</span>
+                    <span class="md-data-badge md-delayed">Delayed</span>
+                    <span class="md-latency-cell">10–15 min</span>
+                    <div class="md-plan-cell"><button class="md-upgrade-btn">Upgrade</button></div>
+                  </div>
+                </div>
+
+                <!-- Forex -->
+                <div class="md-pane" id="mdPane-forex">
+                  <div class="md-list-header">
+                    <span>Exchange</span>
+                    <span>Coverage</span>
+                    <span>Data Type</span>
+                    <span>Latency</span>
+                    <span>Plan</span>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">Forex</span>
+                    <span class="md-exchange-desc">Major Currency Pairs</span>
+                    <span class="md-data-badge md-realtime">Real-time</span>
+                    <span class="md-latency-cell">&lt; 1 sec</span>
+                    <div class="md-plan-cell"><span class="md-included-badge">Included</span></div>
+                  </div>
+                  <div class="md-note-row">
+                    <span class="material-symbols-outlined">info</span>
+                    Real-time forex data is included in all plans.
+                  </div>
+                </div>
+
+                <!-- Crypto -->
+                <div class="md-pane" id="mdPane-crypto">
+                  <div class="md-list-header">
+                    <span>Exchange</span>
+                    <span>Coverage</span>
+                    <span>Data Type</span>
+                    <span>Latency</span>
+                    <span>Plan</span>
+                  </div>
+                  <div class="md-exchange-row">
+                    <span class="md-exchange-name">Crypto</span>
+                    <span class="md-exchange-desc">Major Cryptocurrency Exchanges (Aggregated)</span>
+                    <span class="md-data-badge md-realtime">Real-time</span>
+                    <span class="md-latency-cell">&lt; 1 sec</span>
+                    <div class="md-plan-cell"><span class="md-included-badge">Included</span></div>
+                  </div>
+                  <div class="md-note-row">
+                    <span class="material-symbols-outlined">info</span>
+                    Real-time crypto data is included in all plans.
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Current plan summary -->
+              <div class="cs-card md-plan-card">
+                <div class="cs-card-head">
+                  <span class="cs-card-title">Current Plan</span>
+                  <span class="md-premium-badge">Premium</span>
+                  <button class="md-compare-btn" style="margin-left:auto;">
+                    Compare Plans <span class="material-symbols-outlined">arrow_outward</span>
+                  </button>
+                </div>
+                <p class="md-plan-desc">Real-time futures data across all major CME Group exchanges, plus Forex and
+                  Crypto included at no additional cost.</p>
+                <div class="md-plan-access-row">
+                  <span class="md-plan-access-lbl">Real-time included</span>
+                  <div class="md-plan-pills">
+                    <span class="md-plan-pill">CME</span>
+                    <span class="md-plan-pill">CBOT</span>
+                    <span class="md-plan-pill">NYMEX</span>
+                    <span class="md-plan-pill">COMEX</span>
+                    <span class="md-plan-pill">Forex</span>
+                    <span class="md-plan-pill">Crypto</span>
+                  </div>
+                </div>
+              </div>
+
             </div>
             <div class="cs-pane" data-cs-pane="webhooks">
               <div class="cs-pane-head">
@@ -2057,6 +2575,10 @@
     <!-- Signal Table -->
     <div class="ms-table-section">
       <div class="ms-filter-bar">
+        <div class="ms-search-wrap">
+          <span class="material-symbols-outlined ms-search-icon">search</span>
+          <input type="text" id="scanSearch" class="ms-search-input" placeholder="Search symbol…" autocomplete="off">
+        </div>
         <div class="ms-filter-chips" id="scanFilters">
           <button class="filter-chip" data-tag="breakout">Breakouts</button>
           <button class="filter-chip" data-tag="pullback">Pullbacks</button>
@@ -2290,19 +2812,20 @@
   <!-- ===================== APPEARANCE: CANDLE COLOR SWATCH DROPDOWNS ===================== -->
   <div class="pop-menu" id="csBullColorMenu" style="width:150px;z-index:2100;">
     <button class="pop-item selected" data-color="var(--long)"><span class="cs-color-swatch"
-        style="background:var(--long);"></span><span class="pop-text"><span class="pt-title">Green</span></span></button>
-    <button class="pop-item" data-color="#14B8A6"><span class="cs-color-swatch"
-        style="background:#14B8A6;"></span><span class="pop-text"><span class="pt-title">Teal</span></span></button>
-    <button class="pop-item" data-color="#3B82F6"><span class="cs-color-swatch"
-        style="background:#3B82F6;"></span><span class="pop-text"><span class="pt-title">Blue</span></span></button>
+        style="background:var(--long);"></span><span class="pop-text"><span
+          class="pt-title">Green</span></span></button>
+    <button class="pop-item" data-color="#14B8A6"><span class="cs-color-swatch" style="background:#14B8A6;"></span><span
+        class="pop-text"><span class="pt-title">Teal</span></span></button>
+    <button class="pop-item" data-color="#3B82F6"><span class="cs-color-swatch" style="background:#3B82F6;"></span><span
+        class="pop-text"><span class="pt-title">Blue</span></span></button>
   </div>
   <div class="pop-menu" id="csBearColorMenu" style="width:150px;z-index:2100;">
     <button class="pop-item selected" data-color="var(--short)"><span class="cs-color-swatch"
         style="background:var(--short);"></span><span class="pop-text"><span class="pt-title">Red</span></span></button>
-    <button class="pop-item" data-color="#F97316"><span class="cs-color-swatch"
-        style="background:#F97316;"></span><span class="pop-text"><span class="pt-title">Orange</span></span></button>
-    <button class="pop-item" data-color="#EC4899"><span class="cs-color-swatch"
-        style="background:#EC4899;"></span><span class="pop-text"><span class="pt-title">Pink</span></span></button>
+    <button class="pop-item" data-color="#F97316"><span class="cs-color-swatch" style="background:#F97316;"></span><span
+        class="pop-text"><span class="pt-title">Orange</span></span></button>
+    <button class="pop-item" data-color="#EC4899"><span class="cs-color-swatch" style="background:#EC4899;"></span><span
+        class="pop-text"><span class="pt-title">Pink</span></span></button>
   </div>
 
   <!-- ===================== TP GEAR MENU ===================== -->
@@ -2444,7 +2967,7 @@
     </div>
     <div class="sl-override-row">
       <button class="pop-item" id="slAtr">
-        <span class="pop-icon"><span class="material-symbols-outlined">ssid_chart</span></span>
+        <span class="pop-icon"><span class="material-symbols-outlined">area_chart</span></span>
         <span class="pop-text"><span class="pt-title">ATR Stop</span><span class="pt-sub" id="slAtrSub">Use ATR based
             stop loss</span></span>
       </button>

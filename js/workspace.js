@@ -218,21 +218,32 @@
 
   buildCalendar();
 })();
+function applyScanFilters() {
+  const activeTags = Array.from(document.querySelectorAll('#scanFilters .filter-chip.active')).map(c => c.dataset.tag);
+  const query = (document.getElementById('scanSearch')?.value || '').trim().toLowerCase();
+  let visible = 0;
+  document.querySelectorAll('#scanTableBody tr[data-tags]').forEach(row => {
+    const tags = row.dataset.tags.split(' ');
+    const sym = (row.dataset.sym || row.querySelector('td')?.textContent || '').toLowerCase();
+    const tagMatch = activeTags.length === 0 || activeTags.some(t => tags.includes(t));
+    const searchMatch = query === '' || sym.includes(query);
+    const show = tagMatch && searchMatch;
+    row.classList.toggle('hide-row', !show);
+    if (show) visible++;
+  });
+  const countEl = document.getElementById('scnRowCount');
+  if (countEl) countEl.textContent = visible + ' symbol' + (visible !== 1 ? 's' : '');
+}
+
 document.querySelectorAll('#scanFilters .filter-chip').forEach(chip => {
   chip.addEventListener('click', () => {
     chip.classList.toggle('active');
-    const activeTags = Array.from(document.querySelectorAll('#scanFilters .filter-chip.active')).map(c => c.dataset.tag);
-    let visible = 0;
-    document.querySelectorAll('#scanTableBody tr[data-tags]').forEach(row => {
-      const tags = row.dataset.tags.split(' ');
-      const show = activeTags.length === 0 || activeTags.some(t => tags.includes(t));
-      row.classList.toggle('hide-row', !show);
-      if (show) visible++;
-    });
-    const countEl = document.getElementById('scnRowCount');
-    if (countEl) countEl.textContent = visible + ' symbol' + (visible !== 1 ? 's' : '');
+    applyScanFilters();
   });
 });
+
+const scanSearchEl = document.getElementById('scanSearch');
+if (scanSearchEl) scanSearchEl.addEventListener('input', applyScanFilters);
 document.querySelectorAll('#bpTabs .bp-tab').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#bpTabs .bp-tab').forEach(b => b.classList.remove('active'));
@@ -251,3 +262,112 @@ document.querySelectorAll('.toggle-pill').forEach(btn => {
 const replayToggle = document.getElementById('replayToggle');
 if (replayToggle) replayToggle.addEventListener('click', () => replayToggle.classList.toggle('active'));
 
+
+/* ---- Broker connections ---- */
+
+/* Set Active — event delegation so dynamically-replaced buttons always work */
+document.querySelector('.bc-broker-list')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.bc-set-active-btn');
+  if (!btn) return;
+  const targetRow = btn.closest('.bc-broker-row');
+  document.querySelectorAll('.bc-broker-row').forEach(row => {
+    const isTarget = row === targetRow;
+    row.classList.toggle('bc-row-active', isTarget);
+    const cell = row.querySelector('.bc-active-cell');
+    cell.innerHTML = isTarget
+      ? '<span class="bc-active-badge">Active</span>'
+      : '<button class="bc-set-active-btn">Set Active</button>';
+  });
+});
+
+/* Overflow menu */
+const bcOverflowMenu = document.getElementById('bcOverflowMenu');
+if (bcOverflowMenu) {
+  document.querySelectorAll('.bc-overflow-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.openNear(bcOverflowMenu, btn.getBoundingClientRect(), 'right', btn);
+    });
+  });
+
+  /* Permission checkboxes */
+  bcOverflowMenu.querySelectorAll('.pop-item.checklist').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      item.classList.toggle('checked');
+    });
+  });
+}
+
+/* ---- Market Data pane tabs ---- */
+document.getElementById('mdTabs')?.addEventListener('click', (e) => {
+  const tab = e.target.closest('.md-tab');
+  if (!tab) return;
+  document.querySelectorAll('.md-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.md-pane').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('mdPane-' + tab.dataset.mdTab)?.classList.add('active');
+});
+
+/* ---- Quick Trade settings pane ---- */
+(function () {
+  const amountTypeSelect = document.getElementById('qtsAmountType');
+  const sizeSlider = document.getElementById('qtsSizeSlider');
+  const sliderTicks = document.getElementById('qtsSliderTicks');
+  const sliderHelper = document.getElementById('qtsSliderHelper');
+  const defaultQtyInput = document.getElementById('qtsDefaultQty');
+
+  const sliderModes = {
+    quantity: {
+      min: 1, max: 50, value: 1, step: 1,
+      ticks: ['1', '5', '10', '25', '50'],
+      helper: 'Drag to set a default quantity. Updates the field above.',
+      format: v => v
+    },
+    percent: {
+      min: 0, max: 100, value: 25, step: 1,
+      ticks: ['0%', '25%', '50%', '75%', '100%'],
+      helper: 'Controls position size as a % of available buying power.',
+      format: v => v + '%'
+    },
+    usd: {
+      min: 0, max: 10000, value: 500, step: 50,
+      ticks: ['$0', '$2,500', '$5,000', '$7,500', '$10,000'],
+      helper: 'Controls position size as a fixed USD amount.',
+      format: v => '$' + Number(v).toLocaleString()
+    }
+  };
+
+  function applySliderMode(mode) {
+    const cfg = sliderModes[mode] || sliderModes.quantity;
+    if (!sizeSlider) return;
+    sizeSlider.min = cfg.min;
+    sizeSlider.max = cfg.max;
+    sizeSlider.step = cfg.step;
+    sizeSlider.value = cfg.value;
+    if (sliderTicks) sliderTicks.innerHTML = cfg.ticks.map(t => `<span>${t}</span>`).join('');
+    if (sliderHelper) sliderHelper.textContent = cfg.helper;
+    if (defaultQtyInput) defaultQtyInput.value = cfg.value;
+  }
+
+  if (amountTypeSelect) {
+    amountTypeSelect.addEventListener('change', () => applySliderMode(amountTypeSelect.value));
+  }
+
+  if (sizeSlider && defaultQtyInput) {
+    sizeSlider.addEventListener('input', () => {
+      defaultQtyInput.value = sizeSlider.value;
+    });
+  }
+
+  /* Preset buttons — clicking sets active and updates the quantity input */
+  document.querySelectorAll('.qt-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.qt-preset-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (btn.dataset.qty !== 'max' && defaultQtyInput) {
+        defaultQtyInput.value = btn.dataset.qty;
+      }
+    });
+  });
+})();

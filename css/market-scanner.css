@@ -55,7 +55,7 @@
   display: flex;
   border-bottom: 1px solid var(--line-1);
   flex-shrink: 0;
-  background: var(--ink-900);
+  background: var(--ink-850);
 }
 
 .ms-metrics {
@@ -340,6 +340,43 @@
   white-space: nowrap;
   flex-shrink: 0;
   margin-right: 4px;
+}
+
+.ms-search-wrap {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.ms-search-icon {
+  position: absolute;
+  left: 8px;
+  font-size: 14px;
+  color: var(--paper-500);
+  pointer-events: none;
+  user-select: none;
+}
+
+.ms-search-input {
+  width: 160px;
+  height: 30px;
+  background: var(--ink-800);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  color: var(--paper-100);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 0 10px 0 28px;
+  outline: none;
+}
+
+.ms-search-input::placeholder {
+  color: var(--paper-500);
+}
+
+.ms-search-input:focus {
+  border-color: var(--line-3);
 }
 
 .ms-filter-chips {
