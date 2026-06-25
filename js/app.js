@@ -281,8 +281,16 @@
         sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
       }
     }
+    const currentPrice = (() => {
+      const el = document.getElementById('hdrLast');
+      return el ? parseFloat(el.textContent.replace(/,/g, '')) : BASE_PRICE;
+    })();
+    const fillAbove = entry > currentPrice;
+    const orderType = side === 'buy'
+      ? (fillAbove ? 'Stop Market' : 'Limit')
+      : (fillAbove ? 'Limit' : 'Stop Market');
     order = {
-      side, entry, qty: parseInt(qtyInput.value || '1'), orderType: 'Limit',
+      side, entry, qty: parseInt(qtyInput.value || '1'), orderType, fillAbove,
       sizeMode: 'contracts', filled: false,
       sizeValues: { dollar: 5000, percent: 25, risk: 500 },
       tps, sl, tpsHitCount: 0,
@@ -419,8 +427,10 @@
     const { qty } = qtComputeAmount();
     const prevVal = qtyInput.value;
     qtyInput.value = Math.max(1, Math.round(qty));
+    const tab = qtActiveTab();
     createOrder(side, price);
-    if (qtActiveTab() === 'market') confirmOrderFill();
+    if (order && tab === 'limit') order.orderType = 'Limit';
+    if (tab === 'market') confirmOrderFill();
     qtyInput.value = prevVal;
   }
   function qtActiveTab() {
@@ -1363,7 +1373,7 @@
       checkTpFills(prevLast, last);
       if (order && order.filled) checkSlHit(last);
       if (order && !order.filled) {
-        const hitEntry = order.side === 'buy' ? last <= order.entry : last >= order.entry;
+        const hitEntry = order.fillAbove ? last >= order.entry : last <= order.entry;
         if (hitEntry) confirmOrderFill();
       }
       simTickCounter++;
@@ -2156,6 +2166,23 @@
     chartSettings = cloneCsDefaults();
     populateChartSettingsForm();
     showToast('Reset to defaults', 'restart_alt');
+  });
+
+  /* ---------- layout picker (topbar) ---------- */
+  const layoutPickerTrigger = document.getElementById('layoutPickerTrigger');
+  const layoutPickerMenu = document.getElementById('layoutPickerMenu');
+  layoutPickerTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openNear(layoutPickerMenu, layoutPickerTrigger.getBoundingClientRect(), 'left', layoutPickerTrigger);
+  });
+  layoutPickerMenu.querySelectorAll('.layout-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      layoutPickerMenu.querySelectorAll('.layout-option').forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      closeAllPopovers();
+      showToast(opt.dataset.layout + ' layout selected', 'space_dashboard');
+    });
   });
 
   /* ---------- candle type dropdown (topbar) ---------- */
