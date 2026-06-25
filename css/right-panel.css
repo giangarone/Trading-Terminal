@@ -160,8 +160,8 @@
 
 .bs-btn {
   flex: 1;
-  border-radius: 9px;
-  padding: 13px 8px;
+  border-radius: 8px;
+  padding: 12px 8px;
   text-align: center;
   border: none;
 }
@@ -179,23 +179,21 @@
 }
 
 .bs-btn.buy {
-  background: rgba(43, 212, 126, .12);
-  border: 1px solid var(--long);
-  color: var(--long);
+  background: var(--long);
+  color: #0b1a12;
 }
 
 .bs-btn.buy:hover {
-  background: rgba(43, 212, 126, .20);
+  filter: brightness(1.1);
 }
 
 .bs-btn.sell {
-  background: rgba(242, 73, 92, .12);
-  border: 1px solid var(--short);
-  color: var(--short);
+  background: var(--short);
+  color: #1c0608;
 }
 
 .bs-btn.sell:hover {
-  background: rgba(242, 73, 92, .20);
+  filter: brightness(1.1);
 }
 
 .join-row {
