@@ -220,8 +220,8 @@
     const below = pendingClickPrice < currentPrice;
     const priceStr = fmt(pendingClickPrice);
     const qtyStr = qty.toFixed(2);
-    ctxLongLbl.textContent = 'Buy ' + qtyStr + ' ETH @ ' + priceStr + ' ' + (below ? 'limit' : 'stop');
-    ctxShortLbl.textContent = 'Sell ' + qtyStr + ' ETH @ ' + priceStr + ' ' + (below ? 'stop' : 'limit');
+    ctxLongLbl.textContent = 'Buy ' + qtyStr + ' ETH @ ' + priceStr;
+    ctxShortLbl.textContent = 'Sell ' + qtyStr + ' ETH @ ' + priceStr;
     openAt(ctxMenu, e.clientX, e.clientY);
   });
   document.getElementById('ctxLong').addEventListener('click', () => { createOrder('buy', pendingClickPrice); closeAllPopovers(); });
@@ -1080,14 +1080,18 @@
     const ts = Date.now() - idxFromEnd * BAR_INTERVAL_MIN * 60000;
     return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
-  function drawPriceChart() {
-    if (!priceCanvas) return;
-    const rect = chart.getBoundingClientRect();
+  let secondaryPanes = []; // [{canvas, container}] — live panes other than the primary
+
+  function drawPriceChart(secCanvas, secRect) {
+    const targetCanvas = secCanvas || priceCanvas;
+    if (!targetCanvas) return;
+    const rect = secRect || chart.getBoundingClientRect();
+    const isPrimary = !secCanvas;
     const dpr = window.devicePixelRatio || 1;
     const w = rect.width, h = rect.height;
     if (w <= 0 || h <= 0) return;
-    priceCanvas.width = w * dpr; priceCanvas.height = h * dpr;
-    const ctx = priceCanvas.getContext('2d');
+    targetCanvas.width = w * dpr; targetCanvas.height = h * dpr;
+    const ctx = targetCanvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
@@ -1150,7 +1154,7 @@
       if (x < 0 || x > plotW) continue;
       ctx.fillText(fmtBarTime((VISIBLE_BARS - 1) - vi), x, ih + 7);
     }
-    renderNewsMarkers(slot, baseIndexOffset, panX, plotW, ih, n);
+    if (isPrimary) renderNewsMarkers(slot, baseIndexOffset, panX, plotW, ih, n);
 
     /* ---- axis divider lines ---- */
     ctx.strokeStyle = axisLineColor;
@@ -1198,14 +1202,14 @@
       ctx.textBaseline = 'middle';
       ctx.fillText(fmt(price), plotW + 8, y + 0.5);
     }
-    if (order) {
+    if (isPrimary && order) {
       order.tps.forEach(tp => drawOrderAxisTagOutline(tp.price, '#2bd47e', hoveredHandle === 'tp:' + tp.id));
       if (order.sl) drawOrderAxisTagOutline(order.sl.price, '#f2495c', hoveredHandle === 'sl');
       drawOrderAxisTagOutline(order.entry, order.side === 'buy' ? '#2bd47e' : '#f2495c', hoveredHandle === 'entry');
     }
 
     /* ---- crosshair: dotted guide lines + axis labels at cursor ---- */
-    if (crosshair) {
+    if (isPrimary && crosshair) {
       const cx = clamp(crosshair.x, 0, plotW);
       const cy = clamp(crosshair.y, 0, ih);
       ctx.save();
@@ -1247,7 +1251,13 @@
   let chartResizeRaf = null;
   function scheduleDrawPriceChart() {
     if (chartResizeRaf) return;
-    chartResizeRaf = requestAnimationFrame(() => { chartResizeRaf = null; drawPriceChart(); });
+    chartResizeRaf = requestAnimationFrame(() => {
+      chartResizeRaf = null;
+      drawPriceChart();
+      secondaryPanes.forEach(({ canvas, container }) => {
+        drawPriceChart(canvas, container.getBoundingClientRect());
+      });
+    });
   }
   new ResizeObserver(scheduleDrawPriceChart).observe(chart);
   window.addEventListener('resize', scheduleDrawPriceChart);
@@ -2169,6 +2179,46 @@
   });
 
   /* ---------- layout picker (topbar) ---------- */
+  const chartPaneArea = document.getElementById('chartPaneArea');
+
+  const LAYOUT_CSS = {
+    'Single':     '',
+    '2 Columns':  'layout-2col',
+    '2 Rows':     'layout-2row',
+    '4 Grid':     'layout-4grid',
+    'Large + 2':  'layout-large2',
+    '2 + Large':  'layout-2large',
+    '3 Columns':  'layout-3col',
+    'Top + 2':    'layout-top2',
+    '2 + Bottom': 'layout-2bottom',
+  };
+  const LAYOUT_PANES = {
+    'Single': 1, '2 Columns': 2, '2 Rows': 2, '4 Grid': 4,
+    'Large + 2': 3, '2 + Large': 3, '3 Columns': 3,
+    'Top + 2': 3, '2 + Bottom': 3,
+  };
+
+  function applyLayout(name) {
+    chartPaneArea.querySelectorAll('.chart-pane.secondary').forEach(p => p.remove());
+    secondaryPanes = [];
+    chartPaneArea.className = 'chart-pane-area' + (LAYOUT_CSS[name] ? ' ' + LAYOUT_CSS[name] : '');
+    const paneCount = LAYOUT_PANES[name] || 1;
+    for (let i = 1; i < paneCount; i++) {
+      const pane = document.createElement('div');
+      pane.className = 'chart-pane secondary';
+      const canvas = document.createElement('canvas');
+      const label = document.createElement('div');
+      label.className = 'chart-pane-label';
+      label.textContent = 'ETHUSD · 15m';
+      pane.appendChild(canvas);
+      pane.appendChild(label);
+      chartPaneArea.appendChild(pane);
+      secondaryPanes.push({ canvas, container: pane });
+      new ResizeObserver(scheduleDrawPriceChart).observe(pane);
+    }
+    scheduleDrawPriceChart();
+  }
+
   const layoutPickerTrigger = document.getElementById('layoutPickerTrigger');
   const layoutPickerMenu = document.getElementById('layoutPickerMenu');
   layoutPickerTrigger.addEventListener('click', (e) => {
@@ -2180,8 +2230,8 @@
       e.stopPropagation();
       layoutPickerMenu.querySelectorAll('.layout-option').forEach(o => o.classList.remove('active'));
       opt.classList.add('active');
+      applyLayout(opt.dataset.layout);
       closeAllPopovers();
-      showToast(opt.dataset.layout + ' layout selected', 'space_dashboard');
     });
   });
 
