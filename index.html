@@ -466,14 +466,16 @@
                       <div class="cs-field">
                         <label>Bullish Color</label>
                         <div class="select-input pop-trigger" id="csBullColorTrigger"><span class="cs-color-swatch"
-                            id="csBullColorSwatch" style="background:var(--long);"></span><span
-                            class="material-symbols-outlined">expand_more</span></div>
+                            id="csBullColorSwatch" style="background:var(--long);"></span><span class="cs-color-name"
+                            id="csBullColorName">Green</span><span class="material-symbols-outlined">expand_more</span>
+                        </div>
                       </div>
                       <div class="cs-field">
                         <label>Bearish Color</label>
                         <div class="select-input pop-trigger" id="csBearColorTrigger"><span class="cs-color-swatch"
-                            id="csBearColorSwatch" style="background:var(--short);"></span><span
-                            class="material-symbols-outlined">expand_more</span></div>
+                            id="csBearColorSwatch" style="background:var(--short);"></span><span class="cs-color-name"
+                            id="csBearColorName">Red</span><span class="material-symbols-outlined">expand_more</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1010,7 +1012,15 @@
                     </div>
                     <div class="cs-field">
                       <label>Default Quantity</label>
-                      <input type="number" id="qtsDefaultQty" class="cs-num-input" value="1" min="0.001" step="1">
+                      <div class="price-stepper cs-price-stepper">
+                        <input type="text" id="qtsDefaultQty" value="1" data-step="1">
+                        <div class="price-stepper-arrows">
+                          <button type="button" class="ps-up" data-target="qtsDefaultQty"><span
+                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                          <button type="button" class="ps-down" data-target="qtsDefaultQty"><span
+                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3006,7 +3016,7 @@
       <label class="sm-amount-lbl">Quantity</label>
       <div class="sm-stepper">
         <button id="smQtyDec">−</button>
-        <input type="text" id="smQtyInput" readonly value="1">
+        <input type="text" id="smQtyInput" value="1">
         <button id="smQtyInc">+</button>
       </div>
       <label class="sm-amount-lbl">Quick Select</label>
@@ -3019,7 +3029,7 @@
       <label class="sm-amount-lbl">Dollar Amount</label>
       <div class="sm-stepper">
         <button id="smDolDec">−</button>
-        <input type="text" id="smDolInput" readonly value="$5,000">
+        <input type="text" id="smDolInput" value="$5,000">
         <button id="smDolInc">+</button>
       </div>
       <div class="sm-divider"></div>
@@ -3056,8 +3066,7 @@
     <div class="modal-radio-group" id="exitModeGroup">
       <label class="modal-radio-row checked" data-exitmode="percent"><span class="sm-radio checked"></span>% of
         Position</label>
-      <label class="modal-radio-row" data-exitmode="contracts"><span class="sm-radio"></span>Exact Contracts
-        (ETH)</label>
+      <label class="modal-radio-row" data-exitmode="contracts"><span class="sm-radio"></span>Contracts</label>
       <label class="modal-radio-row" data-exitmode="dollar"><span class="sm-radio"></span>Dollar Amount (USD)</label>
     </div>
 
@@ -3071,22 +3080,18 @@
       <label class="sm-amount-lbl">Quantity</label>
       <div class="sm-stepper">
         <button id="exitQtyDec">−</button>
-        <input type="text" id="exitQtyInput" readonly value="0">
+        <input type="text" id="exitQtyInput" value="0">
         <button id="exitQtyInc">+</button>
       </div>
-      <label class="sm-amount-lbl">Quick Select</label>
-      <div class="sm-quick" id="exitQtyQuick"></div>
     </div>
 
     <div class="sm-body" data-exitbody="dollar">
       <label class="sm-amount-lbl">Dollar Amount</label>
       <div class="sm-stepper">
         <button id="exitDolDec">−</button>
-        <input type="text" id="exitDolInput" readonly value="$0">
+        <input type="text" id="exitDolInput" value="$0">
         <button id="exitDolInc">+</button>
       </div>
-      <label class="sm-amount-lbl">Quick Select</label>
-      <div class="sm-quick" id="exitDolQuick"></div>
     </div>
 
     <div class="modal-summary">

@@ -952,6 +952,21 @@ table.ms-scan-table tr[data-tags].hide-row {
   text-decoration-color: currentColor;
 }
 
+.ol-chip.sl .ol-amt {
+  cursor: default;
+  pointer-events: none;
+  text-decoration: none;
+}
+
+.ol-pill.combo.locked .ol-pill-seg {
+  cursor: default;
+  pointer-events: none;
+}
+
+.ol-pill.combo.locked:hover {
+  border-color: var(--line-2);
+}
+
 .ol-rmult {
   font-size: 10px;
   color: var(--paper-100);

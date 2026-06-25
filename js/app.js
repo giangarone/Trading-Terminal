@@ -83,6 +83,18 @@
   let crosshair = null; // {x,y} in CSS px relative to chart, within plot bounds, or null when not hovering
   let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | 'tp-add' | 'sl-add' | null — which order-line handle is currently hovered
   let isDraggingOrderLine = false; // true for the duration of any order-line drag — blocks the price-tick auto-render from wiping live drag visuals
+  let isHoveringBarControls = false; // true when pointer is over a non-drag interactive element inside an entry/TP/SL bar — suppresses the chart crosshair
+  layer.addEventListener('mouseover', (e) => {
+    if (e.target.closest('.ol-pill-seg, .ol-gear, .ol-amt, .ol-pct-chip, .ol-entry-pnl')) {
+      isHoveringBarControls = true;
+      if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
+    }
+  });
+  layer.addEventListener('mouseout', (e) => {
+    if (!e.relatedTarget || !e.relatedTarget.closest('.ol-pill-seg, .ol-gear, .ol-amt, .ol-pct-chip, .ol-entry-pnl')) {
+      isHoveringBarControls = false;
+    }
+  });
   function priceToY(price, h) { const ih = h - AXIS_BOTTOM_H; return ih / 2 - (price - BASE_PRICE - panY) * PX_PER_POINT; }
   function yToPrice(y, h) { const ih = h - AXIS_BOTTOM_H; return BASE_PRICE + panY - (y - ih / 2) / PX_PER_POINT; }
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
@@ -357,11 +369,16 @@
       const input = document.getElementById(btn.dataset.target);
       if (!input || input.disabled) return;
       const isSlippage = QT_SLIPPAGE_IDS.includes(input.id);
-      const step = input.id === 'qtTrailDelta' ? 0.1 : isSlippage ? 0.05 : 0.25;
+      const dataStep = input.dataset.step ? parseFloat(input.dataset.step) : null;
+      const step = dataStep !== null ? dataStep : input.id === 'qtTrailDelta' ? 0.1 : isSlippage ? 0.05 : 0.25;
       const min = isSlippage ? 0.1 : 0;
       const cur = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
       const next = btn.classList.contains('ps-up') ? cur + step : Math.max(min, cur - step);
-      input.value = input.id === 'qtTrailDelta' ? next.toFixed(1) : isSlippage ? next.toFixed(2) : fmt(next);
+      if (dataStep !== null) {
+        input.value = Number.isInteger(step) ? String(Math.round(next)) : next.toFixed(2);
+      } else {
+        input.value = input.id === 'qtTrailDelta' ? next.toFixed(1) : isSlippage ? next.toFixed(2) : fmt(next);
+      }
     });
   });
 
@@ -606,6 +623,10 @@
     });
     order.tpsHitCount = (order.tpsHitCount || 0) + hitTps.length;
     order.tps = order.tps.filter(tp => !hitTps.includes(tp));
+    if (order.tps.length === 0) {
+      showToast('All targets hit — position fully closed', 'check_circle');
+      order = null;
+    }
     render();
   }
   /* ---------- shared trigger-condition resolver for breakeven / trailing-stop / trailing-TP ---------- */
@@ -1251,7 +1272,7 @@
     const rect = chart.getBoundingClientRect();
     const x = e.clientX - rect.left, y = e.clientY - rect.top;
     const plotW = rect.width - AXIS_RIGHT_W, ih = rect.height - AXIS_BOTTOM_H;
-    if (isPanning || hoveringNewsMarker || hoveredHandle || x < 0 || x > plotW || y < 0 || y > ih) {
+    if (isPanning || hoveringNewsMarker || hoveredHandle || isHoveringBarControls || x < 0 || x > plotW || y < 0 || y > ih) {
       if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
       return;
     }
@@ -1371,6 +1392,7 @@
   function render() {
     renderOpenOrders();
     renderOrderHistory();
+    isHoveringBarControls = false;
     layer.innerHTML = '';
     const H0 = rectH();
     alerts.forEach(a => {
@@ -1560,7 +1582,7 @@
       const sizeLabel = order.sizeMode === 'contracts' ? String(order.qty)
         : order.sizeMode === 'dollar' ? '$' + fmt(order.sizeValues.dollar, 0)
           : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
-            : '$' + fmt(order.sizeValues.risk, 0) + ' risk';
+            : String(order.qty);
 
       if (!order.filled) {
         bar.innerHTML =
@@ -1580,8 +1602,8 @@
         bar.innerHTML =
           '<span class="ol-chip entry locked ' + side + '" id="entryPriceHandle">' + sideLabel + pnlHtml + '</span>' +
           tpAddHandleHtml + slAddHandleHtml +
-          '<span class="ol-pill neutral combo" id="orderConfigPill">' +
-          '<span class="ol-pill-seg" id="sizePillTrigger">' + order.qty + ' ' + QT_INSTRUMENT_UNIT + '</span>' +
+          '<span class="ol-pill neutral combo locked" id="orderConfigPill">' +
+          '<span class="ol-pill-seg" id="sizePillTrigger">' + order.qty + '</span>' +
           '<span class="ol-pill-divider"></span>' +
           '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
           '</span>' +
@@ -1608,12 +1630,14 @@
         }
       }
 
-      bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
-        e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-      });
-      bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
-        e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-      });
+      if (!order.filled) {
+        bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
+          e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+        bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
+          e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+      }
       bar.querySelector('#cancelOrderBtn').addEventListener('click', (e) => { e.stopPropagation(); cancelOrder(); });
     }
 
@@ -1906,6 +1930,7 @@
     const trigger = document.getElementById(triggerId);
     const menu = document.getElementById(menuId);
     const swatch = document.getElementById(swatchId);
+    const nameEl = trigger ? trigger.querySelector('.cs-color-name') : null;
     if (!trigger || !menu || !swatch) return;
     trigger.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1916,6 +1941,7 @@
         menu.querySelectorAll('.pop-item').forEach(i => i.classList.remove('selected'));
         item.classList.add('selected');
         swatch.style.background = item.dataset.color;
+        if (nameEl) nameEl.textContent = item.querySelector('.pt-title')?.textContent || '';
         closeAllPopovers();
       });
     });
@@ -2839,6 +2865,14 @@
   const smQtyInput = document.getElementById('smQtyInput');
   document.getElementById('smQtyDec').addEventListener('click', () => { order.qty = Math.max(1, order.qty - 1); smQtyInput.value = order.qty; render(); });
   document.getElementById('smQtyInc').addEventListener('click', () => { order.qty = order.qty + 1; smQtyInput.value = order.qty; render(); });
+  smQtyInput.addEventListener('click', (e) => e.stopPropagation());
+  smQtyInput.addEventListener('change', (e) => {
+    e.stopPropagation();
+    const v = parseInt((e.target.value || '').replace(/[^0-9]/g, '')) || 1;
+    order.qty = Math.max(1, v);
+    smQtyInput.value = order.qty;
+    render();
+  });
   document.getElementById('smQtyQuick').querySelectorAll('button').forEach(b => {
     b.addEventListener('click', () => { order.qty = parseInt(b.textContent); smQtyInput.value = order.qty; render(); });
   });
@@ -2848,6 +2882,12 @@
   function setDollar(v) { order.sizeValues.dollar = Math.max(500, v); refreshSizeBodies(); render(); }
   document.getElementById('smDolDec').addEventListener('click', () => setDollar(order.sizeValues.dollar - 500));
   document.getElementById('smDolInc').addEventListener('click', () => setDollar(order.sizeValues.dollar + 500));
+  smDolInput.addEventListener('click', (e) => e.stopPropagation());
+  smDolInput.addEventListener('change', (e) => {
+    e.stopPropagation();
+    const v = parseFloat((e.target.value || '').replace(/[$,]/g, '')) || 500;
+    setDollar(v);
+  });
 
   // percent mode
   const smPctSlider = document.getElementById('smPctSlider');
@@ -2956,9 +2996,7 @@
   const exitPctDisplay = document.getElementById('exitPctDisplay');
   const exitBodies = editBackdrop.querySelectorAll('.sm-body');
   const exitQtyInput = document.getElementById('exitQtyInput');
-  const exitQtyQuick = document.getElementById('exitQtyQuick');
   const exitDolInput = document.getElementById('exitDolInput');
-  const exitDolQuick = document.getElementById('exitDolQuick');
 
   function exitMarkPrice() {
     const el = document.getElementById('hdrLast');
@@ -2974,26 +3012,11 @@
     return pv > 0 ? clamp(Math.round(dollar / pv * 100), 0, 100) : 0;
   }
 
-  function buildExitQuickButtons(container, mode) {
-    container.innerHTML = '';
-    [25, 55, 75, 100].forEach(p => {
-      const btn = document.createElement('button');
-      btn.dataset.pct = p;
-      btn.textContent = mode === 'contracts' ? exitPctToQty(p) + ' ETH' : '$' + exitPctToDollar(p).toLocaleString();
-      btn.addEventListener('click', () => {
-        exitModal.pct = p;
-        syncExitModeInputs();
-        refreshExitSummary();
-      });
-      container.appendChild(btn);
-    });
-  }
-
-  function syncExitModeInputs() {
+function syncExitModeInputs() {
     if (!exitModal) return;
     exitPctSlider.value = exitModal.pct;
     exitPctDisplay.textContent = exitModal.pct + '%';
-    exitQtyInput.value = exitPctToQty(exitModal.pct);
+    exitQtyInput.value = exitPctToQty(exitModal.pct).toFixed(2);
     exitDolInput.value = '$' + exitPctToDollar(exitModal.pct).toLocaleString();
   }
 
@@ -3004,14 +3027,16 @@
       r.querySelector('.sm-radio').classList.toggle('checked', r.dataset.exitmode === mode);
     });
     exitBodies.forEach(b => b.classList.toggle('active', b.dataset.exitbody === mode));
-    buildExitQuickButtons(exitQtyQuick, 'contracts');
-    buildExitQuickButtons(exitDolQuick, 'dollar');
     syncExitModeInputs();
   }
 
   function openEditExitModal(tpId, anchorRect, trigger) {
     const tp = order.tps.find(t => t.id === tpId);
     if (!tp) return;
+    if (exitModal && exitModal.tpId === tpId && editBackdrop.classList.contains('show')) {
+      closeEditExitModal();
+      return;
+    }
     const idx = order.tps.indexOf(tp);
     exitModal = { tpId, mode: 'percent', pct: tp.pct };
     document.getElementById('exitModalTpName').textContent = 'TP' + (idx + 1);
@@ -3029,9 +3054,9 @@
     const remaining = order.qty - contracts;
     const totalOther = order.tps.filter(t => t.id !== exitModal.tpId).reduce((s, t) => s + t.pct, 0);
     const total = totalOther + pct;
-    document.getElementById('exitCurrent').textContent = pct + '% (' + contracts + ' ETH)';
-    document.getElementById('exitThis').textContent = contracts + ' ETH';
-    document.getElementById('exitRemaining').textContent = remaining + ' ETH (' + (100 - pct) + '%)';
+    document.getElementById('exitCurrent').textContent = pct + '% (' + contracts.toFixed(2) + ' ETH)';
+    document.getElementById('exitThis').textContent = contracts.toFixed(2) + ' ETH';
+    document.getElementById('exitRemaining').textContent = remaining.toFixed(2) + ' ETH (' + (100 - pct) + '%)';
     const totalEl = document.getElementById('exitTotal');
     if (total === 100) {
       totalEl.innerHTML = total + '% <span class="material-symbols-outlined">check_circle</span>';
@@ -3047,7 +3072,7 @@
   exitPctSlider.addEventListener('input', () => {
     exitModal.pct = parseInt(exitPctSlider.value);
     exitPctDisplay.textContent = exitModal.pct + '%';
-    exitQtyInput.value = exitPctToQty(exitModal.pct);
+    exitQtyInput.value = exitPctToQty(exitModal.pct).toFixed(2);
     exitDolInput.value = '$' + exitPctToDollar(exitModal.pct).toLocaleString();
     refreshExitSummary();
   });
@@ -3069,6 +3094,22 @@
     const dollar = Math.min(exitPositionValue(), exitPctToDollar(exitModal.pct) + exitDolStep);
     exitModal.pct = exitDollarToPct(dollar);
     syncExitModeInputs(); refreshExitSummary();
+  });
+  exitQtyInput.addEventListener('click', (e) => e.stopPropagation());
+  exitQtyInput.addEventListener('change', (e) => {
+    e.stopPropagation();
+    const qty = parseFloat(e.target.value) || 0;
+    exitModal.pct = exitQtyToPct(qty);
+    syncExitModeInputs();
+    refreshExitSummary();
+  });
+  exitDolInput.addEventListener('click', (e) => e.stopPropagation());
+  exitDolInput.addEventListener('change', (e) => {
+    e.stopPropagation();
+    const dollar = parseFloat((e.target.value || '').replace(/[$,]/g, '')) || 0;
+    exitModal.pct = exitDollarToPct(dollar);
+    syncExitModeInputs();
+    refreshExitSummary();
   });
   document.getElementById('exitModalClose').addEventListener('click', closeEditExitModal);
   document.getElementById('exitCancel').addEventListener('click', closeEditExitModal);
