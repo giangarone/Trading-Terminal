@@ -332,24 +332,6 @@
   white-space: nowrap;
 }
 
-.cs-num-input {
-  width: 100%;
-  height: var(--h-input);
-  background: var(--ink-800);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-sm);
-  padding: 0 10px;
-  font-family: var(--sans);
-  font-size: var(--fs-data);
-  font-weight: var(--fw-semi);
-  color: var(--paper-100);
-}
-
-.cs-num-input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
 .cs-helper {
   font-size: 10.5px;
   color: var(--paper-500);

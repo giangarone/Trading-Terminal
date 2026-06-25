@@ -766,7 +766,13 @@
                       </div>
                       <div class="cs-field" id="csBeCustomRWrap" style="display:none;">
                         <label>Custom R Multiple</label>
-                        <input type="number" class="cs-num-input" id="csBeCustomRValue" step="0.1" min="0.1" value="1">
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="csBeCustomRValue" value="1" data-step="0.1">
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="csBeCustomRValue"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="csBeCustomRValue"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
                       </div>
                       <div class="cs-field">
                         <label>Breakeven Offset</label>
@@ -845,8 +851,13 @@
                       </div>
                       <div class="cs-field" id="csTsStartCustomRWrap" style="display:none;">
                         <label>Custom R Multiple</label>
-                        <input type="number" class="cs-num-input" id="csTsStartCustomRValue" step="0.1" min="0.1"
-                          value="1">
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="csTsStartCustomRValue" value="1" data-step="0.1">
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="csTsStartCustomRValue"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="csTsStartCustomRValue"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
                       </div>
                       <div class="cs-field">
                         <label>Minimum Trail Step</label>
@@ -951,8 +962,13 @@
                       </div>
                       <div class="cs-field" id="csTtpActivationCustomRWrap" style="display:none;">
                         <label>Custom R Multiple</label>
-                        <input type="number" class="cs-num-input" id="csTtpActivationCustomRValue" step="0.1" min="0.1"
-                          value="1">
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="csTtpActivationCustomRValue" value="1" data-step="0.1">
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="csTtpActivationCustomRValue"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="csTtpActivationCustomRValue"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
                       </div>
                       <div class="cs-field">
                         <label>Method</label>
@@ -1040,7 +1056,7 @@
                           <span class="material-symbols-outlined">expand_more</span>
                         </div>
                         <select id="csTpslAppliesto" style="display:none;">
-                          <option value="both" selected>Both / All</option>
+                          <option value="both" selected>All</option>
                           <option value="quicktrade">Quick Trade</option>
                           <option value="chart">Chart Execution</option>
                         </select>
