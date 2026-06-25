@@ -69,7 +69,7 @@
           <button class="ct-action-btn pop-trigger" id="marketScannerTrigger"><span class="material-symbols-outlined"
               style="font-size:15px;">radar</span>Market Scanner</button>
           <button class="ct-action-btn" id="newsToggle"><span class="material-symbols-outlined"
-              style="font-size:15px;">article</span>News Overlay</button>
+              style="font-size:15px;">article</span>News</button>
         </div>
 
         <div class="tb-stats" style="display:none;" aria-hidden="true">
@@ -96,6 +96,9 @@
         </div>
 
         <div class="tb-right">
+          <button class="ct-icon pop-trigger" id="layoutPickerTrigger" title="Chart Layout">
+            <span class="material-symbols-outlined">space_dashboard</span>
+          </button>
           <div class="tb-account pop-trigger" id="templatesSelectTrigger" title="Trade Templates">
             <span class="material-symbols-outlined">bookmark</span>
             <span class="tb-account-name" id="templatesSelectName">Scalping</span>
@@ -127,6 +130,91 @@
         <span class="pop-icon"><span class="material-symbols-outlined">restart_alt</span></span>
         <span class="pop-text"><span class="pt-title">Apply Defaults</span></span>
       </button>
+    </div>
+
+    <div class="pop-menu" id="layoutPickerMenu" style="width:216px;">
+      <div class="pop-menu-label">Chart Layout</div>
+      <div class="layout-picker-grid">
+
+        <button class="layout-option active" data-layout="Single">
+          <svg viewBox="0 0 54 38" width="54" height="38">
+            <rect x="1" y="1" width="52" height="36" rx="1" />
+          </svg>
+          <span class="layout-option-label">Single</span>
+        </button>
+
+        <button class="layout-option" data-layout="2 Columns">
+          <svg viewBox="0 0 54 38" width="54" height="38">
+            <rect x="1" y="1" width="25" height="36" rx="1" />
+            <rect x="28" y="1" width="25" height="36" rx="1" />
+          </svg>
+          <span class="layout-option-label">2 Columns</span>
+        </button>
+
+        <button class="layout-option" data-layout="2 Rows">
+          <svg viewBox="0 0 54 38" width="54" height="38">
+            <rect x="1" y="1" width="52" height="17" rx="1" />
+            <rect x="1" y="20" width="52" height="17" rx="1" />
+          </svg>
+          <span class="layout-option-label">2 Rows</span>
+        </button>
+
+        <button class="layout-option" data-layout="4 Grid">
+          <svg viewBox="0 0 54 38" width="54" height="38">
+            <rect x="1" y="1" width="25" height="17" rx="1" />
+            <rect x="28" y="1" width="25" height="17" rx="1" />
+            <rect x="1" y="20" width="25" height="17" rx="1" />
+            <rect x="28" y="20" width="25" height="17" rx="1" />
+          </svg>
+          <span class="layout-option-label">4 Grid</span>
+        </button>
+
+        <button class="layout-option" data-layout="Large + 2">
+          <svg viewBox="0 0 54 38" width="54" height="38">
+            <rect x="1" y="1" width="33" height="36" rx="1" />
+            <rect x="36" y="1" width="17" height="17" rx="1" />
+            <rect x="36" y="20" width="17" height="17" rx="1" />
+          </svg>
+          <span class="layout-option-label">Large + 2</span>
+        </button>
+
+        <button class="layout-option" data-layout="2 + Large">
+          <svg viewBox="0 0 54 38" width="54" height="38">
+            <rect x="1" y="1" width="17" height="17" rx="1" />
+            <rect x="1" y="20" width="17" height="17" rx="1" />
+            <rect x="20" y="1" width="33" height="36" rx="1" />
+          </svg>
+          <span class="layout-option-label">2 + Large</span>
+        </button>
+
+        <button class="layout-option" data-layout="3 Columns">
+          <svg viewBox="0 0 54 38" width="54" height="38">
+            <rect x="1" y="1" width="15" height="36" rx="1" />
+            <rect x="19" y="1" width="16" height="36" rx="1" />
+            <rect x="38" y="1" width="15" height="36" rx="1" />
+          </svg>
+          <span class="layout-option-label">3 Columns</span>
+        </button>
+
+        <button class="layout-option" data-layout="Top + 2">
+          <svg viewBox="0 0 54 38" width="54" height="38">
+            <rect x="1" y="1" width="52" height="20" rx="1" />
+            <rect x="1" y="23" width="25" height="14" rx="1" />
+            <rect x="28" y="23" width="25" height="14" rx="1" />
+          </svg>
+          <span class="layout-option-label">Top + 2</span>
+        </button>
+
+        <button class="layout-option" data-layout="2 + Bottom">
+          <svg viewBox="0 0 54 38" width="54" height="38">
+            <rect x="1" y="1" width="25" height="14" rx="1" />
+            <rect x="28" y="1" width="25" height="14" rx="1" />
+            <rect x="1" y="17" width="52" height="20" rx="1" />
+          </svg>
+          <span class="layout-option-label">2 + Bottom</span>
+        </button>
+
+      </div>
     </div>
 
     <div class="pop-menu" id="templateNameMenu" style="width:260px; padding:14px;">

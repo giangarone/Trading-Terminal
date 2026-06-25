@@ -98,12 +98,13 @@
   justify-content: center;
   border-radius: 6px;
   color: var(--paper-300);
-  border: 1px solid transparent;
+  border: 1px solid var(--line-2);
+  background: var(--ink-850);
 }
 
 .ct-icon:hover {
   background: var(--ink-850);
-  border-color: var(--line-2);
+  border-color: var(--line-3);
   color: var(--paper-100);
 }
 
@@ -149,6 +150,59 @@
 .tb-account-caret {
   font-size: 15px;
   color: var(--paper-500);
+}
+
+/* ====== Layout picker dropdown ====== */
+.layout-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 4px 0 2px;
+}
+
+.layout-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 0 6px;
+  border-radius: 6px;
+  border: 1px solid var(--line-2);
+  cursor: pointer;
+  background: transparent;
+}
+
+.layout-option:hover {
+  background: var(--ink-800);
+  border-color: var(--line-3);
+}
+
+.layout-option.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.layout-option rect {
+  fill: rgba(233, 237, 240, 0.07);
+  stroke: rgba(233, 237, 240, 0.18);
+  stroke-width: 0.75;
+}
+
+.layout-option.active rect {
+  fill: rgba(227, 160, 57, 0.13);
+  stroke: rgba(227, 160, 57, 0.5);
+}
+
+.layout-option-label {
+  font-size: 9.5px;
+  color: var(--paper-500);
+  font-family: var(--sans);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.layout-option.active .layout-option-label {
+  color: var(--accent);
 }
 
 .account-item {
