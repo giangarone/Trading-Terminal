@@ -349,20 +349,20 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--purple);
+  background: var(--paper-300);
   cursor: pointer;
   border: 3px solid var(--ink-900);
-  box-shadow: 0 0 0 1px var(--purple-guide);
+  box-shadow: 0 0 0 1px var(--paper-300);
 }
 
 .qt-slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--purple);
+  background: var(--paper-300);
   cursor: pointer;
   border: 3px solid var(--ink-900);
-  box-shadow: 0 0 0 1px var(--purple-guide);
+  box-shadow: 0 0 0 1px var(--paper-300);
 }
 
 .qt-tick-row {

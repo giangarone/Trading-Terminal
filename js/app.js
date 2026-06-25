@@ -83,17 +83,6 @@
   let crosshair = null; // {x,y} in CSS px relative to chart, within plot bounds, or null when not hovering
   let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | 'tp-add' | 'sl-add' | null — which order-line handle is currently hovered
   let isDraggingOrderLine = false; // true for the duration of any order-line drag — blocks the price-tick auto-render from wiping live drag visuals
-  let entryGroupHovered = false; // tracks pointer-over state across re-renders so the hover-revealed entry bar doesn't flicker when a price tick rebuilds the order-line DOM mid-hover
-  let isHoveringOrderLine = false; // true while the pointer is over any order-line control (entry bar, TP/SL rows, etc.) —
-                                    // blocks the price-tick auto-render so hovered buttons/tooltips don't blink as their
-                                    // DOM nodes get destroyed and recreated underneath the still pointer every tick
-  layer.addEventListener('mouseover', (e) => {
-    if (e.target.closest('.ol-entry-bar, .ol-hover-zone, .ol-side-row')) isHoveringOrderLine = true;
-  });
-  layer.addEventListener('mouseout', (e) => {
-    const stillInside = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.ol-entry-bar, .ol-hover-zone, .ol-side-row');
-    if (!stillInside) isHoveringOrderLine = false;
-  });
   function priceToY(price, h) { const ih = h - AXIS_BOTTOM_H; return ih / 2 - (price - BASE_PRICE - panY) * PX_PER_POINT; }
   function yToPrice(y, h) { const ih = h - AXIS_BOTTOM_H; return BASE_PRICE + panY - (y - ih / 2) / PX_PER_POINT; }
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
@@ -213,13 +202,14 @@
     e.preventDefault();
     const rect = chart.getBoundingClientRect();
     pendingClickPrice = roundTick(yToPrice(e.clientY - rect.top, rect.height));
-    const qty = parseInt(qtyInput.value || '1');
+    const qty = parseFloat(qtyInput.value || '1') || 1;
     const lastEl = document.getElementById('hdrLast');
     const currentPrice = lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
     const below = pendingClickPrice < currentPrice;
     const priceStr = fmt(pendingClickPrice);
-    ctxLongLbl.textContent = 'Buy ' + qty + ' ETH @ ' + priceStr + ' ' + (below ? 'limit' : 'stop');
-    ctxShortLbl.textContent = 'Sell ' + qty + ' ETH @ ' + priceStr + ' ' + (below ? 'stop' : 'limit');
+    const qtyStr = qty.toFixed(2);
+    ctxLongLbl.textContent = 'Buy ' + qtyStr + ' ETH @ ' + priceStr + ' ' + (below ? 'limit' : 'stop');
+    ctxShortLbl.textContent = 'Sell ' + qtyStr + ' ETH @ ' + priceStr + ' ' + (below ? 'stop' : 'limit');
     openAt(ctxMenu, e.clientX, e.clientY);
   });
   document.getElementById('ctxLong').addEventListener('click', () => { createOrder('buy', pendingClickPrice); closeAllPopovers(); });
@@ -258,7 +248,7 @@
     showToast('Chart view reset', 'restart_alt');
     closeAllPopovers();
   });
-  document.getElementById('ctxSettings').addEventListener('click', () => { closeAllPopovers(); openChartSettings('trademgmt'); });
+  document.getElementById('ctxSettings').addEventListener('click', () => { closeAllPopovers(); openChartSettings('general'); });
 
   /* ---------- order lifecycle ---------- */
   function createOrder(side, entryPrice) {
@@ -281,7 +271,7 @@
     }
     order = {
       side, entry, qty: parseInt(qtyInput.value || '1'), orderType: 'Limit',
-      sizeMode: 'contracts', filled: false, editing: false,
+      sizeMode: 'contracts', filled: false,
       sizeValues: { dollar: 5000, percent: 25, risk: 500 },
       tps, sl, tpsHitCount: 0,
       initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null
@@ -413,7 +403,7 @@
     const prevVal = qtyInput.value;
     qtyInput.value = Math.max(1, Math.round(qty));
     createOrder(side, price);
-    confirmOrderFill();
+    if (qtActiveTab() === 'market') confirmOrderFill();
     qtyInput.value = prevVal;
   }
   function qtActiveTab() {
@@ -463,7 +453,7 @@
 
   function qtModeMax(mode) {
     const price = qtCurrentPrice() || 1;
-    if (mode === 'Quantity') return Math.max(1, Math.floor(QT_AVAILABLE_BALANCE / price));
+    if (mode === 'Quantity') return Math.max(0.01, QT_AVAILABLE_BALANCE / price);
     if (mode === 'USD') return QT_AVAILABLE_BALANCE;
     return 100;
   }
@@ -476,12 +466,10 @@
     return { qty: usdValue / price, usdValue };
   }
   function qtFmtQty(q) {
-    let s = q.toFixed(q >= 1 ? 2 : 4);
-    s = s.replace(/0+$/, '').replace(/\.$/, '');
-    return s === '' || s === '-' ? '0' : s;
+    return q.toFixed(2);
   }
   function qtSliderFill(pct) {
-    qtSlider.style.background = 'linear-gradient(to right, var(--purple) 0%, var(--purple) ' + pct + '%, var(--line-2) ' + pct + '%, var(--line-2) 100%)';
+    qtSlider.style.background = 'linear-gradient(to right, var(--paper-300) 0%, var(--paper-300) ' + pct + '%, var(--line-2) ' + pct + '%, var(--line-2) 100%)';
   }
   function qtSliderTickLabel(val) {
     if (qtAmountMode === 'Quantity') return qtFmtQty(val) + ' ' + QT_INSTRUMENT_UNIT;
@@ -549,7 +537,8 @@
   qtSlider.addEventListener('input', () => {
     const pct = parseInt(qtSlider.value, 10);
     const max = qtModeMax(qtAmountMode);
-    qtAmountInput.value = Math.max(0, Math.round(pct / 100 * max));
+    const raw = pct / 100 * max;
+    qtAmountInput.value = qtAmountMode === 'Quantity' ? parseFloat(raw.toFixed(2)) : Math.max(0, Math.round(raw));
     qtUpdateEstimates(false);
   });
   qtUpdateEstimates();
@@ -578,6 +567,20 @@
     order.sl = null;
     render();
   }
+  /* ---------- SL hit detection ---------- */
+  function checkSlHit(currentPrice) {
+    if (!order || !order.filled || !order.sl) return false;
+    const dir = order.side === 'buy' ? 1 : -1;
+    const hit = dir === 1 ? currentPrice <= order.sl.price : currentPrice >= order.sl.price;
+    if (!hit) return false;
+    const closingSide = order.side === 'buy' ? 'sell' : 'buy';
+    orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, status: 'filled', time: nowTimeStr() });
+    showToast('Stop loss hit at ' + fmt(order.sl.price) + ' — position closed', 'stop_circle');
+    order = null;
+    render();
+    return true;
+  }
+
   /* ---------- TP fill detection (drives "Move to Break Even" once the chosen TP is hit) ---------- */
   function checkTpFills(prevPrice, currentPrice) {
     if (!order || !order.filled || !order.tps.length) return;
@@ -1165,11 +1168,8 @@
       ctx.fillText(fmt(price), plotW + 8, y + 0.5);
     }
     if (order) {
-      const tagFullEdit = !order.filled || order.editing;
-      if (tagFullEdit) {
-        order.tps.forEach(tp => drawOrderAxisTagOutline(tp.price, '#2bd47e', hoveredHandle === 'tp:' + tp.id));
-        if (order.sl) drawOrderAxisTagOutline(order.sl.price, '#f2495c', hoveredHandle === 'sl');
-      }
+      order.tps.forEach(tp => drawOrderAxisTagOutline(tp.price, '#2bd47e', hoveredHandle === 'tp:' + tp.id));
+      if (order.sl) drawOrderAxisTagOutline(order.sl.price, '#f2495c', hoveredHandle === 'sl');
       drawOrderAxisTagOutline(order.entry, order.side === 'buy' ? '#2bd47e' : '#f2495c', hoveredHandle === 'entry');
     }
 
@@ -1340,12 +1340,17 @@
       lastBar.low = Math.min(lastBar.low, last);
       scheduleDrawPriceChart();
       checkTpFills(prevLast, last);
+      if (order && order.filled) checkSlHit(last);
+      if (order && !order.filled) {
+        const hitEntry = order.side === 'buy' ? last <= order.entry : last >= order.entry;
+        if (hitEntry) confirmOrderFill();
+      }
       simTickCounter++;
       const isNewBarTick = (simTickCounter % 10 === 0);
       applyTrailingStop(last);
       applyAtrDynamicStop(last, isNewBarTick);
       applyTrailingTp(last);
-      if (order && order.filled && !isDraggingOrderLine && !isHoveringOrderLine) render();
+      if (order && order.filled && !isDraggingOrderLine) render();
 
       let alertsChanged = false;
       alerts.forEach(a => {
@@ -1413,12 +1418,8 @@
     if (!order) { return; }
     const H = rectH();
 
-    // ---- Once filled & not in edit mode: only the entry shows (subtle line, hover reveals its bar). ----
-    // ---- TP/SL stay fully hidden until "full edit mode" is entered via the entry's settings icon.   ----
-    const fullEdit = !order.filled || order.editing;
-
-    if (fullEdit) {
-      // ---- TP lines (sorted nearest-to-entry first, so labels renumber TP1, TP2, TP3... by proximity) ----
+    // ---- TP lines (sorted nearest-to-entry first, so labels renumber TP1, TP2, TP3... by proximity) ----
+    {
       const tpSortDir = order.side === 'buy' ? 1 : -1;
       order.tps.slice().sort((a, b) => tpSortDir * (a.price - b.price)).forEach((tp, idx) => {
         const y = clamp(priceToY(tp.price, H), 10, H - 10);
@@ -1539,52 +1540,31 @@
       }
     }
 
-    // ---- Entry line + control bar ----
-    // Pending or in full-edit mode: entry renders directly, always visible, fully interactive.
-    // Filled & not editing: entry renders inside a hover group — line stays subtle, bar reveals on hover.
+    // ---- Entry line + control bar (always visible in full edit mode) ----
     {
       const y = clamp(priceToY(order.entry, H), 10, H - 10);
-      let entryHost = layer;
-      let entryGroup = null;
-      if (!fullEdit) {
-        const group = document.createElement('div');
-        group.className = 'ol-position-group' + (entryGroupHovered ? ' force-reveal' : '');
-        layer.appendChild(group);
-        const zone = document.createElement('div');
-        zone.className = 'ol-hover-zone';
-        zone.style.top = (y - 14) + 'px';
-        zone.style.height = '28px';
-        zone.addEventListener('mouseenter', () => { entryGroupHovered = true; group.classList.add('force-reveal'); });
-        zone.addEventListener('mouseleave', () => { entryGroupHovered = false; group.classList.remove('force-reveal'); });
-        group.appendChild(zone);
-        entryHost = group;
-        entryGroup = group;
-      }
 
       const line = document.createElement('div');
-      line.className = 'ol-line entry ' + order.side + (!fullEdit ? ' subtle' : '');
+      line.className = 'ol-line entry ' + order.side;
       line.style.top = y + 'px';
-      entryHost.appendChild(line);
+      layer.appendChild(line);
 
       const bar = document.createElement('div');
-      bar.className = 'ol-entry-bar' + (!fullEdit ? ' reveal' : '');
+      bar.className = 'ol-entry-bar';
       bar.style.top = y + 'px';
 
       const side = order.side;
       const sideLabel = side === 'buy' ? 'BUY' : 'SELL';
-      const confirmBtn = '<span class="ol-entry-confirm" id="entryConfirmBtn" title="Place Order"><span class="material-symbols-outlined">check</span></span>';
-      const doneBtn    = '<span class="ol-entry-confirm" id="doneEditingBtn"   title="Done Editing"><span class="material-symbols-outlined">check</span></span>';
-      const editBtn    = '<span class="ol-entry-confirm" id="entryEditTrigger" title="Edit Trade"><span class="material-symbols-outlined">edit</span></span>';
       const tpAddHandleHtml = '<span class="ol-chip ghost tp-add" id="tpAddHandle">TP</span>';
       const slAddHandleHtml = !order.sl ? '<span class="ol-chip ghost sl-add" id="slAddHandle">SL</span>' : '';
+      const sizeLabel = order.sizeMode === 'contracts' ? String(order.qty)
+        : order.sizeMode === 'dollar' ? '$' + fmt(order.sizeValues.dollar, 0)
+          : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
+            : '$' + fmt(order.sizeValues.risk, 0) + ' risk';
 
       if (!order.filled) {
-        const sizeLabel = order.sizeMode === 'contracts' ? String(order.qty)
-          : order.sizeMode === 'dollar' ? '$' + fmt(order.sizeValues.dollar, 0)
-            : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
-              : '$' + fmt(order.sizeValues.risk, 0) + ' risk';
         bar.innerHTML =
-          '<span class="ol-chip entry ' + side + '" id="entryPriceHandle" title="Drag to move entry">' + sideLabel + confirmBtn + '</span>' +
+          '<span class="ol-chip entry ' + side + '" id="entryPriceHandle" title="Drag to move entry">' + sideLabel + '</span>' +
           tpAddHandleHtml + slAddHandleHtml +
           '<span class="ol-pill neutral combo" id="orderConfigPill">' +
           '<span class="ol-pill-seg" id="sizePillTrigger">' + sizeLabel + '</span>' +
@@ -1592,9 +1572,13 @@
           '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
           '</span>' +
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Cancel Order"><span class="material-symbols-outlined">delete</span></span>';
-      } else if (order.editing) {
+      } else {
+        const dir = order.side === 'buy' ? 1 : -1;
+        const currentPrice = qtCurrentPrice();
+        const pnl = dir * (currentPrice - order.entry) * POINT_VALUE * order.qty;
+        const pnlHtml = '<span class="ol-entry-pnl ' + (pnl >= 0 ? 'up' : 'down') + '">' + (pnl >= 0 ? '+' : '') + fmtMoney(pnl) + '</span>';
         bar.innerHTML =
-          '<span class="ol-chip entry ' + side + '" id="entryPriceHandle" title="Drag to move entry">' + sideLabel + doneBtn + '</span>' +
+          '<span class="ol-chip entry locked ' + side + '" id="entryPriceHandle">' + sideLabel + pnlHtml + '</span>' +
           tpAddHandleHtml + slAddHandleHtml +
           '<span class="ol-pill neutral combo" id="orderConfigPill">' +
           '<span class="ol-pill-seg" id="sizePillTrigger">' + order.qty + ' ' + QT_INSTRUMENT_UNIT + '</span>' +
@@ -1602,16 +1586,8 @@
           '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
           '</span>' +
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
-      } else {
-        bar.innerHTML =
-          '<span class="ol-chip entry locked ' + side + '" id="entryPriceHandle">' + sideLabel + editBtn + '</span>' +
-          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
       }
-      entryHost.appendChild(bar);
-      if (entryGroup) {
-        bar.addEventListener('mouseenter', () => { entryGroupHovered = true; entryGroup.classList.add('force-reveal'); });
-        bar.addEventListener('mouseleave', () => { entryGroupHovered = false; entryGroup.classList.remove('force-reveal'); });
-      }
+      layer.appendChild(bar);
 
       const tpAddHandle = bar.querySelector('#tpAddHandle');
       if (tpAddHandle) { makeAddHandleDraggable(tpAddHandle, 'tp'); bindHandleHover(tpAddHandle, 'tp-add'); }
@@ -1621,41 +1597,23 @@
       const entryPriceHandle = bar.querySelector('#entryPriceHandle');
       if (entryPriceHandle) {
         bindHandleHover(entryPriceHandle, 'entry');
-        if (!order.filled || order.editing) {
+        if (!order.filled) {
           makeDraggable(entryPriceHandle,
             (cy, h) => {
               bar.style.top = cy + 'px'; line.style.top = cy + 'px';
               order.entry = roundTick(yToPrice(cy, h));
               drawPriceChart();
             },
-            (cy, h) => { order.entry = roundTick(yToPrice(cy, h)); syncQtyFromRisk(); render(); },
-            '.ol-entry-confirm');
+            (cy, h) => { order.entry = roundTick(yToPrice(cy, h)); syncQtyFromRisk(); render(); });
         }
       }
 
-      if (!order.filled) {
-        bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
-          e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-        });
-        bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
-          e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-        });
-        bar.querySelector('#entryConfirmBtn').addEventListener('click', (e) => { e.stopPropagation(); confirmOrderFill(); });
-      } else if (order.editing) {
-        bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
-          e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-        });
-        bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
-          e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-        });
-        bar.querySelector('#doneEditingBtn').addEventListener('click', (e) => {
-          e.stopPropagation(); order.editing = false; render();
-        });
-      } else {
-        bar.querySelector('#entryEditTrigger').addEventListener('click', (e) => {
-          e.stopPropagation(); order.editing = true; render();
-        });
-      }
+      bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
+        e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+      });
+      bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
+        e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+      });
       bar.querySelector('#cancelOrderBtn').addEventListener('click', (e) => { e.stopPropagation(); cancelOrder(); });
     }
 
@@ -1965,9 +1923,6 @@
   bindColorSwatchMenu('csBullColorTrigger', 'csBullColorMenu', 'csBullColorSwatch');
   bindColorSwatchMenu('csBearColorTrigger', 'csBearColorMenu', 'csBearColorSwatch');
 
-  document.getElementById('csManageTemplatesBtn').addEventListener('click', () => {
-    showToast('Manage templates from the dropdown in the top bar', 'bookmark');
-  });
   function csUpdateTargetTableVisibility() {
     const mode = document.querySelector('#csDisplayModeGroup .cs-seg-btn.active').dataset.mode;
     document.getElementById('csTargetTableWrap').style.display = mode === 'expanded' ? '' : 'none';
@@ -2908,7 +2863,7 @@
     smDolInput.value = '$' + fmt(order.sizeValues.dollar, 0);
     const dolQty = +(order.sizeValues.dollar / MARGIN_PER_CONTRACT).toFixed(2);
     const dolMargin = +(dolQty * MARGIN_PER_CONTRACT).toFixed(2);
-    document.getElementById('smDolQty').textContent = fmt(dolQty) + ' ETH';
+    document.getElementById('smDolQty').textContent = fmt(dolQty, 2) + ' ETH';
     document.getElementById('smDolMargin').textContent = fmtMoney(dolMargin);
     document.getElementById('smDolBp').textContent = fmtMoney(BUYING_POWER - dolMargin);
 
@@ -2920,7 +2875,7 @@
     const pctMargin = +(pctQty * MARGIN_PER_CONTRACT).toFixed(2);
     document.getElementById('smPctBal').textContent = fmtMoney(ACCOUNT_BALANCE);
     document.getElementById('smPctPos').textContent = fmtMoney(posVal);
-    document.getElementById('smPctQty').textContent = fmt(pctQty) + ' ETH';
+    document.getElementById('smPctQty').textContent = fmt(pctQty, 2) + ' ETH';
     document.getElementById('smPctMargin').textContent = fmtMoney(pctMargin);
 
     // risk — rebuilt each time since it has 3 distinct states
@@ -2934,7 +2889,7 @@
       const riskPerContract = stopDist * POINT_VALUE;
       body.innerHTML =
         '<label class="sm-amount-lbl">Risk Amount (USD)</label>' +
-        '<div class="sm-stepper"><button id="smRiskDec">−</button><input type="text" id="smRiskInput" readonly value="$' + fmt(order.sizeValues.risk, 0) + '"><button id="smRiskInc">+</button></div>' +
+        '<div class="sm-stepper"><button id="smRiskDec">−</button><input type="text" id="smRiskInput" value="$' + fmt(order.sizeValues.risk, 0) + '"><button id="smRiskInc">+</button></div>' +
         '<div class="sm-divider"></div>' +
         '<div class="sm-stat-row"><span class="l">Stop Distance</span><span class="v">' + fmt(stopDist, 2) + ' pts</span></div>' +
         '<div class="sm-stat-row"><span class="l">Risk per Contract</span><span class="v">' + fmtMoney(riskPerContract) + '</span></div>' +
@@ -2945,7 +2900,7 @@
       const slot = body.querySelector('#smRiskCalcSlot');
       if (sufficient) {
         slot.innerHTML =
-          '<div class="sm-stat-row"><span class="l">Calculated Quantity</span><span class="v">' + calcQty + ' ETH</span></div>' +
+          '<div class="sm-stat-row"><span class="l">Calculated Quantity</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
           '<div class="sm-stat-row"><span class="l">Margin Required</span><span class="v">' + fmtMoney(marginReq) + '</span></div>' +
           '<div class="sm-stat-row"><span class="l">Buying Power Available</span><span class="v up">' + fmtMoney(BUYING_POWER - marginReq) + '</span></div>' +
           '<div class="sm-divider"></div>' +
@@ -2955,8 +2910,8 @@
         const maxQty = Math.floor(BUYING_POWER / MARGIN_PER_CONTRACT);
         const actualRisk = maxQty * riskPerContract;
         slot.innerHTML =
-          '<div class="sm-stat-row"><span class="l">Calculated Quantity</span><span class="v">' + calcQty + ' ETH</span></div>' +
-          '<div class="sm-stat-row"><span class="l">Max Available Quantity</span><span class="v">' + maxQty + ' ETH</span></div>' +
+          '<div class="sm-stat-row"><span class="l">Calculated Quantity</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
+          '<div class="sm-stat-row"><span class="l">Max Available Quantity</span><span class="v">' + maxQty.toFixed(2) + ' ETH</span></div>' +
           '<div class="sm-stat-row"><span class="l">Actual Risk</span><span class="v">' + fmtMoney(actualRisk) + '</span></div>' +
           '<div class="sm-divider"></div>' +
           '<div class="sm-state-banner bad"><span class="material-symbols-outlined">error</span>Insufficient Buying Power</div>' +
@@ -2968,6 +2923,15 @@
       }
       document.getElementById('smRiskDec').addEventListener('click', (e) => { e.stopPropagation(); order.sizeValues.risk = Math.max(250, order.sizeValues.risk - 250); syncQtyFromRisk(); refreshSizeBodies(); render(); });
       document.getElementById('smRiskInc').addEventListener('click', (e) => { e.stopPropagation(); order.sizeValues.risk += 250; syncQtyFromRisk(); refreshSizeBodies(); render(); });
+      document.getElementById('smRiskInput').addEventListener('click', (e) => e.stopPropagation());
+      document.getElementById('smRiskInput').addEventListener('change', (e) => {
+        e.stopPropagation();
+        const val = parseFloat((e.target.value || '').replace(/[$,]/g, '')) || 0;
+        order.sizeValues.risk = Math.max(250, Math.round(val));
+        syncQtyFromRisk();
+        refreshSizeBodies();
+        render();
+      });
       const useMax = document.getElementById('smUseMax');
       if (useMax) useMax.addEventListener('click', (e) => {
         e.stopPropagation();

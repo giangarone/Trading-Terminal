@@ -1,6 +1,6 @@
 /* ---------- resizable panels ---------- */
 function clampResize(v, min, max) { return Math.max(min, Math.min(max, v)); }
-function setupHorizontalResize(handle, panel, side, minW, maxW) {
+function setupHorizontalResize(handle, panel, side, minW, maxW, cssVar) {
   if (!handle || !panel) return;
   handle.addEventListener('mousedown', (e) => {
     e.preventDefault();
@@ -11,6 +11,7 @@ function setupHorizontalResize(handle, panel, side, minW, maxW) {
       const dx = ev.clientX - startX;
       const w = clampResize((side === 'left' ? startW + dx : startW - dx), minW, maxW);
       panel.style.width = w + 'px';
+      if (cssVar) document.documentElement.style.setProperty(cssVar, w + 'px');
     }
     function up() {
       handle.classList.remove('dragging');
@@ -44,7 +45,7 @@ function setupVerticalResize(handle, panel, minH, maxH) {
     document.addEventListener('mouseup', up);
   });
 }
-setupHorizontalResize(document.getElementById('leftResizeHandle'), document.querySelector('.left-panel'), 'left', 310, 480);
+setupHorizontalResize(document.getElementById('leftResizeHandle'), document.querySelector('.left-panel'), 'left', 310, 480, '--left-panel-w');
 setupHorizontalResize(document.getElementById('rightResizeHandle'), document.querySelector('.right-panel'), 'right', 280, 540);
 setupVerticalResize(document.getElementById('bottomResizeHandle'), document.querySelector('.bottom-panel'), 100, 560);
 

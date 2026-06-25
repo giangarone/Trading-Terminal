@@ -1,6 +1,6 @@
 /* ====== Left panel ====== */
 .left-panel {
-  width: 310px;
+  width: var(--left-panel-w);
   flex-shrink: 0;
   background: var(--ink-900);
   border-right: 1px solid var(--line-1);

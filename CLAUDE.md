@@ -1,6 +1,6 @@
 # Trading Terminal
 
-A static HTML/CSS/JS trading terminal UI. No build system — all assets are loaded directly in `index.html`.
+An HTML/CSS/JS trading terminal UI designed to simulate a real trading platform, but functioning purely as a mockup.
 
 ## Design mandate
 
@@ -11,8 +11,15 @@ Every new feature and every edit to an existing one must match the current desig
 - **Reuse first.** Before writing new CSS, check whether an existing class already covers the pattern. Duplicate styles and one-off rules are not acceptable.
 - **Tokens over raw values.** All font sizes, weights, letter-spacing, radii, heights, and transitions must reference the design tokens defined in `css/tokens.css`. Never hard-code a value that a token already covers.
 - **Match spacing and typography.** Labels, table headers, badges, buttons, and input fields each have an established size/weight/spacing pattern — match it exactly. When in doubt, inspect a nearby similar element and copy its token usage.
-- **No visual clutter.** The UI is intentionally minimal and dark. Avoid unnecessary borders, shadows, icons, or decorative elements that aren't already present in adjacent components.
-- **Preserve layout integrity.** The terminal uses a fixed three-column layout (left watchlist / center chart / right panel) with a draggable bottom panel and floating modals. New UI must not break or shift existing layout regions.
+- **Preserve layout integrity.** The terminal uses a fixed three-column layout with a draggable bottom panel and floating modals. New UI must not break or shift existing layout regions.
+
+## Removing elements from the Settings panel
+
+When removing any element from `index.html` that has an `id`:
+
+1. Search `js/app.js` for every reference to that `id` and remove the corresponding JS (event listeners, `getElementById` calls, populate/collect mappings).
+2. If the element is a form field referenced in `populateChartSettingsForm` or `collectChartSettingsForm`, remove it from both functions.
+3. Failure to do this crashes the entire settings initialization block silently — the settings gear stops opening, and no JS wired up after the broken line will work.
 
 ## Code quality
 

@@ -59,6 +59,10 @@
   --ic-md: 17px;
   /* action button icons                       */
 
+  /* ── Layout ──────────────────────────────────────────────── */
+  --left-panel-w: 310px;
+  /* left watchlist panel width; topbar logo zone tracks this  */
+
   /* ── Components ──────────────────────────────────────────── */
   --h-input: 34px;
   /* standard single-line input height         */

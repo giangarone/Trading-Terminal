@@ -33,84 +33,86 @@
 
     <!-- ===================== TOP BAR ===================== -->
     <header class="topbar">
-      <div class="tb-left">
+      <div class="tb-logo-zone">
         <div class="tb-logo"><img src="assets/chartprime-logo.webp" alt="ChartPrime"></div>
-        <div class="tb-divider"></div>
-        <div class="symbol-block">
-          <div class="symbol-select pop-trigger" id="symSelectTrigger">
-            <span class="sym" id="symSelectLabel">ETHUSD</span>
-            <span class="material-symbols-outlined" style="font-size:16px;color:var(--paper-500);">expand_more</span>
+      </div>
+      <div class="tb-chart-zone">
+        <div class="tb-left">
+          <div class="symbol-block">
+            <div class="symbol-select pop-trigger" id="symSelectTrigger">
+              <span class="sym" id="symSelectLabel">ETHUSD</span>
+              <span class="material-symbols-outlined" style="font-size:16px;color:var(--paper-500);">expand_more</span>
+            </div>
+          </div>
+
+          <div class="tf-group" id="tfGroup">
+            <button class="tf-btn active" data-tf="15m">15m</button>
+            <button class="tf-btn" data-tf="1h">1h</button>
+            <button class="tf-btn" data-tf="4h">4h</button>
+            <button class="tf-btn" data-tf="D">D</button>
+            <button class="tf-btn tf-more pop-trigger" id="tfMoreTrigger"><span id="tfMoreLabel"></span><span
+                class="material-symbols-outlined" style="font-size:14px;">expand_more</span></button>
+          </div>
+          <button class="ct-action-btn pop-trigger" id="candleTypeTrigger"><span class="material-symbols-outlined"
+              style="font-size:15px;">candlestick_chart</span><span id="candleTypeLabel">Candles</span><span
+              class="material-symbols-outlined" style="font-size:15px;">expand_more</span></button>
+          <button class="ct-action-btn pop-trigger" id="indicatorsTrigger"><span class="material-symbols-outlined"
+              style="font-size:15px;">function</span>Indicators<span class="ind-count" id="indicatorsCount"
+              style="display:none;"></span><span class="material-symbols-outlined"
+              style="font-size:15px;">expand_more</span></button>
+          <button class="ct-action-btn pop-trigger" id="l2IndicatorsTrigger"><span class="material-symbols-outlined"
+              style="font-size:15px;">stacked_line_chart</span>L2<span class="ind-count" id="l2IndicatorsCount"
+              style="display:none;"></span><span class="material-symbols-outlined"
+              style="font-size:15px;">expand_more</span></button>
+          <button class="ct-action-btn" id="replayToggle"><span class="material-symbols-outlined"
+              style="font-size:15px;">fast_rewind</span>Replay</button>
+          <button class="ct-action-btn pop-trigger" id="marketScannerTrigger"><span class="material-symbols-outlined"
+              style="font-size:15px;">radar</span>Market Scanner</button>
+          <button class="ct-action-btn" id="newsToggle"><span class="material-symbols-outlined"
+              style="font-size:15px;">article</span>News Overlay</button>
+        </div>
+
+        <div class="tb-stats" style="display:none;" aria-hidden="true">
+          <div class="stat">
+            <span class="val hero" id="hdrLast">4,500.25</span>
+            <span class="chg up" id="hdrChg">+18.25 (+0.41%)</span>
+          </div>
+          <div class="stat">
+            <span class="lbl">Bid</span>
+            <span class="val" id="hdrBid">4,500.00</span>
+          </div>
+          <div class="stat">
+            <span class="lbl">Ask</span>
+            <span class="val" id="hdrAsk">4,500.25</span>
+          </div>
+          <div class="stat">
+            <span class="lbl">Day High</span>
+            <span class="val" id="hdrDayHigh">4,505.75</span>
+          </div>
+          <div class="stat">
+            <span class="lbl">Day Low</span>
+            <span class="val" id="hdrDayLow">4,473.25</span>
           </div>
         </div>
 
-        <div class="tf-group" id="tfGroup">
-          <button class="tf-btn active" data-tf="15m">15m</button>
-          <button class="tf-btn" data-tf="1h">1h</button>
-          <button class="tf-btn" data-tf="4h">4h</button>
-          <button class="tf-btn" data-tf="D">D</button>
-          <button class="tf-btn" data-tf="W">W</button>
-          <button class="tf-btn tf-more pop-trigger" id="tfMoreTrigger"><span id="tfMoreLabel"></span><span
-              class="material-symbols-outlined" style="font-size:14px;">expand_more</span></button>
+        <div class="tb-right">
+          <div class="tb-account pop-trigger" id="templatesSelectTrigger" title="Trade Templates">
+            <span class="material-symbols-outlined">bookmark</span>
+            <span class="tb-account-name" id="templatesSelectName">Scalping</span>
+            <span class="material-symbols-outlined tb-account-caret">expand_more</span>
+          </div>
+          <div class="tb-account pop-trigger" id="accountSelectTrigger">
+            <span class="material-symbols-outlined">account_balance</span>
+            <span class="tb-account-name" id="accountSelectName">BloFin</span>
+            <span class="tb-account-balance" id="accountSelectBalance">$52,430.00</span>
+            <span class="material-symbols-outlined tb-account-caret">expand_more</span>
+          </div>
+          <button class="ct-icon pop-trigger" id="alertsTrigger"><span
+              class="material-symbols-outlined">notifications</span></button>
+          <button class="ct-icon pop-trigger" id="settingsTrigger"><span
+              class="material-symbols-outlined">settings</span></button>
         </div>
-        <button class="ct-action-btn pop-trigger" id="candleTypeTrigger"><span class="material-symbols-outlined"
-            style="font-size:15px;">candlestick_chart</span><span id="candleTypeLabel">Candles</span><span
-            class="material-symbols-outlined" style="font-size:15px;">expand_more</span></button>
-        <button class="ct-action-btn pop-trigger" id="indicatorsTrigger"><span class="material-symbols-outlined"
-            style="font-size:15px;">function</span>Indicators<span class="ind-count" id="indicatorsCount"
-            style="display:none;"></span><span class="material-symbols-outlined"
-            style="font-size:15px;">expand_more</span></button>
-        <button class="ct-action-btn pop-trigger" id="l2IndicatorsTrigger"><span class="material-symbols-outlined"
-            style="font-size:15px;">stacked_line_chart</span>L2 Indicators<span class="ind-count" id="l2IndicatorsCount"
-            style="display:none;"></span><span class="material-symbols-outlined"
-            style="font-size:15px;">expand_more</span></button>
-        <button class="ct-action-btn" id="replayToggle"><span class="material-symbols-outlined"
-            style="font-size:15px;">fast_rewind</span>Replay</button>
-        <button class="ct-action-btn pop-trigger" id="marketScannerTrigger"><span class="material-symbols-outlined"
-            style="font-size:15px;">radar</span>Market Scanner</button>
-        <button class="ct-action-btn" id="newsToggle"><span class="material-symbols-outlined"
-            style="font-size:15px;">article</span>News Overlay</button>
-      </div>
-
-      <div class="tb-stats" style="display:none;" aria-hidden="true">
-        <div class="stat">
-          <span class="val hero" id="hdrLast">4,500.25</span>
-          <span class="chg up" id="hdrChg">+18.25 (+0.41%)</span>
-        </div>
-        <div class="stat">
-          <span class="lbl">Bid</span>
-          <span class="val" id="hdrBid">4,500.00</span>
-        </div>
-        <div class="stat">
-          <span class="lbl">Ask</span>
-          <span class="val" id="hdrAsk">4,500.25</span>
-        </div>
-        <div class="stat">
-          <span class="lbl">Day High</span>
-          <span class="val" id="hdrDayHigh">4,505.75</span>
-        </div>
-        <div class="stat">
-          <span class="lbl">Day Low</span>
-          <span class="val" id="hdrDayLow">4,473.25</span>
-        </div>
-      </div>
-
-      <div class="tb-right">
-        <div class="tb-account pop-trigger" id="templatesSelectTrigger" title="Trade Templates">
-          <span class="material-symbols-outlined">bookmark</span>
-          <span class="tb-account-name" id="templatesSelectName">Scalping</span>
-          <span class="material-symbols-outlined tb-account-caret">expand_more</span>
-        </div>
-        <div class="tb-account pop-trigger" id="accountSelectTrigger">
-          <span class="material-symbols-outlined">account_balance</span>
-          <span class="tb-account-name" id="accountSelectName">BloFin</span>
-          <span class="tb-account-balance" id="accountSelectBalance">$52,430.00</span>
-          <span class="material-symbols-outlined tb-account-caret">expand_more</span>
-        </div>
-        <button class="ct-icon pop-trigger" id="alertsTrigger"><span
-            class="material-symbols-outlined">notifications</span></button>
-        <button class="ct-icon pop-trigger" id="settingsTrigger"><span
-            class="material-symbols-outlined">settings</span></button>
-      </div>
+      </div><!-- /.tb-chart-zone -->
     </header>
 
     <div class="pop-menu" id="templatesSelectMenu" style="width:260px;">
@@ -389,20 +391,6 @@
                       </span>
                       <button type="button" class="ind-toggle-btn" aria-label="Toggle Remember Indicator Presets"><span
                           class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-field" style="margin-top:14px;margin-bottom:0;">
-                      <label>Default Template</label>
-                      <div class="cs-field-actions">
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csDefaultTemplate"><span
-                            class="cs-select-label">Order Flow</span><span
-                            class="material-symbols-outlined">expand_more</span></div><select id="csDefaultTemplate"
-                          style="display:none;">
-                          <option value="orderflow" selected>Order Flow</option>
-                          <option value="scalping">Scalping</option>
-                          <option value="swing">Swing Trading</option>
-                        </select>
-                        <button type="button" class="ghost-btn" id="csManageTemplatesBtn">Manage Templates</button>
-                      </div>
                     </div>
                   </div>
 
@@ -955,6 +943,18 @@
                       the chart.</div>
 
                     <div class="cs-field" id="csTargetTableWrap" style="display:none; margin-top:14px;">
+                      <div class="cs-field" style="margin-bottom:12px;">
+                        <label>Applies To</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csTpslAppliesto">
+                          <span class="cs-select-label"></span>
+                          <span class="material-symbols-outlined">expand_more</span>
+                        </div>
+                        <select id="csTpslAppliesto" style="display:none;">
+                          <option value="both" selected>Both / All</option>
+                          <option value="quicktrade">Quick Trade</option>
+                          <option value="chart">Chart Execution</option>
+                        </select>
+                      </div>
                       <div class="cs-target-table">
                         <div class="cs-target-row cs-target-head">
                           <span>Target</span><span>%</span><span>Risk</span><span>Type</span><span></span>
@@ -1013,25 +1013,6 @@
                       <input type="number" id="qtsDefaultQty" class="cs-num-input" value="1" min="0.001" step="1">
                     </div>
                   </div>
-                  <div class="cs-field" style="margin-bottom:16px;">
-                    <label>Size Presets</label>
-                    <div class="qt-preset-group">
-                      <button class="qt-preset-btn active" data-qty="1">1</button>
-                      <button class="qt-preset-btn" data-qty="5">5</button>
-                      <button class="qt-preset-btn" data-qty="10">10</button>
-                      <button class="qt-preset-btn" data-qty="20">20</button>
-                      <button class="qt-preset-btn" data-qty="50">50</button>
-                      <button class="qt-preset-btn" data-qty="max">Max</button>
-                    </div>
-                  </div>
-                  <div class="cs-field">
-                    <label>Amount Slider</label>
-                    <input type="range" id="qtsSizeSlider" class="qt-slider" min="0" max="100" value="25">
-                    <div class="qt-tick-row" id="qtsSliderTicks">
-                      <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
-                    </div>
-                    <p class="cs-helper" id="qtsSliderHelper">Controls position size as a % of available buying power.</p>
-                  </div>
                 </div>
 
                 <!-- Order Behavior -->
@@ -1071,7 +1052,8 @@
                   <div class="cs-switch-row" id="qtReduceOnly">
                     <span class="cs-switch-text">
                       <span class="cs-switch-title">Reduce Only</span>
-                      <span class="cs-switch-desc">Orders can only reduce an existing position, never open a new one.</span>
+                      <span class="cs-switch-desc">Orders can only reduce an existing position, never open a new
+                        one.</span>
                     </span>
                     <button type="button" class="ind-toggle-btn" aria-label="Toggle Reduce Only">
                       <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
@@ -1080,7 +1062,8 @@
                   <div class="cs-switch-row" id="qtPostOnly">
                     <span class="cs-switch-text">
                       <span class="cs-switch-title">Post Only</span>
-                      <span class="cs-switch-desc">Limit orders are placed as maker orders only — rejected if they'd fill immediately.</span>
+                      <span class="cs-switch-desc">Limit orders are placed as maker orders only — rejected if they'd
+                        fill immediately.</span>
                     </span>
                     <button type="button" class="ind-toggle-btn" aria-label="Toggle Post Only">
                       <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
@@ -1105,7 +1088,8 @@
                   <div class="cs-switch-row" id="qtRiskCurrency">
                     <span class="cs-switch-text">
                       <span class="cs-switch-title">Risk in Account Currency</span>
-                      <span class="cs-switch-desc">Show risk and P&amp;L values in your account currency rather than percentage.</span>
+                      <span class="cs-switch-desc">Show risk and P&amp;L values in your account currency rather than
+                        percentage.</span>
                     </span>
                     <button type="button" class="ind-toggle-btn" aria-label="Toggle Risk in Account Currency">
                       <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
@@ -1117,15 +1101,6 @@
                       <span class="cs-switch-desc">Display the estimated trading fee before placing an order.</span>
                     </span>
                     <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Estimated Fees">
-                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
-                    </button>
-                  </div>
-                  <div class="cs-switch-row active" id="qtShowEstVal">
-                    <span class="cs-switch-text">
-                      <span class="cs-switch-title">Show Estimated Value / Size</span>
-                      <span class="cs-switch-desc">Display the estimated order value and contract size in the panel.</span>
-                    </span>
-                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Estimated Value / Size">
                       <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
                     </button>
                   </div>
@@ -2338,6 +2313,7 @@
     <button class="pop-item" data-tf="2h">2h</button>
     <button class="pop-item" data-tf="6h">6h</button>
     <button class="pop-item" data-tf="12h">12h</button>
+    <button class="pop-item" data-tf="W">W</button>
     <button class="pop-item" data-tf="M">M</button>
     <button class="pop-item" data-tf="Y">Y</button>
   </div>
