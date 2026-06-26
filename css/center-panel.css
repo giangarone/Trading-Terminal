@@ -52,6 +52,32 @@
   padding: 0 4px;
 }
 
+/* "More timeframes" dropdown — wider than a typical narrow pop-menu so the custom
+   timeframe form (type select + interval input) has room to lay out cleanly. */
+.tf-more-menu {
+  width: 200px;
+}
+
+.tf-custom-form {
+  padding: 9px 9px 0;
+}
+
+.tf-field {
+  margin-bottom: 10px;
+}
+
+.tf-custom-error {
+  font-size: 10.5px;
+  color: var(--short);
+  line-height: 1.4;
+  margin: -4px 0 10px;
+}
+
+.tf-custom-form .modal-actions {
+  margin-top: 0;
+  padding-bottom: 9px;
+}
+
 .ct-action-btn {
   display: flex;
   align-items: center;

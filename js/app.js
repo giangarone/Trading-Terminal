@@ -124,6 +124,17 @@
     el.style.left = Math.max(8, x) + 'px';
     el.style.top = Math.max(8, y) + 'px';
   }
+  function positionPopover(el, anchorRect, align) {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const w = el.offsetWidth, h = el.offsetHeight;
+    let x = align === 'right' ? anchorRect.right - w : anchorRect.left;
+    let y = anchorRect.bottom + 8;
+    if (y + h > vh - 12) y = anchorRect.top - h - 8;
+    if (x + w > vw - 12) x = vw - w - 12;
+    if (x < 8) x = 8;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+  }
   function openNear(el, anchorRect, align, trigger) {
     if (trigger && el.classList.contains('show') && el._openTrigger === trigger) {
       closeAllPopovers();
@@ -135,15 +146,7 @@
     closeAllPopoversExcept(el, parentMenu);
     el.classList.add('show');
     el._openTrigger = trigger || null;
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const w = el.offsetWidth, h = el.offsetHeight;
-    let x = align === 'right' ? anchorRect.right - w : anchorRect.left;
-    let y = anchorRect.bottom + 8;
-    if (y + h > vh - 12) y = anchorRect.top - h - 8;
-    if (x + w > vw - 12) x = vw - w - 12;
-    if (x < 8) x = 8;
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
+    positionPopover(el, anchorRect, align);
   }
   function closeAllPopoversExcept(...keep) {
     document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => {
@@ -2347,9 +2350,18 @@
     const tfMoreTrigger = document.getElementById('tfMoreTrigger');
     const tfMoreMenu = document.getElementById('tfMoreMenu');
     const tfMoreLabel = document.getElementById('tfMoreLabel');
+    const tfMenuDivider = document.getElementById('tfMenuDivider');
+    const tfAddCustomBtn = document.getElementById('tfAddCustomBtn');
+    const tfCustomForm = document.getElementById('tfCustomForm');
+    const tfCustomType = document.getElementById('tfCustomType');
+    const tfCustomInterval = document.getElementById('tfCustomInterval');
+    const tfCustomError = document.getElementById('tfCustomError');
+    const tfCustomCancel = document.getElementById('tfCustomCancel');
+    const tfCustomAdd = document.getElementById('tfCustomAdd');
+
     function selectTimeframe(tf, fromMenuItem) {
       tfGroup.querySelectorAll('.tf-btn[data-tf]').forEach(b => b.classList.remove('active'));
-      tfMoreMenu.querySelectorAll('.pop-item').forEach(b => b.classList.remove('selected'));
+      tfMoreMenu.querySelectorAll('.pop-item[data-tf]').forEach(b => b.classList.remove('selected'));
       if (fromMenuItem) {
         tfMoreTrigger.classList.add('active');
         tfMoreLabel.textContent = tf;
@@ -2366,14 +2378,86 @@
     });
     tfMoreTrigger.addEventListener('click', (e) => {
       e.stopPropagation();
+      const wasOpen = tfMoreMenu.classList.contains('show');
       openNear(tfMoreMenu, tfMoreTrigger.getBoundingClientRect(), 'left', tfMoreTrigger);
+      if (!wasOpen) showCustomForm(false);
     });
-    tfMoreMenu.querySelectorAll('.pop-item').forEach(item => {
+
+    function bindMenuItem(item) {
       item.addEventListener('click', (e) => {
         e.stopPropagation();
         selectTimeframe(item.dataset.tf, item);
         closeAllPopovers();
       });
+    }
+    tfMoreMenu.querySelectorAll('.pop-item[data-tf]').forEach(bindMenuItem);
+
+    /* ---------- custom timeframe creation ---------- */
+    function timeframeExists(code) {
+      return !!tfGroup.querySelector('.tf-btn[data-tf="' + code + '"]') ||
+        !!tfMoreMenu.querySelector('.pop-item[data-tf="' + code + '"]');
+    }
+    function buildCustomCode(type, n) {
+      switch (type) {
+        case 'minutes': return n + 'm';
+        case 'hours': return n + 'h';
+        case 'days': return n === 1 ? 'D' : n + 'D';
+        case 'weeks': return n === 1 ? 'W' : n + 'W';
+        case 'months': return n === 1 ? 'M' : n + 'M';
+        case 'range': return n + 'R';
+        default: return String(n);
+      }
+    }
+    function showCustomForm(show) {
+      tfCustomForm.style.display = show ? 'block' : 'none';
+      tfCustomError.style.display = 'none';
+      if (show) {
+        tfCustomInterval.value = '';
+        positionPopover(tfMoreMenu, tfMoreTrigger.getBoundingClientRect(), 'left');
+        tfCustomInterval.focus();
+      }
+    }
+    function commitCustomTimeframe() {
+      const n = parseInt(tfCustomInterval.value, 10);
+      if (!n || n < 1) { tfCustomInterval.focus(); return; }
+      const code = buildCustomCode(tfCustomType.value, n);
+      if (timeframeExists(code)) {
+        tfCustomError.textContent = 'Interval already exists, please use a different value';
+        tfCustomError.style.display = 'block';
+        positionPopover(tfMoreMenu, tfMoreTrigger.getBoundingClientRect(), 'left');
+        tfCustomInterval.focus();
+        return;
+      }
+      const item = document.createElement('button');
+      item.className = 'pop-item';
+      item.dataset.tf = code;
+      item.textContent = code;
+      tfMoreMenu.insertBefore(item, tfMenuDivider);
+      bindMenuItem(item);
+      showCustomForm(false);
+      selectTimeframe(code, item);
+      closeAllPopovers();
+      showToast('Custom timeframe "' + code + '" added', 'add_circle');
+    }
+
+    tfAddCustomBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showCustomForm(tfCustomForm.style.display !== 'block');
+    });
+    tfCustomCancel.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showCustomForm(false);
+    });
+    tfCustomAdd.addEventListener('click', (e) => {
+      e.stopPropagation();
+      commitCustomTimeframe();
+    });
+    tfCustomType.addEventListener('change', () => { tfCustomError.style.display = 'none'; });
+    tfCustomInterval.addEventListener('click', (e) => e.stopPropagation());
+    tfCustomInterval.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') { e.preventDefault(); commitCustomTimeframe(); }
+      if (e.key === 'Escape') { e.preventDefault(); showCustomForm(false); }
     });
   })();
 
@@ -2442,7 +2526,11 @@
   const indicatorSearchClear = document.getElementById('indicatorSearchClear');
   const indicatorList = document.getElementById('indicatorList');
   const indEmpty = document.getElementById('indEmpty');
+  const indEmptyIcon = document.getElementById('indEmptyIcon');
+  const indEmptyText = document.getElementById('indEmptyText');
   const indActiveLabel = document.getElementById('indActiveLabel');
+  const indActiveOnlyToggle = document.getElementById('indActiveOnlyToggle');
+  const indActiveOnlyCheck = document.getElementById('indActiveOnlyCheck');
 
   const IND_DATA = [
     { name: 'Moving Average', desc: 'Smooths price to show overall trend direction.', cat: 'classic' },
@@ -2490,44 +2578,57 @@
   ];
 
   const CAT_LABELS = { classic: 'Classic Indicators', l1: 'Trade Flow Intelligence (L1)', l2: 'Order Book Intelligence (L2)', chartprime: 'ChartPrime' };
+  const FLAGSHIP_CATS = ['l1', 'l2'];
   const indState = new Map(IND_DATA.map(d => [d.name, false]));
+
+  let indShowActiveOnly = false;
 
   function renderIndList(query, cat) {
     indicatorList.innerHTML = '';
     const q = (query || '').toLowerCase().trim();
     const showCat = cat === 'all' ? null : cat;
     let anyVisible = false;
-    const groups = showCat ? [showCat] : ['classic', 'l1', 'l2', 'chartprime'];
+    const groups = showCat ? [showCat] : ['classic', 'chartprime', 'l1', 'l2'];
     groups.forEach(g => {
+      const isFlagship = FLAGSHIP_CATS.includes(g);
       const rows = IND_DATA.filter(d => {
         if (d.cat !== g) return false;
+        if (indShowActiveOnly && !indState.get(d.name)) return false;
         if (q && !d.name.toLowerCase().includes(q) && !d.desc.toLowerCase().includes(q)) return false;
         return true;
       });
       if (!rows.length) return;
       anyVisible = true;
-      if (!showCat || groups.length > 1) {
+      if (!showCat) {
         const lbl = document.createElement('div');
-        lbl.className = 'ind-group-label';
-        lbl.textContent = CAT_LABELS[g];
+        lbl.className = 'ind-group-label' + (isFlagship ? ' flagship' : '');
+        lbl.innerHTML = isFlagship ? `${CAT_LABELS[g]}<span class="ind-pro-badge">PRO</span>` : CAT_LABELS[g];
         indicatorList.appendChild(lbl);
       }
       rows.forEach(d => {
         const row = document.createElement('div');
-        row.className = 'ind-row' + (indState.get(d.name) ? ' active' : '');
+        row.className = 'ind-row' + (indState.get(d.name) ? ' active' : '') + (isFlagship ? ' flagship' : '');
         row.dataset.name = d.name;
-        row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ui-toggle" aria-label="Toggle ${d.name}"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>`;
+        const flagshipBadge = isFlagship ? '<span class="ind-pro-badge">PRO</span>' : '';
+        row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}${flagshipBadge}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ui-toggle" aria-label="Toggle ${d.name}"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>`;
         row.addEventListener('click', (e) => {
           e.stopPropagation();
           const on = !indState.get(d.name);
           indState.set(d.name, on);
-          row.classList.toggle('active', on);
           updateIndicatorsCount();
           showToast(d.name + (on ? ' enabled' : ' disabled'), 'function');
+          if (indShowActiveOnly) {
+            renderIndList(getIndSearch(), indActiveCat);
+          } else {
+            row.classList.toggle('active', on);
+          }
         });
         indicatorList.appendChild(row);
       });
     });
+    const noActiveYet = indShowActiveOnly && !q && !anyVisible;
+    indEmptyIcon.textContent = noActiveYet ? 'toggle_off' : 'search_off';
+    indEmptyText.textContent = noActiveYet ? 'No active indicators yet' : 'No indicators match your search';
     indEmpty.style.display = anyVisible ? 'none' : 'flex';
   }
 
@@ -2540,6 +2641,14 @@
 
   let indActiveCat = 'all';
   function getIndSearch() { return indicatorSearch.value; }
+
+  indActiveOnlyToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    indShowActiveOnly = !indShowActiveOnly;
+    indActiveOnlyCheck.classList.toggle('checked', indShowActiveOnly);
+    indActiveOnlyToggle.classList.toggle('on', indShowActiveOnly);
+    renderIndList(getIndSearch(), indActiveCat);
+  });
 
   indicatorsTrigger.addEventListener('click', (e) => {
     e.stopPropagation();

@@ -2546,7 +2546,8 @@
   </div>
 
   <!-- ===================== MORE TIMEFRAMES DROPDOWN ===================== -->
-  <div class="pop-menu" id="tfMoreMenu" style="width:110px;">
+  <div class="pop-menu tf-more-menu" id="tfMoreMenu">
+    <div class="pop-menu-label">Timeframe</div>
     <button class="pop-item" data-tf="1m">1m</button>
     <button class="pop-item" data-tf="3m">3m</button>
     <button class="pop-item" data-tf="5m">5m</button>
@@ -2558,6 +2559,45 @@
     <button class="pop-item" data-tf="W">W</button>
     <button class="pop-item" data-tf="M">M</button>
     <button class="pop-item" data-tf="Y">Y</button>
+    <div class="pop-sep" id="tfMenuDivider"></div>
+    <button class="pop-item" id="tfAddCustomBtn">
+      <span class="pop-icon"><span class="material-symbols-outlined">add</span></span>
+      <span class="pop-text"><span class="pt-title">Custom Timeframe</span></span>
+    </button>
+    <div class="tf-custom-form" id="tfCustomForm" style="display:none;">
+      <div class="tf-field">
+        <label class="modal-label">Type</label>
+        <div class="select-input pop-trigger cs-dd-trigger" data-target="tfCustomType"><span
+            class="cs-select-label">Minutes</span><span class="material-symbols-outlined">expand_more</span></div>
+        <select id="tfCustomType" style="display:none;">
+          <option value="minutes">Minutes</option>
+          <option value="hours">Hours</option>
+          <option value="days">Days</option>
+          <option value="weeks">Weeks</option>
+          <option value="months">Months</option>
+          <option value="range">Range</option>
+        </select>
+      </div>
+      <div class="tf-field">
+        <label class="modal-label">Interval</label>
+        <div class="price-stepper">
+          <input type="text" id="tfCustomInterval" data-step="1" inputmode="numeric" placeholder="e.g. 45">
+          <div class="price-stepper-arrows">
+            <button type="button" class="ps-up" data-target="tfCustomInterval">
+              <span class="material-symbols-outlined">keyboard_arrow_up</span>
+            </button>
+            <button type="button" class="ps-down" data-target="tfCustomInterval">
+              <span class="material-symbols-outlined">keyboard_arrow_down</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="tf-custom-error" id="tfCustomError" style="display:none;"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="tfCustomCancel">Cancel</button>
+        <button type="button" class="btn-save" id="tfCustomAdd">Add</button>
+      </div>
+    </div>
   </div>
 
   <!-- ===================== SYMBOL SELECTOR DROPDOWN ===================== -->
@@ -2614,18 +2654,24 @@
     <div class="ind-cats" id="indCatTabs">
       <button class="ind-cat active" data-cat="all">All</button>
       <button class="ind-cat" data-cat="classic">Classic Indicators</button>
-      <button class="ind-cat" data-cat="l1">Trade Flow Intelligence (L1)</button>
-      <button class="ind-cat" data-cat="l2">Order Book Intelligence (L2)</button>
       <button class="ind-cat" data-cat="chartprime">ChartPrime</button>
+      <button class="ind-cat flagship" data-cat="l1">Trade Flow Intelligence (L1)<span
+          class="ind-pro-badge">PRO</span></button>
+      <button class="ind-cat flagship" data-cat="l2">Order Book Intelligence (L2)<span
+          class="ind-pro-badge">PRO</span></button>
     </div>
     <div class="ind-list-wrap">
       <div class="ind-list" id="indicatorList"></div>
       <div class="ind-empty" id="indEmpty" style="display:none;">
-        <span class="material-symbols-outlined">search_off</span>
-        <span>No indicators match your search</span>
+        <span class="material-symbols-outlined" id="indEmptyIcon">search_off</span>
+        <span id="indEmptyText">No indicators match your search</span>
       </div>
     </div>
     <div class="float-panel-footer">
+      <button class="ind-active-toggle" id="indActiveOnlyToggle">
+        <span class="chk-box" id="indActiveOnlyCheck"><span class="material-symbols-outlined">check</span></span>
+        <span>Active only</span>
+      </button>
       <span class="ind-active-label" id="indActiveLabel">0 active</span>
     </div>
   </div>
