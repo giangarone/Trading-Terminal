@@ -62,9 +62,20 @@
   let alerts = [];
   function nowTimeStr() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
   let orderHistory = [
-    { symbol: 'ETHUSD', side: 'buy', qty: 2, price: 4486.50, status: 'filled', time: '09:15:32 AM' },
-    { symbol: 'NQU5', side: 'buy', qty: 1, price: 18480.00, status: 'filled', time: '09:18:47 AM' },
-    { symbol: 'RTYU5', side: 'buy', qty: 3, price: 2070.00, status: 'cancelled', time: '08:55:10 AM' },
+    { symbol: 'ETHUSD', side: 'buy',  qty: 2, price: 4486.50, status: 'filled',    type: 'Market', time: '09:15:32 AM' },
+    { symbol: 'NQU5',   side: 'buy',  qty: 1, price: 18480.00, status: 'filled',   type: 'Market', time: '09:18:47 AM' },
+    { symbol: 'RTYU5',  side: 'buy',  qty: 3, price: 2070.00,  status: 'cancelled', type: 'Market', time: '08:55:10 AM' },
+  ];
+
+  /* ---------- trade history state ----------
+     Only actual fill executions — no cancels, no pending orders.
+     pnl: realized P&L in dollars for closing trades; null for opening trades. */
+  let tradeHistory = [
+    { symbol: 'ETHUSD', side: 'buy',  qty: 2, price: 4486.50,  pnl: null,       role: 'open',  type: 'Market',     time: '09:15:32 AM' },
+    { symbol: 'NQU5',   side: 'buy',  qty: 1, price: 18480.00, pnl: null,       role: 'open',  type: 'Market',     time: '09:18:47 AM' },
+    { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4562.25,  pnl: 3787.50,    role: 'close', type: 'Limit (TP)', time: '10:03:18 AM' },
+    { symbol: 'NQU5',   side: 'sell', qty: 1, price: 18560.00, pnl: 4000.00,    role: 'close', type: 'Limit (TP)', time: '10:41:55 AM' },
+    { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4495.00,  pnl: 425.00,     role: 'close', type: 'Market',     time: '11:12:40 AM' },
   ];
 
   /* ---------- helpers ---------- */
@@ -235,30 +246,30 @@
   document.getElementById('ctxLong').addEventListener('click', () => { createOrder('buy', pendingClickPrice); closeAllPopovers(); });
   document.getElementById('ctxShort').addEventListener('click', () => { createOrder('sell', pendingClickPrice); closeAllPopovers(); });
 
-  /* ---------- position row actions dropdown ---------- */
-  const posActionsMenu = document.getElementById('posActionsMenu');
-  let activeClosePosSym = null;
-  document.querySelectorAll('[data-pos-actions]').forEach(el => {
-    el.addEventListener('click', (e) => {
-      e.stopPropagation();
-      activeClosePosSym = el.dataset.posActions;
-      openNear(posActionsMenu, el.getBoundingClientRect(), 'right');
+  /* ---------- positions panel: expand/collapse & in-row actions ---------- */
+  document.querySelectorAll('.pos-row-summary').forEach(summary => {
+    summary.addEventListener('click', () => {
+      summary.closest('.pos-row').classList.toggle('is-expanded');
     });
   });
-  posActionsMenu.querySelectorAll('[data-close-pct]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (!activeClosePosSym || !window.closePositionPct(activeClosePosSym, parseInt(btn.dataset.closePct, 10))) { activeClosePosSym = null; closeAllPopovers(); return; }
-      const pct = parseInt(btn.dataset.closePct, 10);
-      showToast(activeClosePosSym + ' position ' + (pct >= 100 ? 'closed' : 'reduced by ' + pct + '%'), 'check_circle');
-      closeAllPopovers();
-      activeClosePosSym = null;
-    });
-  });
-  document.getElementById('posActionsReverse').addEventListener('click', () => {
-    if (!activeClosePosSym || !window.reversePosition(activeClosePosSym)) { activeClosePosSym = null; closeAllPopovers(); return; }
-    showToast(activeClosePosSym + ' position reversed', 'sync_alt');
-    closeAllPopovers();
-    activeClosePosSym = null;
+
+  const posPanel = document.getElementById('bpPanel-positions');
+  posPanel.addEventListener('click', e => {
+    const closeBtn = e.target.closest('[data-pos-close-pct]');
+    if (closeBtn) {
+      const row = closeBtn.closest('.pos-row');
+      const sym = row.dataset.posId;
+      const pct = parseInt(closeBtn.dataset.posClosePct, 10);
+      if (!window.closePositionPct(sym, pct)) return;
+      showToast(sym + ' position ' + (pct >= 100 ? 'closed' : 'reduced by ' + pct + '%'), 'check_circle');
+      return;
+    }
+    const reverseBtn = e.target.closest('[data-pos-reverse]');
+    if (reverseBtn) {
+      const sym = reverseBtn.closest('.pos-row').dataset.posId;
+      if (!window.reversePosition(sym)) return;
+      showToast(sym + ' position reversed', 'sync_alt');
+    }
   });
   document.getElementById('ctxAlert').addEventListener('click', () => { addAlert(pendingClickPrice); closeAllPopovers(); });
   document.getElementById('ctxReset').addEventListener('click', () => {
@@ -462,7 +473,7 @@
   qtBuyBtn.addEventListener('click', () => qtPlaceOrder('buy', qtActivePrice()));
   qtSellBtn.addEventListener('click', () => qtPlaceOrder('sell', qtActivePrice()));
   document.getElementById('qtFlatten').addEventListener('click', () => {
-    const rows = document.querySelectorAll('[data-pos-row]');
+    const rows = document.querySelectorAll('.pos-row[data-pos-id]');
     const hasChartOrder = !!order;
     if (!rows.length && !hasChartOrder) { showToast('No open orders to close', 'info'); return; }
     rows.forEach(r => r.remove());
@@ -583,7 +594,16 @@
   qtUpdateEstimates();
 
   function cancelOrder() {
-    if (order) orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: order.filled ? 'closed' : 'cancelled', time: nowTimeStr() });
+    if (order) {
+      orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: order.filled ? 'closed' : 'cancelled', type: order.orderType, time: nowTimeStr() });
+      if (order.filled) {
+        const lastEl = document.getElementById('hdrLast');
+        const closePrice = lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : order.entry;
+        const dir = order.side === 'buy' ? 1 : -1;
+        const closeSide = order.side === 'buy' ? 'sell' : 'buy';
+        tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: order.qty, price: closePrice, pnl: (closePrice - order.entry) * order.qty * dir * POINT_VALUE, role: 'close', type: 'Market', time: nowTimeStr() });
+      }
+    }
     order = null; render(); closeAllPopovers();
   }
   function confirmOrderFill() {
@@ -596,7 +616,8 @@
       order.sl.price = roundTick(order.entry - dir * computeTrailDist(cfg, order.entry));
       syncQtyFromRisk();
     }
-    orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'filled', time: nowTimeStr() });
+    orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'filled', type: order.orderType, time: nowTimeStr() });
+    tradeHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, pnl: null, role: 'open', type: order.orderType, time: nowTimeStr() });
     render();
     showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
   }
@@ -620,7 +641,9 @@
     const hit = dir === 1 ? currentPrice <= order.sl.price : currentPrice >= order.sl.price;
     if (!hit) return false;
     const closingSide = order.side === 'buy' ? 'sell' : 'buy';
-    orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, status: 'filled', time: nowTimeStr() });
+    const slPnl = (order.sl.price - order.entry) * order.qty * dir * POINT_VALUE;
+    orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, status: 'filled', type: 'Stop (SL)', time: nowTimeStr() });
+    tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, pnl: slPnl, role: 'close', type: 'Stop (SL)', time: nowTimeStr() });
     showToast('Stop loss hit at ' + fmt(order.sl.price) + ' — position closed', 'stop_circle');
     order = null;
     render();
@@ -639,7 +662,9 @@
       const idx = order.tps.indexOf(tp);
       const closingSide = order.side === 'buy' ? 'sell' : 'buy';
       const tpQty = Math.max(1, Math.round(order.qty * tp.pct / 100));
-      orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: tp.price, status: 'filled', time: nowTimeStr() });
+      const tpPnl = (tp.price - order.entry) * tpQty * dir * POINT_VALUE;
+      orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: tp.price, status: 'filled', type: 'Limit (TP)', time: nowTimeStr() });
+      tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: tp.price, pnl: tpPnl, role: 'close', type: 'Limit (TP)', time: nowTimeStr() });
       showToast('TP' + (idx + 1) + ' hit at ' + fmt(tp.price), 'check_circle');
       if (order.sl && order.sl.beTpId === tp.id && !order.sl.beActive) {
         const beCfg = getEffectiveBeConfig();
@@ -778,22 +803,53 @@
     renderAlerts();
     render();
   }
+  /* Resolve icon class and 2-char initials for any symbol */
+  function symMeta(sym) {
+    const u = sym.toUpperCase();
+    if (/AAPL|TSLA|NVDA|MSFT|AMZN|GOOGL/.test(u)) return { cls: 'pos-icon-stock',   init: u.slice(0, 2) };
+    if (/USD|BTC|ETH|SOL|XRP|BNB|DOGE|JUP/.test(u)) return { cls: 'pos-icon-crypto', init: u.slice(0, 2) };
+    return { cls: 'pos-icon-futures', init: u.slice(0, 2) };
+  }
+
+  /* Build the reusable symbol cell used across all three tabs */
+  function symCell(sym, sideCls, sideLabel, subText) {
+    const m = symMeta(sym);
+    return (
+      '<div class="ord-sym-cell">' +
+        '<div class="pos-sym-icon ' + m.cls + '">' + m.init + '</div>' +
+        '<div class="pos-sym-info">' +
+          '<div class="pos-sym-top">' +
+            '<span class="pos-sym-ticker">' + sym + '</span>' +
+            (sideCls ? '<span class="pos-side-badge ' + sideCls + '">' + sideLabel + '</span>' : '') +
+          '</div>' +
+          (subText ? '<span class="pos-sym-sub">' + subText + '</span>' : '') +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   function renderAlerts() {
     const body = document.getElementById('bpBody-alerts');
     if (!body) return;
     if (alerts.length === 0) {
       body.innerHTML = '<tr class="bp-empty-row"><td colspan="6">No alerts yet — right-click the chart and choose "Add Alert Here".</td></tr>';
     } else {
-      body.innerHTML = alerts.map(a =>
-        '<tr>' +
-        '<td><span class="sym-cell">' + a.symbol + '</span></td>' +
-        '<td>' + a.condition + '</td>' +
-        '<td>' + fmt(a.price) + '</td>' +
-        '<td>' + a.created + '</td>' +
-        '<td><span class="bp-status ' + (a.status === 'triggered' ? 'triggered' : 'active-status') + '">' + (a.status === 'triggered' ? 'Triggered' : 'Active') + '</span></td>' +
-        '<td><span class="bp-action-icon" data-remove-alert="' + a.id + '"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
-        '</tr>'
-      ).join('');
+      body.innerHTML = alerts.map(a => {
+        const isAbove = a.condition === 'Crosses Above';
+        const dirCls = isAbove ? 'above' : 'below';
+        const dirIcon = isAbove ? '↑' : '↓';
+        const triggered = a.status === 'triggered';
+        return (
+          '<tr>' +
+          '<td>' + symCell(a.symbol, '', '', '') + '</td>' +
+          '<td><span class="ord-alert-dir ' + dirCls + '">' + dirIcon + ' ' + a.condition + '</span></td>' +
+          '<td>' + fmt(a.price) + '</td>' +
+          '<td><span class="ord-val-sub" style="display:inline">' + a.created + '</span></td>' +
+          '<td><span class="bp-status ' + (triggered ? 'triggered' : 'active-status') + '">' + (triggered ? 'Triggered' : 'Active') + '</span></td>' +
+          '<td>' + (!triggered ? '<span class="bp-action-icon" data-remove-alert="' + a.id + '"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span>' : '') + '</td>' +
+          '</tr>'
+        );
+      }).join('');
     }
     body.querySelectorAll('[data-remove-alert]').forEach(el => {
       el.addEventListener('click', () => removeAlert(el.dataset.removeAlert));
@@ -802,76 +858,123 @@
     const countEl = document.getElementById('bpCountAlerts');
     if (countEl) countEl.textContent = activeCount > 0 ? '(' + activeCount + ')' : '';
   }
+
   function renderOpenOrders() {
     const body = document.getElementById('bpBody-orders');
     if (!body) return;
     const rows = [];
-    if (order && order.filled) {
-      const dir = order.side === 'buy' ? 1 : -1;
-      const closingSide = order.side === 'buy' ? 'Sell' : 'Buy';
+
+    if (order) {
+      const sideCls  = order.side === 'buy' ? 'long' : 'short';
+      const sideLabel = order.side === 'buy' ? 'Buy' : 'Sell';
+      const closeSideCls  = order.side === 'buy' ? 'short' : 'long';
+      const closeSideLabel = order.side === 'buy' ? 'Sell' : 'Buy';
+
+      /* Entry row — show before and after fill */
+      const entryStatus = order.filled ? 'filled' : 'working';
+      const entryLabel  = order.filled ? 'Filled' : 'Pending';
       rows.push(
         '<tr>' +
-        '<td><span class="sym-cell">ETHUSD</span></td>' +
-        '<td class="' + (order.side === 'buy' ? 'up' : 'down') + '">' + (order.side === 'buy' ? 'Buy' : 'Sell') + '</td>' +
-        '<td>' + order.orderType + '</td>' +
-        '<td>' + order.qty + '</td>' +
+        '<td>' + symCell('ETHUSD', sideCls, sideLabel, 'Entry · ' + order.orderType) + '</td>' +
+        '<td><span class="ord-val-primary">' + order.qty + '</span></td>' +
         '<td>' + fmt(order.entry) + '</td>' +
-        '<td><span class="bp-status filled">Filled</span></td>' +
+        '<td><span class="bp-status ' + entryStatus + '">' + entryLabel + '</span></td>' +
         '<td><span class="bp-action-icon" data-cancel-entry="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
         '</tr>'
       );
-      order.tps.forEach(tp => {
-        const tpQty = Math.max(1, Math.round(order.qty * tp.pct / 100));
-        rows.push(
-          '<tr>' +
-          '<td><span class="sym-cell">ETHUSD</span></td>' +
-          '<td class="' + (closingSide === 'Buy' ? 'up' : 'down') + '">' + closingSide + '</td>' +
-          '<td>Limit (TP)</td>' +
-          '<td>' + tpQty + '</td>' +
-          '<td>' + fmt(tp.price) + '</td>' +
-          '<td><span class="bp-status working">Working</span></td>' +
-          '<td><span class="bp-action-icon" data-cancel-tp="' + tp.id + '"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
-          '</tr>'
-        );
-      });
-      if (order.sl) {
-        rows.push(
-          '<tr>' +
-          '<td><span class="sym-cell">ETHUSD</span></td>' +
-          '<td class="' + (closingSide === 'Buy' ? 'up' : 'down') + '">' + closingSide + '</td>' +
-          '<td>Stop (SL)</td>' +
-          '<td>' + order.qty + '</td>' +
-          '<td>' + fmt(order.sl.price) + '</td>' +
-          '<td><span class="bp-status working">Working</span></td>' +
-          '<td><span class="bp-action-icon" data-cancel-sl="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
-          '</tr>'
-        );
+
+      if (order.filled) {
+        order.tps.forEach((tp, i) => {
+          const tpQty = Math.max(1, Math.round(order.qty * tp.pct / 100));
+          rows.push(
+            '<tr' + (i === 0 ? ' class="ord-group-sep"' : '') + '>' +
+            '<td>' + symCell('ETHUSD', closeSideCls, closeSideLabel, 'TP ' + (i + 1) + ' · Limit') + '</td>' +
+            '<td><span class="ord-val-primary">' + tpQty + '</span></td>' +
+            '<td>' + fmt(tp.price) + '</td>' +
+            '<td><span class="bp-status working">Working</span></td>' +
+            '<td><span class="bp-action-icon" data-cancel-tp="' + tp.id + '"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
+            '</tr>'
+          );
+        });
+
+        if (order.sl) {
+          rows.push(
+            '<tr' + (order.tps.length === 0 ? ' class="ord-group-sep"' : '') + '>' +
+            '<td>' + symCell('ETHUSD', closeSideCls, closeSideLabel, 'Stop Loss · Stop') + '</td>' +
+            '<td><span class="ord-val-primary">' + order.qty + '</span></td>' +
+            '<td>' + fmt(order.sl.price) + '</td>' +
+            '<td><span class="bp-status working">Working</span></td>' +
+            '<td><span class="bp-action-icon" data-cancel-sl="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
+            '</tr>'
+          );
+        }
       }
     }
-    body.innerHTML = rows.length ? rows.join('') : '<tr class="bp-empty-row"><td colspan="7">No open orders — right-click the chart to trade.</td></tr>';
+
+    body.innerHTML = rows.length ? rows.join('') : '<tr class="bp-empty-row"><td colspan="5">No open orders — right-click the chart to trade.</td></tr>';
     body.querySelectorAll('[data-cancel-entry]').forEach(el => el.addEventListener('click', cancelOrder));
     body.querySelectorAll('[data-cancel-tp]').forEach(el => el.addEventListener('click', () => removeTp(el.dataset.cancelTp)));
     body.querySelectorAll('[data-cancel-sl]').forEach(el => el.addEventListener('click', removeSl));
     const countEl = document.getElementById('bpCountOrders');
     if (countEl) countEl.textContent = rows.length > 0 ? '(' + rows.length + ')' : '';
   }
+
   function renderOrderHistory() {
     const body = document.getElementById('bpBody-history');
     if (!body) return;
     if (orderHistory.length === 0) {
-      body.innerHTML = '<tr class="bp-empty-row"><td colspan="6">No order history yet.</td></tr>';
+      body.innerHTML = '<tr class="bp-empty-row"><td colspan="5">No order history yet.</td></tr>';
       return;
     }
-    body.innerHTML = orderHistory.map(h =>
-      '<tr>' +
-      '<td><span class="sym-cell">' + h.symbol + '</span></td>' +
-      '<td class="' + (h.side === 'buy' ? 'up' : 'down') + '">' + (h.side === 'buy' ? 'Buy' : 'Sell') + '</td>' +
-      '<td>' + h.qty + '</td>' +
-      '<td>' + fmt(h.price) + '</td>' +
-      '<td><span class="bp-status ' + h.status + '">' + h.status.charAt(0).toUpperCase() + h.status.slice(1) + '</span></td>' +
-      '<td>' + h.time + '</td>' +
-      '</tr>'
-    ).join('');
+    body.innerHTML = orderHistory.map(h => {
+      const sideCls   = h.side === 'buy' ? 'long' : 'short';
+      const sideLabel = h.side === 'buy' ? 'Buy' : 'Sell';
+      const statusLabel = h.status.charAt(0).toUpperCase() + h.status.slice(1);
+      return (
+        '<tr>' +
+        '<td>' + symCell(h.symbol, sideCls, sideLabel, h.type || '') + '</td>' +
+        '<td><span class="ord-val-primary">' + h.qty + '</span></td>' +
+        '<td>' + fmt(h.price) + '</td>' +
+        '<td><span class="ord-val-sub" style="display:inline">' + h.time + '</span></td>' +
+        '<td><span class="bp-status ' + h.status + '">' + statusLabel + '</span></td>' +
+        '</tr>'
+      );
+    }).join('');
+  }
+
+  function renderTradeHistory() {
+    const body = document.getElementById('bpBody-trades');
+    if (!body) return;
+    if (tradeHistory.length === 0) {
+      body.innerHTML = '<tr class="bp-empty-row"><td colspan="5">No trades yet — executed fills will appear here.</td></tr>';
+      return;
+    }
+    body.innerHTML = tradeHistory.map(t => {
+      const sideCls   = t.side === 'buy' ? 'long' : 'short';
+      const sideLabel = t.side === 'buy' ? 'Buy' : 'Sell';
+      const subText = t.role === 'open'
+        ? 'Open · ' + t.type
+        : t.type === 'Limit (TP)' ? 'Take Profit · Close'
+        : t.type === 'Stop (SL)'  ? 'Stop Loss · Close'
+        : 'Market Close';
+      let pnlHtml;
+      if (t.pnl === null) {
+        pnlHtml = '<span class="ord-val-sub" style="display:inline">—</span>';
+      } else {
+        const pnlCls = t.pnl >= 0 ? 'up' : 'down';
+        const pnlStr = (t.pnl >= 0 ? '+' : '') + '$' + fmt(Math.abs(t.pnl));
+        pnlHtml = '<span class="' + pnlCls + '" style="font-weight:500">' + pnlStr + '</span>';
+      }
+      return (
+        '<tr>' +
+        '<td>' + symCell(t.symbol, sideCls, sideLabel, subText) + '</td>' +
+        '<td><span class="ord-val-primary">' + t.qty + '</span></td>' +
+        '<td>' + fmt(t.price) + '</td>' +
+        '<td>' + pnlHtml + '</td>' +
+        '<td><span class="ord-val-sub" style="display:inline">' + t.time + '</span></td>' +
+        '</tr>'
+      );
+    }).join('');
   }
 
   function syncQtyFromRisk() {
@@ -1457,6 +1560,7 @@
   function render() {
     renderOpenOrders();
     renderOrderHistory();
+    renderTradeHistory();
     isHoveringBarControls = false;
     layer.innerHTML = '';
     const H0 = rectH();
@@ -3317,6 +3421,7 @@ function syncExitModeInputs() {
   });
   renderOpenOrders();
   renderOrderHistory();
+  renderTradeHistory();
   renderAlerts();
 
 })();

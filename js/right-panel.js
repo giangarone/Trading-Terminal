@@ -56,48 +56,56 @@
     s.elChg = document.getElementById('wlChg-' + s.sym);
   });
 
-  /* positions: derive per-position sensitivity from the figures already on screen,
-     so the simulation continues smoothly from the values shown at page load */
-  function makePosition(sym, qty, avgPrice, mark0, pnlOpen0, pnlDay0, pct0) {
-    const pv = pnlOpen0 / ((mark0 - avgPrice) * qty); // implied $ per point for this mock position
-    const unitBase = pct0 !== 0 ? pnlOpen0 / pct0 : 1; // $ per 1% move, scales with position size
+  /* positions — each carries its own mark price noise so they're independent
+     of watchlist symbols and continue to animate correctly as positions close */
+  function makePosition(sym, qty, avgPrice, mark0, pnlOpen0, pct0, step, dec) {
+    const pv = Math.abs(mark0 - avgPrice) > 1e-9
+      ? pnlOpen0 / ((mark0 - avgPrice) * qty)
+      : 1;
+    const unitBase = pct0 !== 0 ? pnlOpen0 / pct0 : 1;
     return {
-      sym, qty, avgPrice, mark: mark0, pv, pnlOpen0, pnlDay0, unitBase, mark0,
-      elQty: document.getElementById('posQty-' + sym),
-      elAvg: document.getElementById('posAvg-' + sym),
-      elMark: document.getElementById('posMark-' + sym),
+      sym, qty, avgPrice,
+      mark: mark0, mark0, anchor: mark0, step: step || 0.01, dec: dec || 2,
+      pv, pnlOpen0, unitBase,
+      elQty:     document.getElementById('posQty-'     + sym),
+      elAvg:     document.getElementById('posAvg-'     + sym),
+      elMark:    document.getElementById('posMark-'    + sym),
       elPnlOpen: document.getElementById('posPnlOpen-' + sym),
-      elPnlDay: document.getElementById('posPnlDay-' + sym),
-      elPct: document.getElementById('posPct-' + sym),
+      elPct:     document.getElementById('posPct-'     + sym),
     };
   }
+
   const positions = [
-    makePosition('ETHUSD', 2, 4486.50, 4500.25, 2750.00, 1950.00, 0.74),
-    makePosition('NQU5', 1, 18480.00, 18624.50, 1445.00, 980.00, 0.78),
+    //                sym        qty       avgPrice   mark0      pnlOpen0  pct0   step    dec
+    makePosition('MNQU26',       8,      29748.00,  29704.75,  -692.00,  -0.15,  0.25,   2),
+    makePosition('MESZ25',       5,       6015.25,   6028.00,   -63.75,  -0.21,  0.25,   2),
+    makePosition('JUPUSDT',   3084.19,     0.2136,    0.2195,   -83.55,  -8.35,  0.0001, 4),
+    makePosition('BTCUSDT',      0.125, 66245.10,  67121.50,   109.55,   1.32,  0.5,    2),
+    makePosition('ETHUSDT',      2.0,    3125.40,   3210.75,   170.70,   2.73,  0.05,   2),
+    makePosition('AAPL',       100,       185.27,    188.45,   318.00,   1.72,  0.05,   2),
   ];
+
   const totPnlOpenEl = document.getElementById('totPnlOpen');
-  const totPnlDayEl = document.getElementById('totPnlDay');
-  const totPctEl = document.getElementById('totPct');
+  const totPctEl     = document.getElementById('totPct');
 
   function fmtQty(q) {
     let s = q.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
     return s === '' || s === '-' ? '0' : s;
   }
 
-  /* ---------- position row quick actions: partial/full close & reverse ---------- */
+  /* ---------- position actions: partial/full close & reverse ---------- */
   window.closePositionPct = function (sym, pct) {
     const p = positions.find(x => x.sym === sym);
     if (!p) return false;
     if (pct >= 100) {
       positions.splice(positions.indexOf(p), 1);
-      const row = document.querySelector('[data-pos-row="' + sym + '"]');
+      const row = document.querySelector('.pos-row[data-pos-id="' + sym + '"]');
       if (row) row.remove();
       return true;
     }
     const remainFrac = 1 - pct / 100;
-    p.qty *= remainFrac;
+    p.qty      *= remainFrac;
     p.pnlOpen0 *= remainFrac;
-    p.pnlDay0 *= remainFrac;
     p.unitBase *= remainFrac;
     if (p.elQty) p.elQty.textContent = fmtQty(p.qty);
     return true;
@@ -106,16 +114,17 @@
   window.reversePosition = function (sym) {
     const p = positions.find(x => x.sym === sym);
     if (!p) return false;
-    p.pv = -p.pv;
+    p.pv       = -p.pv;
     p.avgPrice = p.mark;
-    p.mark0 = p.mark;
-    p.pnlDay0 += p.pnlOpen0;
+    p.mark0    = p.mark;
+    p.anchor   = p.mark;
     p.pnlOpen0 = 0;
-    if (p.elAvg) p.elAvg.textContent = fmt(p.avgPrice);
+    if (p.elAvg) p.elAvg.textContent = fmt(p.avgPrice, p.dec);
     return true;
   };
 
   function tick() {
+    /* watchlist */
     watchSyms.forEach(s => {
       const prevLast = s.last;
       const reversion = (s.anchor - s.last) * 0.05;
@@ -125,41 +134,50 @@
       const isUp = s.last > prevLast;
       const chg = (s.last - s.prevClose) / s.prevClose * 100;
       const chgUp = chg >= 0;
-      s.elLast.textContent = fmt(s.last, s.dec);
-      s.elChg.textContent = (chgUp ? '+' : '') + fmt(chg) + '%';
-      setUpDown(s.elChg, chgUp);
-      flashEl(s.elLast, isUp);
+      if (s.elLast) s.elLast.textContent = fmt(s.last, s.dec);
+      if (s.elChg)  { s.elChg.textContent = (chgUp ? '+' : '') + fmt(chg) + '%'; setUpDown(s.elChg, chgUp); }
+      if (s.elLast) flashEl(s.elLast, isUp);
     });
 
-    // ETH position mark price mirrors the header/chart simulation already on screen
-    const esLast = parseFloat(document.getElementById('hdrLast').textContent.replace(/,/g, ''));
-    const nq = watchSyms.find(s => s.sym === 'NQU5');
-    const markBySym = { ETHUSD: esLast, NQU5: nq.last };
-
-    let sumPnlOpen = 0, sumPnlDay = 0, sumBase = 0;
+    /* positions — self-contained noise per position */
+    let sumPnlOpen = 0, sumBase = 0;
     positions.forEach(p => {
-      p.mark = markBySym[p.sym];
-      const deltaMark = p.mark - p.mark0;
-      const deltaPnl = deltaMark * p.qty * p.pv;
-      const pnlOpen = p.pnlOpen0 + deltaPnl;
-      const pnlDay = p.pnlDay0 + deltaPnl;
-      const pct = p.unitBase !== 0 ? pnlOpen / p.unitBase : 0;
-      p.elMark.textContent = fmt(p.mark);
-      p.elPnlOpen.textContent = (pnlOpen >= 0 ? '+' : '') + fmt(pnlOpen);
-      p.elPnlDay.textContent = (pnlDay >= 0 ? '+' : '') + fmt(pnlDay);
-      p.elPct.textContent = (pct >= 0 ? '+' : '') + fmt(pct) + '%';
-      setUpDown(p.elPnlOpen, pnlOpen >= 0);
-      setUpDown(p.elPnlDay, pnlDay >= 0);
-      setUpDown(p.elPct, pct >= 0);
-      sumPnlOpen += pnlOpen; sumPnlDay += pnlDay; sumBase += p.unitBase;
+      try {
+        const reversion = (p.anchor - p.mark) * 0.04;
+        let next = roundStep(p.mark + noise() * p.step * 0.6 + reversion, p.step);
+        if (next === p.mark) next = roundStep(p.mark + (rand() < 0.5 ? -p.step : p.step), p.step);
+        p.mark = Math.max(next, p.step);
+
+        const deltaMark = p.mark - p.mark0;
+        const deltaPnl  = deltaMark * p.qty * p.pv;
+        const pnlOpen   = p.pnlOpen0 + deltaPnl;
+        const pct       = p.unitBase !== 0 ? pnlOpen / p.unitBase : 0;
+
+        if (p.elMark)    p.elMark.textContent = fmt(p.mark, p.dec);
+        if (p.elPnlOpen) {
+          p.elPnlOpen.textContent = (pnlOpen >= 0 ? '+' : '') + fmt(pnlOpen);
+          setUpDown(p.elPnlOpen, pnlOpen >= 0);
+        }
+        if (p.elPct) {
+          p.elPct.textContent = (pct >= 0 ? '+' : '') + fmt(pct) + '%';
+          setUpDown(p.elPct, pct >= 0);
+        }
+
+        sumPnlOpen += pnlOpen;
+        sumBase    += p.unitBase;
+      } catch (_) { /* guard against stale element refs mid-tick */ }
     });
+
+    /* totals bar */
     const totPct = sumBase !== 0 ? sumPnlOpen / sumBase : 0;
-    totPnlOpenEl.textContent = (sumPnlOpen >= 0 ? '+' : '') + fmt(sumPnlOpen);
-    totPnlDayEl.textContent = (sumPnlDay >= 0 ? '+' : '') + fmt(sumPnlDay);
-    totPctEl.textContent = (totPct >= 0 ? '+' : '') + fmt(totPct) + '%';
-    setUpDown(totPnlOpenEl, sumPnlOpen >= 0);
-    setUpDown(totPnlDayEl, sumPnlDay >= 0);
-    setUpDown(totPctEl, totPct >= 0);
+    if (totPnlOpenEl) {
+      totPnlOpenEl.textContent = (sumPnlOpen >= 0 ? '+' : '') + fmt(sumPnlOpen);
+      setUpDown(totPnlOpenEl, sumPnlOpen >= 0);
+    }
+    if (totPctEl) {
+      totPctEl.textContent = (totPct >= 0 ? '+' : '') + fmt(totPct) + '%';
+      setUpDown(totPctEl, totPct >= 0);
+    }
   }
   setInterval(tick, 1200);
 })();

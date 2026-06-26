@@ -645,3 +645,539 @@ table.bp-table tr.total-row td {
   color: var(--paper-500);
   cursor: pointer;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Positions Panel — div-based expandable rows
+───────────────────────────────────────────────────────────── */
+
+/* Override .bp-table-wrap.active's display:block with flex-column */
+.bp-table-wrap.pos-panel.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Shared column grid used by both the header bar and each summary row */
+.pos-header-bar,
+.pos-row-summary {
+  display: grid;
+  grid-template-columns: minmax(200px, 1.5fr) 90px 130px 130px 140px 90px 44px;
+  align-items: center;
+}
+
+/* ── Header bar ──────────────────────────────────────────── */
+
+.pos-header-bar {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--line-1);
+  background: var(--ink-900);
+}
+
+.pos-header-bar .pos-col {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-mid);
+  color: var(--paper-500);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-label);
+  padding: 9px 16px;
+}
+
+.pos-header-bar .pos-col-size,
+.pos-header-bar .pos-col-price,
+.pos-header-bar .pos-col-pnl,
+.pos-header-bar .pos-col-tpsl,
+.pos-header-bar .pos-col-liq {
+  text-align: right;
+}
+
+/* ── Rows scroll area ────────────────────────────────────── */
+
+.pos-rows-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  min-height: 0;
+}
+
+/* ── Individual position row ─────────────────────────────── */
+
+.pos-row {
+  border-bottom: 1px solid var(--line-1);
+}
+
+.pos-row-summary {
+  cursor: pointer;
+  transition: background var(--t-ui);
+}
+
+.pos-row:hover .pos-row-summary,
+.pos-row.is-expanded .pos-row-summary {
+  background: var(--ink-850);
+}
+
+.pos-row-summary .pos-col {
+  padding: 10px 16px;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-mid);
+}
+
+.pos-row-summary .pos-col-size,
+.pos-row-summary .pos-col-price,
+.pos-row-summary .pos-col-pnl,
+.pos-row-summary .pos-col-tpsl,
+.pos-row-summary .pos-col-liq {
+  text-align: right;
+}
+
+/* ── Symbol cell ─────────────────────────────────────────── */
+
+.pos-col-symbol {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pos-sym-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: var(--fw-semi);
+  letter-spacing: 0;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.pos-icon-futures {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.pos-icon-crypto {
+  background: var(--intel-dim);
+  color: var(--intel);
+}
+
+.pos-icon-stock {
+  background: var(--purple-dim);
+  color: var(--purple);
+}
+
+.pos-sym-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pos-sym-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.pos-sym-ticker {
+  font-weight: var(--fw-semi);
+  color: var(--paper-100);
+  white-space: nowrap;
+}
+
+.pos-sym-sub {
+  font-size: var(--fs-label);
+  color: var(--paper-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pos-side-badge,
+.pos-type-badge {
+  font-size: 9.5px;
+  font-weight: var(--fw-semi);
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pos-side-badge.long {
+  color: var(--long);
+  background: var(--long-dim);
+}
+
+.pos-side-badge.short {
+  color: var(--short);
+  background: var(--short-dim);
+}
+
+.pos-type-badge {
+  color: var(--paper-500);
+  background: var(--ink-750);
+}
+
+/* ── Size cell ───────────────────────────────────────────── */
+
+.pos-size-qty {
+  display: block;
+  color: var(--paper-100);
+}
+
+.pos-size-unit {
+  display: block;
+  font-size: var(--fs-label);
+  color: var(--paper-500);
+  margin-top: 2px;
+}
+
+/* ── Entry / Mark cell ───────────────────────────────────── */
+
+.pos-entry {
+  display: block;
+  font-size: var(--fs-label);
+  color: var(--paper-500);
+}
+
+.pos-mark {
+  display: block;
+  color: var(--paper-100);
+  margin-top: 3px;
+}
+
+/* ── P&L cell ────────────────────────────────────────────── */
+
+.pos-pnl-dollar {
+  display: block;
+  font-weight: var(--fw-semi);
+}
+
+.pos-pnl-pct {
+  display: block;
+  font-size: var(--fs-label);
+  margin-top: 3px;
+}
+
+/* ── TP / SL cell ────────────────────────────────────────── */
+
+.pos-tpsl-line {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.pos-tpsl-line+.pos-tpsl-line {
+  margin-top: 3px;
+}
+
+.pos-tpsl-tag {
+  font-size: 9px;
+  font-weight: var(--fw-semi);
+  padding: 1px 4px;
+  border-radius: 3px;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.pos-tpsl-tag.tp {
+  color: var(--long);
+  background: var(--long-dim);
+}
+
+.pos-tpsl-tag.sl {
+  color: var(--short);
+  background: var(--short-dim);
+}
+
+/* ── Actions cell ────────────────────────────────────────── */
+
+.pos-col-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px;
+}
+
+.pos-expand-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--paper-500);
+  transition: color var(--t-ui), background var(--t-ui);
+}
+
+.pos-expand-btn:hover {
+  color: var(--paper-100);
+  background: var(--ink-750);
+}
+
+.pos-expand-btn .material-symbols-outlined,
+.pos-more-btn .material-symbols-outlined {
+  font-size: 17px;
+}
+
+.pos-chevron {
+  transition: transform var(--t-mid);
+}
+
+.pos-row.is-expanded .pos-chevron {
+  transform: rotate(180deg);
+}
+
+/* ── Expanded detail panel ───────────────────────────────── */
+
+.pos-row-detail {
+  display: none;
+  grid-template-columns: 200px 1fr 1fr 1fr;
+  border-top: 1px solid var(--line-2);
+  background: var(--ink-850);
+}
+
+.pos-row.is-expanded .pos-row-detail {
+  display: grid;
+}
+
+.pos-detail-close,
+.pos-detail-section {
+  padding: 14px;
+  border-right: 1px solid var(--line-1);
+  min-width: 0;
+}
+
+.pos-detail-section:last-child {
+  border-right: none;
+}
+
+.pos-detail-label {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semi);
+  color: var(--paper-500);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-label);
+  margin-bottom: 10px;
+}
+
+/* Close section */
+.pos-close-pct-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 9px;
+}
+
+.pos-close-pct-btn {
+  flex: 1;
+  height: 26px;
+  border-radius: var(--r-xs);
+  background: var(--ink-800);
+  border: 1px solid var(--line-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--paper-300);
+  transition: background var(--t-ui), border-color var(--t-ui), color var(--t-ui);
+}
+
+.pos-close-pct-btn:hover {
+  background: var(--ink-750);
+  border-color: var(--line-3);
+  color: var(--paper-100);
+}
+
+.pos-close-full {
+  color: var(--short);
+  border-color: rgba(242, 73, 92, .3);
+}
+
+.pos-close-full:hover {
+  background: var(--short-dim);
+  border-color: rgba(242, 73, 92, .5);
+  color: var(--short);
+}
+
+.pos-close-est {
+  font-size: var(--fs-sm);
+  color: var(--paper-500);
+  margin-bottom: 9px;
+}
+
+.pos-close-est strong {
+  color: var(--paper-300);
+  font-weight: var(--fw-mid);
+}
+
+.pos-close-primary {
+  width: 100%;
+  height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--short-dim);
+  border: 1px solid rgba(242, 73, 92, .3);
+  color: var(--short);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  margin-bottom: 6px;
+  transition: background var(--t-ui), border-color var(--t-ui);
+}
+
+.pos-close-primary:hover {
+  background: rgba(242, 73, 92, .22);
+  border-color: rgba(242, 73, 92, .5);
+}
+
+.pos-reverse-btn {
+  width: 100%;
+  height: 26px;
+  border-radius: var(--r-sm);
+  background: var(--ink-800);
+  border: 1px solid var(--line-2);
+  color: var(--paper-300);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-mid);
+  transition: background var(--t-ui), color var(--t-ui);
+}
+
+.pos-reverse-btn:hover {
+  background: var(--ink-750);
+  color: var(--paper-100);
+}
+
+/* Key-value grid inside detail sections */
+.pos-kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 14px;
+  align-items: baseline;
+}
+
+.pos-kv-k {
+  font-size: var(--fs-sm);
+  color: var(--paper-500);
+  white-space: nowrap;
+}
+
+.pos-kv-v {
+  font-size: var(--fs-sm);
+  color: var(--paper-100);
+  text-align: right;
+  font-weight: var(--fw-mid);
+}
+
+/* TP/SL list inside detail */
+.pos-tpsl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.pos-tpsl-entry {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.pos-tpsl-name {
+  font-size: var(--fs-sm);
+  color: var(--paper-500);
+  font-weight: var(--fw-semi);
+}
+
+.pos-tpsl-price {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-mid);
+}
+
+.pos-tpsl-dist,
+.pos-tpsl-size {
+  font-size: var(--fs-label);
+  color: var(--paper-500);
+}
+
+.pos-sl-entry .pos-tpsl-name {
+  color: var(--short);
+}
+
+/* ── Totals bar ──────────────────────────────────────────── */
+
+.pos-totals-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--ink-850);
+  border-top: 1px solid var(--line-2);
+}
+
+.pos-totals-label {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-mid);
+  color: var(--paper-500);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-label);
+  flex: 1;
+}
+
+.pos-totals-pnl {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semi);
+}
+
+.pos-totals-pct {
+  font-size: var(--fs-sm);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Orders / History / Alerts — shared table cell components
+   Reuses .pos-sym-icon, .pos-side-badge, .pos-type-badge etc.
+───────────────────────────────────────────────────────────── */
+
+/* Symbol cell flex container (mirrors pos-col-symbol) */
+.ord-sym-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Stacked primary + secondary value inside a single cell */
+.ord-val-primary {
+  display: block;
+  color: var(--paper-100);
+  font-weight: var(--fw-mid);
+}
+
+.ord-val-sub {
+  display: block;
+  font-size: var(--fs-label);
+  color: var(--paper-500);
+  margin-top: 2px;
+}
+
+/* Alert direction indicator (↑ / ↓ with condition label) */
+.ord-alert-dir {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+}
+
+.ord-alert-dir.above {
+  color: var(--long);
+}
+
+.ord-alert-dir.below {
+  color: var(--short);
+}
+
+/* Visual group separator — used before first TP row in Open Orders */
+.ord-group-sep td {
+  border-top: 1px solid var(--line-2);
+}

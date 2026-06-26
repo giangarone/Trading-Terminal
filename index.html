@@ -2029,70 +2029,657 @@
             <button class="bp-tab" data-panel="orders">Open Orders <span class="count"
                 id="bpCountOrders"></span></button>
             <button class="bp-tab" data-panel="history">Order History</button>
+            <button class="bp-tab" data-panel="trades">Trade History</button>
             <button class="bp-tab" data-panel="alerts">Alerts <span class="count" id="bpCountAlerts"></span></button>
           </div>
 
-          <div class="bp-table-wrap active" id="bpPanel-positions">
-            <table class="bp-table">
-              <thead>
-                <tr>
-                  <th>Symbol</th>
-                  <th>Position</th>
-                  <th>Avg Price</th>
-                  <th>Mark Price</th>
-                  <th>P&amp;L Open</th>
-                  <th>P&amp;L Day</th>
-                  <th>%P&amp;L</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr data-pos-row="ETHUSD">
-                  <td><span class="sym-cell">ETHUSD</span></td>
-                  <td id="posQty-ETHUSD">2</td>
-                  <td id="posAvg-ETHUSD">4,486.50</td>
-                  <td id="posMark-ETHUSD">4,500.25</td>
-                  <td class="up" id="posPnlOpen-ETHUSD">+2,750.00</td>
-                  <td class="up" id="posPnlDay-ETHUSD">+1,950.00</td>
-                  <td class="up" id="posPct-ETHUSD">+0.74%</td>
-                  <td><span class="material-symbols-outlined action-dots" data-pos-actions="ETHUSD">more_horiz</span>
-                  </td>
-                </tr>
-                <tr data-pos-row="NQU5">
-                  <td><span class="sym-cell">NQU5</span></td>
-                  <td id="posQty-NQU5">1</td>
-                  <td id="posAvg-NQU5">18,480.00</td>
-                  <td id="posMark-NQU5">18,624.50</td>
-                  <td class="up" id="posPnlOpen-NQU5">+1,445.00</td>
-                  <td class="up" id="posPnlDay-NQU5">+980.00</td>
-                  <td class="up" id="posPct-NQU5">+0.78%</td>
-                  <td><span class="material-symbols-outlined action-dots" data-pos-actions="NQU5">more_horiz</span></td>
-                </tr>
-                <tr class="total-row">
-                  <td>TOTAL</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td class="up" id="totPnlOpen">+4,195.00</td>
-                  <td class="up" id="totPnlDay">+2,930.00</td>
-                  <td class="up" id="totPct">+0.76%</td>
-                  <td></td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="bp-table-wrap pos-panel active" id="bpPanel-positions">
+
+            <!-- Column headers -->
+            <div class="pos-header-bar">
+              <div class="pos-col pos-col-symbol">Symbol</div>
+              <div class="pos-col pos-col-size">Size</div>
+              <div class="pos-col pos-col-price">Entry / Mark</div>
+              <div class="pos-col pos-col-pnl">Unrealized P&amp;L</div>
+              <div class="pos-col pos-col-tpsl">TP / SL</div>
+              <div class="pos-col pos-col-liq">Liq. Price</div>
+              <div class="pos-col pos-col-actions"></div>
+            </div>
+
+            <div class="pos-rows-scroll">
+
+              <!-- ── MNQU26 ── -->
+              <div class="pos-row" data-pos-id="MNQU26">
+                <div class="pos-row-summary">
+                  <div class="pos-col pos-col-symbol">
+                    <div class="pos-sym-icon pos-icon-futures">MN</div>
+                    <div class="pos-sym-info">
+                      <div class="pos-sym-top">
+                        <span class="pos-sym-ticker">MNQU26</span>
+                        <span class="pos-side-badge long">Long</span>
+                        <span class="pos-type-badge">Futures</span>
+                      </div>
+                      <span class="pos-sym-sub">Micro E-mini Nasdaq-100</span>
+                    </div>
+                  </div>
+                  <div class="pos-col pos-col-size">
+                    <span class="pos-size-qty" id="posQty-MNQU26">8</span>
+                    <span class="pos-size-unit">Contracts</span>
+                  </div>
+                  <div class="pos-col pos-col-price">
+                    <span class="pos-entry" id="posAvg-MNQU26">29,748.00</span>
+                    <span class="pos-mark" id="posMark-MNQU26">29,704.75</span>
+                  </div>
+                  <div class="pos-col pos-col-pnl">
+                    <span class="pos-pnl-dollar down" id="posPnlOpen-MNQU26">-692.00</span>
+                    <span class="pos-pnl-pct down" id="posPct-MNQU26">-0.15%</span>
+                  </div>
+                  <div class="pos-col pos-col-tpsl">
+                    <div class="pos-tpsl-line">
+                      <span class="pos-tpsl-tag tp">TP</span>
+                      <span class="pos-tpsl-val up">30,250.00</span>
+                    </div>
+                    <div class="pos-tpsl-line">
+                      <span class="pos-tpsl-tag sl">SL</span>
+                      <span class="pos-tpsl-val down">29,250.00</span>
+                    </div>
+                  </div>
+                  <div class="pos-col pos-col-liq">
+                    <span class="pos-liq faint">—</span>
+                  </div>
+                  <div class="pos-col pos-col-actions">
+                    <button class="pos-expand-btn" title="Expand details">
+                      <span class="material-symbols-outlined pos-chevron">expand_more</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="pos-row-detail">
+                  <div class="pos-detail-close">
+                    <div class="pos-detail-label">Close Position</div>
+                    <div class="pos-close-pct-row">
+                      <button class="pos-close-pct-btn" data-pos-close-pct="25">25%</button>
+                      <button class="pos-close-pct-btn" data-pos-close-pct="50">50%</button>
+                      <button class="pos-close-pct-btn" data-pos-close-pct="75">75%</button>
+                      <button class="pos-close-pct-btn pos-close-full" data-pos-close-pct="100">100%</button>
+                    </div>
+                    <div class="pos-close-est">Est. close: <strong>8 Contracts</strong></div>
+                    <button class="pos-close-primary" data-pos-close-pct="100">Close Position</button>
+                    <button class="pos-reverse-btn" data-pos-reverse>Reverse</button>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">Position</div>
+                    <div class="pos-kv">
+                      <span class="pos-kv-k">Size</span><span class="pos-kv-v">8 Contracts</span>
+                      <span class="pos-kv-k">Avg Entry</span><span class="pos-kv-v">29,748.00</span>
+                      <span class="pos-kv-k">Mark Price</span><span class="pos-kv-v">29,704.75</span>
+                      <span class="pos-kv-k">Break Even</span><span class="pos-kv-v">29,749.60</span>
+                      <span class="pos-kv-k">Margin</span><span class="pos-kv-v">$34,352.00</span>
+                      <span class="pos-kv-k">Liq. Price</span><span class="pos-kv-v faint">—</span>
+                    </div>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">P&amp;L</div>
+                    <div class="pos-kv">
+                      <span class="pos-kv-k">Unrealized</span><span class="pos-kv-v down">-692.00</span>
+                      <span class="pos-kv-k">Realized</span><span class="pos-kv-v up">+1,240.00</span>
+                      <span class="pos-kv-k">Funding</span><span class="pos-kv-v faint">—</span>
+                      <span class="pos-kv-k">24h High</span><span class="pos-kv-v">29,890.00</span>
+                      <span class="pos-kv-k">24h Low</span><span class="pos-kv-v">29,540.00</span>
+                    </div>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">TP / SL</div>
+                    <div class="pos-tpsl-list">
+                      <div class="pos-tpsl-entry">
+                        <span class="pos-tpsl-name">TP 1</span>
+                        <span class="pos-tpsl-price up">30,250.00</span>
+                        <span class="pos-tpsl-dist faint">+1.7%</span>
+                        <span class="pos-tpsl-size faint">50%</span>
+                      </div>
+                      <div class="pos-tpsl-entry">
+                        <span class="pos-tpsl-name">TP 2</span>
+                        <span class="pos-tpsl-price up">30,850.00</span>
+                        <span class="pos-tpsl-dist faint">+3.7%</span>
+                        <span class="pos-tpsl-size faint">50%</span>
+                      </div>
+                      <div class="pos-tpsl-entry pos-sl-entry">
+                        <span class="pos-tpsl-name">SL</span>
+                        <span class="pos-tpsl-price down">29,250.00</span>
+                        <span class="pos-tpsl-dist faint">-1.7%</span>
+                        <span class="pos-tpsl-size faint">100%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── MESZ25 ── -->
+              <div class="pos-row" data-pos-id="MESZ25">
+                <div class="pos-row-summary">
+                  <div class="pos-col pos-col-symbol">
+                    <div class="pos-sym-icon pos-icon-futures">ME</div>
+                    <div class="pos-sym-info">
+                      <div class="pos-sym-top">
+                        <span class="pos-sym-ticker">MESZ25</span>
+                        <span class="pos-side-badge short">Short</span>
+                        <span class="pos-type-badge">Futures</span>
+                      </div>
+                      <span class="pos-sym-sub">Micro E-mini S&amp;P 500</span>
+                    </div>
+                  </div>
+                  <div class="pos-col pos-col-size">
+                    <span class="pos-size-qty" id="posQty-MESZ25">5</span>
+                    <span class="pos-size-unit">Contracts</span>
+                  </div>
+                  <div class="pos-col pos-col-price">
+                    <span class="pos-entry" id="posAvg-MESZ25">6,015.25</span>
+                    <span class="pos-mark" id="posMark-MESZ25">6,028.00</span>
+                  </div>
+                  <div class="pos-col pos-col-pnl">
+                    <span class="pos-pnl-dollar down" id="posPnlOpen-MESZ25">-63.75</span>
+                    <span class="pos-pnl-pct down" id="posPct-MESZ25">-0.21%</span>
+                  </div>
+                  <div class="pos-col pos-col-tpsl">
+                    <div class="pos-tpsl-line">
+                      <span class="pos-tpsl-tag tp">TP</span>
+                      <span class="pos-tpsl-val up">5,950.00</span>
+                    </div>
+                    <div class="pos-tpsl-line">
+                      <span class="pos-tpsl-tag sl">SL</span>
+                      <span class="pos-tpsl-val down">6,080.00</span>
+                    </div>
+                  </div>
+                  <div class="pos-col pos-col-liq">
+                    <span class="pos-liq faint">—</span>
+                  </div>
+                  <div class="pos-col pos-col-actions">
+                    <button class="pos-expand-btn" title="Expand details">
+                      <span class="material-symbols-outlined pos-chevron">expand_more</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="pos-row-detail">
+                  <div class="pos-detail-close">
+                    <div class="pos-detail-label">Close Position</div>
+                    <div class="pos-close-pct-row">
+                      <button class="pos-close-pct-btn" data-pos-close-pct="25">25%</button>
+                      <button class="pos-close-pct-btn" data-pos-close-pct="50">50%</button>
+                      <button class="pos-close-pct-btn" data-pos-close-pct="75">75%</button>
+                      <button class="pos-close-pct-btn pos-close-full" data-pos-close-pct="100">100%</button>
+                    </div>
+                    <div class="pos-close-est">Est. close: <strong>5 Contracts</strong></div>
+                    <button class="pos-close-primary" data-pos-close-pct="100">Close Position</button>
+                    <button class="pos-reverse-btn" data-pos-reverse>Reverse</button>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">Position</div>
+                    <div class="pos-kv">
+                      <span class="pos-kv-k">Size</span><span class="pos-kv-v">5 Contracts</span>
+                      <span class="pos-kv-k">Avg Entry</span><span class="pos-kv-v">6,015.25</span>
+                      <span class="pos-kv-k">Mark Price</span><span class="pos-kv-v">6,028.00</span>
+                      <span class="pos-kv-k">Break Even</span><span class="pos-kv-v">6,014.50</span>
+                      <span class="pos-kv-k">Margin</span><span class="pos-kv-v">$18,540.00</span>
+                      <span class="pos-kv-k">Liq. Price</span><span class="pos-kv-v faint">—</span>
+                    </div>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">P&amp;L</div>
+                    <div class="pos-kv">
+                      <span class="pos-kv-k">Unrealized</span><span class="pos-kv-v down">-63.75</span>
+                      <span class="pos-kv-k">Realized</span><span class="pos-kv-v up">+880.00</span>
+                      <span class="pos-kv-k">Funding</span><span class="pos-kv-v faint">—</span>
+                      <span class="pos-kv-k">24h High</span><span class="pos-kv-v">6,040.00</span>
+                      <span class="pos-kv-k">24h Low</span><span class="pos-kv-v">5,998.00</span>
+                    </div>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">TP / SL</div>
+                    <div class="pos-tpsl-list">
+                      <div class="pos-tpsl-entry">
+                        <span class="pos-tpsl-name">TP 1</span>
+                        <span class="pos-tpsl-price up">5,950.00</span>
+                        <span class="pos-tpsl-dist faint">-1.1%</span>
+                        <span class="pos-tpsl-size faint">100%</span>
+                      </div>
+                      <div class="pos-tpsl-entry pos-sl-entry">
+                        <span class="pos-tpsl-name">SL</span>
+                        <span class="pos-tpsl-price down">6,080.00</span>
+                        <span class="pos-tpsl-dist faint">+1.1%</span>
+                        <span class="pos-tpsl-size faint">100%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── JUPUSDT ── -->
+              <div class="pos-row" data-pos-id="JUPUSDT">
+                <div class="pos-row-summary">
+                  <div class="pos-col pos-col-symbol">
+                    <div class="pos-sym-icon pos-icon-crypto">JU</div>
+                    <div class="pos-sym-info">
+                      <div class="pos-sym-top">
+                        <span class="pos-sym-ticker">JUPUSDT</span>
+                        <span class="pos-side-badge short">Short</span>
+                        <span class="pos-type-badge">Crypto</span>
+                      </div>
+                      <span class="pos-sym-sub">Jupiter / USDT (Perp)</span>
+                    </div>
+                  </div>
+                  <div class="pos-col pos-col-size">
+                    <span class="pos-size-qty" id="posQty-JUPUSDT">3,084.19</span>
+                    <span class="pos-size-unit">USDT</span>
+                  </div>
+                  <div class="pos-col pos-col-price">
+                    <span class="pos-entry" id="posAvg-JUPUSDT">0.2136</span>
+                    <span class="pos-mark" id="posMark-JUPUSDT">0.2195</span>
+                  </div>
+                  <div class="pos-col pos-col-pnl">
+                    <span class="pos-pnl-dollar down" id="posPnlOpen-JUPUSDT">-83.55</span>
+                    <span class="pos-pnl-pct down" id="posPct-JUPUSDT">-8.35%</span>
+                  </div>
+                  <div class="pos-col pos-col-tpsl">
+                    <div class="pos-tpsl-line">
+                      <span class="pos-tpsl-tag tp">TP</span>
+                      <span class="pos-tpsl-val up">0.1950</span>
+                    </div>
+                    <div class="pos-tpsl-line">
+                      <span class="pos-tpsl-tag sl">SL</span>
+                      <span class="pos-tpsl-val down">0.2350</span>
+                    </div>
+                  </div>
+                  <div class="pos-col pos-col-liq">
+                    <span class="pos-liq down">0.2827</span>
+                  </div>
+                  <div class="pos-col pos-col-actions">
+                    <button class="pos-expand-btn" title="Expand details">
+                      <span class="material-symbols-outlined pos-chevron">expand_more</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="pos-row-detail">
+                  <div class="pos-detail-close">
+                    <div class="pos-detail-label">Close Position</div>
+                    <div class="pos-close-pct-row">
+                      <button class="pos-close-pct-btn" data-pos-close-pct="25">25%</button>
+                      <button class="pos-close-pct-btn" data-pos-close-pct="50">50%</button>
+                      <button class="pos-close-pct-btn" data-pos-close-pct="75">75%</button>
+                      <button class="pos-close-pct-btn pos-close-full" data-pos-close-pct="100">100%</button>
+                    </div>
+                    <div class="pos-close-est">Est. close: <strong>3,084.19 USDT</strong></div>
+                    <button class="pos-close-primary" data-pos-close-pct="100">Close Position</button>
+                    <button class="pos-reverse-btn" data-pos-reverse>Reverse</button>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">Position</div>
+                    <div class="pos-kv">
+                      <span class="pos-kv-k">Size</span><span class="pos-kv-v">3,084.19 USDT</span>
+                      <span class="pos-kv-k">Avg Entry</span><span class="pos-kv-v">0.2136</span>
+                      <span class="pos-kv-k">Mark Price</span><span class="pos-kv-v">0.2195</span>
+                      <span class="pos-kv-k">Break Even</span><span class="pos-kv-v">0.2140</span>
+                      <span class="pos-kv-k">Margin (3×)</span><span class="pos-kv-v">1,000.44 USDT</span>
+                      <span class="pos-kv-k">Liq. Price</span><span class="pos-kv-v down">0.2827</span>
+                    </div>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">P&amp;L</div>
+                    <div class="pos-kv">
+                      <span class="pos-kv-k">Unrealized</span><span class="pos-kv-v down">-83.55</span>
+                      <span class="pos-kv-k">Realized</span><span class="pos-kv-v down">-1.50</span>
+                      <span class="pos-kv-k">Funding</span><span class="pos-kv-v down">-0.05 USDT</span>
+                      <span class="pos-kv-k">24h High</span><span class="pos-kv-v">0.2241</span>
+                      <span class="pos-kv-k">24h Low</span><span class="pos-kv-v">0.2078</span>
+                    </div>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">TP / SL</div>
+                    <div class="pos-tpsl-list">
+                      <div class="pos-tpsl-entry">
+                        <span class="pos-tpsl-name">TP 1</span>
+                        <span class="pos-tpsl-price up">0.1950</span>
+                        <span class="pos-tpsl-dist faint">-8.7%</span>
+                        <span class="pos-tpsl-size faint">100%</span>
+                      </div>
+                      <div class="pos-tpsl-entry pos-sl-entry">
+                        <span class="pos-tpsl-name">SL</span>
+                        <span class="pos-tpsl-price down">0.2350</span>
+                        <span class="pos-tpsl-dist faint">+10.0%</span>
+                        <span class="pos-tpsl-size faint">100%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── BTCUSDT ── -->
+              <div class="pos-row" data-pos-id="BTCUSDT">
+                <div class="pos-row-summary">
+                  <div class="pos-col pos-col-symbol">
+                    <div class="pos-sym-icon pos-icon-crypto">BT</div>
+                    <div class="pos-sym-info">
+                      <div class="pos-sym-top">
+                        <span class="pos-sym-ticker">BTCUSDT</span>
+                        <span class="pos-side-badge long">Long</span>
+                        <span class="pos-type-badge">Crypto</span>
+                      </div>
+                      <span class="pos-sym-sub">Bitcoin / USDT (Perp)</span>
+                    </div>
+                  </div>
+                  <div class="pos-col pos-col-size">
+                    <span class="pos-size-qty" id="posQty-BTCUSDT">0.1250</span>
+                    <span class="pos-size-unit">BTC</span>
+                  </div>
+                  <div class="pos-col pos-col-price">
+                    <span class="pos-entry" id="posAvg-BTCUSDT">66,245.10</span>
+                    <span class="pos-mark" id="posMark-BTCUSDT">67,121.50</span>
+                  </div>
+                  <div class="pos-col pos-col-pnl">
+                    <span class="pos-pnl-dollar up" id="posPnlOpen-BTCUSDT">+109.55</span>
+                    <span class="pos-pnl-pct up" id="posPct-BTCUSDT">+1.32%</span>
+                  </div>
+                  <div class="pos-col pos-col-tpsl">
+                    <div class="pos-tpsl-line">
+                      <span class="pos-tpsl-tag tp">TP</span>
+                      <span class="pos-tpsl-val up">71,000.00</span>
+                    </div>
+                    <div class="pos-tpsl-line">
+                      <span class="pos-tpsl-tag sl">SL</span>
+                      <span class="pos-tpsl-val down">62,000.00</span>
+                    </div>
+                  </div>
+                  <div class="pos-col pos-col-liq">
+                    <span class="pos-liq down">52,310.20</span>
+                  </div>
+                  <div class="pos-col pos-col-actions">
+                    <button class="pos-expand-btn" title="Expand details">
+                      <span class="material-symbols-outlined pos-chevron">expand_more</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="pos-row-detail">
+                  <div class="pos-detail-close">
+                    <div class="pos-detail-label">Close Position</div>
+                    <div class="pos-close-pct-row">
+                      <button class="pos-close-pct-btn" data-pos-close-pct="25">25%</button>
+                      <button class="pos-close-pct-btn" data-pos-close-pct="50">50%</button>
+                      <button class="pos-close-pct-btn" data-pos-close-pct="75">75%</button>
+                      <button class="pos-close-pct-btn pos-close-full" data-pos-close-pct="100">100%</button>
+                    </div>
+                    <div class="pos-close-est">Est. close: <strong>0.1250 BTC</strong></div>
+                    <button class="pos-close-primary" data-pos-close-pct="100">Close Position</button>
+                    <button class="pos-reverse-btn" data-pos-reverse>Reverse</button>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">Position</div>
+                    <div class="pos-kv">
+                      <span class="pos-kv-k">Size</span><span class="pos-kv-v">0.1250 BTC</span>
+                      <span class="pos-kv-k">Avg Entry</span><span class="pos-kv-v">66,245.10</span>
+                      <span class="pos-kv-k">Mark Price</span><span class="pos-kv-v">67,121.50</span>
+                      <span class="pos-kv-k">Break Even</span><span class="pos-kv-v">66,253.00</span>
+                      <span class="pos-kv-k">Margin (5×)</span><span class="pos-kv-v">2,500.00 USDT</span>
+                      <span class="pos-kv-k">Liq. Price</span><span class="pos-kv-v down">52,310.20</span>
+                    </div>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">P&amp;L</div>
+                    <div class="pos-kv">
+                      <span class="pos-kv-k">Unrealized</span><span class="pos-kv-v up">+109.55</span>
+                      <span class="pos-kv-k">Realized</span><span class="pos-kv-v up">+340.20</span>
+                      <span class="pos-kv-k">Funding</span><span class="pos-kv-v down">-3.15 USDT</span>
+                      <span class="pos-kv-k">24h High</span><span class="pos-kv-v">67,480.00</span>
+                      <span class="pos-kv-k">24h Low</span><span class="pos-kv-v">65,820.00</span>
+                    </div>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">TP / SL</div>
+                    <div class="pos-tpsl-list">
+                      <div class="pos-tpsl-entry">
+                        <span class="pos-tpsl-name">TP 1</span>
+                        <span class="pos-tpsl-price up">71,000.00</span>
+                        <span class="pos-tpsl-dist faint">+5.8%</span>
+                        <span class="pos-tpsl-size faint">50%</span>
+                      </div>
+                      <div class="pos-tpsl-entry">
+                        <span class="pos-tpsl-name">TP 2</span>
+                        <span class="pos-tpsl-price up">75,000.00</span>
+                        <span class="pos-tpsl-dist faint">+11.7%</span>
+                        <span class="pos-tpsl-size faint">50%</span>
+                      </div>
+                      <div class="pos-tpsl-entry pos-sl-entry">
+                        <span class="pos-tpsl-name">SL</span>
+                        <span class="pos-tpsl-price down">62,000.00</span>
+                        <span class="pos-tpsl-dist faint">-7.6%</span>
+                        <span class="pos-tpsl-size faint">100%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── ETHUSDT ── -->
+              <div class="pos-row" data-pos-id="ETHUSDT">
+                <div class="pos-row-summary">
+                  <div class="pos-col pos-col-symbol">
+                    <div class="pos-sym-icon pos-icon-crypto">ET</div>
+                    <div class="pos-sym-info">
+                      <div class="pos-sym-top">
+                        <span class="pos-sym-ticker">ETHUSDT</span>
+                        <span class="pos-side-badge long">Long</span>
+                        <span class="pos-type-badge">Crypto</span>
+                      </div>
+                      <span class="pos-sym-sub">Ethereum / USDT (Perp)</span>
+                    </div>
+                  </div>
+                  <div class="pos-col pos-col-size">
+                    <span class="pos-size-qty" id="posQty-ETHUSDT">2.000</span>
+                    <span class="pos-size-unit">ETH</span>
+                  </div>
+                  <div class="pos-col pos-col-price">
+                    <span class="pos-entry" id="posAvg-ETHUSDT">3,125.40</span>
+                    <span class="pos-mark" id="posMark-ETHUSDT">3,210.75</span>
+                  </div>
+                  <div class="pos-col pos-col-pnl">
+                    <span class="pos-pnl-dollar up" id="posPnlOpen-ETHUSDT">+170.70</span>
+                    <span class="pos-pnl-pct up" id="posPct-ETHUSDT">+2.73%</span>
+                  </div>
+                  <div class="pos-col pos-col-tpsl">
+                    <div class="pos-tpsl-line">
+                      <span class="pos-tpsl-tag tp">TP</span>
+                      <span class="pos-tpsl-val up">3,500.00</span>
+                    </div>
+                    <div class="pos-tpsl-line">
+                      <span class="pos-tpsl-tag sl">SL</span>
+                      <span class="pos-tpsl-val down">2,900.00</span>
+                    </div>
+                  </div>
+                  <div class="pos-col pos-col-liq">
+                    <span class="pos-liq down">2,150.30</span>
+                  </div>
+                  <div class="pos-col pos-col-actions">
+                    <button class="pos-expand-btn" title="Expand details">
+                      <span class="material-symbols-outlined pos-chevron">expand_more</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="pos-row-detail">
+                  <div class="pos-detail-close">
+                    <div class="pos-detail-label">Close Position</div>
+                    <div class="pos-close-pct-row">
+                      <button class="pos-close-pct-btn" data-pos-close-pct="25">25%</button>
+                      <button class="pos-close-pct-btn" data-pos-close-pct="50">50%</button>
+                      <button class="pos-close-pct-btn" data-pos-close-pct="75">75%</button>
+                      <button class="pos-close-pct-btn pos-close-full" data-pos-close-pct="100">100%</button>
+                    </div>
+                    <div class="pos-close-est">Est. close: <strong>2.000 ETH</strong></div>
+                    <button class="pos-close-primary" data-pos-close-pct="100">Close Position</button>
+                    <button class="pos-reverse-btn" data-pos-reverse>Reverse</button>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">Position</div>
+                    <div class="pos-kv">
+                      <span class="pos-kv-k">Size</span><span class="pos-kv-v">2.000 ETH</span>
+                      <span class="pos-kv-k">Avg Entry</span><span class="pos-kv-v">3,125.40</span>
+                      <span class="pos-kv-k">Mark Price</span><span class="pos-kv-v">3,210.75</span>
+                      <span class="pos-kv-k">Break Even</span><span class="pos-kv-v">3,126.80</span>
+                      <span class="pos-kv-k">Margin (4×)</span><span class="pos-kv-v">1,200.00 USDT</span>
+                      <span class="pos-kv-k">Liq. Price</span><span class="pos-kv-v down">2,150.30</span>
+                    </div>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">P&amp;L</div>
+                    <div class="pos-kv">
+                      <span class="pos-kv-k">Unrealized</span><span class="pos-kv-v up">+170.70</span>
+                      <span class="pos-kv-k">Realized</span><span class="pos-kv-v up">+520.45</span>
+                      <span class="pos-kv-k">Funding</span><span class="pos-kv-v down">-1.25 USDT</span>
+                      <span class="pos-kv-k">24h High</span><span class="pos-kv-v">3,245.00</span>
+                      <span class="pos-kv-k">24h Low</span><span class="pos-kv-v">3,098.00</span>
+                    </div>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">TP / SL</div>
+                    <div class="pos-tpsl-list">
+                      <div class="pos-tpsl-entry">
+                        <span class="pos-tpsl-name">TP 1</span>
+                        <span class="pos-tpsl-price up">3,500.00</span>
+                        <span class="pos-tpsl-dist faint">+9.0%</span>
+                        <span class="pos-tpsl-size faint">50%</span>
+                      </div>
+                      <div class="pos-tpsl-entry">
+                        <span class="pos-tpsl-name">TP 2</span>
+                        <span class="pos-tpsl-price up">3,850.00</span>
+                        <span class="pos-tpsl-dist faint">+19.9%</span>
+                        <span class="pos-tpsl-size faint">50%</span>
+                      </div>
+                      <div class="pos-tpsl-entry pos-sl-entry">
+                        <span class="pos-tpsl-name">SL</span>
+                        <span class="pos-tpsl-price down">2,900.00</span>
+                        <span class="pos-tpsl-dist faint">-9.7%</span>
+                        <span class="pos-tpsl-size faint">100%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── AAPL ── -->
+              <div class="pos-row" data-pos-id="AAPL">
+                <div class="pos-row-summary">
+                  <div class="pos-col pos-col-symbol">
+                    <div class="pos-sym-icon pos-icon-stock">AP</div>
+                    <div class="pos-sym-info">
+                      <div class="pos-sym-top">
+                        <span class="pos-sym-ticker">AAPL</span>
+                        <span class="pos-side-badge long">Long</span>
+                        <span class="pos-type-badge">Stock</span>
+                      </div>
+                      <span class="pos-sym-sub">Apple Inc.</span>
+                    </div>
+                  </div>
+                  <div class="pos-col pos-col-size">
+                    <span class="pos-size-qty" id="posQty-AAPL">100</span>
+                    <span class="pos-size-unit">Shares</span>
+                  </div>
+                  <div class="pos-col pos-col-price">
+                    <span class="pos-entry" id="posAvg-AAPL">185.27</span>
+                    <span class="pos-mark" id="posMark-AAPL">188.45</span>
+                  </div>
+                  <div class="pos-col pos-col-pnl">
+                    <span class="pos-pnl-dollar up" id="posPnlOpen-AAPL">+318.00</span>
+                    <span class="pos-pnl-pct up" id="posPct-AAPL">+1.72%</span>
+                  </div>
+                  <div class="pos-col pos-col-tpsl">
+                    <div class="pos-tpsl-line">
+                      <span class="pos-tpsl-tag tp">TP</span>
+                      <span class="pos-tpsl-val up">195.00</span>
+                    </div>
+                    <div class="pos-tpsl-line">
+                      <span class="pos-tpsl-tag sl">SL</span>
+                      <span class="pos-tpsl-val down">175.00</span>
+                    </div>
+                  </div>
+                  <div class="pos-col pos-col-liq">
+                    <span class="pos-liq faint">—</span>
+                  </div>
+                  <div class="pos-col pos-col-actions">
+                    <button class="pos-expand-btn" title="Expand details">
+                      <span class="material-symbols-outlined pos-chevron">expand_more</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="pos-row-detail">
+                  <div class="pos-detail-close">
+                    <div class="pos-detail-label">Close Position</div>
+                    <div class="pos-close-pct-row">
+                      <button class="pos-close-pct-btn" data-pos-close-pct="25">25%</button>
+                      <button class="pos-close-pct-btn" data-pos-close-pct="50">50%</button>
+                      <button class="pos-close-pct-btn" data-pos-close-pct="75">75%</button>
+                      <button class="pos-close-pct-btn pos-close-full" data-pos-close-pct="100">100%</button>
+                    </div>
+                    <div class="pos-close-est">Est. close: <strong>100 Shares</strong></div>
+                    <button class="pos-close-primary" data-pos-close-pct="100">Close Position</button>
+                    <button class="pos-reverse-btn" data-pos-reverse>Reverse</button>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">Position</div>
+                    <div class="pos-kv">
+                      <span class="pos-kv-k">Size</span><span class="pos-kv-v">100 Shares</span>
+                      <span class="pos-kv-k">Avg Entry</span><span class="pos-kv-v">185.27</span>
+                      <span class="pos-kv-k">Mark Price</span><span class="pos-kv-v">188.45</span>
+                      <span class="pos-kv-k">Break Even</span><span class="pos-kv-v">185.27</span>
+                      <span class="pos-kv-k">Market Value</span><span class="pos-kv-v">$18,845.00</span>
+                      <span class="pos-kv-k">Liq. Price</span><span class="pos-kv-v faint">—</span>
+                    </div>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">P&amp;L</div>
+                    <div class="pos-kv">
+                      <span class="pos-kv-k">Unrealized</span><span class="pos-kv-v up">+318.00</span>
+                      <span class="pos-kv-k">Realized</span><span class="pos-kv-v faint">0.00</span>
+                      <span class="pos-kv-k">Funding</span><span class="pos-kv-v faint">—</span>
+                      <span class="pos-kv-k">24h High</span><span class="pos-kv-v">189.20</span>
+                      <span class="pos-kv-k">24h Low</span><span class="pos-kv-v">186.40</span>
+                    </div>
+                  </div>
+                  <div class="pos-detail-section">
+                    <div class="pos-detail-label">TP / SL</div>
+                    <div class="pos-tpsl-list">
+                      <div class="pos-tpsl-entry">
+                        <span class="pos-tpsl-name">TP 1</span>
+                        <span class="pos-tpsl-price up">195.00</span>
+                        <span class="pos-tpsl-dist faint">+5.2%</span>
+                        <span class="pos-tpsl-size faint">100%</span>
+                      </div>
+                      <div class="pos-tpsl-entry pos-sl-entry">
+                        <span class="pos-tpsl-name">SL</span>
+                        <span class="pos-tpsl-price down">175.00</span>
+                        <span class="pos-tpsl-dist faint">-5.5%</span>
+                        <span class="pos-tpsl-size faint">100%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div><!-- /pos-rows-scroll -->
+
+            <div class="pos-totals-bar">
+              <span class="pos-totals-label">Total P&amp;L</span>
+              <span class="pos-totals-pnl up" id="totPnlOpen">—</span>
+              <span class="pos-totals-pct up" id="totPct">—</span>
+              <span id="totPnlDay" style="display:none"></span>
+            </div>
+
           </div>
 
           <div class="bp-table-wrap" id="bpPanel-orders">
             <table class="bp-table">
               <thead>
                 <tr>
-                  <th>Symbol</th>
-                  <th>Side</th>
-                  <th>Type</th>
+                  <th>Order</th>
                   <th>Qty</th>
                   <th>Price</th>
                   <th>Status</th>
-                  <th>Action</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="bpBody-orders"></tbody>
@@ -2103,15 +2690,29 @@
             <table class="bp-table">
               <thead>
                 <tr>
-                  <th>Symbol</th>
-                  <th>Side</th>
+                  <th>Trade</th>
                   <th>Qty</th>
                   <th>Price</th>
-                  <th>Status</th>
                   <th>Time</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody id="bpBody-history"></tbody>
+            </table>
+          </div>
+
+          <div class="bp-table-wrap" id="bpPanel-trades">
+            <table class="bp-table">
+              <thead>
+                <tr>
+                  <th>Trade</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th>P&amp;L</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody id="bpBody-trades"></tbody>
             </table>
           </div>
 
@@ -2124,7 +2725,7 @@
                   <th>Price</th>
                   <th>Created</th>
                   <th>Status</th>
-                  <th>Action</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="bpBody-alerts"></tbody>
@@ -2545,20 +3146,8 @@
         class="material-symbols-outlined">settings</span>Settings...</button>
   </div>
 
-  <!-- ===================== POSITION ROW ACTIONS DROPDOWN ===================== -->
-  <div class="ctx-menu" id="posActionsMenu">
-    <button class="ctx-item" data-close-pct="25"><span class="material-symbols-outlined">percent</span>Close
-      25%</button>
-    <button class="ctx-item" data-close-pct="50"><span class="material-symbols-outlined">percent</span>Close
-      50%</button>
-    <button class="ctx-item short" data-close-pct="100"><span class="material-symbols-outlined">close</span>Close
-      100%</button>
-    <div class="ctx-sep"></div>
-    <button class="ctx-item" id="posActionsReverse"><span class="material-symbols-outlined">sync_alt</span>Reverse
-      Position</button>
-  </div>
 
-  <!-- ===================== MORE TIMEFRAMES DROPDOWN ===================== -->
+<!-- ===================== MORE TIMEFRAMES DROPDOWN ===================== -->
   <div class="pop-menu tf-more-menu" id="tfMoreMenu">
     <div class="pop-menu-label">Timeframe</div>
     <button class="pop-item" data-tf="1m">1m</button>
