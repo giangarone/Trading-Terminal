@@ -28,11 +28,11 @@ new MutationObserver(() => {
 
 /* drag the popup around by its header, like the legacy chart-popups used to */
 (function enableMarketScannerDrag() {
-  const head = marketScannerPopup.querySelector('.ind-modal-header');
+  const head = marketScannerPopup.querySelector('.float-panel-header');
   if (!head) return;
   let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
   head.addEventListener('mousedown', (e) => {
-    if (e.target.closest('.ind-modal-close, .ct-icon')) return;
+    if (e.target.closest('.float-panel-close, .ct-icon')) return;
     dragging = true;
     const rect = marketScannerPopup.getBoundingClientRect();
     startX = e.clientX; startY = e.clientY;

@@ -1,0 +1,311 @@
+/* ====== Trading Journal floating panel ====== */
+
+/* Size/layout overrides on the shared float-panel */
+.tj-journal-panel {
+  width: min(1100px, 94vw);
+  max-height: min(760px, 88vh);
+  display: none;
+  flex-direction: column;
+}
+
+.tj-journal-panel.show {
+  display: flex;
+}
+
+/* Draggable header — same pattern as Market Scanner */
+.tj-journal-panel .float-panel-header {
+  cursor: move;
+  user-select: none;
+}
+
+/* Push close button to the far right */
+.tj-journal-panel .float-panel-title {
+  flex: 1;
+}
+
+/* Month navigation row above the calendar grid */
+.tj-cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.tj-modal-month-lbl {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 140px;
+  text-align: center;
+  color: var(--paper-100);
+}
+
+/* ---- Stats strip ---- */
+.tj-stats-strip {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--line-1);
+  flex-shrink: 0;
+  background: var(--ink-850);
+}
+
+.tj-strip-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 12px 18px;
+  border-right: 1px solid var(--line-2);
+}
+
+.tj-strip-stat:last-child {
+  border-right: none;
+}
+
+.tj-strip-lbl {
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--paper-500);
+}
+
+.tj-strip-val {
+  font-size: 17px;
+  font-weight: 600;
+  font-family: var(--sans);
+  color: var(--paper-100);
+  line-height: 1;
+}
+
+.tj-strip-val.up {
+  color: var(--long);
+}
+
+.tj-strip-val.down {
+  color: var(--short);
+}
+
+/* ---- Modal body ---- */
+.tj-modal-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+/* ---- Calendar area ---- */
+.tj-modal-cal-area {
+  flex: 1;
+  min-width: 0;
+  padding: 18px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--ink-850)
+}
+
+/* ---- Sidebar ---- */
+.tj-modal-sidebar {
+  width: 272px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--line-1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tj-sidebar-head {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--line-1);
+  flex-shrink: 0;
+}
+
+.tj-sidebar-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--paper-100);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.tj-sidebar-date-hint {
+  font-size: var(--fs-sm);
+  color: var(--paper-500);
+  display: block;
+}
+
+/* ---- 2x2 KPI grid ---- */
+.tj-sidebar-kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line-1);
+  border-bottom: 1px solid var(--line-1);
+  flex-shrink: 0;
+}
+
+.tj-sidebar-kpi {
+  padding: 12px 18px;
+  background: var(--ink-850);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tj-sidebar-kpi-lbl {
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--paper-500);
+}
+
+.tj-sidebar-kpi-val {
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--sans);
+  color: var(--paper-100);
+  line-height: 1;
+}
+
+.tj-sidebar-kpi-val.up {
+  color: var(--long);
+}
+
+.tj-sidebar-kpi-val.down {
+  color: var(--short);
+}
+
+/* ---- Trade list ---- */
+.tj-sidebar-trades-area {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tj-sidebar-trades-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px 8px;
+  flex-shrink: 0;
+}
+
+.tj-sidebar-trades-title {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--paper-500);
+}
+
+.tj-sidebar-trades-count {
+  font-size: var(--fs-sm);
+  color: var(--paper-500);
+}
+
+.tj-trade-row {
+  display: grid;
+  grid-template-columns: 54px 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-top: 1px solid var(--line-1);
+}
+
+.tj-trade-time {
+  font-size: 10.5px;
+  color: var(--paper-500);
+  white-space: nowrap;
+}
+
+.tj-trade-sym {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semi);
+  color: var(--paper-100);
+}
+
+.tj-trade-side {
+  font-size: 10px;
+  font-weight: var(--fw-semi);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+}
+
+.tj-trade-side.long {
+  color: var(--long);
+  background: var(--long-dim);
+}
+
+.tj-trade-side.short {
+  color: var(--short);
+  background: var(--short-dim);
+}
+
+.tj-trade-pnl {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semi);
+  font-family: var(--sans);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tj-trade-pnl.up {
+  color: var(--long);
+}
+
+.tj-trade-pnl.down {
+  color: var(--short);
+}
+
+/* ---- Sidebar empty state ---- */
+.tj-sidebar-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 18px;
+  text-align: center;
+}
+
+.tj-sidebar-empty .material-symbols-outlined {
+  font-size: 28px;
+  color: var(--paper-500);
+}
+
+.tj-sidebar-empty-text {
+  font-size: var(--fs-sm);
+  color: var(--paper-500);
+  line-height: 1.5;
+}
+
+/* ---- Selected day cell ---- */
+.jc-day.selected {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* ---- Open-journal icon on the card head ---- */
+.tj-open-btn {
+  display: flex;
+  align-items: center;
+  color: var(--paper-500);
+  cursor: pointer;
+  transition: color var(--t-ui);
+}
+
+.tj-open-btn:hover {
+  color: var(--paper-100);
+}
+
+.tj-open-btn .material-symbols-outlined {
+  font-size: 16px;
+}

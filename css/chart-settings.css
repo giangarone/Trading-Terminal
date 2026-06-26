@@ -361,7 +361,7 @@
   padding: 9px 0;
 }
 
-.cs-switch-row .ind-toggle-btn {
+.cs-switch-row .ui-toggle {
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -385,16 +385,16 @@
   line-height: 1.4;
 }
 
-.cs-switch-row .ind-toggle-btn {
+.cs-switch-row .ui-toggle {
   margin-top: 1px;
 }
 
-.cs-switch-row.active .ind-toggle-track {
+.cs-switch-row.active .ui-toggle-track {
   background: var(--accent);
   border-color: var(--accent);
 }
 
-.cs-switch-row.active .ind-toggle-thumb {
+.cs-switch-row.active .ui-toggle-thumb {
   transform: translateX(16px);
   background: var(--on-accent);
 }

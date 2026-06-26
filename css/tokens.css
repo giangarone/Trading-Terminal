@@ -48,7 +48,7 @@
   /* buttons, labels, interactive elements     */
 
   /* ── Letter spacing ──────────────────────────────────────── */
-  --ls-label: .06em;
+  --ls-label: .03em;
   /* uppercase labels                          */
   --ls-ui: .03em;
   /* subtle tracking                           */

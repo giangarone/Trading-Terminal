@@ -110,7 +110,9 @@
 
   /* ---------- popover positioning ---------- */
   function closeAllPopovers() {
-    document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => m.classList.remove('show'));
+    document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => {
+      if (!m.dataset.persistent) m.classList.remove('show');
+    });
   }
   function openAt(el, x, y) {
     closeAllPopovers();
@@ -144,7 +146,10 @@
     el.style.top = y + 'px';
   }
   function closeAllPopoversExcept(...keep) {
-    document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => { if (!keep.includes(m)) m.classList.remove('show'); });
+    document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => {
+      if (m.dataset.persistent || m.classList.contains('float-panel') || keep.includes(m)) return;
+      m.classList.remove('show');
+    });
   }
   /* exposed so overlays.js (loaded before this script) can share the same popover engine */
   window.openNear = openNear;
@@ -313,7 +318,7 @@
   const qtBuyBtn = document.getElementById('qtBuyBtn');
   const qtSellBtn = document.getElementById('qtSellBtn');
   const QT_TAB_LABELS = { limit: 'Limit', market: 'Market' };
-  const QT_ADVANCED_LABELS = { stopMarket: 'Stop Market', stopLimit: 'Stop Limit', trailingStop: 'Trailing Stop', mit: 'MIT' };
+  const QT_ADVANCED_LABELS = { stopMarket: 'Stop Market', stopLimit: 'Stop Limit', mit: 'MIT' };
   let qtAdvancedType = 'stopMarket';
   function qtSetActiveTab(tabName) {
     const panelName = tabName === 'advanced' ? qtAdvancedType : tabName;
@@ -349,8 +354,13 @@
     openNear(qtAdvancedTypeMenu, qtAdvancedTab.getBoundingClientRect(), 'right', qtAdvancedTab);
   }
   function qtScheduleCloseAdvMenu() {
+    /* A transient hover dropdown only dismisses itself — it must not sweep away
+       other open popovers (e.g. the Indicators / L2 / Market Scanner floating panels). */
     clearTimeout(qtAdvHoverTimer);
-    qtAdvHoverTimer = setTimeout(() => closeAllPopovers(), 150);
+    qtAdvHoverTimer = setTimeout(() => {
+      qtAdvancedTypeMenu.classList.remove('show');
+      qtAdvancedTypeMenu._openTrigger = null;
+    }, 150);
   }
   qtAdvancedTab.addEventListener('mouseenter', qtOpenAdvMenu);
   qtAdvancedTab.addEventListener('mouseleave', qtScheduleCloseAdvMenu);
@@ -390,23 +400,6 @@
     });
   });
 
-  /* ---------- Trailing Stop: Limit/Market toggle, Activation Price ---------- */
-  const qtTrailMarketToggle = document.getElementById('qtTrailMarketToggle');
-  const qtTrailLimitInput = document.getElementById('qtTrailLimit');
-  qtTrailMarketToggle.addEventListener('click', () => {
-    const active = qtTrailMarketToggle.classList.toggle('active');
-    qtTrailLimitInput.disabled = active;
-    qtTrailLimitInput.placeholder = active ? 'Market' : 'Limit price';
-    if (active) qtTrailLimitInput.value = '';
-  });
-  const qtTrailActivationToggle = document.getElementById('qtTrailActivationToggle');
-  const qtTrailActivationCheckbox = document.getElementById('qtTrailActivationCheckbox');
-  const qtTrailActivationBlock = document.getElementById('qtTrailActivationBlock');
-  qtTrailActivationToggle.addEventListener('click', () => {
-    const enabled = qtTrailActivationCheckbox.classList.toggle('checked');
-    qtTrailActivationBlock.style.display = enabled ? 'flex' : 'none';
-  });
-
   /* ---------- Limit tab: TP/SL toggle ---------- */
   const qtTpslToggle = document.getElementById('qtTpslToggle');
   const qtTpslCheckbox = document.getElementById('qtTpslCheckbox');
@@ -437,7 +430,7 @@
     const active = qtOrderTabs.querySelector('.qt-tab.active');
     return active ? active.dataset.tab : 'market';
   }
-  const QT_ADVANCED_TRIGGER_IDS = { stopMarket: 'qtStopMarketTrigger', stopLimit: 'qtStopLimitTrigger', trailingStop: 'qtTrailLimit', mit: 'qtMitTrigger' };
+  const QT_ADVANCED_TRIGGER_IDS = { stopMarket: 'qtStopMarketTrigger', stopLimit: 'qtStopLimitTrigger', mit: 'qtMitTrigger' };
   function qtActivePrice() {
     const tab = qtActiveTab();
     if (tab === 'limit') return parseFloat(document.getElementById('qtLimitPrice').value.replace(/,/g, ''));
@@ -1919,7 +1912,7 @@
   });
 
   /* ---------- General / Appearance settings panes (visual only, no persistence) ---------- */
-  document.querySelectorAll('#chartSettingsBackdrop .cs-switch-row .ind-toggle-btn').forEach(btn => {
+  document.querySelectorAll('#chartSettingsBackdrop .cs-switch-row .ui-toggle').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       btn.closest('.cs-switch-row').classList.toggle('active');
@@ -2423,7 +2416,7 @@
         const row = document.createElement('div');
         row.className = 'ind-row' + (indState.get(d.name) ? ' active' : '');
         row.dataset.name = d.name;
-        row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ind-toggle-btn" aria-label="Toggle ${d.name}"><span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>`;
+        row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ui-toggle" aria-label="Toggle ${d.name}"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>`;
         row.addEventListener('click', (e) => {
           e.stopPropagation();
           const on = !indState.get(d.name);
@@ -2548,7 +2541,7 @@
         const row = document.createElement('div');
         row.className = 'ind-row' + (l2IndState.get(d.name) ? ' active' : '');
         row.dataset.name = d.name;
-        row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ind-toggle-btn" aria-label="Toggle ${d.name}"><span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>`;
+        row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ui-toggle" aria-label="Toggle ${d.name}"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>`;
         row.addEventListener('click', (e) => {
           e.stopPropagation();
           const on = !l2IndState.get(d.name);

@@ -31,10 +31,10 @@
 (function () {
   const journalDays = [
     { label: 'Today', pnl: 2975.00, trades: 7, winRate: 71, best: 1420.00, worst: -310.00 },
-    { label: 'Jun 19', pnl: -640.00, trades: 5, winRate: 40, best: 510.00, worst: -560.00 },
-    { label: 'Jun 18', pnl: 1180.00, trades: 6, winRate: 67, best: 800.00, worst: -220.00 },
-    { label: 'Jun 17', pnl: 0.00, trades: 0, winRate: 0, best: 0.00, worst: 0.00 },
-    { label: 'Jun 16', pnl: 2110.00, trades: 9, winRate: 78, best: 990.00, worst: -180.00 },
+    { label: 'Jun 24', pnl: 1180.00, trades: 6, winRate: 67, best: 800.00, worst: -220.00 },
+    { label: 'Jun 23', pnl: -640.00, trades: 5, winRate: 40, best: 510.00, worst: -560.00 },
+    { label: 'Jun 20', pnl: 0.00, trades: 0, winRate: 0, best: 0.00, worst: 0.00 },
+    { label: 'Jun 19', pnl: 2110.00, trades: 9, winRate: 78, best: 990.00, worst: -180.00 },
   ];
   const tjDaySelect = document.getElementById('tjDaySelect');
   const tjDayMenu = document.getElementById('tjDayMenu');
@@ -88,17 +88,38 @@
   });
 })();
 
-/* ---------- trading journal: mini calendar view (toggled in place of the default widget view) ---------- */
+/* ---------- trading journal: full calendar modal ---------- */
 (function () {
-  const grid = document.getElementById('tjcGrid');
-  const monthLbl = document.getElementById('tjcMonthLbl');
-  const defaultView = document.getElementById('tjDefaultView');
-  const calView = document.getElementById('tjCalView');
-  const calToggleBtn = document.getElementById('tjCalToggleBtn');
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const today = new Date(2026, 5, 20);
+  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const SYMBOLS = ['ETHUSD', 'NQU5', 'BTCUSD', 'SOLUSD', 'EURUSD', 'NVDA', 'YMU5'];
+  const today = new Date(2026, 5, 25); // Thursday June 25, 2026
   let viewYear = today.getFullYear(), viewMonth = today.getMonth();
-  function mulberry32Local(seed) {
+
+  const backdrop = document.getElementById('tjModalBackdrop');
+  const openBtn = document.getElementById('tjOpenModal');
+  const closeBtn = document.getElementById('tjModalClose');
+  const prevBtn = document.getElementById('tjModalPrevBtn');
+  const nextBtn = document.getElementById('tjModalNextBtn');
+  const monthLbl = document.getElementById('tjModalMonthLbl');
+  const grid = document.getElementById('tjModalGrid');
+
+  const statMonthPnl = document.getElementById('tjmMonthPnl');
+  const statWinRate = document.getElementById('tjmWinRate');
+  const statTrades = document.getElementById('tjmTrades');
+  const statTradingDays = document.getElementById('tjmTradingDays');
+  const statBestDay = document.getElementById('tjmBestDay');
+  const statWorstDay = document.getElementById('tjmWorstDay');
+
+  const sidebarDate = document.getElementById('tjSidebarDate');
+  const sidebarDateHint = document.getElementById('tjSidebarDateHint');
+  const sidebarPnl = document.getElementById('tjSidebarPnl');
+  const sidebarWinRate = document.getElementById('tjSidebarWinRate');
+  const sidebarTrades = document.getElementById('tjSidebarTrades');
+  const sidebarAvg = document.getElementById('tjSidebarAvg');
+  const sidebarTradesCount = document.getElementById('tjSidebarTradesCount');
+  const sidebarTradeList = document.getElementById('tjSidebarTradeList');
+
+  function mulberry32(seed) {
     return function () {
       seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
       let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -106,16 +127,82 @@
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
-  let jcRand = mulberry32Local(5530 + viewYear * 100 + viewMonth);
-  function fmtSignedShort(n) {
-    const sign = n > 0 ? '+' : n < 0 ? '-' : '';
-    return sign + '$' + Math.round(Math.abs(n)).toLocaleString('en-US');
+
+  function fmtSigned(n) {
+    return (n < 0 ? '-' : '+') + '$' + Math.round(Math.abs(n)).toLocaleString('en-US');
+  }
+
+  function generateTrades(data, rand) {
+    const trades = [];
+    for (let i = 0; i < data.trades; i++) {
+      const isWin = i < data.wins;
+      const hour = 8 + Math.floor(rand() * 9);
+      const min = Math.floor(rand() * 60);
+      const ampm = hour < 12 ? 'AM' : 'PM';
+      const pnl = isWin ? Math.round(60 + rand() * 1100) : -Math.round(40 + rand() * 550);
+      trades.push({
+        time: (hour % 12 || 12) + ':' + String(min).padStart(2, '0') + ' ' + ampm,
+        sym: SYMBOLS[Math.floor(rand() * SYMBOLS.length)],
+        side: rand() > 0.5 ? 'Long' : 'Short',
+        pnl
+      });
+    }
+    return trades.sort((a, b) => a.time < b.time ? -1 : 1);
+  }
+
+  function showSidebarDay(data) {
+    const isToday = data.day === today.getDate() && viewYear === today.getFullYear() && viewMonth === today.getMonth();
+    sidebarDate.textContent = data.dateLbl + ', ' + viewYear;
+    sidebarDateHint.textContent = isToday ? 'Today' : '';
+
+    sidebarPnl.textContent = fmtSigned(data.pnl);
+    sidebarPnl.className = 'tj-sidebar-kpi-val ' + (data.pnl >= 0 ? 'up' : 'down');
+
+    sidebarWinRate.textContent = data.winRate + '%';
+    sidebarWinRate.className = 'tj-sidebar-kpi-val';
+
+    sidebarTrades.textContent = data.trades;
+    sidebarTrades.className = 'tj-sidebar-kpi-val';
+
+    const avg = data.trades > 0 ? data.pnl / data.trades : 0;
+    sidebarAvg.textContent = fmtSigned(avg);
+    sidebarAvg.className = 'tj-sidebar-kpi-val ' + (avg >= 0 ? 'up' : 'down');
+
+    sidebarTradesCount.textContent = data.trades + ' trade' + (data.trades !== 1 ? 's' : '');
+
+    const rand = mulberry32(8800 + viewYear * 100 + viewMonth * 31 + data.day);
+    const tradeList = generateTrades(data, rand);
+    sidebarTradeList.innerHTML = tradeList.map(t => {
+      return '<div class="tj-trade-row">' +
+        '<span class="tj-trade-time">' + t.time + '</span>' +
+        '<span class="tj-trade-sym">' + t.sym + '</span>' +
+        '<span class="tj-trade-side ' + t.side.toLowerCase() + '">' + t.side + '</span>' +
+        '<span class="tj-trade-pnl ' + (t.pnl >= 0 ? 'up' : 'down') + '">' + fmtSigned(t.pnl) + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  function clearSidebar() {
+    sidebarDate.textContent = 'Select a trading day';
+    sidebarDateHint.textContent = '';
+    ['sidebarPnl', 'sidebarWinRate', 'sidebarTrades', 'sidebarAvg'].forEach(id => {
+      const el = { sidebarPnl, sidebarWinRate, sidebarTrades, sidebarAvg }[id];
+      el.textContent = '—';
+      el.className = 'tj-sidebar-kpi-val';
+    });
+    sidebarTradesCount.textContent = '';
+    sidebarTradeList.innerHTML =
+      '<div class="tj-sidebar-empty">' +
+      '<span class="material-symbols-outlined">touch_app</span>' +
+      '<span class="tj-sidebar-empty-text">Click a trading day<br>to view trade details</span>' +
+      '</div>';
   }
 
   function buildCalendar() {
-    jcRand = mulberry32Local(5530 + viewYear * 100 + viewMonth);
-    monthLbl.textContent = monthNames[viewMonth] + ' ' + viewYear;
+    const rand = mulberry32(5530 + viewYear * 100 + viewMonth);
+    monthLbl.textContent = MONTH_NAMES[viewMonth] + ' ' + viewYear;
     grid.innerHTML = '';
+
     ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => {
       const el = document.createElement('div');
       el.className = 'jc-dow';
@@ -127,96 +214,162 @@
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
     for (let i = 0; i < firstDow; i++) {
       const el = document.createElement('div');
-      el.className = 'jc-day mini empty';
+      el.className = 'jc-day empty';
       grid.appendChild(el);
     }
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      const isFuture = new Date(viewYear, viewMonth, day) > today;
-      const el = document.createElement('div');
-      el.className = 'jc-day mini';
-      const isToday = viewYear === today.getFullYear() && viewMonth === today.getMonth() && day === today.getDate();
-      if (isToday) el.classList.add('today');
-      if (isFuture) el.classList.add('future');
+    let monthPnl = 0, totalTrades = 0, totalWins = 0, tradingDays = 0;
+    let bestPnl = null, worstPnl = null, todayData = null;
 
-      const numEl = document.createElement('span');
-      numEl.className = 'd-num';
-      numEl.textContent = day;
-      el.appendChild(numEl);
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(viewYear, viewMonth, day);
+      const isFuture = date > today;
+      const isToday = viewYear === today.getFullYear() && viewMonth === today.getMonth() && day === today.getDate();
+
+      const el = document.createElement('div');
+      el.className = 'jc-day';
+      if (isFuture) el.classList.add('future');
+      if (isToday) el.classList.add('today');
+
+      const numRow = document.createElement('div');
+      numRow.className = 'd-num-row';
+      const numSpan = document.createElement('span');
+      numSpan.className = 'd-num';
+      numSpan.textContent = day;
+      numRow.appendChild(numSpan);
+      if (isToday) {
+        const tag = document.createElement('span');
+        tag.className = 'd-today-tag';
+        tag.textContent = 'Today';
+        numRow.appendChild(tag);
+      }
+      el.appendChild(numRow);
 
       if (!isFuture) {
-        const hasTrades = jcRand() > 0.22;
-        if (hasTrades) {
-          const pnl = Math.round((jcRand() - 0.42) * 3200);
-          el.classList.add(pnl >= 0 ? 'up' : 'down', 'has-stats');
-          const pnlEl = document.createElement('span');
-          pnlEl.className = 'd-pnl ' + (pnl >= 0 ? 'up' : 'down');
-          pnlEl.textContent = fmtSignedShort(pnl);
-          el.appendChild(pnlEl);
+        let data = null;
 
-          const trades = Math.max(1, Math.round(1 + jcRand() * 7));
-          const winRatio = pnl >= 0 ? (0.55 + jcRand() * 0.35) : (jcRand() * 0.35);
-          const wins = Math.min(trades, Math.max(pnl >= 0 ? 1 : 0, Math.round(trades * winRatio)));
-          const losses = trades - wins;
-          const winRate = Math.round((wins / trades) * 100);
-          const avgTrade = pnl / trades;
-          el.dataset.dateLbl = monthNames[viewMonth].slice(0, 3) + ' ' + day + ', ' + viewYear;
-          el.dataset.pnl = pnl;
-          el.dataset.trades = trades;
-          el.dataset.wins = wins;
-          el.dataset.losses = losses;
-          el.dataset.winRate = winRate;
-          el.dataset.avgTrade = avgTrade.toFixed(2);
+        if (isToday) {
+          // Use the same data shown on the small card widget
+          const pnl = 2975, trades = 7, wins = 5;
+          data = { day, pnl, trades, wins, losses: 2, winRate: 71, dateLbl: MONTH_NAMES[viewMonth].slice(0, 3) + ' ' + day };
+        } else {
+          const hasTrades = rand() > 0.22;
+          if (hasTrades) {
+            const pnl = Math.round((rand() - 0.42) * 3200);
+            const trades = Math.max(1, Math.round(1 + rand() * 7));
+            const winRatio = pnl >= 0 ? (0.55 + rand() * 0.35) : (rand() * 0.35);
+            const wins = Math.min(trades, Math.max(pnl >= 0 ? 1 : 0, Math.round(trades * winRatio)));
+            const winRate = Math.round((wins / trades) * 100);
+            data = { day, pnl, trades, wins, losses: trades - wins, winRate, dateLbl: MONTH_NAMES[viewMonth].slice(0, 3) + ' ' + day };
+          }
+        }
+
+        if (data) {
+          el.classList.add(data.pnl >= 0 ? 'up' : 'down', 'has-stats');
+          monthPnl += data.pnl;
+          totalTrades += data.trades;
+          totalWins += data.wins;
+          tradingDays++;
+          if (bestPnl === null || data.pnl > bestPnl) bestPnl = data.pnl;
+          if (worstPnl === null || data.pnl < worstPnl) worstPnl = data.pnl;
+          if (isToday) todayData = data;
+
+          const statsEl = document.createElement('div');
+          statsEl.className = 'd-stats';
+
+          const pnlEl = document.createElement('span');
+          pnlEl.className = 'd-pnl ' + (data.pnl >= 0 ? 'up' : 'down');
+          pnlEl.textContent = fmtSigned(data.pnl);
+          statsEl.appendChild(pnlEl);
+
+          const metaEl = document.createElement('div');
+          metaEl.className = 'd-meta';
+          const winrateEl = document.createElement('span');
+          winrateEl.className = 'd-winrate';
+          winrateEl.textContent = data.winRate + '% win';
+          const tradesEl = document.createElement('span');
+          tradesEl.className = 'd-trades';
+          tradesEl.textContent = data.trades + (data.trades === 1 ? ' trade' : ' trades');
+          metaEl.appendChild(winrateEl);
+          metaEl.appendChild(tradesEl);
+          statsEl.appendChild(metaEl);
+
+          el.appendChild(statsEl);
+
+          el.addEventListener('click', () => {
+            grid.querySelectorAll('.jc-day.selected').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            showSidebarDay(data);
+          });
         }
       }
+
       grid.appendChild(el);
+    }
+
+    // Update stats strip
+    const overallWinRate = totalTrades > 0 ? Math.round((totalWins / totalTrades) * 100) : 0;
+    statMonthPnl.textContent = fmtSigned(monthPnl);
+    statMonthPnl.className = 'tj-strip-val ' + (monthPnl >= 0 ? 'up' : 'down');
+    statWinRate.textContent = overallWinRate + '%';
+    statTrades.textContent = totalTrades;
+    statTradingDays.textContent = tradingDays + ' days';
+    statBestDay.textContent = bestPnl !== null ? fmtSigned(bestPnl) : '—';
+    statWorstDay.textContent = worstPnl !== null ? fmtSigned(worstPnl) : '—';
+
+    if (todayData) {
+      const todayEl = grid.querySelector('.jc-day.today.has-stats');
+      if (todayEl) { todayEl.classList.add('selected'); showSidebarDay(todayData); }
+    } else {
+      clearSidebar();
     }
   }
 
-  document.getElementById('tjcPrevBtn').addEventListener('click', () => {
-    viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+  function openModal() {
+    // Close any small popovers (but TJ itself is persistent so it stays if already open)
+    if (window.closeAllPopovers) window.closeAllPopovers();
+    backdrop.classList.add('show');
+    backdrop._openTrigger = openBtn;
     buildCalendar();
-  });
-  document.getElementById('tjcNextBtn').addEventListener('click', () => {
-    viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
-    buildCalendar();
-  });
-  if (calToggleBtn) calToggleBtn.addEventListener('click', () => {
-    const showCal = !calToggleBtn.classList.contains('active');
-    calToggleBtn.classList.toggle('active', showCal);
-    defaultView.style.display = showCal ? 'none' : 'block';
-    calView.style.display = showCal ? 'block' : 'none';
-  });
+    // Center in viewport after content is built
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const pw = backdrop.offsetWidth, ph = backdrop.offsetHeight;
+    backdrop.style.left = Math.max(8, Math.round((vw - pw) / 2)) + 'px';
+    backdrop.style.top = Math.max(8, Math.round((vh - ph) / 2)) + 'px';
+  }
 
-  /* ---------- per-day stats tooltip ---------- */
-  const tjDayTooltip = document.getElementById('tjDayTooltip');
-  grid.addEventListener('mouseover', (e) => {
-    const cell = e.target.closest('.jc-day.mini.has-stats');
-    if (!cell) return;
-    const pnl = parseFloat(cell.dataset.pnl);
-    const avgUp = parseFloat(cell.dataset.avgTrade) >= 0;
-    tjDayTooltip.innerHTML =
-      '<div class="jc-tt-title">' + cell.dataset.dateLbl + '</div>' +
-      '<div class="jc-tt-row"><span class="l">P&amp;L</span><span class="v ' + (pnl >= 0 ? 'up' : 'down') + '">' + fmtSignedShort(pnl) + '</span></div>' +
-      '<div class="jc-tt-row"><span class="l">Trades</span><span class="v">' + cell.dataset.trades + '</span></div>' +
-      '<div class="jc-tt-row"><span class="l">Wins / Losses</span><span class="v">' + cell.dataset.wins + ' / ' + cell.dataset.losses + '</span></div>' +
-      '<div class="jc-tt-row"><span class="l">Win Rate</span><span class="v">' + cell.dataset.winRate + '%</span></div>' +
-      '<div class="jc-tt-row"><span class="l">Avg / Trade</span><span class="v ' + (avgUp ? 'up' : 'down') + '">' + fmtSignedShort(parseFloat(cell.dataset.avgTrade)) + '</span></div>';
-    tjDayTooltip.classList.add('show');
-    const rect = cell.getBoundingClientRect();
-    const ttRect = tjDayTooltip.getBoundingClientRect();
-    let left = rect.left + rect.width / 2 - ttRect.width / 2;
-    let top = rect.top - ttRect.height - 8;
-    if (top < 8) top = rect.bottom + 8;
-    left = Math.max(8, Math.min(left, window.innerWidth - ttRect.width - 8));
-    tjDayTooltip.style.left = left + 'px';
-    tjDayTooltip.style.top = top + 'px';
-  });
-  grid.addEventListener('mouseout', (e) => {
-    if (!e.relatedTarget || !grid.contains(e.relatedTarget)) tjDayTooltip.classList.remove('show');
-  });
+  function closeModal() {
+    backdrop.classList.remove('show');
+  }
 
-  buildCalendar();
+  if (openBtn) openBtn.addEventListener('click', (e) => { e.stopPropagation(); openModal(); });
+  closeBtn.addEventListener('click', (e) => { e.stopPropagation(); closeModal(); });
+  prevBtn.addEventListener('click', () => { viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; } buildCalendar(); });
+  nextBtn.addEventListener('click', () => { viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; } buildCalendar(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && backdrop.classList.contains('show')) closeModal(); });
+
+  /* Drag the panel by the header */
+  (function enableDrag() {
+    const header = backdrop.querySelector('.float-panel-header');
+    let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+    header.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.float-panel-close')) return;
+      dragging = true;
+      const rect = backdrop.getBoundingClientRect();
+      startX = e.clientX; startY = e.clientY;
+      startLeft = rect.left; startTop = rect.top;
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const left = Math.min(Math.max(0, startLeft + (e.clientX - startX)), vw - backdrop.offsetWidth);
+      const top = Math.min(Math.max(0, startTop + (e.clientY - startY)), vh - backdrop.offsetHeight);
+      backdrop.style.left = left + 'px';
+      backdrop.style.top = top + 'px';
+    });
+    document.addEventListener('mouseup', () => { dragging = false; });
+  })();
 })();
 function applyScanFilters() {
   const activeTags = Array.from(document.querySelectorAll('#scanFilters .filter-chip.active')).map(c => c.dataset.tag);

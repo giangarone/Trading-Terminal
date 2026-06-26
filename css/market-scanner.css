@@ -1,12 +1,12 @@
 /* ===== MARKET SCANNER MODAL ===== */
-/* shares position/display/header styling with .ind-modal (Indicators / L2 Indicators); only the
+/* shares position/display/header styling with .float-panel (Indicators / L2 Indicators); only the
    width/height and the scanner-specific body below need their own rules. */
-.ind-modal.scanner-modal {
+.float-panel.scanner-modal {
   width: 1040px;
   max-height: 86vh;
 }
 
-.scanner-modal .ind-modal-header {
+.scanner-modal .float-panel-header {
   cursor: move;
   user-select: none;
 }
@@ -753,6 +753,7 @@ table.ms-scan-table tr[data-tags].hide-row {
   height: 100%;
   padding: 0 11px;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .ol-pill-seg:hover {
@@ -1425,7 +1426,7 @@ table.ms-scan-table tr[data-tags].hide-row {
   color: var(--on-accent);
 }
 
-.ind-count {
+.count-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;

@@ -13,18 +13,19 @@
     rel="stylesheet">
 
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
-  <link rel="stylesheet" href="css/tokens.css">
-  <link rel="stylesheet" href="css/topbar.css">
-  <link rel="stylesheet" href="css/left-panel.css">
-  <link rel="stylesheet" href="css/center-panel.css">
-  <link rel="stylesheet" href="css/workspace.css">
-  <link rel="stylesheet" href="css/right-panel.css">
-  <link rel="stylesheet" href="css/quick-trade.css">
-  <link rel="stylesheet" href="css/status-bar.css">
-  <link rel="stylesheet" href="css/order-lines.css">
-  <link rel="stylesheet" href="css/market-scanner.css">
-  <link rel="stylesheet" href="css/indicators.css">
-  <link rel="stylesheet" href="css/chart-settings.css">
+  <link rel="stylesheet" href="css/tokens.css?v=2">
+  <link rel="stylesheet" href="css/topbar.css?v=2">
+  <link rel="stylesheet" href="css/left-panel.css?v=2">
+  <link rel="stylesheet" href="css/center-panel.css?v=3">
+  <link rel="stylesheet" href="css/workspace.css?v=5">
+  <link rel="stylesheet" href="css/right-panel.css?v=2">
+  <link rel="stylesheet" href="css/quick-trade.css?v=2">
+  <link rel="stylesheet" href="css/status-bar.css?v=2">
+  <link rel="stylesheet" href="css/order-lines.css?v=2">
+  <link rel="stylesheet" href="css/market-scanner.css?v=2">
+  <link rel="stylesheet" href="css/indicators.css?v=2">
+  <link rel="stylesheet" href="css/chart-settings.css?v=2">
+  <link rel="stylesheet" href="css/trading-journal.css?v=5">
 </head>
 
 <body>
@@ -57,11 +58,11 @@
               style="font-size:15px;">candlestick_chart</span><span id="candleTypeLabel">Candles</span><span
               class="material-symbols-outlined" style="font-size:15px;">expand_more</span></button>
           <button class="ct-action-btn pop-trigger" id="indicatorsTrigger"><span class="material-symbols-outlined"
-              style="font-size:15px;">function</span>Indicators<span class="ind-count" id="indicatorsCount"
+              style="font-size:15px;">function</span>Indicators<span class="count-badge" id="indicatorsCount"
               style="display:none;"></span><span class="material-symbols-outlined"
               style="font-size:15px;">expand_more</span></button>
           <button class="ct-action-btn pop-trigger" id="l2IndicatorsTrigger"><span class="material-symbols-outlined"
-              style="font-size:15px;">stacked_line_chart</span>L2<span class="ind-count" id="l2IndicatorsCount"
+              style="font-size:15px;">stacked_line_chart</span>L2<span class="count-badge" id="l2IndicatorsCount"
               style="display:none;"></span><span class="material-symbols-outlined"
               style="font-size:15px;">expand_more</span></button>
           <button class="ct-action-btn" id="replayToggle"><span class="material-symbols-outlined"
@@ -405,9 +406,8 @@
                         <span class="cs-switch-title">Reconnect Broker Automatically</span>
                         <span class="cs-switch-desc">Automatically reconnect to your broker on startup.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn"
-                        aria-label="Toggle Reconnect Broker Automatically"><span class="ind-toggle-track"><span
-                            class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Reconnect Broker Automatically"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row" id="csReconnectMarketData">
                       <span class="cs-switch-text">
@@ -415,9 +415,9 @@
                         <span class="cs-switch-desc">Automatically reconnect to your market data services on
                           startup.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn"
-                        aria-label="Toggle Reconnect Market Data Automatically"><span class="ind-toggle-track"><span
-                            class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle"
+                        aria-label="Toggle Reconnect Market Data Automatically"><span class="ui-toggle-track"><span
+                            class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
 
@@ -460,25 +460,24 @@
                         <span class="cs-switch-title">Auto Save Templates</span>
                         <span class="cs-switch-desc">Automatically save your template changes.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Auto Save Templates"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Auto Save Templates"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csSyncTemplates">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Sync Templates Across Devices</span>
                         <span class="cs-switch-desc">Keep your templates in sync across all your devices.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn"
-                        aria-label="Toggle Sync Templates Across Devices"><span class="ind-toggle-track"><span
-                            class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Sync Templates Across Devices"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csRememberPresets">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Remember Indicator Presets</span>
                         <span class="cs-switch-desc">Restore your custom indicator presets on startup.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Remember Indicator Presets"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Remember Indicator Presets"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
 
@@ -491,25 +490,24 @@
                         <span class="cs-switch-title">Confirm Market Orders</span>
                         <span class="cs-switch-desc">Show confirmation before sending market orders.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Confirm Market Orders"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Confirm Market Orders"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csConfirmFlatten">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Confirm Flatten All Positions</span>
                         <span class="cs-switch-desc">Show confirmation before flattening all positions.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn"
-                        aria-label="Toggle Confirm Flatten All Positions"><span class="ind-toggle-track"><span
-                            class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Confirm Flatten All Positions"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csConfirmCancelAll">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Confirm Cancel All Orders</span>
                         <span class="cs-switch-desc">Show confirmation before canceling all orders.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Confirm Cancel All Orders"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Confirm Cancel All Orders"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
 
@@ -589,16 +587,16 @@
                         <span class="cs-switch-title">Session Breaks</span>
                         <span class="cs-switch-desc">Show session breaks on intraday charts.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Session Breaks"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Session Breaks"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row" id="csExtendedHours">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Extended Hours</span>
                         <span class="cs-switch-desc">Show pre-market and after-hours data.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Extended Hours"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Extended Hours"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
 
@@ -615,40 +613,40 @@
                         <span class="cs-switch-title">Grid Lines</span>
                         <span class="cs-switch-desc">Show grid lines on the chart.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Grid Lines"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Grid Lines"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowCrosshair">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Crosshair</span>
                         <span class="cs-switch-desc">Show crosshair on chart.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Crosshair"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Crosshair"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowPriceLine">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Price Line</span>
                         <span class="cs-switch-desc">Show last price line.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Price Line"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Price Line"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowLastPriceLabel">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Last Price Label</span>
                         <span class="cs-switch-desc">Show price label on the right axis.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Last Price Label"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Last Price Label"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csAutoScale">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Auto Scale</span>
                         <span class="cs-switch-desc">Automatically fit data to the screen.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Auto Scale"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Auto Scale"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-field" style="margin-top:4px;margin-bottom:0;">
                       <label>Scale Position</label>
@@ -668,48 +666,48 @@
                         <span class="cs-switch-title">Show Open Positions</span>
                         <span class="cs-switch-desc">Display your open positions on chart.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Open Positions"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Show Open Positions"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowWorkingOrders">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Show Working Orders</span>
                         <span class="cs-switch-desc">Display working orders on chart.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Working Orders"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Show Working Orders"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowTpSlLevels">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Show TP/SL Levels</span>
                         <span class="cs-switch-desc">Display take profit and stop loss levels.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Show TP/SL Levels"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Show TP/SL Levels"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowRiskBox">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Show Risk Box</span>
                         <span class="cs-switch-desc">Display risk/reward box on new orders.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Risk Box"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Show Risk Box"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowEntryLabels">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Show Entry Labels</span>
                         <span class="cs-switch-desc">Display entry price labels on filled orders.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Entry Labels"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Show Entry Labels"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowPositionLabels">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Show Position Labels</span>
                         <span class="cs-switch-desc">Display position labels with P&amp;L.</span>
                       </span>
-                      <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Position Labels"><span
-                          class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span></button>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Show Position Labels"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
 
@@ -769,8 +767,10 @@
                         <div class="price-stepper cs-price-stepper">
                           <input type="text" id="csBeCustomRValue" value="1" data-step="0.1">
                           <div class="price-stepper-arrows">
-                            <button type="button" class="ps-up" data-target="csBeCustomRValue"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" class="ps-down" data-target="csBeCustomRValue"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            <button type="button" class="ps-up" data-target="csBeCustomRValue"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="csBeCustomRValue"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
                           </div>
                         </div>
                       </div>
@@ -854,8 +854,10 @@
                         <div class="price-stepper cs-price-stepper">
                           <input type="text" id="csTsStartCustomRValue" value="1" data-step="0.1">
                           <div class="price-stepper-arrows">
-                            <button type="button" class="ps-up" data-target="csTsStartCustomRValue"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" class="ps-down" data-target="csTsStartCustomRValue"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            <button type="button" class="ps-up" data-target="csTsStartCustomRValue"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="csTsStartCustomRValue"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
                           </div>
                         </div>
                       </div>
@@ -965,8 +967,10 @@
                         <div class="price-stepper cs-price-stepper">
                           <input type="text" id="csTtpActivationCustomRValue" value="1" data-step="0.1">
                           <div class="price-stepper-arrows">
-                            <button type="button" class="ps-up" data-target="csTtpActivationCustomRValue"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" class="ps-down" data-target="csTtpActivationCustomRValue"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            <button type="button" class="ps-up" data-target="csTtpActivationCustomRValue"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="csTtpActivationCustomRValue"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
                           </div>
                         </div>
                       </div>
@@ -1169,8 +1173,8 @@
                       <span class="cs-switch-desc">Orders can only reduce an existing position, never open a new
                         one.</span>
                     </span>
-                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Reduce Only">
-                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    <button type="button" class="ui-toggle" aria-label="Toggle Reduce Only">
+                      <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
                     </button>
                   </div>
                   <div class="cs-switch-row" id="qtPostOnly">
@@ -1179,8 +1183,8 @@
                       <span class="cs-switch-desc">Limit orders are placed as maker orders only — rejected if they'd
                         fill immediately.</span>
                     </span>
-                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Post Only">
-                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    <button type="button" class="ui-toggle" aria-label="Toggle Post Only">
+                      <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
                     </button>
                   </div>
                   <div class="cs-switch-row" id="qtConfirmMarket">
@@ -1188,8 +1192,8 @@
                       <span class="cs-switch-title">Confirm Market Orders</span>
                       <span class="cs-switch-desc">Show a confirmation dialog before placing a market order.</span>
                     </span>
-                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Confirm Market Orders">
-                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    <button type="button" class="ui-toggle" aria-label="Toggle Confirm Market Orders">
+                      <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
                     </button>
                   </div>
                 </div>
@@ -1205,8 +1209,8 @@
                       <span class="cs-switch-desc">Show risk and P&amp;L values in your account currency rather than
                         percentage.</span>
                     </span>
-                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Risk in Account Currency">
-                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    <button type="button" class="ui-toggle" aria-label="Toggle Risk in Account Currency">
+                      <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
                     </button>
                   </div>
                   <div class="cs-switch-row active" id="qtShowFees">
@@ -1214,8 +1218,8 @@
                       <span class="cs-switch-title">Show Estimated Fees</span>
                       <span class="cs-switch-desc">Display the estimated trading fee before placing an order.</span>
                     </span>
-                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Estimated Fees">
-                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    <button type="button" class="ui-toggle" aria-label="Toggle Show Estimated Fees">
+                      <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
                     </button>
                   </div>
                 </div>
@@ -1393,8 +1397,8 @@
                       <span class="cs-switch-title">Auto-Reconnect</span>
                       <span class="cs-switch-desc">Automatically reconnect if a connection drops.</span>
                     </span>
-                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Auto-Reconnect">
-                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    <button type="button" class="ui-toggle" aria-label="Toggle Auto-Reconnect">
+                      <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
                     </button>
                   </div>
                   <div class="cs-switch-row active" id="bcShowConnectionStatus">
@@ -1402,8 +1406,8 @@
                       <span class="cs-switch-title">Show Status in Status Bar</span>
                       <span class="cs-switch-desc">Display connection status at the bottom of the terminal.</span>
                     </span>
-                    <button type="button" class="ind-toggle-btn" aria-label="Toggle Show Status in Status Bar">
-                      <span class="ind-toggle-track"><span class="ind-toggle-thumb"></span></span>
+                    <button type="button" class="ui-toggle" aria-label="Toggle Show Status in Status Bar">
+                      <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
                     </button>
                   </div>
                 </div>
@@ -1800,7 +1804,6 @@
                 <span id="tjDayLabel">Today</span>
                 <span class="material-symbols-outlined">expand_more</span>
               </div>
-              <span class="material-symbols-outlined" id="tjCalToggleBtn" title="Calendar view">calendar_month</span>
             </div>
           </div>
 
@@ -1816,26 +1819,20 @@
                 id="tjBest">+$1,420.00</span></div>
             <div class="tj-row"><span class="tj-lbl">Worst Trade</span><span class="tj-val down"
                 id="tjWorst">-$310.00</span></div>
+            <div class="tj-divider"></div>
+            <div class="join-row">
+              <button class="ghost-btn" id="tjOpenModal">Open Trading Journal</button>
+            </div>
           </div>
 
-          <div id="tjCalView" style="display:none;">
-            <div class="jc-mini-nav">
-              <button class="jc-nav-btn" id="tjcPrevBtn"><span
-                  class="material-symbols-outlined">chevron_left</span></button>
-              <span class="jc-mini-month-lbl" id="tjcMonthLbl">June 2026</span>
-              <button class="jc-nav-btn" id="tjcNextBtn"><span
-                  class="material-symbols-outlined">chevron_right</span></button>
-            </div>
-            <div class="jc-mini-grid" id="tjcGrid"></div>
-          </div>
         </div>
 
         <div class="pop-menu" id="tjDayMenu" style="width:130px;">
           <button class="pop-item selected" data-day="0">Today</button>
-          <button class="pop-item" data-day="1">Jun 19</button>
-          <button class="pop-item" data-day="2">Jun 18</button>
-          <button class="pop-item" data-day="3">Jun 17</button>
-          <button class="pop-item" data-day="4">Jun 16</button>
+          <button class="pop-item" data-day="1">Jun 24</button>
+          <button class="pop-item" data-day="2">Jun 23</button>
+          <button class="pop-item" data-day="3">Jun 20</button>
+          <button class="pop-item" data-day="4">Jun 19</button>
         </div>
 
 
@@ -1882,11 +1879,11 @@
                   class="material-symbols-outlined">delete_outline</span></button>
             </div>
             <div class="chart-pane-area" id="chartPaneArea">
-            <div class="chart-placeholder chart-pane primary" id="chartPlaceholder">
-              <canvas id="priceChartCanvas"></canvas>
-              <div id="orderLineLayer"></div>
-              <div id="newsMarkerLayer"></div>
-            </div>
+              <div class="chart-placeholder chart-pane primary" id="chartPlaceholder">
+                <canvas id="priceChartCanvas"></canvas>
+                <div id="orderLineLayer"></div>
+                <div id="newsMarkerLayer"></div>
+              </div>
             </div><!-- /.chart-pane-area -->
           </div>
 
@@ -2114,47 +2111,6 @@
               </div>
             </div>
 
-            <div class="qt-tab-panel" data-tab-panel="trailingStop" id="qtTabPanel-trailingStop">
-              <label class="label-sm">Trailing Delta</label>
-              <div class="price-stepper">
-                <input type="text" id="qtTrailDelta" value="1">
-                <span class="qty-unit">%</span>
-                <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtTrailDelta"><span
-                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                  <button type="button" class="ps-down" data-target="qtTrailDelta"><span
-                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                </div>
-              </div>
-              <label class="label-sm" style="margin-top:12px;">Limit</label>
-              <div class="qty-row" style="margin-bottom:0;">
-                <div class="price-stepper">
-                  <input type="text" id="qtTrailLimit" placeholder="Limit price" value="4,500.25">
-                  <div class="price-stepper-arrows">
-                    <button type="button" class="ps-up" data-target="qtTrailLimit"><span
-                        class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                    <button type="button" class="ps-down" data-target="qtTrailLimit"><span
-                        class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                  </div>
-                </div>
-                <button type="button" class="qt-side-btn" id="qtTrailMarketToggle">Market</button>
-              </div>
-              <label class="tpsl-checkbox-row" id="qtTrailActivationToggle">
-                <span class="chk-box" id="qtTrailActivationCheckbox"><span
-                    class="material-symbols-outlined">check</span></span>
-                <span>Activation Price</span>
-              </label>
-              <div class="price-stepper" id="qtTrailActivationBlock" style="display:none;margin-top:10px;">
-                <input type="text" id="qtTrailActivationPrice" placeholder="Activation price" value="4,510.00">
-                <span class="qty-unit">USD</span>
-                <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtTrailActivationPrice"><span
-                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                  <button type="button" class="ps-down" data-target="qtTrailActivationPrice"><span
-                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                </div>
-              </div>
-            </div>
 
             <div class="qt-tab-panel" data-tab-panel="mit" id="qtTabPanel-mit">
               <label class="label-sm">Trigger</label>
@@ -2471,9 +2427,9 @@
   </div>
 
   <!-- ===================== INDICATORS MODAL ===================== -->
-  <div class="pop-menu ind-modal" id="indicatorsMenu">
-    <div class="ind-modal-header">
-      <span class="ind-modal-title"><span class="material-symbols-outlined"
+  <div class="pop-menu float-panel" id="indicatorsMenu">
+    <div class="float-panel-header">
+      <span class="float-panel-title"><span class="material-symbols-outlined"
           style="font-size:14px;vertical-align:-2px;">function</span> Indicators</span>
       <div class="ind-search-wrap">
         <span class="material-symbols-outlined ind-search-icon">search</span>
@@ -2482,7 +2438,7 @@
         <button class="ind-search-clear" id="indicatorSearchClear" style="display:none;"><span
             class="material-symbols-outlined">close</span></button>
       </div>
-      <button class="ind-modal-close" id="indicatorsModalClose"><span
+      <button class="float-panel-close" id="indicatorsModalClose"><span
           class="material-symbols-outlined">close</span></button>
     </div>
     <div class="ind-cats" id="indCatTabs">
@@ -2500,15 +2456,15 @@
         <span>No indicators match your search</span>
       </div>
     </div>
-    <div class="ind-modal-footer">
+    <div class="float-panel-footer">
       <span class="ind-active-label" id="indActiveLabel">0 active</span>
     </div>
   </div>
 
   <!-- ===================== L2 INDICATORS MODAL ===================== -->
-  <div class="pop-menu ind-modal" id="l2IndicatorsMenu">
-    <div class="ind-modal-header">
-      <span class="ind-modal-title"><span class="material-symbols-outlined"
+  <div class="pop-menu float-panel" id="l2IndicatorsMenu">
+    <div class="float-panel-header">
+      <span class="float-panel-title"><span class="material-symbols-outlined"
           style="font-size:14px;vertical-align:-2px;color:var(--intel);">stacked_line_chart</span> L2 Indicators</span>
       <div class="ind-search-wrap">
         <span class="material-symbols-outlined ind-search-icon">search</span>
@@ -2517,7 +2473,7 @@
         <button class="ind-search-clear" id="l2IndicatorSearchClear" style="display:none;"><span
             class="material-symbols-outlined">close</span></button>
       </div>
-      <button class="ind-modal-close" id="l2IndicatorsModalClose"><span
+      <button class="float-panel-close" id="l2IndicatorsModalClose"><span
           class="material-symbols-outlined">close</span></button>
     </div>
     <div class="ind-cats" id="l2IndCatTabs">
@@ -2534,24 +2490,24 @@
         <span>No indicators match your search</span>
       </div>
     </div>
-    <div class="ind-modal-footer">
+    <div class="float-panel-footer">
       <span class="ind-active-label" id="l2IndActiveLabel">0 active</span>
     </div>
   </div>
 
   <!-- ===================== MARKET SCANNER MODAL ===================== -->
-  <div class="pop-menu ind-modal scanner-modal" id="marketScannerPopup">
+  <div class="pop-menu float-panel scanner-modal" id="marketScannerPopup">
 
     <!-- Header -->
-    <div class="ind-modal-header">
-      <span class="ind-modal-title"><span class="material-symbols-outlined"
+    <div class="float-panel-header">
+      <span class="float-panel-title"><span class="material-symbols-outlined"
           style="font-size:14px;vertical-align:-2px;">manage_search</span> Market Scanner</span>
       <div class="ms-live-pill"><span class="ms-live-dot"></span>Live</div>
       <div class="ms-head-spacer"></div>
       <button class="ct-icon" id="marketScannerRefresh" style="width:26px;height:26px;" title="Refresh">
         <span class="material-symbols-outlined" style="font-size:15px;">refresh</span>
       </button>
-      <button class="ind-modal-close" id="marketScannerClose">
+      <button class="float-panel-close" id="marketScannerClose">
         <span class="material-symbols-outlined">close</span>
       </button>
     </div>
@@ -2871,10 +2827,6 @@
     <button class="pop-item" data-adv-type="stopLimit">
       <span class="pop-text"><span class="pt-title">Stop Limit</span><span class="pt-sub">Trigger a limit order at a
           stop price</span></span>
-    </button>
-    <button class="pop-item" data-adv-type="trailingStop">
-      <span class="pop-text"><span class="pt-title">Trailing Stop</span><span class="pt-sub">Trail the market by a
-          delta</span></span>
     </button>
     <button class="pop-item" data-adv-type="mit">
       <span class="pop-text"><span class="pt-title">MIT</span><span class="pt-sub">Market order once price is
@@ -3212,6 +3164,122 @@
     </div>
   </div>
 
+  <!-- ===================== TRADING JOURNAL FLOATING PANEL ===================== -->
+  <div class="pop-menu float-panel tj-journal-panel" id="tjModalBackdrop" data-persistent="true">
+
+    <!-- Header -->
+    <div class="float-panel-header">
+      <span class="float-panel-title">
+        <span class="material-symbols-outlined" style="font-size:14px;color:var(--accent);">menu_book</span>
+        Trading Journal
+      </span>
+      <button class="float-panel-close" id="tjModalClose">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <!-- Stats Strip -->
+    <div class="tj-stats-strip">
+      <div class="tj-strip-stat">
+        <span class="tj-strip-lbl">Month P&amp;L</span>
+        <span class="tj-strip-val" id="tjmMonthPnl">—</span>
+      </div>
+      <div class="tj-strip-stat">
+        <span class="tj-strip-lbl">Win Rate</span>
+        <span class="tj-strip-val" id="tjmWinRate">—</span>
+      </div>
+      <div class="tj-strip-stat">
+        <span class="tj-strip-lbl">Trades</span>
+        <span class="tj-strip-val" id="tjmTrades">—</span>
+      </div>
+      <div class="tj-strip-stat">
+        <span class="tj-strip-lbl">Trading Days</span>
+        <span class="tj-strip-val" id="tjmTradingDays">—</span>
+      </div>
+      <div class="tj-strip-stat">
+        <span class="tj-strip-lbl">Best Day</span>
+        <span class="tj-strip-val up" id="tjmBestDay">—</span>
+      </div>
+      <div class="tj-strip-stat">
+        <span class="tj-strip-lbl">Worst Day</span>
+        <span class="tj-strip-val down" id="tjmWorstDay">—</span>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="tj-modal-body">
+
+      <!-- Calendar area -->
+      <div class="tj-modal-cal-area">
+        <div class="tj-cal-nav">
+          <button class="jc-nav-btn" id="tjModalPrevBtn">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <span class="tj-modal-month-lbl" id="tjModalMonthLbl">June 2026</span>
+          <button class="jc-nav-btn" id="tjModalNextBtn">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+        <div class="jc-grid" id="tjModalGrid"></div>
+        <div class="jc-legend">
+          <div class="jc-legend-item">
+            <span class="jc-legend-dot" style="background:rgba(43,212,126,.5);"></span>
+            Profitable day
+          </div>
+          <div class="jc-legend-item">
+            <span class="jc-legend-dot" style="background:rgba(242,73,92,.5);"></span>
+            Loss day
+          </div>
+          <div class="jc-legend-item">
+            <span class="jc-legend-dot" style="background:var(--ink-850);border:1px solid var(--line-2);"></span>
+            No trades
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="tj-modal-sidebar">
+        <div class="tj-sidebar-head">
+          <span class="tj-sidebar-date" id="tjSidebarDate">Select a trading day</span>
+          <span class="tj-sidebar-date-hint" id="tjSidebarDateHint"></span>
+        </div>
+
+        <div class="tj-sidebar-kpi-grid">
+          <div class="tj-sidebar-kpi">
+            <span class="tj-sidebar-kpi-lbl">Daily P&amp;L</span>
+            <span class="tj-sidebar-kpi-val" id="tjSidebarPnl">—</span>
+          </div>
+          <div class="tj-sidebar-kpi">
+            <span class="tj-sidebar-kpi-lbl">Win Rate</span>
+            <span class="tj-sidebar-kpi-val" id="tjSidebarWinRate">—</span>
+          </div>
+          <div class="tj-sidebar-kpi">
+            <span class="tj-sidebar-kpi-lbl">Trades</span>
+            <span class="tj-sidebar-kpi-val" id="tjSidebarTrades">—</span>
+          </div>
+          <div class="tj-sidebar-kpi">
+            <span class="tj-sidebar-kpi-lbl">Avg / Trade</span>
+            <span class="tj-sidebar-kpi-val" id="tjSidebarAvg">—</span>
+          </div>
+        </div>
+
+        <div class="tj-sidebar-trades-area">
+          <div class="tj-sidebar-trades-hdr">
+            <span class="tj-sidebar-trades-title">Trades</span>
+            <span class="tj-sidebar-trades-count" id="tjSidebarTradesCount"></span>
+          </div>
+          <div id="tjSidebarTradeList">
+            <div class="tj-sidebar-empty">
+              <span class="material-symbols-outlined">touch_app</span>
+              <span class="tj-sidebar-empty-text">Click a trading day<br>to view trade details</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.tj-modal-body -->
+  </div><!-- /.tj-journal-panel -->
+
   <!-- ===================== TOASTS ===================== -->
   <div class="toast-stack" id="toastStack"></div>
 
@@ -3221,10 +3289,10 @@
 
   <!-- ====== Scripts (order matters: utils → workspace → overlays → resize → app → right-panel) ====== -->
   <script src="js/utils.js"></script>
-  <script src="js/workspace.js"></script>
+  <script src="js/workspace.js?v=5"></script>
   <script src="js/overlays.js"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=3"></script>
   <script src="js/right-panel.js"></script>
 
 </body>
