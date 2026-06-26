@@ -61,10 +61,6 @@
               style="font-size:15px;">function</span>Indicators<span class="count-badge" id="indicatorsCount"
               style="display:none;"></span><span class="material-symbols-outlined"
               style="font-size:15px;">expand_more</span></button>
-          <button class="ct-action-btn pop-trigger" id="l2IndicatorsTrigger"><span class="material-symbols-outlined"
-              style="font-size:15px;">stacked_line_chart</span>L2<span class="count-badge" id="l2IndicatorsCount"
-              style="display:none;"></span><span class="material-symbols-outlined"
-              style="font-size:15px;">expand_more</span></button>
           <button class="ct-action-btn" id="replayToggle"><span class="material-symbols-outlined"
               style="font-size:15px;">fast_rewind</span>Replay</button>
           <button class="ct-action-btn pop-trigger" id="marketScannerTrigger"><span class="material-symbols-outlined"
@@ -2617,11 +2613,10 @@
     </div>
     <div class="ind-cats" id="indCatTabs">
       <button class="ind-cat active" data-cat="all">All</button>
-      <button class="ind-cat" data-cat="trend">Trend</button>
-      <button class="ind-cat" data-cat="momentum">Momentum</button>
-      <button class="ind-cat" data-cat="volatility">Volatility</button>
-      <button class="ind-cat" data-cat="volume">Volume</button>
-      <button class="ind-cat" data-cat="custom">Custom</button>
+      <button class="ind-cat" data-cat="classic">Classic Indicators</button>
+      <button class="ind-cat" data-cat="l1">Trade Flow Intelligence (L1)</button>
+      <button class="ind-cat" data-cat="l2">Order Book Intelligence (L2)</button>
+      <button class="ind-cat" data-cat="chartprime">ChartPrime</button>
     </div>
     <div class="ind-list-wrap">
       <div class="ind-list" id="indicatorList"></div>
@@ -2632,40 +2627,6 @@
     </div>
     <div class="float-panel-footer">
       <span class="ind-active-label" id="indActiveLabel">0 active</span>
-    </div>
-  </div>
-
-  <!-- ===================== L2 INDICATORS MODAL ===================== -->
-  <div class="pop-menu float-panel" id="l2IndicatorsMenu">
-    <div class="float-panel-header">
-      <span class="float-panel-title"><span class="material-symbols-outlined"
-          style="font-size:14px;vertical-align:-2px;color:var(--intel);">stacked_line_chart</span> L2 Indicators</span>
-      <div class="ind-search-wrap">
-        <span class="material-symbols-outlined ind-search-icon">search</span>
-        <input type="text" class="ind-search" id="l2IndicatorSearch" placeholder="Search L2 indicators…"
-          autocomplete="off" spellcheck="false">
-        <button class="ind-search-clear" id="l2IndicatorSearchClear" style="display:none;"><span
-            class="material-symbols-outlined">close</span></button>
-      </div>
-      <button class="float-panel-close" id="l2IndicatorsModalClose"><span
-          class="material-symbols-outlined">close</span></button>
-    </div>
-    <div class="ind-cats" id="l2IndCatTabs">
-      <button class="ind-cat active" data-cat="all">All</button>
-      <button class="ind-cat" data-cat="orderbook">Order Book</button>
-      <button class="ind-cat" data-cat="orderflow">Order Flow</button>
-      <button class="ind-cat" data-cat="volume">Volume</button>
-      <button class="ind-cat" data-cat="liquidity">Liquidity</button>
-    </div>
-    <div class="ind-list-wrap">
-      <div class="ind-list" id="l2IndicatorList"></div>
-      <div class="ind-empty" id="l2IndEmpty" style="display:none;">
-        <span class="material-symbols-outlined">search_off</span>
-        <span>No indicators match your search</span>
-      </div>
-    </div>
-    <div class="float-panel-footer">
-      <span class="ind-active-label" id="l2IndActiveLabel">0 active</span>
     </div>
   </div>
 

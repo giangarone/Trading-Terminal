@@ -1,4 +1,4 @@
-/* ---------- Market Scanner popover (same open/close model as Indicators / L2 Indicators, but ---------- */
+/* ---------- Market Scanner popover (same open/close model as Indicators, but ---------- */
 /* ---------- opens horizontally centered and can be dragged around by its header)         ---------- */
 const marketScannerTrigger = document.getElementById('marketScannerTrigger');
 const marketScannerPopup = document.getElementById('marketScannerPopup');

@@ -1,5 +1,5 @@
 /* ===== MARKET SCANNER MODAL ===== */
-/* shares position/display/header styling with .float-panel (Indicators / L2 Indicators); only the
+/* shares position/display/header styling with .float-panel (Indicators); only the
    width/height and the scanner-specific body below need their own rules. */
 .float-panel.scanner-modal {
   width: 1040px;

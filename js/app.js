@@ -2445,46 +2445,51 @@
   const indActiveLabel = document.getElementById('indActiveLabel');
 
   const IND_DATA = [
-    { name: 'EMA', desc: 'Exponential Moving Average — reacts faster to recent price changes than SMA', cat: 'trend' },
-    { name: 'SMA', desc: 'Simple Moving Average — average price over a defined lookback period', cat: 'trend' },
-    { name: 'WMA', desc: 'Weighted Moving Average — linearly weights recent prices more heavily', cat: 'trend' },
-    { name: 'VWAP', desc: 'Volume Weighted Average Price — daily average price weighted by volume', cat: 'trend' },
-    { name: 'Ichimoku Cloud', desc: 'Multi-component trend system showing support, resistance, and momentum', cat: 'trend' },
-    { name: 'Parabolic SAR', desc: 'Trailing stop-based trend reversal signal that follows price', cat: 'trend' },
-    { name: 'ADX', desc: 'Average Directional Index — measures trend strength regardless of direction', cat: 'trend' },
-    { name: 'DEMA', desc: 'Double EMA — reduces lag of standard EMA for faster trend signals', cat: 'trend' },
-    { name: 'TEMA', desc: 'Triple EMA — triple-smoothed moving average with minimal lag', cat: 'trend' },
-    { name: 'Supertrend', desc: 'ATR-based dynamic support/resistance trend-following line', cat: 'trend' },
-    { name: 'RSI', desc: 'Relative Strength Index — oscillator measuring overbought/oversold on 0–100 scale', cat: 'momentum' },
-    { name: 'MACD', desc: 'Moving Average Convergence Divergence — trend-following momentum indicator', cat: 'momentum' },
-    { name: 'Stochastic Oscillator', desc: 'Compares closing price to a high/low range over a set period', cat: 'momentum' },
-    { name: 'CCI', desc: 'Commodity Channel Index — measures deviation from the statistical mean price', cat: 'momentum' },
-    { name: 'Williams %R', desc: 'Momentum oscillator measuring overbought and oversold levels', cat: 'momentum' },
-    { name: 'Momentum', desc: 'Raw price change over a set period expressed as an oscillator', cat: 'momentum' },
-    { name: 'ROC', desc: 'Rate of Change — percentage price change over a defined lookback', cat: 'momentum' },
-    { name: 'Awesome Oscillator', desc: 'Difference of 5 & 34-period SMAs of bar midpoints', cat: 'momentum' },
-    { name: 'Ultimate Oscillator', desc: 'Weighted oscillator across 3 timeframes to reduce false signals', cat: 'momentum' },
-    { name: 'MFI', desc: 'Money Flow Index — RSI-variant that incorporates volume for momentum signals', cat: 'momentum' },
-    { name: 'Bollinger Bands', desc: 'Dynamic bands 2 standard deviations around a 20-period SMA', cat: 'volatility' },
-    { name: 'ATR', desc: 'Average True Range — measures market volatility over a rolling lookback', cat: 'volatility' },
-    { name: 'Keltner Channel', desc: 'ATR-based envelope around an EMA for detecting volatility breakouts', cat: 'volatility' },
-    { name: 'Donchian Channel', desc: 'Highest high / lowest low channel over a user-defined period', cat: 'volatility' },
-    { name: 'Standard Deviation', desc: 'Statistical dispersion of price from its mean over N periods', cat: 'volatility' },
-    { name: 'Historical Volatility', desc: 'Annualized standard deviation of log returns over a lookback window', cat: 'volatility' },
-    { name: 'Chaikin Volatility', desc: 'Rate of change of ATR to detect volatility expansion and contraction', cat: 'volatility' },
-    { name: 'OBV', desc: 'On Balance Volume — cumulative volume using up/down day directional logic', cat: 'volume' },
-    { name: 'Volume MA', desc: 'Moving average of volume to identify abnormal volume spikes', cat: 'volume' },
-    { name: 'Accumulation/Distribution', desc: 'Cumulative flow indicator using close position within the bar range', cat: 'volume' },
-    { name: 'Chaikin Money Flow', desc: 'Measures buying/selling pressure via volume-weighted close location', cat: 'volume' },
-    { name: 'Elder\'s Force Index', desc: 'Combines price change and volume to measure the force of moves', cat: 'volume' },
-    { name: 'VWAP Bands', desc: 'Standard deviation bands around VWAP for intraday mean reversion', cat: 'volume' },
-    { name: 'Market Oracle', desc: 'Proprietary signal combining multi-timeframe trend and momentum factors', cat: 'custom' },
-    { name: 'Market Dynamics', desc: 'Visualizes market regime shifts using adaptive volatility models', cat: 'custom' },
-    { name: 'Prime Oscillators', desc: 'Suite of composite oscillators optimized for intraday trading', cat: 'custom' },
-    { name: 'Prime Screener', desc: 'Real-time multi-symbol scan', cat: 'custom' },
+    { name: 'Moving Average', desc: 'Smooths price to show overall trend direction.', cat: 'classic' },
+    { name: 'EMA', desc: 'Faster moving average that reacts quicker to price.', cat: 'classic' },
+    { name: 'SMA', desc: 'Simple average price over a selected period.', cat: 'classic' },
+    { name: 'VWAP', desc: 'Shows average price weighted by volume.', cat: 'classic' },
+    { name: 'RSI', desc: 'Measures overbought and oversold momentum.', cat: 'classic' },
+    { name: 'Stochastic RSI', desc: 'More sensitive RSI for spotting momentum extremes.', cat: 'classic' },
+    { name: 'MACD', desc: 'Shows trend momentum and possible trend shifts.', cat: 'classic' },
+    { name: 'Bollinger Bands', desc: 'Shows volatility and price expansion or contraction.', cat: 'classic' },
+    { name: 'ATR', desc: 'Measures market volatility and average price range.', cat: 'classic' },
+    { name: 'Volume', desc: 'Shows how much trading activity is happening.', cat: 'classic' },
+    { name: 'Volume Profile', desc: 'Shows where most trading volume occurred by price.', cat: 'classic' },
+    { name: 'Support & Resistance', desc: 'Marks key levels where price may react.', cat: 'classic' },
+    { name: 'Pivot Points', desc: 'Pre-calculated support and resistance levels.', cat: 'classic' },
+    { name: 'Supertrend', desc: 'Trend-following indicator for direction and trailing stops.', cat: 'classic' },
+    { name: 'Ichimoku Cloud', desc: 'Shows trend, momentum, support, and resistance.', cat: 'classic' },
+    { name: 'Parabolic SAR', desc: 'Helps identify trend direction and possible reversals.', cat: 'classic' },
+    { name: 'ADX', desc: 'Measures trend strength, not direction.', cat: 'classic' },
+    { name: 'CCI', desc: 'Finds momentum extremes and potential reversals.', cat: 'classic' },
+    { name: 'Williams %R', desc: 'Shows overbought and oversold conditions.', cat: 'classic' },
+    { name: 'Fibonacci Retracement', desc: 'Highlights possible pullback and reaction zones.', cat: 'classic' },
+
+    { name: 'Large Lot / Block Trade Detector', desc: 'Highlights unusually large executed trades that may indicate institutional participation.', cat: 'l1' },
+    { name: 'Aggressive Order Flow', desc: 'Measures whether buyers or sellers are controlling the tape through sustained market orders.', cat: 'l1' },
+    { name: 'Smart Volume Spike Detector', desc: 'Detects abnormal volume and classifies whether it supports continuation, exhaustion, absorption, liquidation, or a fake breakout.', cat: 'l1' },
+
+    { name: 'Limit Order Heatmap', desc: 'Shows resting bid/ask liquidity to identify support, resistance, liquidity walls, and breakout zones.', cat: 'l2' },
+    { name: 'Iceberg Detector', desc: 'Detects hidden or refreshing institutional orders.', cat: 'l2' },
+    { name: 'Spoofing Detector', desc: 'Detects large fake orders intended to influence price before being canceled.', cat: 'l2' },
+    { name: 'Liquidity Vacuum', desc: 'Identifies thin liquidity zones where price can move rapidly.', cat: 'l2' },
+    { name: 'Liquidation Heatmap', desc: 'Shows estimated liquidation zones where leveraged traders may be forced to buy or sell.', cat: 'l2' },
+    { name: 'Open Interest Analysis', desc: 'Shows whether new money is entering or leaving the market and helps classify move participation.', cat: 'l2' },
+    { name: 'Institutional Order Blocks', desc: 'Identifies high-probability institutional buying and selling zones by combining order flow and liquidity signals.', cat: 'l2' },
+    { name: 'Absorption Detector', desc: 'Detects aggressive buying or selling being absorbed by large passive orders.', cat: 'l2' },
+    { name: 'Trap Detector', desc: 'Detects failed breakouts or breakdowns where traders become trapped.', cat: 'l2' },
+    { name: 'Exhaustion Detector', desc: 'Detects when aggressive buying or selling stops moving price efficiently.', cat: 'l2' },
+    { name: 'Smart Liquidity Sweep Detector', desc: 'Detects liquidity sweeps and determines whether the move is likely reversal or breakout continuation.', cat: 'l2' },
+    { name: 'Delta Divergence Signal', desc: 'Detects when price and aggressive buying/selling pressure diverge, warning that momentum may be weakening.', cat: 'l2' },
+
+    { name: 'Market Oracle', desc: 'A trend and signal toolkit that helps traders act with more clarity as price moves.', cat: 'chartprime' },
+    { name: 'Market Dynamics', desc: 'A liquidity and structure toolkit that maps reaction zones, breakouts, gaps, and institutional areas in real time.', cat: 'chartprime' },
+    { name: 'Prime Oscillators', desc: 'A momentum toolkit that shows when momentum is building, fading, or flipping.', cat: 'chartprime' },
+    { name: 'Prime Screener', desc: 'An on-chart dashboard for scanning different assets and spotting opportunities at a glance.', cat: 'chartprime' },
   ];
 
-  const CAT_LABELS = { trend: 'Trend', momentum: 'Momentum', volatility: 'Volatility', volume: 'Volume', custom: 'Custom' };
+  const CAT_LABELS = { classic: 'Classic Indicators', l1: 'Trade Flow Intelligence (L1)', l2: 'Order Book Intelligence (L2)', chartprime: 'ChartPrime' };
   const indState = new Map(IND_DATA.map(d => [d.name, false]));
 
   function renderIndList(query, cat) {
@@ -2492,7 +2497,7 @@
     const q = (query || '').toLowerCase().trim();
     const showCat = cat === 'all' ? null : cat;
     let anyVisible = false;
-    const groups = showCat ? [showCat] : ['trend', 'momentum', 'volatility', 'volume', 'custom'];
+    const groups = showCat ? [showCat] : ['classic', 'l1', 'l2', 'chartprime'];
     groups.forEach(g => {
       const rows = IND_DATA.filter(d => {
         if (d.cat !== g) return false;
@@ -2572,131 +2577,6 @@
       btn.classList.add('active');
       indActiveCat = btn.dataset.cat;
       renderIndList(getIndSearch(), indActiveCat);
-    });
-  });
-
-  /* ---------- L2 indicators checklist dropdown ---------- */
-  /* ---------- L2 indicators modal ---------- */
-  const l2IndicatorsTrigger = document.getElementById('l2IndicatorsTrigger');
-  const l2IndicatorsMenu = document.getElementById('l2IndicatorsMenu');
-  const l2IndicatorsCount = document.getElementById('l2IndicatorsCount');
-  const l2IndicatorSearch = document.getElementById('l2IndicatorSearch');
-  const l2IndicatorSearchClear = document.getElementById('l2IndicatorSearchClear');
-  const l2IndicatorList = document.getElementById('l2IndicatorList');
-  const l2IndEmpty = document.getElementById('l2IndEmpty');
-  const l2IndActiveLabel = document.getElementById('l2IndActiveLabel');
-
-  const L2_IND_DATA = [
-    { name:'Depth of Market', desc:'Live bid/ask ladder showing pending orders at each price level', cat:'orderbook' },
-    { name:'Order Book Heatmap', desc:'Color-coded visualization of order density across price levels', cat:'orderbook' },
-    { name:'Bid/Ask Imbalance', desc:'Real-time ratio of buy vs sell pressure visible in the order book', cat:'orderbook' },
-    { name:'Cumulative Delta', desc:'Running total of buy-initiated vs sell-initiated volume over the session', cat:'orderbook' },
-    { name:'Book Pressure', desc:'Weighted order book imbalance indicating directional market pressure', cat:'orderbook' },
-    { name:'Footprint Chart', desc:'Per-bar breakdown of volume executed at each price and direction', cat:'orderflow' },
-    { name:'Order Flow Imbalance', desc:'Detects significant buy/sell imbalance within each individual candle', cat:'orderflow' },
-    { name:'Trade Tape', desc:'Live time-and-sales stream showing each executed trade in real time', cat:'orderflow' },
-    { name:'Delta Divergence', desc:'Spots divergence between price direction and cumulative delta', cat:'orderflow' },
-    { name:'Aggressive Orders', desc:'Highlights large market orders that immediately take available liquidity', cat:'orderflow' },
-    { name:'Volume Profile', desc:'Horizontal histogram showing total volume traded at each price level', cat:'volume' },
-    { name:'VPOC', desc:'Volume Point of Control — the price level with the highest traded volume', cat:'volume' },
-    { name:'Volume by Price', desc:'Distributes total session volume across the currently visible price range', cat:'volume' },
-    { name:'TPO Profile', desc:'Time-Price-Opportunity chart showing time spent at each price level', cat:'volume' },
-    { name:'Value Area', desc:'Highlights the price range containing 70% of total session volume', cat:'volume' },
-    { name:'Liquidity Absorption', desc:'Identifies when large resting orders absorb aggressive market flow', cat:'liquidity' },
-    { name:'Iceberg Detection', desc:'Flags large hidden orders being drip-fed into the visible order book', cat:'liquidity' },
-    { name:'Stop Hunt Zones', desc:'Highlights likely stop cluster accumulation areas above and below price', cat:'liquidity' },
-    { name:'Dark Pool Levels', desc:'Estimated off-exchange print levels derived from dark pool activity', cat:'liquidity' },
-    { name:'Liquidity Map', desc:'Visual map of estimated buy and sell side liquidity across the book', cat:'liquidity' },
-  ];
-
-  const L2_CAT_LABELS = { orderbook:'Order Book', orderflow:'Order Flow', volume:'Volume', liquidity:'Liquidity' };
-  const l2IndState = new Map(L2_IND_DATA.map(d => [d.name, false]));
-
-  function renderL2IndList(query, cat) {
-    l2IndicatorList.innerHTML = '';
-    const q = (query || '').toLowerCase().trim();
-    const showCat = cat === 'all' ? null : cat;
-    let anyVisible = false;
-    const groups = showCat ? [showCat] : ['orderbook','orderflow','volume','liquidity'];
-    groups.forEach(g => {
-      const rows = L2_IND_DATA.filter(d => {
-        if (d.cat !== g) return false;
-        if (q && !d.name.toLowerCase().includes(q) && !d.desc.toLowerCase().includes(q)) return false;
-        return true;
-      });
-      if (!rows.length) return;
-      anyVisible = true;
-      if (!showCat || groups.length > 1) {
-        const lbl = document.createElement('div');
-        lbl.className = 'ind-group-label';
-        lbl.textContent = L2_CAT_LABELS[g];
-        l2IndicatorList.appendChild(lbl);
-      }
-      rows.forEach(d => {
-        const row = document.createElement('div');
-        row.className = 'ind-row' + (l2IndState.get(d.name) ? ' active' : '');
-        row.dataset.name = d.name;
-        row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ui-toggle" aria-label="Toggle ${d.name}"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>`;
-        row.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const on = !l2IndState.get(d.name);
-          l2IndState.set(d.name, on);
-          row.classList.toggle('active', on);
-          updateL2IndicatorsCount();
-          showToast(d.name + (on ? ' enabled' : ' disabled'), 'stacked_line_chart');
-        });
-        l2IndicatorList.appendChild(row);
-      });
-    });
-    l2IndEmpty.style.display = anyVisible ? 'none' : 'flex';
-  }
-
-  function updateL2IndicatorsCount() {
-    const n = [...l2IndState.values()].filter(Boolean).length;
-    l2IndicatorsCount.style.display = n > 0 ? 'inline-flex' : 'none';
-    l2IndicatorsCount.textContent = n;
-    l2IndActiveLabel.textContent = n + ' active';
-  }
-
-  let l2ActiveCat = 'all';
-  function getL2Search() { return l2IndicatorSearch.value; }
-
-  l2IndicatorsTrigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (l2IndicatorsMenu.classList.contains('show') && l2IndicatorsMenu._openTrigger === l2IndicatorsTrigger) {
-      closeAllPopovers(); return;
-    }
-    renderL2IndList(getL2Search(), l2ActiveCat);
-    openNear(l2IndicatorsMenu, l2IndicatorsTrigger.getBoundingClientRect(), 'left', l2IndicatorsTrigger);
-    l2IndicatorSearch.focus();
-  });
-
-  document.getElementById('l2IndicatorsModalClose').addEventListener('click', (e) => {
-    e.stopPropagation();
-    closeAllPopovers();
-  });
-
-  l2IndicatorSearch.addEventListener('input', () => {
-    const q = l2IndicatorSearch.value;
-    l2IndicatorSearchClear.style.display = q ? 'flex' : 'none';
-    renderL2IndList(q, l2ActiveCat);
-  });
-  l2IndicatorSearch.addEventListener('click', (e) => e.stopPropagation());
-  l2IndicatorSearchClear.addEventListener('click', (e) => {
-    e.stopPropagation();
-    l2IndicatorSearch.value = '';
-    l2IndicatorSearchClear.style.display = 'none';
-    renderL2IndList('', l2ActiveCat);
-    l2IndicatorSearch.focus();
-  });
-
-  document.getElementById('l2IndCatTabs').querySelectorAll('.ind-cat').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      document.getElementById('l2IndCatTabs').querySelectorAll('.ind-cat').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      l2ActiveCat = btn.dataset.cat;
-      renderL2IndList(getL2Search(), l2ActiveCat);
     });
   });
 
