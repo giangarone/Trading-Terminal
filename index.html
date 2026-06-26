@@ -282,7 +282,7 @@
               <button class="cs-nav-item" data-cs-tab="orderdefaults"><span
                   class="material-symbols-outlined">receipt_long</span>Quick Trade</button>
               <button class="cs-nav-item" data-cs-tab="trademgmt"><span
-                  class="material-symbols-outlined">shield</span>Take Profits &amp; Stop Loss</button>
+                  class="material-symbols-outlined">show_chart</span>Chart Trades</button>
               <button class="cs-nav-item" data-cs-tab="positiondefaults"><span
                   class="material-symbols-outlined">account_tree</span>Position Defaults</button>
               <button class="cs-nav-item" data-cs-tab="risk"><span class="material-symbols-outlined">balance</span>Risk
@@ -738,12 +738,105 @@
 
             <div class="cs-pane active" data-cs-pane="trademgmt">
               <div class="cs-pane-head">
-                <h2>Take Profits &amp; Stop Loss</h2>
-                <p>Configure default TP and SL levels applied when you open or manage a position.</p>
+                <h2>Chart Trades</h2>
+                <p>Configure default order type, sizing, TP/SL, and behavior for chart-placed trades.</p>
               </div>
 
               <div class="cs-grid">
                 <div class="cs-col">
+
+                  <!-- Default Size -->
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Default Size</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Position Sizing</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="ctSizingMethod"><span class="cs-select-label">Contracts</span><span class="material-symbols-outlined">expand_more</span></div><select id="ctSizingMethod" style="display:none;">
+                          <option value="contracts" selected>Contracts</option>
+                          <option value="shares">Shares</option>
+                          <option value="dollar">Dollar Amount</option>
+                          <option value="pct_equity">% Equity</option>
+                          <option value="risk_pct">Risk %</option>
+                        </select>
+                      </div>
+                      <div class="cs-field">
+                        <label>Default Slippage</label>
+                        <div class="cs-unit-pair">
+                          <div class="price-stepper cs-price-stepper">
+                            <input type="text" id="ctSlippage" value="0.05" data-step="0.01">
+                            <div class="price-stepper-arrows">
+                              <button type="button" class="ps-up" data-target="ctSlippage"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                              <button type="button" class="ps-down" data-target="ctSlippage"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            </div>
+                          </div>
+                          <div class="select-input" style="cursor:default;min-width:42px;justify-content:center;pointer-events:none;">%</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Default Leverage (Crypto)</label>
+                        <div class="cs-unit-pair">
+                          <div class="price-stepper cs-price-stepper">
+                            <input type="text" id="ctLeverage" value="10" data-step="1">
+                            <div class="price-stepper-arrows">
+                              <button type="button" class="ps-up" data-target="ctLeverage"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                              <button type="button" class="ps-down" data-target="ctLeverage"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            </div>
+                          </div>
+                          <div class="select-input" style="cursor:default;min-width:42px;justify-content:center;pointer-events:none;">×</div>
+                        </div>
+                      </div>
+                      <div class="cs-field">
+                        <label>Margin Mode (Crypto)</label>
+                        <div class="cs-segmented" id="ctCrossIsolatedGroup" style="margin-bottom:0;">
+                          <button type="button" class="cs-seg-btn active" data-mode="cross">Cross</button>
+                          <button type="button" class="cs-seg-btn" data-mode="isolated">Isolated</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Order Behavior -->
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Order Behavior</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Default Order Type</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="ctOrderType"><span class="cs-select-label">Market</span><span class="material-symbols-outlined">expand_more</span></div><select id="ctOrderType" style="display:none;">
+                          <option value="market" selected>Market</option>
+                          <option value="limit">Limit</option>
+                          <option value="stop">Stop</option>
+                        </select>
+                      </div>
+                      <div class="cs-field">
+                        <label>Time in Force</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="ctTimeInForce"><span class="cs-select-label">GTC — Good Till Canceled</span><span class="material-symbols-outlined">expand_more</span></div><select id="ctTimeInForce" style="display:none;">
+                          <option value="gtc" selected>GTC — Good Till Canceled</option>
+                          <option value="day">Day</option>
+                          <option value="ioc">IOC — Immediate or Cancel</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="cs-switch-row">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Reduce Only</span>
+                        <span class="cs-switch-desc">Orders can only reduce an existing position, never open a new one.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Reduce Only"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Post Only</span>
+                        <span class="cs-switch-desc">Limit orders are placed as maker orders only — rejected if they'd fill immediately.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Post Only"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                  </div>
 
                   <div class="cs-card">
                     <div class="cs-card-head">
@@ -1089,135 +1182,323 @@
             <div class="cs-pane" data-cs-pane="orderdefaults">
               <div class="cs-pane-head">
                 <h2>Quick Trade</h2>
-                <p>Default order type, size, and behavior for the quick trade panel.</p>
+                <p>Configure default order type, sizing, TP/SL, and behavior for the quick trade panel.</p>
               </div>
 
-              <div class="cs-col">
+              <div class="cs-grid">
+                <div class="cs-col">
 
-                <!-- Default Size -->
-                <div class="cs-card">
-                  <div class="cs-card-head">
-                    <span class="cs-card-title">Default Size</span>
-                  </div>
-                  <div class="cs-fields-row">
-                    <div class="cs-field">
-                      <label>Amount Type</label>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="qtsAmountType">
-                        <span class="cs-select-label">Quantity</span>
-                        <span class="material-symbols-outlined">expand_more</span>
-                      </div>
-                      <select id="qtsAmountType" style="display:none;">
-                        <option value="quantity" selected>Quantity</option>
-                        <option value="percent">% of Balance</option>
-                        <option value="usd">USD Amount</option>
-                      </select>
+                  <!-- Default Size -->
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Default Size</span>
                     </div>
-                    <div class="cs-field">
-                      <label>Default Quantity</label>
-                      <div class="price-stepper cs-price-stepper">
-                        <input type="text" id="qtsDefaultQty" value="1" data-step="1">
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="qtsDefaultQty"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="qtsDefaultQty"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Position Sizing</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="qtsSizingMethod"><span class="cs-select-label">Contracts</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtsSizingMethod" style="display:none;">
+                          <option value="contracts" selected>Contracts</option>
+                          <option value="shares">Shares</option>
+                          <option value="dollar">Dollar Amount</option>
+                          <option value="pct_equity">% Equity</option>
+                          <option value="risk_pct">Risk %</option>
+                        </select>
+                      </div>
+                      <div class="cs-field">
+                        <label>Default Slippage</label>
+                        <div class="cs-unit-pair">
+                          <div class="price-stepper cs-price-stepper">
+                            <input type="text" id="qtsSlippage" value="0.05" data-step="0.01">
+                            <div class="price-stepper-arrows">
+                              <button type="button" class="ps-up" data-target="qtsSlippage"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                              <button type="button" class="ps-down" data-target="qtsSlippage"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            </div>
+                          </div>
+                          <div class="select-input" style="cursor:default;min-width:42px;justify-content:center;pointer-events:none;">%</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Default Leverage (Crypto)</label>
+                        <div class="cs-unit-pair">
+                          <div class="price-stepper cs-price-stepper">
+                            <input type="text" id="qtsLeverage" value="10" data-step="1">
+                            <div class="price-stepper-arrows">
+                              <button type="button" class="ps-up" data-target="qtsLeverage"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                              <button type="button" class="ps-down" data-target="qtsLeverage"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            </div>
+                          </div>
+                          <div class="select-input" style="cursor:default;min-width:42px;justify-content:center;pointer-events:none;">×</div>
+                        </div>
+                      </div>
+                      <div class="cs-field">
+                        <label>Margin Mode (Crypto)</label>
+                        <div class="cs-segmented" id="qtsCrossIsolatedGroup" style="margin-bottom:0;">
+                          <button type="button" class="cs-seg-btn active" data-mode="cross">Cross</button>
+                          <button type="button" class="cs-seg-btn" data-mode="isolated">Isolated</button>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Order Behavior -->
-                <div class="cs-card">
-                  <div class="cs-card-head">
-                    <span class="cs-card-title">Order Behavior</span>
-                  </div>
-                  <div class="cs-fields-row">
-                    <div class="cs-field">
-                      <label>Default Order Type</label>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="qtsOrderType">
-                        <span class="cs-select-label">Market</span>
-                        <span class="material-symbols-outlined">expand_more</span>
-                      </div>
-                      <select id="qtsOrderType" style="display:none;">
-                        <option value="market" selected>Market</option>
-                        <option value="limit">Limit</option>
-                        <option value="stop_market">Stop Market</option>
-                        <option value="stop_limit">Stop Limit</option>
-                      </select>
+                  <!-- Order Behavior -->
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Order Behavior</span>
                     </div>
-                    <div class="cs-field">
-                      <label>Time in Force</label>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="qtsTimeInForce">
-                        <span class="cs-select-label">GTC — Good Till Canceled</span>
-                        <span class="material-symbols-outlined">expand_more</span>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Default Order Type</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="qtsOrderType"><span class="cs-select-label">Market</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtsOrderType" style="display:none;">
+                          <option value="market" selected>Market</option>
+                          <option value="limit">Limit</option>
+                          <option value="stop">Stop</option>
+                        </select>
                       </div>
-                      <select id="qtsTimeInForce" style="display:none;">
-                        <option value="gtc" selected>GTC — Good Till Canceled</option>
-                        <option value="gtd">GTD — Good Till Date</option>
-                        <option value="ioc">IOC — Immediate or Cancel</option>
-                        <option value="fok">FOK — Fill or Kill</option>
-                        <option value="day">DAY</option>
-                      </select>
+                      <div class="cs-field">
+                        <label>Time in Force</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="qtsTimeInForce"><span class="cs-select-label">GTC — Good Till Canceled</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtsTimeInForce" style="display:none;">
+                          <option value="gtc" selected>GTC — Good Till Canceled</option>
+                          <option value="day">Day</option>
+                          <option value="ioc">IOC — Immediate or Cancel</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="cs-switch-row">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Reduce Only</span>
+                        <span class="cs-switch-desc">Orders can only reduce an existing position, never open a new one.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Reduce Only"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Post Only</span>
+                        <span class="cs-switch-desc">Limit orders are placed as maker orders only — rejected if they'd fill immediately.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Post Only"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
-                  <div class="cs-switch-row" id="qtReduceOnly">
-                    <span class="cs-switch-text">
-                      <span class="cs-switch-title">Reduce Only</span>
-                      <span class="cs-switch-desc">Orders can only reduce an existing position, never open a new
-                        one.</span>
-                    </span>
-                    <button type="button" class="ui-toggle" aria-label="Toggle Reduce Only">
-                      <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
-                    </button>
-                  </div>
-                  <div class="cs-switch-row" id="qtPostOnly">
-                    <span class="cs-switch-text">
-                      <span class="cs-switch-title">Post Only</span>
-                      <span class="cs-switch-desc">Limit orders are placed as maker orders only — rejected if they'd
-                        fill immediately.</span>
-                    </span>
-                    <button type="button" class="ui-toggle" aria-label="Toggle Post Only">
-                      <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
-                    </button>
-                  </div>
-                  <div class="cs-switch-row" id="qtConfirmMarket">
-                    <span class="cs-switch-text">
-                      <span class="cs-switch-title">Confirm Market Orders</span>
-                      <span class="cs-switch-desc">Show a confirmation dialog before placing a market order.</span>
-                    </span>
-                    <button type="button" class="ui-toggle" aria-label="Toggle Confirm Market Orders">
-                      <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
-                    </button>
-                  </div>
+
                 </div>
 
-                <!-- Display & Calculations -->
-                <div class="cs-card">
-                  <div class="cs-card-head">
-                    <span class="cs-card-title">Display &amp; Calculations</span>
+                <div class="cs-col">
+
+                  <!-- Move SL To Breakeven (QT) -->
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Move SL To Breakeven</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Trigger</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="qtBeTrigger"><span class="cs-select-label">After TP1 Hit</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtBeTrigger" style="display:none;">
+                          <option value="tp1">After TP1 Hit</option>
+                          <option value="tp2">After TP2 Hit</option>
+                          <option value="tp3">After TP3 Hit</option>
+                          <option value="customR">Custom R Multiple</option>
+                        </select>
+                      </div>
+                      <div class="cs-field">
+                        <label>Breakeven Offset</label>
+                        <div class="cs-unit-pair">
+                          <div class="price-stepper cs-price-stepper">
+                            <input type="text" id="qtBeOffsetValue" value="1" data-step="1">
+                            <div class="price-stepper-arrows">
+                              <button type="button" class="ps-up" data-target="qtBeOffsetValue"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                              <button type="button" class="ps-down" data-target="qtBeOffsetValue"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            </div>
+                          </div>
+                          <div class="select-input pop-trigger cs-dd-trigger" data-target="qtBeOffsetUnit"><span class="cs-select-label">Ticks</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtBeOffsetUnit" style="display:none;">
+                            <option value="ticks">Ticks</option>
+                            <option value="points">Points</option>
+                            <option value="percent">%</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-helper">Offset is added to entry price when moving SL to breakeven.</div>
                   </div>
-                  <div class="cs-switch-row" id="qtRiskCurrency">
-                    <span class="cs-switch-text">
-                      <span class="cs-switch-title">Risk in Account Currency</span>
-                      <span class="cs-switch-desc">Show risk and P&amp;L values in your account currency rather than
-                        percentage.</span>
-                    </span>
-                    <button type="button" class="ui-toggle" aria-label="Toggle Risk in Account Currency">
-                      <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
-                    </button>
+
+                  <!-- Trailing Stop (QT) -->
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Trailing Stop</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Method</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="qtTsMethod"><span class="cs-select-label">Fixed Distance</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtTsMethod" style="display:none;">
+                          <option value="fixed">Fixed Distance</option>
+                          <option value="atr">ATR Based</option>
+                        </select>
+                      </div>
+                      <div class="cs-field">
+                        <label>Distance</label>
+                        <div class="cs-unit-pair">
+                          <div class="price-stepper cs-price-stepper">
+                            <input type="text" id="qtTsDistanceValue" value="20" data-step="5">
+                            <div class="price-stepper-arrows">
+                              <button type="button" class="ps-up" data-target="qtTsDistanceValue"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                              <button type="button" class="ps-down" data-target="qtTsDistanceValue"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            </div>
+                          </div>
+                          <div class="select-input pop-trigger cs-dd-trigger" data-target="qtTsDistanceUnit"><span class="cs-select-label">Ticks</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtTsDistanceUnit" style="display:none;">
+                            <option value="ticks">Ticks</option>
+                            <option value="points">Points</option>
+                            <option value="percent">%</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="cs-field">
+                        <label>ATR Multiplier</label>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="qtTsAtrMultiplier" value="2.0" data-step="0.1">
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="qtTsAtrMultiplier"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="qtTsAtrMultiplier"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Start Trailing</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="qtTsStart"><span class="cs-select-label">Immediately</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtTsStart" style="display:none;">
+                          <option value="immediate" selected>Immediately</option>
+                          <option value="tp1">After TP1 Hit</option>
+                          <option value="tp2">After TP2 Hit</option>
+                          <option value="tp3">After TP3 Hit</option>
+                          <option value="customR">Custom R Multiple</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
-                  <div class="cs-switch-row active" id="qtShowFees">
-                    <span class="cs-switch-text">
-                      <span class="cs-switch-title">Show Estimated Fees</span>
-                      <span class="cs-switch-desc">Display the estimated trading fee before placing an order.</span>
-                    </span>
-                    <button type="button" class="ui-toggle" aria-label="Toggle Show Estimated Fees">
-                      <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
-                    </button>
-                  </div>
+
                 </div>
 
+                <div class="cs-col">
+
+                  <!-- ATR Stop (QT) -->
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">ATR Stop</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>ATR Length</label>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="qtAtrLength" value="14" data-step="1">
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="qtAtrLength"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="qtAtrLength"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="cs-field">
+                        <label>ATR Multiplier</label>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="qtAtrMultiplier" value="2.0" data-step="0.1">
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="qtAtrMultiplier"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="qtAtrMultiplier"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="cs-field">
+                        <label>Timeframe</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="qtAtrTimeframe"><span class="cs-select-label">Current</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtAtrTimeframe" style="display:none;">
+                          <option value="current">Current</option>
+                          <option value="1m">1m</option>
+                          <option value="5m">5m</option>
+                          <option value="15m">15m</option>
+                          <option value="1h">1h</option>
+                          <option value="4h">4h</option>
+                          <option value="D">D</option>
+                        </select>
+                      </div>
+                      <div class="cs-field">
+                        <label>Update Frequency</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="qtAtrUpdateFreq"><span class="cs-select-label">Every Tick</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtAtrUpdateFreq" style="display:none;">
+                          <option value="tick">Every Tick</option>
+                          <option value="newbar">On New Bar</option>
+                        </select>
+                      </div>
+                    </div>
+                    <label class="cs-checkbox-row"><span class="chk-box"><span class="material-symbols-outlined">check</span></span>Update stop dynamically as ATR changes</label>
+                  </div>
+
+                  <!-- Trailing Take Profit (QT) -->
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Trailing Take Profit</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Activation</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="qtTtpActivation"><span class="cs-select-label">After TP1 Hit</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtTtpActivation" style="display:none;">
+                          <option value="tp1">After TP1 Hit</option>
+                          <option value="tp2">After TP2 Hit</option>
+                          <option value="tp3">After TP3 Hit</option>
+                          <option value="customR">Custom R Multiple</option>
+                        </select>
+                      </div>
+                      <div class="cs-field">
+                        <label>Method</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="qtTtpMethod"><span class="cs-select-label">Fixed Distance</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtTtpMethod" style="display:none;">
+                          <option value="fixed">Fixed Distance</option>
+                          <option value="atr">ATR Based</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Trail Distance</label>
+                        <div class="cs-unit-pair">
+                          <div class="price-stepper cs-price-stepper">
+                            <input type="text" id="qtTtpDistanceValue" value="20" data-step="5">
+                            <div class="price-stepper-arrows">
+                              <button type="button" class="ps-up" data-target="qtTtpDistanceValue"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                              <button type="button" class="ps-down" data-target="qtTtpDistanceValue"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                            </div>
+                          </div>
+                          <div class="select-input pop-trigger cs-dd-trigger" data-target="qtTtpDistanceUnit"><span class="cs-select-label">Ticks</span><span class="material-symbols-outlined">expand_more</span></div><select id="qtTtpDistanceUnit" style="display:none;">
+                            <option value="ticks">Ticks</option>
+                            <option value="points">Points</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-helper">When activated, the trailing TP will manage the remaining position until exit.</div>
+                  </div>
+
+                  <!-- Default TP/SL Behavior (QT) -->
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Default TP/SL Behavior</span>
+                    </div>
+                    <div class="cs-field" style="margin-bottom:14px;">
+                      <label>TP/SL Display Mode</label>
+                      <div class="cs-segmented" id="qtDisplayModeGroup" style="margin-bottom:0;">
+                        <button type="button" class="cs-seg-btn active" data-mode="condensed">Condensed</button>
+                        <button type="button" class="cs-seg-btn" data-mode="expanded">Expanded</button>
+                      </div>
+                    </div>
+                    <div class="cs-helper">In Expanded mode, take profits and a stop loss are added automatically when you place an entry. In Condensed mode, you add them manually from the chart.</div>
+                  </div>
+
+                  <!-- Global Behavior (QT) -->
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Global Behavior</span>
+                    </div>
+                    <label class="cs-checkbox-row"><span class="chk-box"><span class="material-symbols-outlined">check</span></span>Cancel all pending exit orders when position is closed manually</label>
+                    <label class="cs-checkbox-row"><span class="chk-box"><span class="material-symbols-outlined">check</span></span>Recalculate targets and stops on position size change</label>
+                    <label class="cs-checkbox-row"><span class="chk-box"><span class="material-symbols-outlined">check</span></span>Persist trade management settings on charts and layouts</label>
+                  </div>
+
+                </div>
               </div>
             </div>
             <div class="cs-pane" data-cs-pane="positiondefaults">

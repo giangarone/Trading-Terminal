@@ -467,9 +467,9 @@
     showToast('All orders closed', 'check_circle');
   });
   document.getElementById('qtCancelAll').addEventListener('click', () => {
-    if (!order) { showToast('No open orders to cancel', 'info'); return; }
+    if (!order || order.filled) { showToast('No pending orders to cancel', 'info'); return; }
     cancelOrder();
-    showToast('All orders cancelled', 'check_circle');
+    showToast('Pending orders cancelled', 'check_circle');
   });
   /* ---------- amount type (Quantity / USD / % of Balance) ---------- */
   const QT_MODES = {
@@ -1987,6 +1987,10 @@
   }
   bindSimpleSegmented('csTimeFormatGroup');
   bindSimpleSegmented('csScalePositionGroup');
+  bindSimpleSegmented('qtsCrossIsolatedGroup');
+  bindSimpleSegmented('qtDisplayModeGroup');
+  bindSimpleSegmented('ctCrossIsolatedGroup');
+  bindSimpleSegmented('ctDisplayModeGroup');
 
   function bindColorSwatchMenu(triggerId, menuId, swatchId) {
     const trigger = document.getElementById(triggerId);
@@ -2201,8 +2205,8 @@
   csSaveBtn.addEventListener('click', () => {
     collectChartSettingsForm();
     csDraftSnapshot = JSON.stringify(chartSettings);
-    csMarkSaved();
     showToast('Settings saved', 'check_circle');
+    closeChartSettings(true);
   });
   document.getElementById('csCancelBtn').addEventListener('click', () => closeChartSettings(false));
   document.getElementById('csCloseBtn').addEventListener('click', () => closeChartSettings(false));
