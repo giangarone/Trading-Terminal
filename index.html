@@ -495,8 +495,8 @@
                     </div>
                     <div class="cs-switch-row active" id="csConfirmFlatten">
                       <span class="cs-switch-text">
-                        <span class="cs-switch-title">Confirm Flatten All Positions</span>
-                        <span class="cs-switch-desc">Show confirmation before flattening all positions.</span>
+                        <span class="cs-switch-title">Confirm Close All</span>
+                        <span class="cs-switch-desc">Show confirmation before closing all orders.</span>
                       </span>
                       <button type="button" class="ui-toggle" aria-label="Toggle Confirm Flatten All Positions"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
@@ -792,6 +792,7 @@
                             style="display:none;">
                             <option value="ticks">Ticks</option>
                             <option value="points">Points</option>
+                            <option value="percent">%</option>
                           </select>
                         </div>
                       </div>
@@ -832,7 +833,20 @@
                             style="display:none;">
                             <option value="ticks">Ticks</option>
                             <option value="points">Points</option>
+                            <option value="percent">%</option>
                           </select>
+                        </div>
+                      </div>
+                      <div class="cs-field" id="csTsAtrMultiplierWrap" style="display:none;">
+                        <label>ATR Multiplier</label>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="csTsAtrMultiplier" readonly value="2.0">
+                          <div class="price-stepper-arrows">
+                            <button type="button" id="csTsAtrMultiplierInc"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" id="csTsAtrMultiplierDec"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -840,9 +854,10 @@
                       <div class="cs-field">
                         <label>Start Trailing</label>
                         <div class="select-input pop-trigger cs-dd-trigger" data-target="csTsStart"><span
-                            class="cs-select-label">After TP1 Hit</span><span
+                            class="cs-select-label">Immediately</span><span
                             class="material-symbols-outlined">expand_more</span></div><select id="csTsStart"
                           style="display:none;">
+                          <option value="immediate" selected>Immediately</option>
                           <option value="tp1">After TP1 Hit</option>
                           <option value="tp2">After TP2 Hit</option>
                           <option value="tp3">After TP3 Hit</option>
@@ -859,27 +874,6 @@
                             <button type="button" class="ps-down" data-target="csTsStartCustomRValue"><span
                                 class="material-symbols-outlined">keyboard_arrow_down</span></button>
                           </div>
-                        </div>
-                      </div>
-                      <div class="cs-field">
-                        <label>Minimum Trail Step</label>
-                        <div class="cs-unit-pair">
-                          <div class="price-stepper cs-price-stepper">
-                            <input type="text" id="csTsMinStepValue" readonly value="1">
-                            <div class="price-stepper-arrows">
-                              <button type="button" id="csTsMinStepInc"><span
-                                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                              <button type="button" id="csTsMinStepDec"><span
-                                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                            </div>
-                          </div>
-                          <div class="select-input pop-trigger cs-dd-trigger" data-target="csTsMinStepUnit"><span
-                              class="cs-select-label">Tick</span><span
-                              class="material-symbols-outlined">expand_more</span></div><select id="csTsMinStepUnit"
-                            style="display:none;">
-                            <option value="ticks">Tick</option>
-                            <option value="points">Point</option>
-                          </select>
                         </div>
                       </div>
                     </div>
@@ -2219,7 +2213,7 @@
             </div>
 
             <div class="join-row" style="margin-bottom:0;">
-              <button class="ghost-btn" id="qtFlatten">Flatten</button>
+              <button class="ghost-btn" id="qtFlatten">Close All</button>
               <button class="ghost-btn danger" id="qtCancelAll">Cancel All</button>
             </div>
 
@@ -2928,6 +2922,7 @@
             <select id="slBeOvOffsetUnit" style="display:none;">
               <option value="ticks">Ticks</option>
               <option value="points">Points</option>
+              <option value="percent">%</option>
             </select>
           </div>
         </div>
@@ -2970,7 +2965,20 @@
             <select id="slTrailOvDistanceUnit" style="display:none;">
               <option value="ticks">Ticks</option>
               <option value="points">Points</option>
+              <option value="percent">%</option>
             </select>
+          </div>
+        </div>
+        <div class="cs-field" id="slTrailOvAtrMultiplierWrap" style="display:none;">
+          <label>ATR Multiplier</label>
+          <div class="price-stepper cs-price-stepper">
+            <input type="text" id="slTrailOvAtrMultiplier" readonly value="2.0">
+            <div class="price-stepper-arrows">
+              <button type="button" id="slTrailOvAtrMultiplierInc"><span
+                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
+              <button type="button" id="slTrailOvAtrMultiplierDec"><span
+                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
+            </div>
           </div>
         </div>
         <div class="cs-field">
@@ -2978,31 +2986,12 @@
           <div class="select-input pop-trigger cs-dd-trigger" data-target="slTrailOvStart"><span
               class="cs-select-label">After TP1 Hit</span><span class="material-symbols-outlined">expand_more</span>
           </div><select id="slTrailOvStart" style="display:none;">
+            <option value="immediate">Immediately</option>
             <option value="tp1">After TP1 Hit</option>
             <option value="tp2">After TP2 Hit</option>
             <option value="tp3">After TP3 Hit</option>
             <option value="customR">Custom R Multiple</option>
           </select>
-        </div>
-        <div class="cs-field">
-          <label>Minimum Trail Step</label>
-          <div class="cs-unit-pair">
-            <div class="price-stepper cs-price-stepper">
-              <input type="text" id="slTrailOvMinStepValue" readonly value="1">
-              <div class="price-stepper-arrows">
-                <button type="button" id="slTrailOvMinStepInc"><span
-                    class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                <button type="button" id="slTrailOvMinStepDec"><span
-                    class="material-symbols-outlined">keyboard_arrow_down</span></button>
-              </div>
-            </div>
-            <div class="select-input pop-trigger cs-dd-trigger" data-target="slTrailOvMinStepUnit"><span
-                class="cs-select-label">Tick</span><span class="material-symbols-outlined">expand_more</span></div>
-            <select id="slTrailOvMinStepUnit" style="display:none;">
-              <option value="ticks">Tick</option>
-              <option value="points">Point</option>
-            </select>
-          </div>
         </div>
       </div>
     </div>

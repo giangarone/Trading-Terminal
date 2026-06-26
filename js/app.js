@@ -38,7 +38,7 @@
     ],
     defaultStopLoss: { r: 1.0, type: 'stopMarket' },
     moveSlToBreakeven: { trigger: 'tp1', customR: 1, offsetValue: 1, offsetUnit: 'ticks' },
-    trailingStop: { method: 'fixed', distanceValue: 20, distanceUnit: 'ticks', start: 'tp1', startCustomR: 1, minStepValue: 1, minStepUnit: 'ticks' },
+    trailingStop: { method: 'fixed', distanceValue: 20, distanceUnit: 'ticks', start: 'immediate', startCustomR: 1, atrMultiplier: 2.0 },
     atrStop: { length: 14, multiplier: 2.0, timeframe: 'current', updateFreq: 'newbar', dynamic: true },
     trailingTp: { activation: 'tp1', activationCustomR: 1, method: 'fixed', distanceValue: 20, distanceUnit: 'ticks', minStepValue: 1, minStepUnit: 'ticks' },
     globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true }
@@ -268,9 +268,20 @@
   document.getElementById('ctxSettings').addEventListener('click', () => { closeAllPopovers(); openChartSettings('general'); });
 
   /* ---------- order lifecycle ---------- */
-  function createOrder(side, entryPrice) {
+  function createOrder(side, entryPrice, source) {
     const dir = side === 'buy' ? 1 : -1;
-    const entry = roundTick(entryPrice);
+    const isChartTrade = source !== 'quick';
+    const currentPrice = (() => {
+      const el = document.getElementById('hdrLast');
+      return el ? parseFloat(el.textContent.replace(/,/g, '')) : BASE_PRICE;
+    })();
+    const fillAbove = entryPrice > currentPrice;
+    const autoOrderType = side === 'buy'
+      ? (fillAbove ? 'Stop Market' : 'Limit')
+      : (fillAbove ? 'Limit' : 'Stop Market');
+    const orderType = isChartTrade ? 'Market' : autoOrderType;
+    // Market chart trades snap to live price immediately so TPs/SL are calculated correctly
+    const entry = roundTick((isChartTrade && orderType === 'Market') ? currentPrice : entryPrice);
     const expanded = chartSettings.tpSlDisplayMode === 'expanded';
     let tps = [];
     let sl = null;
@@ -286,17 +297,10 @@
         sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
       }
     }
-    const currentPrice = (() => {
-      const el = document.getElementById('hdrLast');
-      return el ? parseFloat(el.textContent.replace(/,/g, '')) : BASE_PRICE;
-    })();
-    const fillAbove = entry > currentPrice;
-    const orderType = side === 'buy'
-      ? (fillAbove ? 'Stop Market' : 'Limit')
-      : (fillAbove ? 'Limit' : 'Stop Market');
     order = {
       side, entry, qty: parseInt(qtyInput.value || '1'), orderType, fillAbove,
       sizeMode: 'contracts', filled: false,
+      pendingConfirm: isChartTrade,
       sizeValues: { dollar: 5000, percent: 25, risk: 500 },
       tps, sl, tpsHitCount: 0,
       initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null
@@ -400,6 +404,16 @@
     });
   });
 
+  /* ensure all data-step stepper inputs accept typed values */
+  document.querySelectorAll('.price-stepper input[data-step]').forEach(input => {
+    input.addEventListener('change', () => {
+      const step = parseFloat(input.dataset.step) || 1;
+      const v = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
+      const snapped = Math.round(v / step) * step;
+      input.value = Number.isInteger(step) ? String(Math.max(0, Math.round(snapped))) : Math.max(0, snapped).toFixed(2);
+    });
+  });
+
   /* ---------- Limit tab: TP/SL toggle ---------- */
   const qtTpslToggle = document.getElementById('qtTpslToggle');
   const qtTpslCheckbox = document.getElementById('qtTpslCheckbox');
@@ -421,7 +435,7 @@
     const prevVal = qtyInput.value;
     qtyInput.value = Math.max(1, Math.round(qty));
     const tab = qtActiveTab();
-    createOrder(side, price);
+    createOrder(side, price, 'quick');
     if (order && tab === 'limit') order.orderType = 'Limit';
     if (tab === 'market') confirmOrderFill();
     qtyInput.value = prevVal;
@@ -446,9 +460,11 @@
   qtSellBtn.addEventListener('click', () => qtPlaceOrder('sell', qtActivePrice()));
   document.getElementById('qtFlatten').addEventListener('click', () => {
     const rows = document.querySelectorAll('[data-pos-row]');
-    if (!rows.length) { showToast('No open positions to flatten', 'info'); return; }
+    const hasChartOrder = !!order;
+    if (!rows.length && !hasChartOrder) { showToast('No open orders to close', 'info'); return; }
     rows.forEach(r => r.remove());
-    showToast('All positions flattened', 'check_circle');
+    if (hasChartOrder) cancelOrder();
+    showToast('All orders closed', 'check_circle');
   });
   document.getElementById('qtCancelAll').addEventListener('click', () => {
     if (!order) { showToast('No open orders to cancel', 'info'); return; }
@@ -617,7 +633,9 @@
       showToast('TP' + (idx + 1) + ' hit at ' + fmt(tp.price), 'check_circle');
       if (order.sl && order.sl.beTpId === tp.id && !order.sl.beActive) {
         const beCfg = getEffectiveBeConfig();
-        const offsetPrice = beCfg.offsetUnit === 'points' ? beCfg.offsetValue : beCfg.offsetValue * TICK;
+        const offsetPrice = beCfg.offsetUnit === 'points' ? beCfg.offsetValue
+          : beCfg.offsetUnit === 'percent' ? order.entry * beCfg.offsetValue / 100
+          : beCfg.offsetValue * TICK;
         order.sl.price = roundTick(order.entry + dir * offsetPrice);
         order.sl.beActive = true;
         syncQtyFromRisk();
@@ -662,13 +680,16 @@
   function applyTrailingStop(currentPrice) {
     if (!order || !order.sl || !order.sl.trailing || !order.filled) return;
     const cfg = getEffectiveTrailConfig();
-    if (!meetsTriggerCondition(cfg.start, cfg.startCustomR, currentPrice)) return;
+    if (cfg.start !== 'immediate' && !meetsTriggerCondition(cfg.start, cfg.startCustomR, currentPrice)) return;
     const dir = order.side === 'buy' ? 1 : -1;
-    const distPrice = cfg.method === 'atr' ? atrStopDistance() : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
-    const minStepPrice = cfg.minStepValue * (cfg.minStepUnit === 'points' ? 1 : TICK);
+    const distPrice = cfg.method === 'atr'
+      ? atrStopDistance({ multiplier: cfg.atrMultiplier || 2.0 })
+      : cfg.distanceUnit === 'percent'
+        ? currentPrice * cfg.distanceValue / 100
+        : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
     const candidate = roundTick(currentPrice - dir * distPrice);
     const improvement = dir * (candidate - order.sl.price);
-    if (improvement >= minStepPrice) {
+    if (improvement > 0) {
       order.sl.price = candidate;
       syncQtyFromRisk();
     }
@@ -1330,8 +1351,8 @@
 
     function tick() {
       const prevLast = last;
-      const reversion = (BASE_PRICE - last) * 0.04;
-      let next = roundTick(last + noise() * 0.35 + reversion);
+      const reversion = (BASE_PRICE - last) * 0.015;
+      let next = roundTick(last + noise() * 1.2 + reversion);
       if (next === last) next = roundTick(last + (simRand() < 0.5 ? -TICK : TICK));
       last = next;
       dayHigh = Math.max(dayHigh, last);
@@ -1375,7 +1396,11 @@
       scheduleDrawPriceChart();
       checkTpFills(prevLast, last);
       if (order && order.filled) checkSlHit(last);
-      if (order && !order.filled) {
+      if (order && !order.filled && order.pendingConfirm && order.orderType === 'Market') {
+        order.entry = last;
+        if (!isDraggingOrderLine) render();
+      }
+      if (order && !order.filled && !order.pendingConfirm) {
         const hitEntry = order.fillAbove ? last >= order.entry : last <= order.entry;
         if (hitEntry) confirmOrderFill();
       }
@@ -1598,8 +1623,12 @@
             : String(order.qty);
 
       if (!order.filled) {
+        const confirmBtnHtml = order.pendingConfirm
+          ? '<span class="ol-entry-confirm" id="confirmOrderBtn" title="Place Order"><span class="material-symbols-outlined">check</span></span>'
+          : '';
+        const entryChipTitle = (order.pendingConfirm && order.orderType === 'Market') ? '' : ' title="Drag to move entry"';
         bar.innerHTML =
-          '<span class="ol-chip entry ' + side + '" id="entryPriceHandle" title="Drag to move entry">' + sideLabel + '</span>' +
+          '<span class="ol-chip entry ' + side + '" id="entryPriceHandle"' + entryChipTitle + '>' + sideLabel + confirmBtnHtml + '</span>' +
           tpAddHandleHtml + slAddHandleHtml +
           '<span class="ol-pill neutral combo" id="orderConfigPill">' +
           '<span class="ol-pill-seg" id="sizePillTrigger">' + sizeLabel + '</span>' +
@@ -1632,7 +1661,8 @@
       const entryPriceHandle = bar.querySelector('#entryPriceHandle');
       if (entryPriceHandle) {
         bindHandleHover(entryPriceHandle, 'entry');
-        if (!order.filled) {
+        const canDragEntry = !order.filled && !(order.pendingConfirm && order.orderType === 'Market');
+        if (canDragEntry) {
           makeDraggable(entryPriceHandle,
             (cy, h) => {
               bar.style.top = cy + 'px'; line.style.top = cy + 'px';
@@ -1641,6 +1671,19 @@
             },
             (cy, h) => { order.entry = roundTick(yToPrice(cy, h)); syncQtyFromRisk(); render(); });
         }
+      }
+
+      const confirmOrderBtn = bar.querySelector('#confirmOrderBtn');
+      if (confirmOrderBtn) {
+        confirmOrderBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          order.pendingConfirm = false;
+          if (order.orderType === 'Market') {
+            confirmOrderFill();
+          } else {
+            render();
+          }
+        });
       }
 
       if (!order.filled) {
@@ -1862,7 +1905,9 @@
   });
   function csUpdateConditionalFields() {
     document.getElementById('csBeCustomRWrap').style.display = document.getElementById('csBeTrigger').value === 'customR' ? '' : 'none';
-    document.getElementById('csTsDistanceWrap').style.display = document.getElementById('csTsMethod').value === 'atr' ? 'none' : '';
+    const csTsMethodVal = document.getElementById('csTsMethod').value;
+    document.getElementById('csTsDistanceWrap').style.display = csTsMethodVal === 'atr' ? 'none' : '';
+    document.getElementById('csTsAtrMultiplierWrap').style.display = csTsMethodVal === 'atr' ? '' : 'none';
     document.getElementById('csTsStartCustomRWrap').style.display = document.getElementById('csTsStart').value === 'customR' ? '' : 'none';
     document.getElementById('csTtpDistanceWrap').style.display = document.getElementById('csTtpMethod').value === 'atr' ? 'none' : '';
     document.getElementById('csTtpActivationCustomRWrap').style.display = document.getElementById('csTtpActivation').value === 'customR' ? '' : 'none';
@@ -1879,12 +1924,14 @@
       if (Number.isInteger(step)) v = Math.round(v); else v = +v.toFixed(2);
       return Math.min(max, Math.max(min, v));
     }
+    input.removeAttribute('readonly');
+    input.addEventListener('change', () => { input.value = clampVal(parseFloat(input.value) || 0); });
     dec.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') - step); });
     inc.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') + step); });
   }
   bindCsStepper('csBeOffset', 0, 200, 1);
   bindCsStepper('csTsDistance', 1, 2000, 5);
-  bindCsStepper('csTsMinStep', 1, 200, 1);
+  bindPlainStepper('csTsAtrMultiplier', 0.1, 20, 0.1);
   bindCsStepper('csTtpDistance', 1, 2000, 5);
   bindCsStepper('csTtpMinStep', 1, 200, 1);
   function bindPlainStepper(valueId, min, max, step, onChange) {
@@ -1897,6 +1944,8 @@
       return Math.min(max, Math.max(min, v));
     }
     function set(v) { input.value = clampVal(v); if (onChange) onChange(); }
+    input.removeAttribute('readonly');
+    input.addEventListener('change', () => set(parseFloat(input.value) || 0));
     dec.addEventListener('click', (e) => { e.stopPropagation(); set(parseFloat(input.value || '0') - step); });
     inc.addEventListener('click', (e) => { e.stopPropagation(); set(parseFloat(input.value || '0') + step); });
   }
@@ -2051,10 +2100,9 @@
     document.getElementById('csTsMethod').value = s.trailingStop.method;
     document.getElementById('csTsDistanceValue').value = s.trailingStop.distanceValue;
     document.getElementById('csTsDistanceUnit').value = s.trailingStop.distanceUnit;
+    document.getElementById('csTsAtrMultiplier').value = s.trailingStop.atrMultiplier !== undefined ? s.trailingStop.atrMultiplier : 2.0;
     document.getElementById('csTsStart').value = s.trailingStop.start;
     document.getElementById('csTsStartCustomRValue').value = s.trailingStop.startCustomR;
-    document.getElementById('csTsMinStepValue').value = s.trailingStop.minStepValue;
-    document.getElementById('csTsMinStepUnit').value = s.trailingStop.minStepUnit;
 
     document.getElementById('csAtrLength').value = s.atrStop.length;
     document.getElementById('csAtrMultiplier').value = s.atrStop.multiplier;
@@ -2099,10 +2147,9 @@
         method: document.getElementById('csTsMethod').value,
         distanceValue: parseFloat(document.getElementById('csTsDistanceValue').value) || 1,
         distanceUnit: document.getElementById('csTsDistanceUnit').value,
+        atrMultiplier: parseFloat(document.getElementById('csTsAtrMultiplier').value) || 2.0,
         start: document.getElementById('csTsStart').value,
         startCustomR: parseFloat(document.getElementById('csTsStartCustomRValue').value) || 1,
-        minStepValue: parseFloat(document.getElementById('csTsMinStepValue').value) || 1,
-        minStepUnit: document.getElementById('csTsMinStepUnit').value,
       },
       atrStop: {
         length: parseInt(document.getElementById('csAtrLength').value) || 14,
@@ -2737,7 +2784,22 @@
     e.stopPropagation();
     if (order.sl) {
       order.sl.trailing = !order.sl.trailing;
-      if (order.sl.trailing) { order.sl.beTpId = null; order.sl.beActive = false; order.sl.atr = false; }
+      if (order.sl.trailing) {
+        order.sl.beTpId = null; order.sl.beActive = false; order.sl.atr = false;
+        // Immediately reposition SL to the trailing distance from current price
+        if (order.filled) {
+          const dir = order.side === 'buy' ? 1 : -1;
+          const cfg = getEffectiveTrailConfig();
+          const currentPrice = qtCurrentPrice();
+          const distPrice = cfg.method === 'atr'
+            ? atrStopDistance({ multiplier: cfg.atrMultiplier || 2.0 })
+            : cfg.distanceUnit === 'percent'
+              ? currentPrice * cfg.distanceValue / 100
+              : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
+          order.sl.price = roundTick(currentPrice - dir * distPrice);
+          syncQtyFromRisk();
+        }
+      }
     }
     renderSlGearMenu(); render();
   });
@@ -2781,6 +2843,8 @@
       return Math.min(max, Math.max(min, v));
     }
     function commit() { if (order && order.sl && order.sl[overrideKey]) order.sl[overrideKey][field] = parseFloat(input.value) || 0; }
+    input.removeAttribute('readonly');
+    input.addEventListener('change', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value) || 0); commit(); });
     dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') - step); commit(); });
     inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') + step); commit(); });
   }
@@ -2822,10 +2886,10 @@
   const slTrailOvDistanceValue = document.getElementById('slTrailOvDistanceValue');
   const slTrailOvDistanceUnit = document.getElementById('slTrailOvDistanceUnit');
   const slTrailOvStart = document.getElementById('slTrailOvStart');
-  const slTrailOvMinStepValue = document.getElementById('slTrailOvMinStepValue');
-  const slTrailOvMinStepUnit = document.getElementById('slTrailOvMinStepUnit');
   function updateSlTrailOvConditional() {
-    document.getElementById('slTrailOvDistanceWrap').style.display = slTrailOvMethod.value === 'atr' ? 'none' : '';
+    const isAtr = slTrailOvMethod.value === 'atr';
+    document.getElementById('slTrailOvDistanceWrap').style.display = isAtr ? 'none' : '';
+    document.getElementById('slTrailOvAtrMultiplierWrap').style.display = isAtr ? '' : 'none';
   }
   function ensureTrailOverride() {
     if (!order || !order.sl) return null;
@@ -2834,7 +2898,7 @@
       order.sl.trailOverride = {
         method: base.method, distanceValue: base.distanceValue, distanceUnit: base.distanceUnit,
         start: base.start, startCustomR: base.startCustomR,
-        minStepValue: base.minStepValue, minStepUnit: base.minStepUnit
+        atrMultiplier: base.atrMultiplier || 2.0
       };
     }
     return order.sl.trailOverride;
@@ -2846,13 +2910,12 @@
     slTrailOvDistanceValue.value = cfg.distanceValue;
     slTrailOvDistanceUnit.value = cfg.distanceUnit;
     slTrailOvStart.value = cfg.start;
-    slTrailOvMinStepValue.value = cfg.minStepValue;
-    slTrailOvMinStepUnit.value = cfg.minStepUnit;
+    document.getElementById('slTrailOvAtrMultiplier').value = cfg.atrMultiplier !== undefined ? cfg.atrMultiplier : 2.0;
     updateSlTrailOvConditional();
     refreshAllCsDropdownLabels(document.getElementById('slTrailOverridePanel'));
   }
   document.getElementById('slTrailOverrideTune').addEventListener('click', () => { if (order && order.sl) populateTrailOverrideForm(); });
-  [slTrailOvMethod, slTrailOvDistanceUnit, slTrailOvStart, slTrailOvMinStepUnit].forEach(el => el.addEventListener('change', (e) => {
+  [slTrailOvMethod, slTrailOvDistanceUnit, slTrailOvStart].forEach(el => el.addEventListener('change', (e) => {
     e.stopPropagation();
     if (el === slTrailOvMethod) updateSlTrailOvConditional();
     const ov = ensureTrailOverride();
@@ -2860,11 +2923,20 @@
       ov.method = slTrailOvMethod.value;
       ov.distanceUnit = slTrailOvDistanceUnit.value;
       ov.start = slTrailOvStart.value;
-      ov.minStepUnit = slTrailOvMinStepUnit.value;
     }
   }));
   bindSlOverrideStepper('slTrailOvDistance', 1, 2000, 5, 'trailOverride', 'distanceValue');
-  bindSlOverrideStepper('slTrailOvMinStep', 1, 200, 1, 'trailOverride', 'minStepValue');
+  {
+    const atrMulInput = document.getElementById('slTrailOvAtrMultiplier');
+    const atrMulDec = document.getElementById('slTrailOvAtrMultiplierDec');
+    const atrMulInc = document.getElementById('slTrailOvAtrMultiplierInc');
+    function clampAtrMul(v) { return Math.min(20, Math.max(0.1, +parseFloat(v).toFixed(1))); }
+    function commitAtrMul() { const ov = ensureTrailOverride(); if (ov) ov.atrMultiplier = parseFloat(atrMulInput.value) || 2; }
+    atrMulInput.removeAttribute('readonly');
+    atrMulInput.addEventListener('change', (e) => { e.stopPropagation(); atrMulInput.value = clampAtrMul(atrMulInput.value || '2'); commitAtrMul(); });
+    atrMulDec.addEventListener('click', (e) => { e.stopPropagation(); atrMulInput.value = clampAtrMul(parseFloat(atrMulInput.value || '2') - 0.1); commitAtrMul(); });
+    atrMulInc.addEventListener('click', (e) => { e.stopPropagation(); atrMulInput.value = clampAtrMul(parseFloat(atrMulInput.value || '2') + 0.1); commitAtrMul(); });
+  }
 
   /* -- ATR Stop override -- */
   const slAtrOvLength = document.getElementById('slAtrOvLength');

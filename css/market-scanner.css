@@ -919,7 +919,8 @@ table.ms-scan-table tr[data-tags].hide-row {
   width: 20px;
   height: 20px;
   border-radius: 4px;
-  margin-left: 6px;
+  margin-left: 2px;
+  margin-right: -6px;
   background: rgba(255, 255, 255, .1);
   cursor: pointer;
   flex-shrink: 0;
@@ -959,13 +960,19 @@ table.ms-scan-table tr[data-tags].hide-row {
   text-decoration: none;
 }
 
+.ol-pill.combo.locked {
+  opacity: 0.45;
+  border-color: var(--line-1);
+}
+
 .ol-pill.combo.locked .ol-pill-seg {
   cursor: default;
   pointer-events: none;
 }
 
 .ol-pill.combo.locked:hover {
-  border-color: var(--line-2);
+  border-color: var(--line-1);
+  opacity: 0.45;
 }
 
 .ol-rmult {
