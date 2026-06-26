@@ -243,6 +243,57 @@
   align-items: start;
 }
 
+.cs-grid--3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* Inline unit label rendered inside a price stepper (%, ×, etc.) */
+.cs-price-stepper .cs-stepper-unit {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--paper-500);
+  padding-right: 2px;
+}
+
+/* Plain text input (e.g. email address field) */
+.cs-text-input {
+  width: 100%;
+  background: var(--ink-800);
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+  color: var(--paper-100);
+  font-size: 12.5px;
+  font-family: inherit;
+  font-weight: 500;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color .12s;
+}
+
+.cs-text-input:focus {
+  border-color: var(--line-3);
+}
+
+.cs-text-input::placeholder {
+  color: var(--paper-500);
+  font-weight: 400;
+}
+
+/* Sub-section label within a card (e.g. TAKE PROFIT / STOP LOSS) */
+.cs-tpsl-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--paper-500);
+  margin: 12px 0 8px;
+}
+
+.cs-tpsl-lbl:first-child {
+  margin-top: 0;
+}
+
 @media (max-width: 880px) {
   .cs-grid {
     grid-template-columns: 1fr;

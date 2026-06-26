@@ -1991,6 +1991,8 @@
   bindSimpleSegmented('qtDisplayModeGroup');
   bindSimpleSegmented('ctCrossIsolatedGroup');
   bindSimpleSegmented('ctDisplayModeGroup');
+  bindSimpleSegmented('alertDismissGroup');
+  bindSimpleSegmented('pdCrossIsolatedGroup');
 
   function bindColorSwatchMenu(triggerId, menuId, swatchId) {
     const trigger = document.getElementById(triggerId);

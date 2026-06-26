@@ -22,6 +22,11 @@ When removing any element from `index.html` that has an `id`:
 3. Failure to do this crashes the entire settings initialization block silently — the settings gear stops opening, and no JS wired up after the broken line will work.
 
 
+## Git
+
+Do not push to GitHub unless explicitly asked to.
+
+
 ## Code quality
 
 - **Readable code.** HTML, CSS, and JS must be easy to read at a glance. Avoid clever one-liners, deeply nested selectors, or compressed logic that requires effort to parse.
