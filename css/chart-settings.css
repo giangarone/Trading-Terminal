@@ -857,7 +857,7 @@
   background: var(--accent);
   color: var(--on-accent);
   font-size: var(--fs-sm);
-  font-weight: var(--fw-semi);
+  font-weight: var(--fw-mid);
   transition: opacity var(--t-ui);
 }
 
@@ -1072,6 +1072,176 @@
 #bcOverflowMenu {
   z-index: 2100;
   width: 180px;
+}
+
+/* ---- Connect Broker Modal ---- */
+.bc-connect-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .65);
+  z-index: 2300;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.bc-connect-backdrop.show {
+  display: flex;
+}
+
+.bc-connect-dialog {
+  background: var(--ink-900);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  width: 560px;
+  max-width: calc(100vw - 32px);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .65);
+}
+
+.bc-connect-dialog-head {
+  display: flex;
+  align-items: center;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid var(--line-1);
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.bc-connect-dialog-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--paper-100);
+  flex: 1;
+}
+
+.bc-connect-dialog-sub {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--paper-500);
+  margin-top: 2px;
+}
+
+.bc-connect-close {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--paper-500);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.bc-connect-close:hover {
+  color: var(--paper-100);
+  background: var(--ink-750);
+}
+
+.bc-connect-close .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.bc-security-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 24px 4px;
+  padding: 11px 14px;
+  background: rgba(43, 212, 126, .06);
+  border: 1px solid rgba(43, 212, 126, .18);
+  border-radius: var(--r-md);
+}
+
+.bc-security-note .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--long);
+  flex-shrink: 0;
+}
+
+.bc-security-text {
+  font-size: 11.5px;
+  color: var(--paper-500);
+  line-height: 1.4;
+}
+
+.bc-security-text strong {
+  color: var(--long);
+  font-weight: 600;
+}
+
+.bc-exchange-list {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 24px 24px;
+  gap: 8px;
+}
+
+.bc-exchange-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--ink-850);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  transition: border-color .12s;
+}
+
+.bc-exchange-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -.3px;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.bc-exchange-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bc-exchange-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--paper-100);
+}
+
+.bc-exchange-type {
+  font-size: 10.5px;
+  color: var(--paper-500);
+}
+
+.bc-login-btn {
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  background: var(--ink-800);
+  border: 1px solid var(--line-2);
+  color: var(--paper-300);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+  white-space: nowrap;
+}
+
+.bc-login-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
 }
 
 #templatesSelectMenu {

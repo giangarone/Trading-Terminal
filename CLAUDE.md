@@ -4,7 +4,9 @@ An HTML/CSS/JS trading terminal UI designed to simulate a real trading platform,
 
 ## Design mandate
 
-Every new feature and every edit to an existing one must match the current design exactly. The terminal has a deliberate, premium aesthetic; new elements must feel visually integrated, not bolted on.
+- Every new feature and every edit to an existing one must match the current design exactly. The terminal has a deliberate, premium aesthetic; new elements must feel visually integrated, not bolted on.
+
+- Avoid using font weights above 600, except in very specific cases.
 
 
 ### Consistency rules

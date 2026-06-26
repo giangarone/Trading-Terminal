@@ -586,6 +586,13 @@
   function confirmOrderFill() {
     if (!order || order.filled) return;
     order.filled = true;
+    // Anchor trailing stop to actual fill price so it starts trailing from there
+    if (order.sl && order.sl.trailing) {
+      const dir = order.side === 'buy' ? 1 : -1;
+      const cfg = getEffectiveTrailConfig();
+      order.sl.price = roundTick(order.entry - dir * computeTrailDist(cfg, order.entry));
+      syncQtyFromRisk();
+    }
     orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'filled', time: nowTimeStr() });
     render();
     showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
@@ -677,20 +684,36 @@
     return 7.5 * (cfg.multiplier / 2);
   }
   let simTickCounter = 0;
+  /* Shared helper: compute trailing distance in price units from a reference price */
+  function computeTrailDist(cfg, refPrice) {
+    if (cfg.method === 'atr') return atrStopDistance({ multiplier: cfg.atrMultiplier || 2.0 });
+    if (cfg.distanceUnit === 'percent') return refPrice * cfg.distanceValue / 100;
+    return cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
+  }
+
+  /* For filled positions: move SL only in the favorable direction (ratchet) */
   function applyTrailingStop(currentPrice) {
     if (!order || !order.sl || !order.sl.trailing || !order.filled) return;
     const cfg = getEffectiveTrailConfig();
     if (cfg.start !== 'immediate' && !meetsTriggerCondition(cfg.start, cfg.startCustomR, currentPrice)) return;
     const dir = order.side === 'buy' ? 1 : -1;
-    const distPrice = cfg.method === 'atr'
-      ? atrStopDistance({ multiplier: cfg.atrMultiplier || 2.0 })
-      : cfg.distanceUnit === 'percent'
-        ? currentPrice * cfg.distanceValue / 100
-        : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
-    const candidate = roundTick(currentPrice - dir * distPrice);
+    const candidate = roundTick(currentPrice - dir * computeTrailDist(cfg, currentPrice));
     const improvement = dir * (candidate - order.sl.price);
     if (improvement > 0) {
       order.sl.price = candidate;
+      syncQtyFromRisk();
+    }
+  }
+
+  /* For unfilled orders: always show SL exactly at trailing distance from entry reference */
+  function applyTrailingStopPreview() {
+    if (!order || !order.sl || !order.sl.trailing || order.filled) return;
+    const dir = order.side === 'buy' ? 1 : -1;
+    const cfg = getEffectiveTrailConfig();
+    const refPrice = order.orderType === 'Market' ? qtCurrentPrice() : order.entry;
+    const newSl = roundTick(refPrice - dir * computeTrailDist(cfg, refPrice));
+    if (newSl !== order.sl.price) {
+      order.sl.price = newSl;
       syncQtyFromRisk();
     }
   }
@@ -1398,6 +1421,7 @@
       if (order && order.filled) checkSlHit(last);
       if (order && !order.filled && order.pendingConfirm && order.orderType === 'Market') {
         order.entry = last;
+        if (order.sl && order.sl.trailing) applyTrailingStopPreview();
         if (!isDraggingOrderLine) render();
       }
       if (order && !order.filled && !order.pendingConfirm) {
@@ -1667,6 +1691,10 @@
             (cy, h) => {
               bar.style.top = cy + 'px'; line.style.top = cy + 'px';
               order.entry = roundTick(yToPrice(cy, h));
+              // Keep trailing SL anchored to entry while dragging for non-market orders
+              if (order.sl && order.sl.trailing && order.orderType !== 'Market') {
+                applyTrailingStopPreview();
+              }
               drawPriceChart();
             },
             (cy, h) => { order.entry = roundTick(yToPrice(cy, h)); syncQtyFromRisk(); render(); });
@@ -1750,7 +1778,21 @@
     e.stopPropagation();
     openNear(accountSelectMenu, accountSelectTrigger.getBoundingClientRect(), 'left', accountSelectTrigger);
   });
-  document.getElementById('accountConnectNew').addEventListener('click', (e) => e.stopPropagation());
+  document.getElementById('accountConnectNew').addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeAllPopovers();
+    openChartSettings('broker');
+  });
+
+  /* ---------- Connect Broker modal ---------- */
+  const bcConnectBackdrop = document.getElementById('bcConnectBackdrop');
+  function openBcConnectModal() { bcConnectBackdrop.classList.add('show'); }
+  function closeBcConnectModal() { bcConnectBackdrop.classList.remove('show'); }
+  document.getElementById('bcConnectClose').addEventListener('click', closeBcConnectModal);
+  bcConnectBackdrop.addEventListener('click', (e) => { if (e.target === bcConnectBackdrop) closeBcConnectModal(); });
+  document.querySelectorAll('.bc-connect-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); openBcConnectModal(); });
+  });
 
   /* ---------- trade templates selector (UI-only — no settings are actually applied) ---------- */
   let templates = [
@@ -2792,19 +2834,13 @@
       order.sl.trailing = !order.sl.trailing;
       if (order.sl.trailing) {
         order.sl.beTpId = null; order.sl.beActive = false; order.sl.atr = false;
-        // Immediately reposition SL to the trailing distance from current price
-        if (order.filled) {
-          const dir = order.side === 'buy' ? 1 : -1;
-          const cfg = getEffectiveTrailConfig();
-          const currentPrice = qtCurrentPrice();
-          const distPrice = cfg.method === 'atr'
-            ? atrStopDistance({ multiplier: cfg.atrMultiplier || 2.0 })
-            : cfg.distanceUnit === 'percent'
-              ? currentPrice * cfg.distanceValue / 100
-              : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
-          order.sl.price = roundTick(currentPrice - dir * distPrice);
-          syncQtyFromRisk();
-        }
+        // Snap SL to trailing distance from the appropriate reference price
+        const dir = order.side === 'buy' ? 1 : -1;
+        const cfg = getEffectiveTrailConfig();
+        const refPrice = order.filled ? qtCurrentPrice()
+                       : (order.orderType === 'Market' ? qtCurrentPrice() : order.entry);
+        order.sl.price = roundTick(refPrice - dir * computeTrailDist(cfg, refPrice));
+        syncQtyFromRisk();
       }
     }
     renderSlGearMenu(); render();
