@@ -2039,6 +2039,28 @@
   bindSimpleSegmented('alertDismissGroup');
   bindSimpleSegmented('pdCrossIsolatedGroup');
 
+  /* ---------- Position Defaults: size field tracks the selected sizing method ---------- */
+  const PD_SIZE_MODES = {
+    contracts: { label: 'Default Contracts', unit: 'contracts', step: 1, default: '1' },
+    shares: { label: 'Default Shares', unit: 'shares', step: 1, default: '100' },
+    dollar: { label: 'Default Dollar Amount', unit: '$', step: 50, default: '500' },
+    pct_equity: { label: 'Default % of Equity', unit: '%', step: 1, default: '5' },
+    risk_pct: { label: 'Default Risk %', unit: '%', step: 0.25, default: '1' },
+  };
+  const pdSizingMethod = document.getElementById('pdSizingMethod');
+  const pdDefaultSize = document.getElementById('pdDefaultSize');
+  const pdDefaultSizeUnit = document.getElementById('pdDefaultSizeUnit');
+  const pdDefaultSizeLabel = document.getElementById('pdDefaultSizeLabel');
+  function pdApplySizeMode() {
+    const cfg = PD_SIZE_MODES[pdSizingMethod.value] || PD_SIZE_MODES.contracts;
+    pdDefaultSizeLabel.textContent = cfg.label;
+    pdDefaultSizeUnit.textContent = cfg.unit;
+    pdDefaultSize.dataset.step = cfg.step;
+    pdDefaultSize.value = cfg.default;
+  }
+  pdSizingMethod.addEventListener('change', pdApplySizeMode);
+  pdApplySizeMode();
+
   function bindColorSwatchMenu(triggerId, menuId, swatchId) {
     const trigger = document.getElementById(triggerId);
     const menu = document.getElementById(menuId);
