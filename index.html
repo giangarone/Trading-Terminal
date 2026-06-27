@@ -1180,27 +1180,6 @@
                           </select>
                         </div>
                       </div>
-                      <div class="cs-field">
-                        <label>Minimum Trail Step</label>
-                        <div class="cs-unit-pair">
-                          <div class="price-stepper cs-price-stepper">
-                            <input type="text" id="csTtpMinStepValue" readonly value="1">
-                            <div class="price-stepper-arrows">
-                              <button type="button" id="csTtpMinStepInc"><span
-                                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                              <button type="button" id="csTtpMinStepDec"><span
-                                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                            </div>
-                          </div>
-                          <div class="select-input pop-trigger cs-dd-trigger" data-target="csTtpMinStepUnit"><span
-                              class="cs-select-label">Tick</span><span
-                              class="material-symbols-outlined">expand_more</span></div><select id="csTtpMinStepUnit"
-                            style="display:none;">
-                            <option value="ticks">Tick</option>
-                            <option value="points">Point</option>
-                          </select>
-                        </div>
-                      </div>
                     </div>
                     <div class="cs-helper">When activated, the trailing TP will manage the remaining position until
                       exit.</div>
@@ -3681,11 +3660,72 @@
       <span class="pop-icon"><span class="material-symbols-outlined">add_circle</span></span>
       <span class="pop-text"><span class="pt-title">Add Take Profit</span></span>
     </button>
-    <button class="pop-item" id="tpTrail">
-      <span class="pop-icon"><span class="material-symbols-outlined">trending_up</span></span>
-      <span class="pop-text"><span class="pt-title">Trail This TP</span><span class="pt-sub">Trail TP as price
-          moves</span></span>
-    </button>
+    <div class="gear-override-row">
+      <button class="pop-item" id="tpTrail">
+        <span class="pop-icon"><span class="material-symbols-outlined">trending_up</span></span>
+        <span class="pop-text"><span class="pt-title">Trail This TP</span><span class="pt-sub" id="tpTrailSub">Trail
+            TP as price moves</span></span>
+      </button>
+      <button class="gear-override-tune" id="tpTrailOverrideTune" title="Override for this take profit"><span
+          class="material-symbols-outlined">tune</span></button>
+    </div>
+    <div class="settings-subpanel gear-override-panel" id="tpTrailOverridePanel">
+      <div class="gear-override-fields" id="tpTrailOverrideFields">
+        <div class="cs-field">
+          <label>Activation</label>
+          <div class="select-input pop-trigger cs-dd-trigger" data-target="tpTrailOvActivation"><span
+              class="cs-select-label">After TP1 Hit</span><span class="material-symbols-outlined">expand_more</span>
+          </div><select id="tpTrailOvActivation" style="display:none;">
+            <option value="tp1">After TP1 Hit</option>
+            <option value="tp2">After TP2 Hit</option>
+            <option value="tp3">After TP3 Hit</option>
+            <option value="customR">Custom R Multiple</option>
+          </select>
+        </div>
+        <div class="cs-field" id="tpTrailOvActivationCustomRWrap" style="display:none;">
+          <label>Custom R Multiple</label>
+          <div class="price-stepper cs-price-stepper">
+            <input type="text" id="tpTrailOvActivationCustomRValue" readonly value="1">
+            <div class="price-stepper-arrows">
+              <button type="button" id="tpTrailOvActivationCustomRInc"><span
+                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
+              <button type="button" id="tpTrailOvActivationCustomRDec"><span
+                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="cs-field">
+          <label>Method</label>
+          <div class="select-input pop-trigger cs-dd-trigger" data-target="tpTrailOvMethod"><span
+              class="cs-select-label">Fixed Distance</span><span class="material-symbols-outlined">expand_more</span>
+          </div><select id="tpTrailOvMethod" style="display:none;">
+            <option value="fixed">Fixed Distance</option>
+            <option value="atr">ATR Based</option>
+          </select>
+        </div>
+        <div class="cs-field" id="tpTrailOvDistanceWrap">
+          <label>Distance</label>
+          <div class="cs-unit-pair">
+            <div class="price-stepper cs-price-stepper">
+              <input type="text" id="tpTrailOvDistanceValue" readonly value="20">
+              <div class="price-stepper-arrows">
+                <button type="button" id="tpTrailOvDistanceInc"><span
+                    class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                <button type="button" id="tpTrailOvDistanceDec"><span
+                    class="material-symbols-outlined">keyboard_arrow_down</span></button>
+              </div>
+            </div>
+            <div class="select-input pop-trigger cs-dd-trigger" data-target="tpTrailOvDistanceUnit"><span
+                class="cs-select-label">Ticks</span><span class="material-symbols-outlined">expand_more</span></div>
+            <select id="tpTrailOvDistanceUnit" style="display:none;">
+              <option value="ticks">Ticks</option>
+              <option value="points">Points</option>
+              <option value="percent">%</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="pop-sep"></div>
     <button class="pop-item danger" id="tpRemove">
       <span class="pop-icon"><span class="material-symbols-outlined">delete</span></span>
@@ -3695,17 +3735,17 @@
 
   <!-- ===================== SL GEAR MENU ===================== -->
   <div class="pop-menu sl-gear-menu" id="slGearMenu" style="width:300px;">
-    <div class="sl-override-row">
+    <div class="gear-override-row">
       <button class="pop-item" id="slBeToggle">
         <span class="pop-icon"><span class="material-symbols-outlined">vertical_align_center</span></span>
         <span class="pop-text"><span class="pt-title">Move to Break Even</span><span class="pt-sub" id="slBeSub">Move SL
             to entry once a TP is hit</span></span>
       </button>
-      <button class="sl-override-tune" id="slBeOverrideTune" title="Override for this stop loss"><span
+      <button class="gear-override-tune" id="slBeOverrideTune" title="Override for this stop loss"><span
           class="material-symbols-outlined">tune</span></button>
     </div>
-    <div class="settings-subpanel sl-override-panel" id="slBeOverridePanel">
-      <div class="sl-override-fields" id="slBeOverrideFields">
+    <div class="settings-subpanel gear-override-panel" id="slBeOverridePanel">
+      <div class="gear-override-fields" id="slBeOverrideFields">
         <div class="cs-field">
           <label>Trigger</label>
           <div class="select-input pop-trigger cs-dd-trigger" data-target="slBeOvTrigger"><span
@@ -3740,17 +3780,17 @@
         </div>
       </div>
     </div>
-    <div class="sl-override-row">
+    <div class="gear-override-row">
       <button class="pop-item" id="slTrail">
         <span class="pop-icon"><span class="material-symbols-outlined">trending_down</span></span>
         <span class="pop-text"><span class="pt-title">Trailing Stop</span><span class="pt-sub" id="slTrailSub">Trail
             stop loss as price moves</span></span>
       </button>
-      <button class="sl-override-tune" id="slTrailOverrideTune" title="Override for this stop loss"><span
+      <button class="gear-override-tune" id="slTrailOverrideTune" title="Override for this stop loss"><span
           class="material-symbols-outlined">tune</span></button>
     </div>
-    <div class="settings-subpanel sl-override-panel" id="slTrailOverridePanel">
-      <div class="sl-override-fields" id="slTrailOverrideFields">
+    <div class="settings-subpanel gear-override-panel" id="slTrailOverridePanel">
+      <div class="gear-override-fields" id="slTrailOverrideFields">
         <div class="cs-field">
           <label>Method</label>
           <div class="select-input pop-trigger cs-dd-trigger" data-target="slTrailOvMethod"><span
@@ -3807,17 +3847,17 @@
         </div>
       </div>
     </div>
-    <div class="sl-override-row">
+    <div class="gear-override-row">
       <button class="pop-item" id="slAtr">
         <span class="pop-icon"><span class="material-symbols-outlined">area_chart</span></span>
         <span class="pop-text"><span class="pt-title">ATR Stop</span><span class="pt-sub" id="slAtrSub">Use ATR based
             stop loss</span></span>
       </button>
-      <button class="sl-override-tune" id="slAtrOverrideTune" title="Override for this stop loss"><span
+      <button class="gear-override-tune" id="slAtrOverrideTune" title="Override for this stop loss"><span
           class="material-symbols-outlined">tune</span></button>
     </div>
-    <div class="settings-subpanel sl-override-panel" id="slAtrOverridePanel">
-      <div class="sl-override-fields" id="slAtrOverrideFields">
+    <div class="settings-subpanel gear-override-panel" id="slAtrOverridePanel">
+      <div class="gear-override-fields" id="slAtrOverrideFields">
         <div class="cs-fields-row">
           <div class="cs-field">
             <label>ATR Length</label>

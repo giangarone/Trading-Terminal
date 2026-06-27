@@ -40,7 +40,7 @@
     moveSlToBreakeven: { trigger: 'tp1', customR: 1, offsetValue: 1, offsetUnit: 'ticks' },
     trailingStop: { method: 'fixed', distanceValue: 20, distanceUnit: 'ticks', start: 'immediate', startCustomR: 1, atrMultiplier: 2.0 },
     atrStop: { length: 14, multiplier: 2.0, timeframe: 'current', updateFreq: 'newbar', dynamic: true },
-    trailingTp: { activation: 'tp1', activationCustomR: 1, method: 'fixed', distanceValue: 20, distanceUnit: 'ticks', minStepValue: 1, minStepUnit: 'ticks' },
+    trailingTp: { activation: 'tp1', activationCustomR: 1, method: 'fixed', distanceValue: 20, distanceUnit: 'ticks' },
     globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true }
   };
   function cloneCsDefaults() { return JSON.parse(JSON.stringify(CS_DEFAULTS)); }
@@ -305,7 +305,8 @@
         id: 'tp' + (tpCounter++),
         price: roundTick(entry + dir * t.r * baseR),
         pct: t.pct,
-        trailing: false
+        trailing: false,
+        trailOverride: null
       }));
       if (chartSettings.defaultStopLoss) {
         sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
@@ -720,6 +721,7 @@
   function getEffectiveBeConfig() { return (order && order.sl && order.sl.beOverride) || chartSettings.moveSlToBreakeven; }
   function getEffectiveTrailConfig() { return (order && order.sl && order.sl.trailOverride) || chartSettings.trailingStop; }
   function getEffectiveAtrConfig() { return (order && order.sl && order.sl.atrOverride) || chartSettings.atrStop; }
+  function getEffectiveTpTrailConfig(tp) { return (tp && tp.trailOverride) || chartSettings.trailingTp; }
   function atrStopDistance(cfg) {
     cfg = cfg || getEffectiveAtrConfig();
     return 7.5 * (cfg.multiplier / 2);
@@ -770,18 +772,17 @@
   }
   function applyTrailingTp(currentPrice) {
     if (!order || !order.filled || !order.tps.length) return;
-    const cfg = chartSettings.trailingTp;
     const dir = order.side === 'buy' ? 1 : -1;
     order.tps.forEach(tp => {
       if (!tp.trailing) return;
+      const cfg = getEffectiveTpTrailConfig(tp);
       if (!meetsTriggerCondition(cfg.activation, cfg.activationCustomR, currentPrice)) return;
       const distPrice = cfg.method === 'atr' ? atrStopDistance()
         : cfg.distanceUnit === 'percent' ? currentPrice * cfg.distanceValue / 100
         : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
-      const minStepPrice = cfg.minStepValue * (cfg.minStepUnit === 'points' ? 1 : TICK);
       const candidate = roundTick(currentPrice + dir * distPrice);
       const improvement = dir * (candidate - tp.price);
-      if (improvement >= minStepPrice) { tp.price = candidate; }
+      if (improvement > 0) { tp.price = candidate; }
     });
   }
   /* ---------- auto-balance TP allocations so they always sum to exactly 100% ---------- */
@@ -1129,7 +1130,7 @@
         const finalPrice = last.valid ? last.price : snappedSidePrice(kind, rect.height);
         if (kind === 'tp') {
           const newId = 'tp' + (tpCounter++);
-          order.tps.push({ id: newId, price: finalPrice, pct: 100, trailing: false });
+          order.tps.push({ id: newId, price: finalPrice, pct: 100, trailing: false, trailOverride: null });
           rebalanceTpAllocations(newId);
         } else {
           order.sl = { price: finalPrice, trailing: false, atr: false, beTpId: null, beActive: false, beOverride: null, trailOverride: null, atrOverride: null };
@@ -2202,7 +2203,6 @@
   bindCsStepper('csTsDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP);
   bindPlainStepper('csTsAtrMultiplier', 0.1, 20, 0.1);
   bindCsStepper('csTtpDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP);
-  bindCsStepper('csTtpMinStep', 1, 200, 1);
   function bindPlainStepper(valueId, min, max, step, onChange) {
     const input = document.getElementById(valueId);
     const dec = document.getElementById(valueId + 'Dec');
@@ -2412,8 +2412,6 @@
     document.getElementById('csTtpMethod').value = s.trailingTp.method;
     document.getElementById('csTtpDistanceValue').value = s.trailingTp.distanceValue;
     document.getElementById('csTtpDistanceUnit').value = s.trailingTp.distanceUnit;
-    document.getElementById('csTtpMinStepValue').value = s.trailingTp.minStepValue;
-    document.getElementById('csTtpMinStepUnit').value = s.trailingTp.minStepUnit;
 
     document.querySelectorAll('#csDisplayModeGroup .cs-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === s.tpSlDisplayMode));
     csTargetsDraft = JSON.parse(JSON.stringify(s.defaultTargets || []));
@@ -2461,8 +2459,6 @@
         method: document.getElementById('csTtpMethod').value,
         distanceValue: parseFloat(document.getElementById('csTtpDistanceValue').value) || 1,
         distanceUnit: document.getElementById('csTtpDistanceUnit').value,
-        minStepValue: parseFloat(document.getElementById('csTtpMinStepValue').value) || 1,
-        minStepUnit: document.getElementById('csTtpMinStepUnit').value,
       },
       globalBehavior: {
         cancelOnManualClose: document.getElementById('csGbCancelOnClose').classList.contains('checked'),
@@ -3005,11 +3001,19 @@
 
   /* ---------- TP gear menu ---------- */
   const tpGearMenu = document.getElementById('tpGearMenu');
+  function activeGearTp() { return order && order.tps.find(t => t.id === activeGearTpId); }
+  function renderTpGearMenu() {
+    const tp = activeGearTp();
+    if (!tp) return;
+    document.getElementById('tpTrail').classList.toggle('selected', !!tp.trailing);
+    document.getElementById('tpTrailOverrideTune').classList.toggle('active', !!tp.trailOverride);
+  }
   function openTpGearMenu(anchorRect, trigger) {
     if (trigger && tpGearMenu.classList.contains('show') && tpGearMenu._openTrigger === trigger) {
       closeAllPopovers();
       return;
     }
+    renderTpGearMenu();
     openNear(tpGearMenu, anchorRect, 'right', trigger);
   }
   document.getElementById('tpAdd').addEventListener('click', () => {
@@ -3018,21 +3022,98 @@
     const farthest = order.tps.reduce((m, t) => Math.max(m, dir * (t.price - order.entry)), 0);
     const newPrice = roundTick(order.entry + dir * (farthest + 50 / PX_PER_POINT));
     const newId = 'tp' + (tpCounter++);
-    order.tps.push({ id: newId, price: newPrice, pct: 25, trailing: false });
+    order.tps.push({ id: newId, price: newPrice, pct: 25, trailing: false, trailOverride: null });
     rebalanceTpAllocations(newId);
     closeAllPopovers(); render();
     showToast('Take profit added', 'add_circle');
   });
-  document.getElementById('tpTrail').addEventListener('click', () => {
-    const tp = order.tps.find(t => t.id === activeGearTpId);
+  document.getElementById('tpTrail').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const tp = activeGearTp();
     if (tp) { tp.trailing = !tp.trailing; }
-    closeAllPopovers(); render();
+    renderTpGearMenu(); render();
   });
   document.getElementById('tpRemove').addEventListener('click', () => {
     order.tps = order.tps.filter(t => t.id !== activeGearTpId);
     closeAllPopovers(); render();
     showToast('Take profit removed', 'delete');
   });
+
+  /* -- Trailing Take Profit override -- */
+  const tpTrailOvActivation = document.getElementById('tpTrailOvActivation');
+  const tpTrailOvMethod = document.getElementById('tpTrailOvMethod');
+  const tpTrailOvDistanceUnit = document.getElementById('tpTrailOvDistanceUnit');
+  function updateTpTrailOvConditional() {
+    document.getElementById('tpTrailOvActivationCustomRWrap').style.display = tpTrailOvActivation.value === 'customR' ? '' : 'none';
+    document.getElementById('tpTrailOvDistanceWrap').style.display = tpTrailOvMethod.value === 'atr' ? 'none' : '';
+  }
+  function ensureTpTrailOverride(tp) {
+    if (!tp) return null;
+    if (!tp.trailOverride) {
+      const base = chartSettings.trailingTp;
+      tp.trailOverride = {
+        activation: base.activation, activationCustomR: base.activationCustomR,
+        method: base.method, distanceValue: base.distanceValue, distanceUnit: base.distanceUnit
+      };
+    }
+    return tp.trailOverride;
+  }
+  function populateTpTrailOverrideForm() {
+    const tp = activeGearTp();
+    if (!tp) return;
+    const cfg = ensureTpTrailOverride(tp);
+    tpTrailOvActivation.value = cfg.activation;
+    document.getElementById('tpTrailOvActivationCustomRValue').value = cfg.activationCustomR;
+    tpTrailOvMethod.value = cfg.method;
+    document.getElementById('tpTrailOvDistanceValue').value = cfg.distanceValue;
+    tpTrailOvDistanceUnit.value = cfg.distanceUnit;
+    updateTpTrailOvConditional();
+    refreshAllCsDropdownLabels(document.getElementById('tpTrailOverridePanel'));
+  }
+  document.getElementById('tpTrailOverrideTune').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const tp = activeGearTp();
+    if (!tp) return;
+    const panel = document.getElementById('tpTrailOverridePanel');
+    const willOpen = !panel.classList.contains('open');
+    document.querySelectorAll('.gear-override-panel').forEach(p => p.classList.remove('open'));
+    if (willOpen) populateTpTrailOverrideForm();
+    panel.classList.toggle('open', willOpen);
+  });
+  [tpTrailOvActivation, tpTrailOvMethod, tpTrailOvDistanceUnit].forEach(el => el.addEventListener('change', (e) => {
+    e.stopPropagation();
+    if (el === tpTrailOvActivation || el === tpTrailOvMethod) updateTpTrailOvConditional();
+    const ov = ensureTpTrailOverride(activeGearTp());
+    if (ov) {
+      ov.activation = tpTrailOvActivation.value;
+      ov.method = tpTrailOvMethod.value;
+      ov.distanceUnit = tpTrailOvDistanceUnit.value;
+    }
+    renderTpGearMenu();
+  }));
+  function bindTpTrailOverrideStepper(prefix, min, max, step, field, percentOverride) {
+    const input = document.getElementById(prefix + 'Value');
+    const dec = document.getElementById(prefix + 'Dec');
+    const inc = document.getElementById(prefix + 'Inc');
+    const unitSelect = document.getElementById(prefix + 'Unit');
+    function activeParams() {
+      if (percentOverride && unitSelect && unitSelect.value === 'percent') return percentOverride;
+      return { min, max, step };
+    }
+    function clampVal(v) {
+      const p = activeParams();
+      v = Math.round(v / p.step) * p.step;
+      v = Number.isInteger(p.step) ? Math.round(v) : +v.toFixed(2);
+      return Math.min(p.max, Math.max(p.min, v));
+    }
+    function commit() { const ov = ensureTpTrailOverride(activeGearTp()); if (ov) ov[field] = parseFloat(input.value) || 0; renderTpGearMenu(); }
+    input.removeAttribute('readonly');
+    input.addEventListener('change', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value) || 0); commit(); });
+    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') - activeParams().step); commit(); });
+    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') + activeParams().step); commit(); });
+  }
+  bindTpTrailOverrideStepper('tpTrailOvActivationCustomR', 0.1, 50, 0.1, 'activationCustomR');
+  bindTpTrailOverrideStepper('tpTrailOvDistance', 1, 2000, 5, 'distanceValue', PERCENT_DISTANCE_STEP);
 
   /* ---------- SL gear menu ---------- */
   const slGearMenu = document.getElementById('slGearMenu');
@@ -3150,7 +3231,7 @@
       e.stopPropagation();
       if (!order || !order.sl) return;
       const willOpen = !panel.classList.contains('open');
-      document.querySelectorAll('.sl-override-panel').forEach(p => p.classList.remove('open'));
+      document.querySelectorAll('.gear-override-panel').forEach(p => p.classList.remove('open'));
       panel.classList.toggle('open', willOpen);
     });
   }
@@ -3158,20 +3239,26 @@
   bindSlOverrideAccordion('slTrailOverrideTune', 'slTrailOverridePanel');
   bindSlOverrideAccordion('slAtrOverrideTune', 'slAtrOverridePanel');
 
-  function bindSlOverrideStepper(prefix, min, max, step, overrideKey, field) {
+  function bindSlOverrideStepper(prefix, min, max, step, overrideKey, field, percentOverride) {
     const input = document.getElementById(prefix + 'Value');
     const dec = document.getElementById(prefix + 'Dec');
     const inc = document.getElementById(prefix + 'Inc');
+    const unitSelect = document.getElementById(prefix + 'Unit');
+    function activeParams() {
+      if (percentOverride && unitSelect && unitSelect.value === 'percent') return percentOverride;
+      return { min, max, step };
+    }
     function clampVal(v) {
-      v = Math.round(v / step) * step;
-      v = Number.isInteger(step) ? Math.round(v) : +v.toFixed(2);
-      return Math.min(max, Math.max(min, v));
+      const p = activeParams();
+      v = Math.round(v / p.step) * p.step;
+      v = Number.isInteger(p.step) ? Math.round(v) : +v.toFixed(2);
+      return Math.min(p.max, Math.max(p.min, v));
     }
     function commit() { if (order && order.sl && order.sl[overrideKey]) order.sl[overrideKey][field] = parseFloat(input.value) || 0; }
     input.removeAttribute('readonly');
     input.addEventListener('change', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value) || 0); commit(); });
-    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') - step); commit(); });
-    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') + step); commit(); });
+    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') - activeParams().step); commit(); });
+    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') + activeParams().step); commit(); });
   }
 
   /* -- Move to Break Even override -- */
@@ -3204,7 +3291,7 @@
       ov.offsetUnit = slBeOvOffsetUnit.value;
     }
   }));
-  bindSlOverrideStepper('slBeOvOffset', 0, 200, 1, 'beOverride', 'offsetValue');
+  bindSlOverrideStepper('slBeOvOffset', 0, 200, 1, 'beOverride', 'offsetValue', PERCENT_DISTANCE_STEP);
 
   /* -- Trailing Stop override -- */
   const slTrailOvMethod = document.getElementById('slTrailOvMethod');
@@ -3250,7 +3337,7 @@
       ov.start = slTrailOvStart.value;
     }
   }));
-  bindSlOverrideStepper('slTrailOvDistance', 1, 2000, 5, 'trailOverride', 'distanceValue');
+  bindSlOverrideStepper('slTrailOvDistance', 1, 2000, 5, 'trailOverride', 'distanceValue', PERCENT_DISTANCE_STEP);
   {
     const atrMulInput = document.getElementById('slTrailOvAtrMultiplier');
     const atrMulDec = document.getElementById('slTrailOvAtrMultiplierDec');

@@ -1259,18 +1259,18 @@ table.ms-scan-table tr[data-tags].hide-row {
   display: block;
 }
 
-.sl-override-row {
+.gear-override-row {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.sl-override-row .pop-item {
+.gear-override-row .pop-item {
   flex: 1;
   min-width: 0;
 }
 
-.sl-override-tune {
+.gear-override-tune {
   width: 30px;
   height: 30px;
   flex-shrink: 0;
@@ -1284,25 +1284,25 @@ table.ms-scan-table tr[data-tags].hide-row {
   cursor: pointer;
 }
 
-.sl-override-tune .material-symbols-outlined {
+.gear-override-tune .material-symbols-outlined {
   font-size: 17px;
 }
 
-.sl-override-tune:hover {
+.gear-override-tune:hover {
   color: var(--text-primary);
   background: var(--bg-input);
   border-color: var(--border-default);
 }
 
-.sl-override-tune.active {
+.gear-override-tune.active {
   color: var(--accent);
 }
 
-.sl-override-panel {
+.gear-override-panel {
   padding: 4px 9px 6px;
 }
 
-.sl-override-fields {
+.gear-override-fields {
   display: flex;
   flex-direction: column;
   gap: 10px;
