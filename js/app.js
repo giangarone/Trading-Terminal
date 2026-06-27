@@ -602,6 +602,9 @@
         const dir = order.side === 'buy' ? 1 : -1;
         const closeSide = order.side === 'buy' ? 'sell' : 'buy';
         tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: order.qty, price: closePrice, pnl: (closePrice - order.entry) * order.qty * dir * POINT_VALUE, role: 'close', type: 'Market', time: nowTimeStr() });
+        showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position closed at ' + fmt(closePrice), 'check_circle');
+      } else {
+        showToast('Pending order cancelled', 'cancel');
       }
     }
     order = null; render(); closeAllPopovers();
@@ -620,6 +623,16 @@
     tradeHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, pnl: null, role: 'open', type: order.orderType, time: nowTimeStr() });
     render();
     showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
+  }
+  /* clicking the BUY/SELL entry chip places a pending chart order — blocked while TP/SL sit on the wrong side of entry */
+  function placeOrder() {
+    if (!order || !order.pendingConfirm || !orderTpSlValid()) return;
+    order.pendingConfirm = false;
+    if (order.orderType === 'Market') {
+      confirmOrderFill();
+    } else {
+      render();
+    }
   }
   function removeTp(id) {
     if (!order) return;
@@ -762,7 +775,9 @@
     order.tps.forEach(tp => {
       if (!tp.trailing) return;
       if (!meetsTriggerCondition(cfg.activation, cfg.activationCustomR, currentPrice)) return;
-      const distPrice = cfg.method === 'atr' ? atrStopDistance() : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
+      const distPrice = cfg.method === 'atr' ? atrStopDistance()
+        : cfg.distanceUnit === 'percent' ? currentPrice * cfg.distanceValue / 100
+        : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
       const minStepPrice = cfg.minStepValue * (cfg.minStepUnit === 'points' ? 1 : TICK);
       const candidate = roundTick(currentPrice + dir * distPrice);
       const improvement = dir * (candidate - tp.price);
@@ -992,9 +1007,38 @@
     const entryY = priceToY(order.entry, h);
     return roundTick(yToPrice(clamp(entryY + yDir * 25, 10, h - 10), h));
   }
-  /* a plain click (no movement) on the handle falls through to its own click listener instead of dragging — */
-  /* lets a handle double as both a drag target and a menu/edit trigger (e.g. the size/type pills, .ol-amt) */
-  function makeDraggable(handle, onDrag, onDrop, excludeSelector) {
+  /* a TP/SL is only valid on the correct side of entry: long TP above / SL below, short TP below / SL above */
+  function tpSlSideOk(kind, price) {
+    const dir = order.side === 'buy' ? 1 : -1;
+    return kind === 'tp' ? dir * (price - order.entry) > 0 : dir * (order.entry - price) > 0;
+  }
+  function orderTpSlValid() {
+    if (!order) return true;
+    return order.tps.every(tp => tpSlSideOk('tp', tp.price)) && (!order.sl || tpSlSideOk('sl', order.sl.price));
+  }
+  /* toggle the entry chip's disabled state without a full render(), so it reacts live while dragging */
+  function updateEntryPlaceableState() {
+    if (!order) return;
+    const handle = document.getElementById('entryPriceHandle');
+    if (!handle) return;
+    handle.classList.toggle('disabled', order.pendingConfirm && !order.filled && !orderTpSlValid());
+  }
+  /* re-check every TP/SL chip's invalid state without a full render() — used while dragging Entry/TP/SL */
+  function updateAllTpSlValidityLive() {
+    if (!order) return;
+    layer.querySelectorAll('.ol-side-row[data-tp-id]').forEach(row => {
+      const tp = order.tps.find(t => t.id === row.dataset.tpId);
+      if (tp) row.querySelector('.ol-chip').classList.toggle('invalid', !tpSlSideOk('tp', tp.price));
+    });
+    if (order.sl) {
+      const slChip = layer.querySelector('.ol-chip.sl');
+      if (slChip) slChip.classList.toggle('invalid', !tpSlSideOk('sl', order.sl.price));
+    }
+    updateEntryPlaceableState();
+  }
+  /* a plain click (no movement) on the handle falls through to onClick (if given) instead of dragging — */
+  /* lets a handle double as both a drag target and a menu/edit/place trigger (e.g. the size/type pills, .ol-amt) */
+  function makeDraggable(handle, onDrag, onDrop, excludeSelector, onClick) {
     handle.addEventListener('mousedown', (e) => {
       if (excludeSelector && e.target.closest(excludeSelector)) return;
       e.preventDefault(); e.stopPropagation();
@@ -1015,7 +1059,7 @@
         document.removeEventListener('mousemove', move);
         document.removeEventListener('mouseup', up);
         isDraggingOrderLine = false;
-        if (!dragging) return;
+        if (!dragging) { if (onClick) onClick(); return; }
         const y = clamp(ev.clientY - rect.top, 10, rect.height - 10);
         onDrop(y, rect.height);
       }
@@ -1143,16 +1187,71 @@
     const hrsStr = hrs % 1 === 0 ? hrs.toFixed(0) : hrs.toFixed(1);
     return mins > 0 ? hrsStr + 'h ago' : 'in ' + hrsStr + 'h';
   }
+  // idxFromEnd values above ~60 sit just past the default-visible chart window on
+  // first load — pan left to reveal them, same as scrolling back through older news.
   const newsEvents = [
     {
       idxFromEnd: 14,
+      source: 'News',
+      sentiment: 'bearish',
       headline: 'SEC Delays Ruling on Ether ETF Options Listing',
       description: 'The regulator pushed its decision window on the pending spot Ether ETF options proposal, citing the need for further review of market manipulation safeguards. Traders had priced in approval this week, raising the odds of near-term volatility.',
     },
     {
       idxFromEnd: -8,
+      source: 'News',
+      sentiment: 'bullish',
       headline: 'Ethereum Foundation Sets Fusaka Upgrade Mainnet Date',
       description: 'The Foundation confirmed a mainnet activation date for the Fusaka upgrade, which bundles several EIPs aimed at boosting blob throughput and cutting L2 data costs. Validators are expected to begin client upgrades ahead of the rollout.',
+    },
+    {
+      idxFromEnd: -20,
+      source: 'News',
+      sentiment: 'bearish',
+      headline: 'FOMC Meeting Begins Tomorrow — Rate Decision Due Wednesday',
+      description: 'Markets are pricing in a 70% chance of a hold, with traders bracing for volatility around the 2:00 PM ET announcement and press conference.',
+    },
+    {
+      idxFromEnd: 4,
+      source: 'X',
+      sentiment: 'bullish',
+      headline: '@realDonaldTrump: "We are going to make the United States the bitcoin and crypto capital of the world!"',
+      description: 'Pro-crypto rhetoric reignites optimism around friendlier U.S. digital asset policy.',
+    },
+    {
+      idxFromEnd: 9,
+      source: 'News',
+      sentiment: 'bullish',
+      headline: 'Fed Chair Signals Openness to September Rate Cut',
+      description: 'Comments at a policy forum boosted bets on imminent easing, lifting risk assets broadly.',
+    },
+    {
+      idxFromEnd: 27,
+      source: 'X',
+      sentiment: 'bullish',
+      headline: '@elonmusk: "Had a constructive call with the SEC on crypto regulatory clarity."',
+      description: 'Traders read the comment as a sign friendlier rules are coming.',
+    },
+    {
+      idxFromEnd: 42,
+      source: 'News',
+      sentiment: 'bullish',
+      headline: 'Nonfarm Payrolls Crush Estimates, Unemployment Falls',
+      description: 'A blowout jobs report initially weighed on rate-cut bets, but risk assets recovered as the soft-landing narrative held.',
+    },
+    {
+      idxFromEnd: 58,
+      source: 'X',
+      sentiment: 'bearish',
+      headline: '@realDonaldTrump: "China is not living up to the deal. Tariffs going up substantially!"',
+      description: 'Tariff-escalation rhetoric pressured risk assets across the board.',
+    },
+    {
+      idxFromEnd: 78,
+      source: 'News',
+      sentiment: 'bearish',
+      headline: 'US Core CPI Comes In Above Expectations',
+      description: 'A hotter-than-forecast inflation print pressured rate-cut bets and sent risk assets lower.',
     },
   ].map(ev => Object.assign(ev, { timeLabel: newsTimeLabel(ev.idxFromEnd) }));
   let newsMarkerEls = null;
@@ -1161,14 +1260,15 @@
     if (!newsMarkerLayer) return [];
     const els = newsEvents.map(ev => {
       const el = document.createElement('div');
-      el.className = 'news-marker';
+      el.className = 'news-marker ' + ev.sentiment;
+      const sentimentLabel = ev.sentiment === 'bullish' ? 'Bullish' : 'Bearish';
       el.innerHTML =
         '<div class="news-marker-guide"></div>' +
         '<div class="news-marker-icon"><span class="material-symbols-outlined">article</span></div>' +
         '<div class="news-marker-popup">' +
         '<div class="news-bar"></div>' +
         '<div class="news-main">' +
-        '<div class="news-row-top"><span class="news-src">News</span><span class="news-time">' + ev.timeLabel + '</span></div>' +
+        '<div class="news-row-top"><span class="news-src">' + ev.source + '</span><span class="news-sentiment">' + sentimentLabel + '</span><span class="news-time">' + ev.timeLabel + '</span></div>' +
         '<div class="news-headline">' + ev.headline + '</div>' +
         '<div class="news-desc">' + ev.description + '</div>' +
         '</div>' +
@@ -1632,12 +1732,14 @@
         const profit = pts * POINT_VALUE * contracts;
         const riskPerContractTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
         const rMultiple = riskPerContractTotal ? (pts * POINT_VALUE / riskPerContractTotal) : null;
+        const tpInvalid = !tpSlSideOk('tp', tp.price);
 
         const row = document.createElement('div');
         row.className = 'ol-side-row';
+        row.dataset.tpId = tp.id;
         row.style.top = y + 'px';
         row.innerHTML =
-          '<span class="ol-chip tp">TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '<span class="ol-amt up" data-edit-tp="' + tp.id + '">+' + fmtMoney(profit) + '</span></span>' +
+          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">warning</span>TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '<span class="ol-amt ' + (profit >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '">' + (profit >= 0 ? '+' : '-') + fmtMoney(Math.abs(profit)) + '</span></span>' +
           '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
           '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
           '<span class="ol-gear" data-gear-tp="' + tp.id + '"><span class="material-symbols-outlined">settings</span></span>' +
@@ -1645,25 +1747,26 @@
         layer.appendChild(row);
 
         const tpAmtEl = row.querySelector('.ol-amt');
-        bindHandleHover(row.querySelector('.ol-chip'), 'tp:' + tp.id);
-        makeDraggable(row.querySelector('.ol-chip'),
-          (cy, h) => {
-            row.style.top = cy + 'px'; line.style.top = cy + 'px';
-            tp.price = roundTick(yToPrice(cy, h));
-            const liveDir = order.side === 'buy' ? 1 : -1;
-            const livePts = liveDir * (tp.price - order.entry);
-            const liveProfit = livePts * POINT_VALUE * contracts;
-            tpAmtEl.textContent = (liveProfit >= 0 ? '+' : '-') + fmtMoney(Math.abs(liveProfit));
-            tpAmtEl.classList.toggle('up', liveProfit >= 0);
-            tpAmtEl.classList.toggle('down', liveProfit < 0);
-            drawPriceChart();
-          },
-          (cy, h) => {
-            tp.price = roundTick(yToPrice(cy, h));
-            const dir2 = order.side === 'buy' ? 1 : -1;
-            if (dir2 * (tp.price - order.entry) < 0.25) tp.price = snappedSidePrice('tp', h);
-            render();
-          });
+        const tpChipEl = row.querySelector('.ol-chip');
+        bindHandleHover(tpChipEl, 'tp:' + tp.id);
+        function onDragTp(cy, h) {
+          row.style.top = cy + 'px'; line.style.top = cy + 'px';
+          tp.price = roundTick(yToPrice(cy, h));
+          const liveDir = order.side === 'buy' ? 1 : -1;
+          const livePts = liveDir * (tp.price - order.entry);
+          const liveProfit = livePts * POINT_VALUE * contracts;
+          tpAmtEl.textContent = (liveProfit >= 0 ? '+' : '-') + fmtMoney(Math.abs(liveProfit));
+          tpAmtEl.classList.toggle('up', liveProfit >= 0);
+          tpAmtEl.classList.toggle('down', liveProfit < 0);
+          updateAllTpSlValidityLive();
+          drawPriceChart();
+        }
+        function onDropTp(cy, h) {
+          tp.price = roundTick(yToPrice(cy, h));
+          render();
+        }
+        makeDraggable(tpChipEl, onDragTp, onDropTp);
+        makeDraggable(line, onDragTp, onDropTp);
 
         row.querySelector('[data-edit-tp]').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -1695,12 +1798,13 @@
         const dir = order.side === 'buy' ? 1 : -1;
         const pts = dir * (order.entry - order.sl.price);
         const loss = pts * POINT_VALUE * order.qty;
+        const slInvalid = !tpSlSideOk('sl', order.sl.price);
 
         const row = document.createElement('div');
         row.className = 'ol-side-row';
         row.style.top = y + 'px';
         row.innerHTML =
-          '<span class="ol-chip sl">SL' + (order.sl.beTpId ? '<span class="ol-badge be">SL → BE</span>' : '') + (order.sl.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + (order.sl.atr ? '<span class="ol-badge atr">ATR</span>' : '') + '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span></span>' +
+          '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">warning</span>SL' + (order.sl.beTpId ? '<span class="ol-badge be">SL → BE</span>' : '') + (order.sl.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + (order.sl.atr ? '<span class="ol-badge atr">ATR</span>' : '') + '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span></span>' +
           '<span class="ol-rmult">-1.0R</span>' +
           '<span class="ol-pct-chip">100%</span>' +
           '<span class="ol-gear" id="slGearTrigger"><span class="material-symbols-outlined">settings</span></span>' +
@@ -1708,24 +1812,25 @@
         layer.appendChild(row);
 
         const slAmtEl = row.querySelector('.ol-amt');
-        bindHandleHover(row.querySelector('.ol-chip'), 'sl');
-        makeDraggable(row.querySelector('.ol-chip'),
-          (cy, h) => {
-            row.style.top = cy + 'px'; line.style.top = cy + 'px';
-            order.sl.price = roundTick(yToPrice(cy, h));
-            const liveDir = order.side === 'buy' ? 1 : -1;
-            const livePts = liveDir * (order.entry - order.sl.price);
-            const liveLoss = livePts * POINT_VALUE * order.qty;
-            slAmtEl.textContent = '-' + fmtMoney(Math.abs(liveLoss));
-            drawPriceChart();
-          },
-          (cy, h) => {
-            order.sl.price = roundTick(yToPrice(cy, h));
-            const dir2 = order.side === 'buy' ? 1 : -1;
-            if (dir2 * (order.entry - order.sl.price) < 0.25) order.sl.price = snappedSidePrice('sl', h);
-            syncQtyFromRisk();
-            render();
-          });
+        const slChipEl = row.querySelector('.ol-chip');
+        bindHandleHover(slChipEl, 'sl');
+        function onDragSl(cy, h) {
+          row.style.top = cy + 'px'; line.style.top = cy + 'px';
+          order.sl.price = roundTick(yToPrice(cy, h));
+          const liveDir = order.side === 'buy' ? 1 : -1;
+          const livePts = liveDir * (order.entry - order.sl.price);
+          const liveLoss = livePts * POINT_VALUE * order.qty;
+          slAmtEl.textContent = '-' + fmtMoney(Math.abs(liveLoss));
+          updateAllTpSlValidityLive();
+          drawPriceChart();
+        }
+        function onDropSl(cy, h) {
+          order.sl.price = roundTick(yToPrice(cy, h));
+          syncQtyFromRisk();
+          render();
+        }
+        makeDraggable(slChipEl, onDragSl, onDropSl);
+        makeDraggable(line, onDragSl, onDropSl);
 
         row.querySelector('#slGearTrigger').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -1741,11 +1846,31 @@
     // ---- Entry line + control bar (always visible in full edit mode) ----
     {
       const y = clamp(priceToY(order.entry, H), 10, H - 10);
+      const canDragEntry = !order.filled && !(order.pendingConfirm && order.orderType === 'Market');
+      const placeable = !order.filled && order.pendingConfirm;
+      const blocked = placeable && !orderTpSlValid();
 
       const line = document.createElement('div');
-      line.className = 'ol-line entry ' + order.side;
+      line.className = 'ol-line entry ' + order.side + (canDragEntry ? ' draggable' : '');
       line.style.top = y + 'px';
       layer.appendChild(line);
+
+      function onDragEntry(cy, h) {
+        bar.style.top = cy + 'px'; line.style.top = cy + 'px';
+        order.entry = roundTick(yToPrice(cy, h));
+        // Keep trailing SL anchored to entry while dragging for non-market orders
+        if (order.sl && order.sl.trailing && order.orderType !== 'Market') {
+          applyTrailingStopPreview();
+        }
+        updateAllTpSlValidityLive();
+        drawPriceChart();
+      }
+      function onDropEntry(cy, h) {
+        order.entry = roundTick(yToPrice(cy, h));
+        syncQtyFromRisk();
+        render();
+      }
+      if (canDragEntry) makeDraggable(line, onDragEntry, onDropEntry);
 
       const bar = document.createElement('div');
       bar.className = 'ol-entry-bar';
@@ -1761,12 +1886,13 @@
             : String(order.qty);
 
       if (!order.filled) {
-        const confirmBtnHtml = order.pendingConfirm
-          ? '<span class="ol-entry-confirm" id="confirmOrderBtn" title="Place Order"><span class="material-symbols-outlined">check</span></span>'
-          : '';
-        const entryChipTitle = (order.pendingConfirm && order.orderType === 'Market') ? '' : ' title="Drag to move entry"';
+        let entryTitle;
+        if (blocked) entryTitle = 'Fix invalid TP/SL before placing the order';
+        else if (placeable) entryTitle = canDragEntry ? 'Drag to move, or click to place the order' : 'Click to place the order';
+        else entryTitle = 'Drag to move entry';
+        const entryClass = 'ol-chip entry ' + side + (placeable ? ' placeable' : '') + (blocked ? ' disabled' : '');
         bar.innerHTML =
-          '<span class="ol-chip entry ' + side + '" id="entryPriceHandle"' + entryChipTitle + '>' + sideLabel + confirmBtnHtml + '</span>' +
+          '<span class="' + entryClass + '" id="entryPriceHandle" title="' + entryTitle + '">' + sideLabel + '</span>' +
           tpAddHandleHtml + slAddHandleHtml +
           '<span class="ol-pill neutral combo" id="orderConfigPill">' +
           '<span class="ol-pill-seg" id="sizePillTrigger">' + sizeLabel + '</span>' +
@@ -1799,33 +1925,11 @@
       const entryPriceHandle = bar.querySelector('#entryPriceHandle');
       if (entryPriceHandle) {
         bindHandleHover(entryPriceHandle, 'entry');
-        const canDragEntry = !order.filled && !(order.pendingConfirm && order.orderType === 'Market');
         if (canDragEntry) {
-          makeDraggable(entryPriceHandle,
-            (cy, h) => {
-              bar.style.top = cy + 'px'; line.style.top = cy + 'px';
-              order.entry = roundTick(yToPrice(cy, h));
-              // Keep trailing SL anchored to entry while dragging for non-market orders
-              if (order.sl && order.sl.trailing && order.orderType !== 'Market') {
-                applyTrailingStopPreview();
-              }
-              drawPriceChart();
-            },
-            (cy, h) => { order.entry = roundTick(yToPrice(cy, h)); syncQtyFromRisk(); render(); });
+          makeDraggable(entryPriceHandle, onDragEntry, onDropEntry, undefined, placeOrder);
+        } else if (placeable) {
+          entryPriceHandle.addEventListener('click', (e) => { e.stopPropagation(); placeOrder(); });
         }
-      }
-
-      const confirmOrderBtn = bar.querySelector('#confirmOrderBtn');
-      if (confirmOrderBtn) {
-        confirmOrderBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          order.pendingConfirm = false;
-          if (order.orderType === 'Market') {
-            confirmOrderFill();
-          } else {
-            render();
-          }
-        });
       }
 
       if (!order.filled) {
@@ -2071,24 +2175,33 @@
   ['csBeTrigger', 'csTsMethod', 'csTsStart', 'csTtpMethod', 'csTtpActivation'].forEach(id => {
     document.getElementById(id).addEventListener('change', csUpdateConditionalFields);
   });
-  function bindCsStepper(prefix, min, max, step) {
+  /* percentOverride lets a field use a finer min/step/decimals when its unit dropdown is set to "%" —
+     ticks/points distances are sensibly whole numbers, but a percent distance needs sub-1 decimals (e.g. 0.5%) */
+  function bindCsStepper(prefix, min, max, step, percentOverride) {
     const input = document.getElementById(prefix + 'Value');
     const dec = document.getElementById(prefix + 'Dec');
     const inc = document.getElementById(prefix + 'Inc');
+    const unitSelect = document.getElementById(prefix + 'Unit');
+    function activeParams() {
+      if (percentOverride && unitSelect && unitSelect.value === 'percent') return percentOverride;
+      return { min, max, step };
+    }
     function clampVal(v) {
-      v = Math.round(v / step) * step;
-      if (Number.isInteger(step)) v = Math.round(v); else v = +v.toFixed(2);
-      return Math.min(max, Math.max(min, v));
+      const p = activeParams();
+      v = Math.round(v / p.step) * p.step;
+      if (Number.isInteger(p.step)) v = Math.round(v); else v = +v.toFixed(2);
+      return Math.min(p.max, Math.max(p.min, v));
     }
     input.removeAttribute('readonly');
     input.addEventListener('change', () => { input.value = clampVal(parseFloat(input.value) || 0); });
-    dec.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') - step); });
-    inc.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') + step); });
+    dec.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') - activeParams().step); });
+    inc.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') + activeParams().step); });
   }
-  bindCsStepper('csBeOffset', 0, 200, 1);
-  bindCsStepper('csTsDistance', 1, 2000, 5);
+  const PERCENT_DISTANCE_STEP = { min: 0.1, max: 50, step: 0.1 };
+  bindCsStepper('csBeOffset', 0, 200, 1, PERCENT_DISTANCE_STEP);
+  bindCsStepper('csTsDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP);
   bindPlainStepper('csTsAtrMultiplier', 0.1, 20, 0.1);
-  bindCsStepper('csTtpDistance', 1, 2000, 5);
+  bindCsStepper('csTtpDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP);
   bindCsStepper('csTtpMinStep', 1, 200, 1);
   function bindPlainStepper(valueId, min, max, step, onChange) {
     const input = document.getElementById(valueId);
