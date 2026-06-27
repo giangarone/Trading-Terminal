@@ -77,11 +77,11 @@
 
   const positions = [
     //                sym        qty       avgPrice   mark0      pnlOpen0  pct0   step    dec
-    makePosition('MNQU26',       8,      29748.00,  29704.75,  -692.00,  -0.15,  0.25,   2),
-    makePosition('MESZ25',       5,       6015.25,   6028.00,   -63.75,  -0.21,  0.25,   2),
-    makePosition('JUPUSDT',   3084.19,     0.2136,    0.2195,   -83.55,  -8.35,  0.0001, 4),
-    makePosition('BTCUSDT',      0.125, 66245.10,  67121.50,   109.55,   1.32,  0.5,    2),
-    makePosition('ETHUSDT',      2.0,    3125.40,   3210.75,   170.70,   2.73,  0.05,   2),
+    makePosition('NQU5',       8,      29748.00,  29704.75,  -692.00,  -0.15,  0.25,   2),
+    makePosition('ESU5',       5,       6015.25,   6028.00,   -63.75,  -0.21,  0.25,   2),
+    makePosition('SOLUSD',   3084.19,     0.2136,    0.2195,   -83.55,  -8.35,  0.0001, 4),
+    makePosition('BTCUSD',      0.125, 66245.10,  67121.50,   109.55,   1.32,  0.5,    2),
+    makePosition('ETHUSD',      2.0,    3125.40,   3210.75,   170.70,   2.73,  0.05,   2),
     makePosition('AAPL',       100,       185.27,    188.45,   318.00,   1.72,  0.05,   2),
   ];
 
@@ -121,6 +121,78 @@
     p.pnlOpen0 = 0;
     if (p.elAvg) p.elAvg.textContent = fmt(p.avgPrice, p.dec);
     return true;
+  };
+
+  /* ---------- graduate a filled chart order into a Positions-tab row ---------- */
+  function quickCloseRowHtml() {
+    return '<div class="pos-quick-slider-row">' +
+      '<input type="range" class="pos-quick-slider" min="5" max="100" step="5" value="100">' +
+      '<span class="pos-quick-pct">100%</span></div>' +
+      '<div class="pos-quick-btn-row">' +
+      '<button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>' +
+      '<button class="pos-quick-btn pos-quick-reverse" data-pos-reverse>Reverse</button></div>';
+  }
+  function createPositionRow(sym, side, qty, price, dec) {
+    const row = document.createElement('div');
+    row.className = 'pos-row';
+    row.dataset.posId = sym;
+    const sideCls = side === 'buy' ? 'long' : 'short';
+    const sideLabel = side === 'buy' ? 'Long' : 'Short';
+    row.innerHTML =
+      '<div class="pos-row-summary">' +
+      '<div class="pos-col pos-col-symbol">' +
+      '<div class="pos-sym-icon pos-icon-crypto">' + sym.slice(0, 2) + '</div>' +
+      '<div class="pos-sym-info"><div class="pos-sym-top">' +
+      '<span class="pos-sym-ticker">' + sym + '</span>' +
+      '<span class="pos-side-badge ' + sideCls + '">' + sideLabel + '</span>' +
+      '<span class="pos-type-badge">Crypto</span></div>' +
+      '<span class="pos-sym-sub">' + sym + ' (from chart)</span></div></div>' +
+      '<div class="pos-col pos-col-size"><span class="pos-size-qty" id="posQty-' + sym + '">' + fmtQty(qty) + '</span><span class="pos-size-unit">Units</span></div>' +
+      '<div class="pos-col pos-col-price"><span class="pos-entry" id="posAvg-' + sym + '">' + fmt(price, dec) + '</span><span class="pos-mark" id="posMark-' + sym + '">' + fmt(price, dec) + '</span></div>' +
+      '<div class="pos-col pos-col-pnl"><span class="pos-pnl-dollar up" id="posPnlOpen-' + sym + '">+0.00</span><span class="pos-pnl-pct up" id="posPct-' + sym + '">+0.00%</span></div>' +
+      '<div class="pos-col pos-col-margin"><span class="pos-margin faint" id="posMargin-' + sym + '">—</span></div>' +
+      '<div class="pos-col pos-col-liq"><span class="pos-liq faint">—</span></div>' +
+      '<div class="pos-col pos-col-quickclose">' + quickCloseRowHtml() + '</div>' +
+      '<div class="pos-col pos-col-actions"><button class="pos-expand-btn" title="Expand details"><span class="material-symbols-outlined pos-chevron">expand_more</span></button></div>' +
+      '</div>' +
+      '<div class="pos-row-detail"><div class="pos-detail-close">' +
+      '<div class="pos-detail-label">Close Position</div>' +
+      '<div class="pos-close-pct-row">' +
+      '<button class="pos-close-pct-btn" data-pos-close-pct="25">25%</button>' +
+      '<button class="pos-close-pct-btn" data-pos-close-pct="50">50%</button>' +
+      '<button class="pos-close-pct-btn" data-pos-close-pct="75">75%</button>' +
+      '<button class="pos-close-pct-btn pos-close-full" data-pos-close-pct="100">100%</button></div>' +
+      '<button class="pos-close-primary" data-pos-close-pct="100">Close Position</button>' +
+      '<button class="pos-reverse-btn" data-pos-reverse>Reverse</button>' +
+      '</div></div>';
+    row.querySelector('.pos-row-summary').addEventListener('click', (e) => {
+      if (e.target.closest('.pos-col-quickclose') || e.target.closest('.pos-sym-ticker')) return;
+      row.classList.toggle('is-expanded');
+    });
+    document.querySelector('.pos-rows-scroll').prepend(row);
+  }
+  window.upsertPositionFromFill = function (sym, side, qty, price) {
+    const dir = side === 'buy' ? 1 : -1;
+    const existing = positions.find(x => x.sym === sym);
+    if (existing) {
+      const newQty = existing.qty + qty;
+      existing.avgPrice = (existing.avgPrice * existing.qty + price * qty) / newQty;
+      existing.qty = newQty;
+      existing.mark0 = existing.mark;
+      existing.pnlOpen0 = (existing.mark - existing.avgPrice) * newQty * dir;
+      existing.unitBase = (newQty * price) / 100;
+      existing.pv = dir;
+      if (existing.elQty) existing.elQty.textContent = fmtQty(existing.qty);
+      if (existing.elAvg) existing.elAvg.textContent = fmt(existing.avgPrice, existing.dec);
+      return;
+    }
+    const dec = price < 1 ? 4 : 2;
+    const step = price < 1 ? 0.0001 : price < 100 ? 0.01 : 0.5;
+    createPositionRow(sym, side, qty, price, dec);
+    const pos = makePosition(sym, qty, price, price, 0, 0, step, dec);
+    pos.pv = dir;
+    pos.unitBase = (qty * price) / 100;
+    positions.push(pos);
   };
 
   function tick() {

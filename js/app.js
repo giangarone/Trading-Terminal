@@ -62,20 +62,20 @@
   let alerts = [];
   function nowTimeStr() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
   let orderHistory = [
-    { symbol: 'ETHUSD', side: 'buy',  qty: 2, price: 4486.50, status: 'filled',    type: 'Market', time: '09:15:32 AM' },
-    { symbol: 'NQU5',   side: 'buy',  qty: 1, price: 18480.00, status: 'filled',   type: 'Market', time: '09:18:47 AM' },
-    { symbol: 'RTYU5',  side: 'buy',  qty: 3, price: 2070.00,  status: 'cancelled', type: 'Market', time: '08:55:10 AM' },
+    { symbol: 'ETHUSD', side: 'buy',  qty: 2, price: 4486.50, status: 'filled',    type: 'Market', time: '09:15:32 AM', pnl: null },
+    { symbol: 'NQU5',   side: 'buy',  qty: 1, price: 18480.00, status: 'filled',   type: 'Market', time: '09:18:47 AM', pnl: null },
+    { symbol: 'RTYU5',  side: 'buy',  qty: 3, price: 2070.00,  status: 'cancelled', type: 'Market', time: '08:55:10 AM', pnl: null },
   ];
 
   /* ---------- trade history state ----------
      Only actual fill executions — no cancels, no pending orders.
      pnl: realized P&L in dollars for closing trades; null for opening trades. */
   let tradeHistory = [
-    { symbol: 'ETHUSD', side: 'buy',  qty: 2, price: 4486.50,  pnl: null,       role: 'open',  type: 'Market',     time: '09:15:32 AM' },
-    { symbol: 'NQU5',   side: 'buy',  qty: 1, price: 18480.00, pnl: null,       role: 'open',  type: 'Market',     time: '09:18:47 AM' },
-    { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4562.25,  pnl: 3787.50,    role: 'close', type: 'Limit (TP)', time: '10:03:18 AM' },
-    { symbol: 'NQU5',   side: 'sell', qty: 1, price: 18560.00, pnl: 4000.00,    role: 'close', type: 'Limit (TP)', time: '10:41:55 AM' },
-    { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4495.00,  pnl: 425.00,     role: 'close', type: 'Market',     time: '11:12:40 AM' },
+    { symbol: 'ETHUSD', side: 'buy',  qty: 2, price: 4486.50,  pnl: null,       role: 'open',  type: 'Market',     time: '09:15:32 AM', fee: 2.50 },
+    { symbol: 'NQU5',   side: 'buy',  qty: 1, price: 18480.00, pnl: null,       role: 'open',  type: 'Market',     time: '09:18:47 AM', fee: 1.25 },
+    { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4562.25,  pnl: 3787.50,    role: 'close', type: 'Limit (TP)', time: '10:03:18 AM', fee: 1.25 },
+    { symbol: 'NQU5',   side: 'sell', qty: 1, price: 18560.00, pnl: 4000.00,    role: 'close', type: 'Limit (TP)', time: '10:41:55 AM', fee: 1.25 },
+    { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4495.00,  pnl: 425.00,     role: 'close', type: 'Market',     time: '11:12:40 AM', fee: 1.25 },
   ];
 
   /* ---------- helpers ---------- */
@@ -248,13 +248,20 @@
 
   /* ---------- positions panel: expand/collapse & in-row actions ---------- */
   document.querySelectorAll('.pos-row-summary').forEach(summary => {
-    summary.addEventListener('click', () => {
+    summary.addEventListener('click', (e) => {
+      if (e.target.closest('.pos-col-quickclose') || e.target.closest('.pos-sym-ticker')) return;
       summary.closest('.pos-row').classList.toggle('is-expanded');
     });
   });
 
   const posPanel = document.getElementById('bpPanel-positions');
   posPanel.addEventListener('click', e => {
+    const tickerEl = e.target.closest('.pos-sym-ticker');
+    if (tickerEl) {
+      e.stopPropagation();
+      switchSymbol(tickerEl.closest('.pos-row').dataset.posId);
+      return;
+    }
     const closeBtn = e.target.closest('[data-pos-close-pct]');
     if (closeBtn) {
       const row = closeBtn.closest('.pos-row');
@@ -270,6 +277,13 @@
       if (!window.reversePosition(sym)) return;
       showToast(sym + ' position reversed', 'sync_alt');
     }
+  });
+  posPanel.addEventListener('input', e => {
+    const slider = e.target.closest('.pos-quick-slider');
+    if (!slider) return;
+    const cluster = slider.closest('.pos-col-quickclose');
+    cluster.querySelector('.pos-quick-pct').textContent = slider.value + '%';
+    cluster.querySelector('.pos-quick-close').dataset.posClosePct = slider.value;
   });
   document.getElementById('ctxAlert').addEventListener('click', () => { addAlert(pendingClickPrice); closeAllPopovers(); });
   document.getElementById('ctxReset').addEventListener('click', () => {
@@ -596,15 +610,18 @@
 
   function cancelOrder() {
     if (order) {
-      orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: order.filled ? 'closed' : 'cancelled', type: order.orderType, time: nowTimeStr() });
       if (order.filled) {
         const lastEl = document.getElementById('hdrLast');
         const closePrice = lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : order.entry;
         const dir = order.side === 'buy' ? 1 : -1;
         const closeSide = order.side === 'buy' ? 'sell' : 'buy';
-        tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: order.qty, price: closePrice, pnl: (closePrice - order.entry) * order.qty * dir * POINT_VALUE, role: 'close', type: 'Market', time: nowTimeStr() });
+        const closePnl = (closePrice - order.entry) * order.qty * dir * POINT_VALUE;
+        orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
+        tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: order.qty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
+        window.closePositionPct('ETHUSD', 100);
         showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position closed at ' + fmt(closePrice), 'check_circle');
       } else {
+        orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'cancelled', type: order.orderType, time: nowTimeStr(), pnl: null });
         showToast('Pending order cancelled', 'cancel');
       }
     }
@@ -620,8 +637,9 @@
       order.sl.price = roundTick(order.entry - dir * computeTrailDist(cfg, order.entry));
       syncQtyFromRisk();
     }
-    orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'filled', type: order.orderType, time: nowTimeStr() });
-    tradeHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, pnl: null, role: 'open', type: order.orderType, time: nowTimeStr() });
+    orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'filled', type: order.orderType, time: nowTimeStr(), pnl: null });
+    tradeHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, pnl: null, role: 'open', type: order.orderType, time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
+    window.upsertPositionFromFill('ETHUSD', order.side, order.qty, order.entry);
     render();
     showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
   }
@@ -656,8 +674,9 @@
     if (!hit) return false;
     const closingSide = order.side === 'buy' ? 'sell' : 'buy';
     const slPnl = (order.sl.price - order.entry) * order.qty * dir * POINT_VALUE;
-    orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, status: 'filled', type: 'Stop (SL)', time: nowTimeStr() });
-    tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, pnl: slPnl, role: 'close', type: 'Stop (SL)', time: nowTimeStr() });
+    orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, status: 'filled', type: 'Stop (SL)', time: nowTimeStr(), pnl: slPnl });
+    tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, pnl: slPnl, role: 'close', type: 'Stop (SL)', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
+    window.closePositionPct('ETHUSD', 100);
     showToast('Stop loss hit at ' + fmt(order.sl.price) + ' — position closed', 'stop_circle');
     order = null;
     render();
@@ -677,8 +696,9 @@
       const closingSide = order.side === 'buy' ? 'sell' : 'buy';
       const tpQty = Math.max(1, Math.round(order.qty * tp.pct / 100));
       const tpPnl = (tp.price - order.entry) * tpQty * dir * POINT_VALUE;
-      orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: tp.price, status: 'filled', type: 'Limit (TP)', time: nowTimeStr() });
-      tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: tp.price, pnl: tpPnl, role: 'close', type: 'Limit (TP)', time: nowTimeStr() });
+      orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: tp.price, status: 'filled', type: 'Limit (TP)', time: nowTimeStr(), pnl: tpPnl });
+      tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: tp.price, pnl: tpPnl, role: 'close', type: 'Limit (TP)', time: nowTimeStr(), fee: tpQty * QT_FEE_PER_CONTRACT });
+      window.closePositionPct('ETHUSD', tp.pct);
       showToast('TP' + (idx + 1) + ' hit at ' + fmt(tp.price), 'check_circle');
       if (order.sl && order.sl.beTpId === tp.id && !order.sl.beActive) {
         const beCfg = getEffectiveBeConfig();
@@ -886,18 +906,18 @@
       const closeSideCls  = order.side === 'buy' ? 'short' : 'long';
       const closeSideLabel = order.side === 'buy' ? 'Sell' : 'Buy';
 
-      /* Entry row — show before and after fill */
-      const entryStatus = order.filled ? 'filled' : 'working';
-      const entryLabel  = order.filled ? 'Filled' : 'Pending';
-      rows.push(
-        '<tr>' +
-        '<td>' + symCell('ETHUSD', sideCls, sideLabel, 'Entry · ' + order.orderType) + '</td>' +
-        '<td><span class="ord-val-primary">' + order.qty + '</span></td>' +
-        '<td>' + fmt(order.entry) + '</td>' +
-        '<td><span class="bp-status ' + entryStatus + '">' + entryLabel + '</span></td>' +
-        '<td><span class="bp-action-icon" data-cancel-entry="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
-        '</tr>'
-      );
+      /* Entry row — only while still unfilled; once filled, it's a position, not an order */
+      if (!order.filled) {
+        rows.push(
+          '<tr>' +
+          '<td>' + symCell('ETHUSD', sideCls, sideLabel, 'Entry · ' + order.orderType) + '</td>' +
+          '<td><span class="ord-val-primary">' + order.qty + '</span></td>' +
+          '<td>' + fmt(order.entry) + '</td>' +
+          '<td><span class="bp-status working">Pending</span></td>' +
+          '<td><span class="bp-action-icon" data-cancel-entry="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
+          '</tr>'
+        );
+      }
 
       if (order.filled) {
         order.tps.forEach((tp, i) => {
@@ -935,11 +955,19 @@
     if (countEl) countEl.textContent = rows.length > 0 ? '(' + rows.length + ')' : '';
   }
 
+  /* shared P&L cell formatting for Order History / Position History — null (opening fills) shows as a dash */
+  function pnlCellHtml(pnl) {
+    if (pnl === null) return '<span class="ord-val-sub" style="display:inline">—</span>';
+    const pnlCls = pnl >= 0 ? 'up' : 'down';
+    const pnlStr = (pnl >= 0 ? '+' : '') + '$' + fmt(Math.abs(pnl));
+    return '<span class="' + pnlCls + '" style="font-weight:500">' + pnlStr + '</span>';
+  }
+
   function renderOrderHistory() {
     const body = document.getElementById('bpBody-history');
     if (!body) return;
     if (orderHistory.length === 0) {
-      body.innerHTML = '<tr class="bp-empty-row"><td colspan="5">No order history yet.</td></tr>';
+      body.innerHTML = '<tr class="bp-empty-row"><td colspan="6">No order history yet.</td></tr>';
       return;
     }
     body.innerHTML = orderHistory.map(h => {
@@ -951,6 +979,7 @@
         '<td>' + symCell(h.symbol, sideCls, sideLabel, h.type || '') + '</td>' +
         '<td><span class="ord-val-primary">' + h.qty + '</span></td>' +
         '<td>' + fmt(h.price) + '</td>' +
+        '<td>' + pnlCellHtml(h.pnl) + '</td>' +
         '<td><span class="ord-val-sub" style="display:inline">' + h.time + '</span></td>' +
         '<td><span class="bp-status ' + h.status + '">' + statusLabel + '</span></td>' +
         '</tr>'
@@ -962,7 +991,7 @@
     const body = document.getElementById('bpBody-trades');
     if (!body) return;
     if (tradeHistory.length === 0) {
-      body.innerHTML = '<tr class="bp-empty-row"><td colspan="5">No trades yet — executed fills will appear here.</td></tr>';
+      body.innerHTML = '<tr class="bp-empty-row"><td colspan="6">No trades yet — executed fills will appear here.</td></tr>';
       return;
     }
     body.innerHTML = tradeHistory.map(t => {
@@ -973,20 +1002,13 @@
         : t.type === 'Limit (TP)' ? 'Take Profit · Close'
         : t.type === 'Stop (SL)'  ? 'Stop Loss · Close'
         : 'Market Close';
-      let pnlHtml;
-      if (t.pnl === null) {
-        pnlHtml = '<span class="ord-val-sub" style="display:inline">—</span>';
-      } else {
-        const pnlCls = t.pnl >= 0 ? 'up' : 'down';
-        const pnlStr = (t.pnl >= 0 ? '+' : '') + '$' + fmt(Math.abs(t.pnl));
-        pnlHtml = '<span class="' + pnlCls + '" style="font-weight:500">' + pnlStr + '</span>';
-      }
       return (
         '<tr>' +
         '<td>' + symCell(t.symbol, sideCls, sideLabel, subText) + '</td>' +
         '<td><span class="ord-val-primary">' + t.qty + '</span></td>' +
         '<td>' + fmt(t.price) + '</td>' +
-        '<td>' + pnlHtml + '</td>' +
+        '<td>' + pnlCellHtml(t.pnl) + '</td>' +
+        '<td><span class="ord-val-sub" style="display:inline">' + fmtMoney(t.fee) + '</span></td>' +
         '<td><span class="ord-val-sub" style="display:inline">' + t.time + '</span></td>' +
         '</tr>'
       );
@@ -2723,6 +2745,14 @@
   const symSelectLabel = document.getElementById('symSelectLabel');
   const symSelectTabs = document.querySelectorAll('#symSelectTabs .wl-tab');
   let symSelectCat = 'all';
+  /* cosmetic symbol switch — relabels the topbar/watchlist without loading new chart data */
+  function switchSymbol(sym) {
+    symSelectLabel.textContent = sym;
+    document.querySelectorAll('.wl-row.selected').forEach(r => r.classList.remove('selected'));
+    const wlRow = document.querySelector('.wl-row[data-sym="' + sym + '"]');
+    if (wlRow) wlRow.classList.add('selected');
+    showToast('Switched to ' + sym, 'sync_alt');
+  }
   function renderSymSelectList(filter) {
     const q = (filter || '').trim().toUpperCase();
     const items = SYMBOL_LIST.filter(s => (symSelectCat === 'all' || s.cat === symSelectCat) && (!q || s.sym.includes(q)));
@@ -2732,9 +2762,8 @@
     symSelectList.querySelectorAll('.sym-select-item').forEach(it => {
       it.addEventListener('click', (e) => {
         e.stopPropagation();
-        symSelectLabel.textContent = it.dataset.sym;
+        switchSymbol(it.dataset.sym);
         closeAllPopovers();
-        showToast('Switched to ' + it.dataset.sym, 'sync_alt');
       });
     });
   }

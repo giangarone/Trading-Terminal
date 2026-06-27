@@ -660,7 +660,7 @@ table.bp-table tr.total-row td {
 .pos-header-bar,
 .pos-row-summary {
   display: grid;
-  grid-template-columns: minmax(200px, 1.5fr) 90px 130px 130px 140px 90px 44px;
+  grid-template-columns: minmax(180px, 1.2fr) 90px 130px 120px 100px 90px 190px 44px;
   align-items: center;
 }
 
@@ -684,9 +684,13 @@ table.bp-table tr.total-row td {
 .pos-header-bar .pos-col-size,
 .pos-header-bar .pos-col-price,
 .pos-header-bar .pos-col-pnl,
-.pos-header-bar .pos-col-tpsl,
+.pos-header-bar .pos-col-margin,
 .pos-header-bar .pos-col-liq {
   text-align: right;
+}
+
+.pos-header-bar .pos-col-quickclose {
+  text-align: center;
 }
 
 /* ── Rows scroll area ────────────────────────────────────── */
@@ -723,7 +727,7 @@ table.bp-table tr.total-row td {
 .pos-row-summary .pos-col-size,
 .pos-row-summary .pos-col-price,
 .pos-row-summary .pos-col-pnl,
-.pos-row-summary .pos-col-tpsl,
+.pos-row-summary .pos-col-margin,
 .pos-row-summary .pos-col-liq {
   text-align: right;
 }
@@ -783,6 +787,12 @@ table.bp-table tr.total-row td {
   font-weight: var(--fw-semi);
   color: var(--text-primary);
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.pos-sym-ticker:hover,
+.pos-sym-ticker:active {
+  text-decoration: underline;
 }
 
 .pos-sym-sub {
@@ -861,37 +871,73 @@ table.bp-table tr.total-row td {
   margin-top: 3px;
 }
 
-/* ── TP / SL cell ────────────────────────────────────────── */
+/* ── Margin cell ─────────────────────────────────────────── */
 
-.pos-tpsl-line {
+.pos-margin {
+  color: var(--text-secondary);
+}
+
+/* ── Quick close cell ────────────────────────────────────── */
+
+.pos-col-quickclose {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.pos-quick-slider-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 5px;
+  gap: 8px;
 }
 
-.pos-tpsl-line+.pos-tpsl-line {
-  margin-top: 3px;
+.pos-quick-slider {
+  flex: 1;
+  width: auto;
+  height: 3px;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
-.pos-tpsl-tag {
-  font-size: 9px;
-  font-weight: var(--fw-semi);
-  padding: 1px 4px;
-  border-radius: 3px;
-  letter-spacing: var(--ls-label);
-  text-transform: uppercase;
+.pos-quick-pct {
+  font-size: var(--fs-label);
+  color: var(--text-muted);
+  min-width: 30px;
+  text-align: right;
   flex-shrink: 0;
 }
 
-.pos-tpsl-tag.tp {
-  color: var(--long);
-  background: var(--long-dim);
+.pos-quick-btn-row {
+  display: flex;
+  gap: 6px;
 }
 
-.pos-tpsl-tag.sl {
+.pos-quick-btn {
+  flex: 1;
+  height: 24px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-mid);
+  cursor: pointer;
+  border: 1px solid var(--border-default);
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.pos-quick-btn:hover {
+  border-color: var(--border-strong);
+}
+
+.pos-quick-btn.pos-quick-close {
   color: var(--short);
+  border-color: var(--short-border);
   background: var(--short-dim);
+}
+
+.pos-quick-btn.pos-quick-close:hover {
+  background: var(--short-border);
 }
 
 /* ── Actions cell ────────────────────────────────────────── */
