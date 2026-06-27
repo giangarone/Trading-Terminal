@@ -179,8 +179,8 @@
   background: var(--accent-dim);
   border: 1px solid var(--accent-border);
   border-radius: var(--r-pill);
-  padding: 1px 5px;
-  line-height: 1.4;
+  padding: 2px 5px;
+  line-height: 1;
 }
 
 .ind-panes {
@@ -232,7 +232,7 @@
 }
 
 .ind-premium-title {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: var(--fw-semi);
   letter-spacing: var(--ls-ui);
   color: var(--text-primary);
@@ -245,7 +245,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  backdrop-filter: blur(9px);
+  backdrop-filter: blur(12px);
   transition: opacity var(--t-mid), transform var(--t-mid);
 }
 
@@ -274,7 +274,7 @@
   color: var(--accent);
   background: var(--accent-dim);
   border: 1px solid var(--accent-border);
-  border-radius: 50%;
+  border-radius: 14px;
   padding: 10px;
 }
 
