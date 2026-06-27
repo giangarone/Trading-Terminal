@@ -198,7 +198,7 @@
 }
 
 .ind-pane-left {
-  flex: 1.05;
+  flex: 1;
 }
 
 .ind-pane-right {
@@ -210,6 +210,17 @@
   width: 1px;
   flex-shrink: 0;
   background: var(--border-subtle);
+}
+
+/* single-category view (any tab except "All") shows just the relevant pane at full width */
+.ind-panes.show-left-only .ind-pane-right,
+.ind-panes.show-left-only .ind-pane-divider {
+  display: none;
+}
+
+.ind-panes.show-right-only .ind-pane-left,
+.ind-panes.show-right-only .ind-pane-divider {
+  display: none;
 }
 
 .ind-premium-head {
@@ -225,11 +236,6 @@
   font-weight: var(--fw-semi);
   letter-spacing: var(--ls-ui);
   color: var(--text-primary);
-}
-
-.ind-premium-wrap.locked {
-  opacity: .45;
-  pointer-events: none;
 }
 
 .ind-lock-overlay {

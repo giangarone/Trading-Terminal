@@ -2803,7 +2803,9 @@
   const indActiveOnlyToggle = document.getElementById('indActiveOnlyToggle');
   const indActiveOnlyCheck = document.getElementById('indActiveOnlyCheck');
   const indPremiumList = document.getElementById('indPremiumList');
-  const indPremiumWrap = document.querySelector('.ind-premium-wrap');
+  const indPremiumEmpty = document.getElementById('indPremiumEmpty');
+  const indPremiumEmptyIcon = document.getElementById('indPremiumEmptyIcon');
+  const indPremiumEmptyText = document.getElementById('indPremiumEmptyText');
   const indProLockOverlay = document.getElementById('indProLockOverlay');
   const indGetProBtn = document.getElementById('indGetProBtn');
 
@@ -2867,7 +2869,7 @@
     row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}${flagshipBadge}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ui-toggle" aria-label="Toggle ${d.name}"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>`;
     row.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (isFlagship && !indProUnlocked) return;
+      if (isFlagship && !indProUnlocked) { showIndLockOverlay(); return; }
       const on = !indState.get(d.name);
       indState.set(d.name, on);
       updateIndicatorsCount();
@@ -2910,10 +2912,11 @@
     indEmpty.style.display = anyVisible ? 'none' : 'flex';
   }
 
-  function renderIndRightPane(query) {
+  function renderIndRightPane(query, cats) {
     indPremiumList.innerHTML = '';
     const q = (query || '').toLowerCase().trim();
-    FLAGSHIP_CATS.forEach(g => {
+    let anyVisible = false;
+    cats.forEach(g => {
       const rows = IND_DATA.filter(d => {
         if (d.cat !== g) return false;
         if (indShowActiveOnly && !indState.get(d.name)) return false;
@@ -2921,31 +2924,47 @@
         return true;
       });
       if (!rows.length) return;
+      anyVisible = true;
       const lbl = document.createElement('div');
       lbl.className = 'ind-group-label flagship';
-      lbl.innerHTML = `${CAT_LABELS[g]}<span class="ind-pro-badge">PRO</span>`;
+      lbl.textContent = CAT_LABELS[g];
       indPremiumList.appendChild(lbl);
       rows.forEach(d => indPremiumList.appendChild(buildIndRow(d, true)));
     });
+    const noActiveYet = indShowActiveOnly && !q && !anyVisible;
+    indPremiumEmptyIcon.textContent = noActiveYet ? 'toggle_off' : 'search_off';
+    indPremiumEmptyText.textContent = noActiveYet ? 'No active indicators yet' : 'No indicators match your search';
+    indPremiumEmpty.style.display = anyVisible ? 'none' : 'flex';
   }
 
+  const indPanes = document.querySelector('.ind-panes');
   function renderIndList(query, cat) {
-    renderIndLeftPane(query, cat);
-    renderIndRightPane(query);
+    hideIndLockOverlay();
+    const isAll = cat === 'all';
+    const isFlagshipCat = FLAGSHIP_CATS.includes(cat);
+    indPanes.classList.toggle('show-left-only', !isAll && !isFlagshipCat);
+    indPanes.classList.toggle('show-right-only', !isAll && isFlagshipCat);
+    if (isAll || !isFlagshipCat) renderIndLeftPane(query, cat);
+    if (isAll || isFlagshipCat) renderIndRightPane(query, isAll ? FLAGSHIP_CATS : [cat]);
   }
 
-  function syncIndLockState() {
-    indPremiumWrap.classList.toggle('locked', !indProUnlocked);
-    indProLockOverlay.classList.toggle('hidden', indProUnlocked);
-  }
-  syncIndLockState();
+  /* the lock overlay starts hidden so users can see the real ChartPrime Intelligence
+     indicators behind it — it only appears when they try to activate one while locked */
+  function showIndLockOverlay() { indProLockOverlay.classList.remove('hidden'); }
+  function hideIndLockOverlay() { indProLockOverlay.classList.add('hidden'); }
+  hideIndLockOverlay();
+  indProLockOverlay.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (e.target.closest('.ind-lock-card')) return;
+    hideIndLockOverlay();
+  });
 
   indGetProBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     indProLockOverlay.classList.add('removing');
     setTimeout(() => {
       indProUnlocked = true;
-      syncIndLockState();
+      hideIndLockOverlay();
       indProLockOverlay.classList.remove('removing');
       showToast('Pro unlocked — ChartPrime Intelligence™ is now active', 'workspace_premium');
     }, 200);
