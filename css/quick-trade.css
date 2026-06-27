@@ -3,8 +3,8 @@
   display: grid;
   grid-template-columns: .75fr .75fr 1fr;
   gap: 3px;
-  background: var(--ink-800);
-  border: 1px solid var(--line-2);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
   border-radius: 9px;
   padding: 3px;
   margin-bottom: 14px;
@@ -20,7 +20,7 @@
   font-weight: 600;
   padding: 8px 0;
   border-radius: 7px;
-  color: var(--paper-300);
+  color: var(--text-secondary);
   background: transparent;
   border: 1px solid transparent;
 }
@@ -35,13 +35,13 @@
 }
 
 .qt-tab:hover:not(.active) {
-  color: var(--paper-100);
-  background: var(--ink-750);
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 .qt-tab.active {
-  color: var(--paper-100);
-  background: var(--ink-750);
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 .qt-tab-panel {
@@ -59,8 +59,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  background: var(--ink-800);
-  border: 1px solid var(--line-2);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
   border-radius: 7px;
   padding: 8px 10px;
   font-family: var(--sans);
@@ -71,7 +71,7 @@
 
 .text-input-qt .material-symbols-outlined {
   font-size: 14px;
-  color: var(--paper-500);
+  color: var(--text-muted);
 }
 
 .text-input-qt .price-edit-input {
@@ -80,7 +80,7 @@
   background: transparent;
   border: none;
   outline: none;
-  color: var(--paper-50);
+  color: var(--text-primary);
   font-family: var(--sans);
   font-size: 13px;
   font-weight: 600;
@@ -94,7 +94,7 @@
   cursor: pointer;
   font-size: 12.5px;
   font-weight: 500;
-  color: var(--paper-100);
+  color: var(--text-primary);
   margin: 12px 0 0;
 }
 
@@ -110,20 +110,20 @@
 
 .tpsl-field-input {
   width: 100%;
-  background: var(--ink-800);
-  border: 1px solid var(--line-2);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
   border-radius: 7px;
   padding: 8px 10px;
   font-family: var(--sans);
   font-size: 13px;
   font-weight: 600;
-  color: var(--paper-100);
+  color: var(--text-primary);
   flex: 1.4;
   min-width: 0;
 }
 
 .tpsl-field-input::placeholder {
-  color: var(--paper-500);
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -138,8 +138,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  background: var(--ink-800);
-  border: 1px solid var(--line-2);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
   border-radius: 7px;
   padding: 0 8px 0 10px;
   min-width: 0;
@@ -158,12 +158,12 @@
   font-family: var(--sans);
   font-size: 13px;
   font-weight: 600;
-  color: var(--paper-100);
+  color: var(--text-primary);
   padding: 8px 0;
 }
 
 .tpsl-offset-field input::placeholder {
-  color: var(--paper-500);
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -173,14 +173,14 @@
   gap: 1px;
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--paper-300);
+  color: var(--text-secondary);
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .tpsl-offset-unit .material-symbols-outlined {
   font-size: 15px;
-  color: var(--paper-500);
+  color: var(--text-muted);
 }
 
 .text-input-qt.info {
@@ -188,8 +188,8 @@
   gap: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--paper-300);
-  background: var(--ink-750);
+  color: var(--text-secondary);
+  background: var(--bg-hover);
 }
 
 .text-input-qt.info .material-symbols-outlined {
@@ -199,7 +199,7 @@
 
 .qt-sep {
   height: 1px;
-  background: var(--line-1);
+  background: var(--border-subtle);
   margin: 14px 0;
 }
 
@@ -217,7 +217,7 @@
 .qt-vsep {
   width: 1px;
   flex-shrink: 0;
-  background: var(--line-1);
+  background: var(--border-subtle);
 }
 
 /* ====== Quick Trade: advanced order types (Stop Limit / Stop Market / Trailing Stop / MIT) ====== */
@@ -235,8 +235,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--ink-800);
-  border: 1px solid var(--line-2);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
   border-radius: 7px;
   padding: 0 0 0 10px;
   overflow: hidden;
@@ -252,17 +252,17 @@
   font-family: var(--sans);
   font-size: 13px;
   font-weight: 600;
-  color: var(--paper-100);
+  color: var(--text-primary);
   padding: 8px 0;
 }
 
 .price-stepper input::placeholder {
-  color: var(--paper-500);
+  color: var(--text-muted);
   font-weight: 500;
 }
 
 .price-stepper input:disabled {
-  color: var(--paper-500);
+  color: var(--text-muted);
 }
 
 .price-stepper .qty-unit {
@@ -272,7 +272,7 @@
 .price-stepper-arrows {
   display: flex;
   flex-direction: column;
-  border-left: 1px solid var(--line-2);
+  border-left: 1px solid var(--border-default);
   flex-shrink: 0;
 }
 
@@ -281,7 +281,7 @@
   height: 17px;
   background: transparent;
   border: none;
-  color: var(--paper-500);
+  color: var(--text-muted);
   line-height: 1;
   display: flex;
   align-items: center;
@@ -293,12 +293,12 @@
 }
 
 .price-stepper-arrows button:first-child {
-  border-bottom: 1px solid var(--line-2);
+  border-bottom: 1px solid var(--border-default);
 }
 
 .price-stepper-arrows button:hover {
-  color: var(--paper-100);
-  background: var(--ink-750);
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 .qt-side-btn {
@@ -308,25 +308,25 @@
   border-radius: 7px;
   font-size: 11.5px;
   font-weight: 600;
-  background: var(--ink-800);
-  border: 1px solid var(--line-2);
-  color: var(--paper-300);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
 .qt-side-btn:hover {
-  color: var(--paper-100);
-  border-color: var(--line-3);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
 .qt-side-btn.active {
-  color: var(--paper-50);
-  background: var(--ink-750);
-  border-color: var(--line-3);
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
 }
 
 .qt-disabled-row {
-  color: var(--paper-500) !important;
+  color: var(--text-muted) !important;
 }
 
 .qt-slider-block {
@@ -340,7 +340,7 @@
   appearance: none;
   height: 4px;
   border-radius: 2px;
-  background: var(--line-2);
+  background: var(--border-default);
   cursor: pointer;
 }
 
@@ -349,33 +349,33 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--paper-300);
+  background: var(--text-secondary);
   cursor: pointer;
-  border: 3px solid var(--ink-900);
-  box-shadow: 0 0 0 1px var(--paper-300);
+  border: 3px solid var(--bg-base);
+  box-shadow: 0 0 0 1px var(--text-secondary);
 }
 
 .qt-slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--paper-300);
+  background: var(--text-secondary);
   cursor: pointer;
-  border: 3px solid var(--ink-900);
-  box-shadow: 0 0 0 1px var(--paper-300);
+  border: 3px solid var(--bg-base);
+  box-shadow: 0 0 0 1px var(--text-secondary);
 }
 
 .qt-tick-row {
   display: flex;
   justify-content: space-between;
   font-size: 9px;
-  color: var(--paper-500);
+  color: var(--text-muted);
 }
 
 .qt-est-val {
   font-size: 13px;
   font-weight: 600;
-  color: var(--paper-100);
+  color: var(--text-primary);
   font-family: var(--sans);
 }
 
@@ -385,7 +385,7 @@
   justify-content: space-between;
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid var(--line-1);
+  border-top: 1px solid var(--border-subtle);
   font-size: 11.5px;
 }
 
@@ -396,24 +396,24 @@
 }
 
 .qt-footer-item .l {
-  color: var(--paper-500);
+  color: var(--text-muted);
 }
 
 .qt-footer-item .v {
   font-family: var(--sans);
   font-weight: 600;
-  color: var(--paper-100);
+  color: var(--text-primary);
 }
 
 .qt-info-ic {
   font-size: 14px;
-  color: var(--paper-500);
+  color: var(--text-muted);
   cursor: help;
 }
 
 .ai-ask-desc {
   font-size: 11px;
-  color: var(--paper-500);
+  color: var(--text-muted);
   margin: -2px 0 12px;
   line-height: 1.4;
 }
@@ -428,15 +428,15 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  background: var(--ink-800);
-  border: 1px solid var(--line-2);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
   border-radius: 8px;
   padding: 10px 11px;
   min-width: 0;
 }
 
 .ai-ask-field:focus-within {
-  border-color: var(--line-3);
+  border-color: var(--border-strong);
 }
 
 .ai-ask-field .material-symbols-outlined {
@@ -452,12 +452,12 @@
   border: none;
   outline: none;
   font-size: 12.5px;
-  color: var(--paper-100);
+  color: var(--text-primary);
   font-family: var(--sans);
 }
 
 .ai-ask-field input::placeholder {
-  color: var(--paper-500);
+  color: var(--text-muted);
 }
 
 .ai-ask-send {
@@ -494,10 +494,10 @@
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: var(--ink-850);
-  border: 1px solid var(--line-2);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-md);
-  color: var(--paper-500);
+  color: var(--text-muted);
   font-size: 11.5px;
 }
 
@@ -538,13 +538,13 @@
 }
 
 .ai-response-box {
-  background: var(--ink-850);
-  border: 1px solid var(--line-2);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   padding: 10px 12px;
   font-size: 12px;
   line-height: 1.55;
-  color: var(--paper-300);
+  color: var(--text-secondary);
   animation: aiFadeIn .25s ease;
 }
 
@@ -581,7 +581,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 7px 0;
-  border-top: 1px solid var(--line-1);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .l2-row:first-of-type {
@@ -593,7 +593,7 @@
   align-items: center;
   gap: 7px;
   font-size: 12px;
-  color: var(--paper-300);
+  color: var(--text-secondary);
 }
 
 .l2-dot {
@@ -633,7 +633,7 @@
 .gauge-caption .eyebrow {
   font-size: 9.5px;
   letter-spacing: .12em;
-  color: var(--paper-500);
+  color: var(--text-muted);
   text-transform: uppercase;
 }
 

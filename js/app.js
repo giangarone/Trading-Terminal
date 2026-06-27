@@ -519,7 +519,7 @@
     return q.toFixed(2);
   }
   function qtSliderFill(pct) {
-    qtSlider.style.background = 'linear-gradient(to right, var(--paper-300) 0%, var(--paper-300) ' + pct + '%, var(--line-2) ' + pct + '%, var(--line-2) 100%)';
+    qtSlider.style.background = 'linear-gradient(to right, var(--border-strong) 0%, var(--border-strong) ' + pct + '%, var(--border-default) ' + pct + '%, var(--border-default) 100%)';
   }
   function qtSliderTickLabel(val) {
     if (qtAmountMode === 'Quantity') return qtFmtQty(val) + ' ' + QT_INSTRUMENT_UNIT;
@@ -1224,6 +1224,10 @@
     return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
   let secondaryPanes = []; // [{canvas, container}] — live panes other than the primary
+  window.ttRepaintChart = () => {
+    drawPriceChart();
+    secondaryPanes.forEach(({ canvas, container }) => drawPriceChart(canvas, container.getBoundingClientRect()));
+  };
 
   function drawPriceChart(secCanvas, secRect) {
     const targetCanvas = secCanvas || priceCanvas;
@@ -1240,8 +1244,10 @@
 
     const plotW = Math.max(0, w - AXIS_RIGHT_W);
     const ih = Math.max(0, h - AXIS_BOTTOM_H);
-    const upColor = '#2bd47e', downColor = '#f2495c';
-    const axisLineColor = '#262e35', labelColor = '#5c6770';
+    const themeVars = getComputedStyle(document.documentElement);
+    const themeColor = (name) => themeVars.getPropertyValue(name).trim();
+    const upColor = themeColor('--long'), downColor = themeColor('--short');
+    const axisLineColor = themeColor('--border-default'), labelColor = themeColor('--text-muted');
 
     const n = candleBars.length;
     const slotCount = VISIBLE_BARS + FUTURE_BARS;
@@ -1324,7 +1330,7 @@
     /* ---- highlighted current-price tag ---- */
     ctx.fillStyle = tagColor;
     ctx.fillRect(plotW, tagY - 9, AXIS_RIGHT_W, 18);
-    ctx.fillStyle = '#0b0f10';
+    ctx.fillStyle = themeColor('--on-signal');
     ctx.font = '600 11px "IBM Plex Sans", sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -1334,21 +1340,21 @@
     function drawOrderAxisTagOutline(price, color, highlighted) {
       const y = clamp(priceToY(price, h), 8, h - 8);
       const hh = highlighted ? 20 : 18;
-      ctx.fillStyle = highlighted ? color : '#0c1014';
+      ctx.fillStyle = highlighted ? color : themeColor('--bg-base');
       ctx.fillRect(plotW, y - hh / 2, AXIS_RIGHT_W, hh);
       ctx.strokeStyle = color;
       ctx.lineWidth = highlighted ? 1.5 : 1;
       ctx.strokeRect(plotW + 0.5, y - hh / 2 + 0.5, AXIS_RIGHT_W - 1, hh - 1);
-      ctx.fillStyle = highlighted ? '#0c1014' : color;
+      ctx.fillStyle = highlighted ? themeColor('--bg-base') : color;
       ctx.font = '600 11px "IBM Plex Sans", sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(fmt(price), plotW + 8, y + 0.5);
     }
     if (isPrimary && order) {
-      order.tps.forEach(tp => drawOrderAxisTagOutline(tp.price, '#2bd47e', hoveredHandle === 'tp:' + tp.id));
-      if (order.sl) drawOrderAxisTagOutline(order.sl.price, '#f2495c', hoveredHandle === 'sl');
-      drawOrderAxisTagOutline(order.entry, order.side === 'buy' ? '#2bd47e' : '#f2495c', hoveredHandle === 'entry');
+      order.tps.forEach(tp => drawOrderAxisTagOutline(tp.price, upColor, hoveredHandle === 'tp:' + tp.id));
+      if (order.sl) drawOrderAxisTagOutline(order.sl.price, downColor, hoveredHandle === 'sl');
+      drawOrderAxisTagOutline(order.entry, order.side === 'buy' ? upColor : downColor, hoveredHandle === 'entry');
     }
 
     /* ---- crosshair: dotted guide lines + axis labels at cursor ---- */
@@ -1356,7 +1362,7 @@
       const cx = clamp(crosshair.x, 0, plotW);
       const cy = clamp(crosshair.y, 0, ih);
       ctx.save();
-      ctx.strokeStyle = 'rgba(152,164,172,.5)';
+      ctx.strokeStyle = themeColor('--crosshair-line');
       ctx.lineWidth = 1;
       ctx.setLineDash([3, 3]);
       ctx.beginPath();
@@ -1365,13 +1371,14 @@
       ctx.stroke();
       ctx.restore();
 
+      const tooltipBg = themeColor('--bg-input'), tooltipBorder = themeColor('--border-strong'), tooltipText = themeColor('--text-primary');
       const hoverPrice = yToPrice(cy, h);
-      ctx.fillStyle = '#161d22';
-      ctx.strokeStyle = '#36414b';
+      ctx.fillStyle = tooltipBg;
+      ctx.strokeStyle = tooltipBorder;
       ctx.lineWidth = 1;
       ctx.fillRect(plotW, cy - 9, AXIS_RIGHT_W, 18);
       ctx.strokeRect(plotW + 0.5, cy - 8.5, AXIS_RIGHT_W - 1, 17);
-      ctx.fillStyle = '#e9edf0';
+      ctx.fillStyle = tooltipText;
       ctx.font = '600 11px "IBM Plex Sans", sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
@@ -1382,10 +1389,10 @@
       ctx.font = '600 11px "IBM Plex Sans", sans-serif';
       const tw = ctx.measureText(timeLabel).width + 16;
       const tx = clamp(cx - tw / 2, 0, plotW - tw);
-      ctx.fillStyle = '#161d22';
+      ctx.fillStyle = tooltipBg;
       ctx.fillRect(tx, ih, tw, AXIS_BOTTOM_H);
       ctx.strokeRect(tx + 0.5, ih + 0.5, tw - 1, AXIS_BOTTOM_H - 1);
-      ctx.fillStyle = '#e9edf0';
+      ctx.fillStyle = tooltipText;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(timeLabel, tx + tw / 2, ih + AXIS_BOTTOM_H / 2 + 0.5);
@@ -2657,6 +2664,10 @@
   const indActiveLabel = document.getElementById('indActiveLabel');
   const indActiveOnlyToggle = document.getElementById('indActiveOnlyToggle');
   const indActiveOnlyCheck = document.getElementById('indActiveOnlyCheck');
+  const indPremiumList = document.getElementById('indPremiumList');
+  const indPremiumWrap = document.querySelector('.ind-premium-wrap');
+  const indProLockOverlay = document.getElementById('indProLockOverlay');
+  const indGetProBtn = document.getElementById('indGetProBtn');
 
   const IND_DATA = [
     { name: 'Moving Average', desc: 'Smooths price to show overall trend direction.', cat: 'classic' },
@@ -2708,15 +2719,37 @@
   const indState = new Map(IND_DATA.map(d => [d.name, false]));
 
   let indShowActiveOnly = false;
+  let indProUnlocked = false;
 
-  function renderIndList(query, cat) {
+  function buildIndRow(d, isFlagship) {
+    const row = document.createElement('div');
+    row.className = 'ind-row' + (indState.get(d.name) ? ' active' : '') + (isFlagship ? ' flagship' : '');
+    row.dataset.name = d.name;
+    const flagshipBadge = isFlagship ? '<span class="ind-pro-badge">PRO</span>' : '';
+    row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}${flagshipBadge}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ui-toggle" aria-label="Toggle ${d.name}"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>`;
+    row.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (isFlagship && !indProUnlocked) return;
+      const on = !indState.get(d.name);
+      indState.set(d.name, on);
+      updateIndicatorsCount();
+      showToast(d.name + (on ? ' enabled' : ' disabled'), 'function');
+      if (indShowActiveOnly) {
+        renderIndList(getIndSearch(), indActiveCat);
+      } else {
+        row.classList.toggle('active', on);
+      }
+    });
+    return row;
+  }
+
+  function renderIndLeftPane(query, cat) {
     indicatorList.innerHTML = '';
     const q = (query || '').toLowerCase().trim();
     const showCat = cat === 'all' ? null : cat;
     let anyVisible = false;
-    const groups = showCat ? [showCat] : ['classic', 'chartprime', 'l1', 'l2'];
+    const groups = showCat ? [showCat] : ['classic', 'chartprime'];
     groups.forEach(g => {
-      const isFlagship = FLAGSHIP_CATS.includes(g);
       const rows = IND_DATA.filter(d => {
         if (d.cat !== g) return false;
         if (indShowActiveOnly && !indState.get(d.name)) return false;
@@ -2727,36 +2760,58 @@
       anyVisible = true;
       if (!showCat) {
         const lbl = document.createElement('div');
-        lbl.className = 'ind-group-label' + (isFlagship ? ' flagship' : '');
-        lbl.innerHTML = isFlagship ? `${CAT_LABELS[g]}<span class="ind-pro-badge">PRO</span>` : CAT_LABELS[g];
+        lbl.className = 'ind-group-label';
+        lbl.textContent = CAT_LABELS[g];
         indicatorList.appendChild(lbl);
       }
-      rows.forEach(d => {
-        const row = document.createElement('div');
-        row.className = 'ind-row' + (indState.get(d.name) ? ' active' : '') + (isFlagship ? ' flagship' : '');
-        row.dataset.name = d.name;
-        const flagshipBadge = isFlagship ? '<span class="ind-pro-badge">PRO</span>' : '';
-        row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}${flagshipBadge}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ui-toggle" aria-label="Toggle ${d.name}"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>`;
-        row.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const on = !indState.get(d.name);
-          indState.set(d.name, on);
-          updateIndicatorsCount();
-          showToast(d.name + (on ? ' enabled' : ' disabled'), 'function');
-          if (indShowActiveOnly) {
-            renderIndList(getIndSearch(), indActiveCat);
-          } else {
-            row.classList.toggle('active', on);
-          }
-        });
-        indicatorList.appendChild(row);
-      });
+      rows.forEach(d => indicatorList.appendChild(buildIndRow(d, false)));
     });
     const noActiveYet = indShowActiveOnly && !q && !anyVisible;
     indEmptyIcon.textContent = noActiveYet ? 'toggle_off' : 'search_off';
     indEmptyText.textContent = noActiveYet ? 'No active indicators yet' : 'No indicators match your search';
     indEmpty.style.display = anyVisible ? 'none' : 'flex';
   }
+
+  function renderIndRightPane(query) {
+    indPremiumList.innerHTML = '';
+    const q = (query || '').toLowerCase().trim();
+    FLAGSHIP_CATS.forEach(g => {
+      const rows = IND_DATA.filter(d => {
+        if (d.cat !== g) return false;
+        if (indShowActiveOnly && !indState.get(d.name)) return false;
+        if (q && !d.name.toLowerCase().includes(q) && !d.desc.toLowerCase().includes(q)) return false;
+        return true;
+      });
+      if (!rows.length) return;
+      const lbl = document.createElement('div');
+      lbl.className = 'ind-group-label flagship';
+      lbl.innerHTML = `${CAT_LABELS[g]}<span class="ind-pro-badge">PRO</span>`;
+      indPremiumList.appendChild(lbl);
+      rows.forEach(d => indPremiumList.appendChild(buildIndRow(d, true)));
+    });
+  }
+
+  function renderIndList(query, cat) {
+    renderIndLeftPane(query, cat);
+    renderIndRightPane(query);
+  }
+
+  function syncIndLockState() {
+    indPremiumWrap.classList.toggle('locked', !indProUnlocked);
+    indProLockOverlay.classList.toggle('hidden', indProUnlocked);
+  }
+  syncIndLockState();
+
+  indGetProBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    indProLockOverlay.classList.add('removing');
+    setTimeout(() => {
+      indProUnlocked = true;
+      syncIndLockState();
+      indProLockOverlay.classList.remove('removing');
+      showToast('Pro unlocked — ChartPrime Intelligence™ is now active', 'workspace_premium');
+    }, 200);
+  });
 
   function updateIndicatorsCount() {
     const n = [...indState.values()].filter(Boolean).length;

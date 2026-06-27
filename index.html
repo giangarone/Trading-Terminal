@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trading Terminal</title>
+  <script src="js/theme-init.js?v=2"></script>
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,19 +14,19 @@
     rel="stylesheet">
 
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
-  <link rel="stylesheet" href="css/tokens.css?v=2">
-  <link rel="stylesheet" href="css/topbar.css?v=2">
-  <link rel="stylesheet" href="css/left-panel.css?v=2">
-  <link rel="stylesheet" href="css/center-panel.css?v=3">
-  <link rel="stylesheet" href="css/workspace.css?v=5">
-  <link rel="stylesheet" href="css/right-panel.css?v=2">
-  <link rel="stylesheet" href="css/quick-trade.css?v=2">
-  <link rel="stylesheet" href="css/status-bar.css?v=2">
-  <link rel="stylesheet" href="css/order-lines.css?v=2">
-  <link rel="stylesheet" href="css/market-scanner.css?v=2">
-  <link rel="stylesheet" href="css/indicators.css?v=2">
-  <link rel="stylesheet" href="css/chart-settings.css?v=2">
-  <link rel="stylesheet" href="css/trading-journal.css?v=5">
+  <link rel="stylesheet" href="css/tokens.css?v=7">
+  <link rel="stylesheet" href="css/topbar.css?v=3">
+  <link rel="stylesheet" href="css/left-panel.css?v=3">
+  <link rel="stylesheet" href="css/center-panel.css?v=4">
+  <link rel="stylesheet" href="css/workspace.css?v=6">
+  <link rel="stylesheet" href="css/right-panel.css?v=3">
+  <link rel="stylesheet" href="css/quick-trade.css?v=3">
+  <link rel="stylesheet" href="css/status-bar.css?v=3">
+  <link rel="stylesheet" href="css/order-lines.css?v=3">
+  <link rel="stylesheet" href="css/market-scanner.css?v=5">
+  <link rel="stylesheet" href="css/indicators.css?v=6">
+  <link rel="stylesheet" href="css/chart-settings.css?v=5">
+  <link rel="stylesheet" href="css/trading-journal.css?v=6">
 </head>
 
 <body>
@@ -42,7 +43,7 @@
           <div class="symbol-block">
             <div class="symbol-select pop-trigger" id="symSelectTrigger">
               <span class="sym" id="symSelectLabel">ETHUSD</span>
-              <span class="material-symbols-outlined" style="font-size:16px;color:var(--paper-500);">expand_more</span>
+              <span class="material-symbols-outlined" style="font-size:16px;color:var(--text-muted);">expand_more</span>
             </div>
           </div>
 
@@ -107,6 +108,8 @@
             <span class="tb-account-balance" id="accountSelectBalance">$52,430.00</span>
             <span class="material-symbols-outlined tb-account-caret">expand_more</span>
           </div>
+          <button class="ct-icon" id="themeToggleBtn" aria-label="Switch to light theme"><span
+              class="material-symbols-outlined" id="themeToggleIcon">dark_mode</span></button>
           <button class="ct-icon pop-trigger" id="alertsTrigger"><span
               class="material-symbols-outlined">notifications</span></button>
           <button class="ct-icon pop-trigger" id="settingsTrigger"><span
@@ -1769,7 +1772,7 @@
         </div>
         <div class="cs-footer">
           <div class="select-input pop-trigger cs-footer-template-trigger" id="csFooterTemplateTrigger">
-            <span class="material-symbols-outlined" style="font-size:15px;color:var(--paper-500);">bookmark</span>
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted);">bookmark</span>
             <span class="cs-select-label" id="csFooterTemplateName">Scalping</span>
             <span class="material-symbols-outlined">expand_more</span>
           </div>
@@ -3001,18 +3004,19 @@
                   <stop offset="100%" style="stop-color:var(--long);" />
                 </linearGradient>
               </defs>
-              <path d="M 24 120 A 96 96 0 0 1 216 120" fill="none" style="stroke:var(--ink-750);" stroke-width="20"
+              <path d="M 24 120 A 96 96 0 0 1 216 120" fill="none" style="stroke:var(--bg-hover);" stroke-width="20"
                 stroke-linecap="round" />
               <path d="M 24 120 A 96 96 0 0 1 216 120" fill="none" stroke="url(#gaugeGrad)" stroke-width="14"
                 stroke-linecap="round" opacity="0.95" />
-              <line x1="120" y1="120" x2="189" y2="71" style="stroke:var(--paper-100);" stroke-width="3"
+              <line x1="120" y1="120" x2="189" y2="71" style="stroke:var(--text-primary);" stroke-width="3"
                 stroke-linecap="round" />
-              <circle cx="120" cy="120" r="7" style="fill:var(--ink-850);stroke:var(--line-3);" stroke-width="1.5" />
-              <text x="24" y="140" font-size="8.5" text-anchor="start" style="fill:var(--paper-500);"
+              <circle cx="120" cy="120" r="7" style="fill:var(--bg-surface);stroke:var(--border-strong);"
+                stroke-width="1.5" />
+              <text x="24" y="140" font-size="8.5" text-anchor="start" style="fill:var(--text-muted);"
                 font-family="IBM Plex Sans" letter-spacing="0.5">BEARISH</text>
-              <text x="120" y="9" font-size="8.5" text-anchor="middle" style="fill:var(--paper-500);"
+              <text x="120" y="9" font-size="8.5" text-anchor="middle" style="fill:var(--text-muted);"
                 font-family="IBM Plex Sans" letter-spacing="0.5">NEUTRAL</text>
-              <text x="216" y="140" font-size="8.5" text-anchor="end" style="fill:var(--paper-500);"
+              <text x="216" y="140" font-size="8.5" text-anchor="end" style="fill:var(--text-muted);"
                 font-family="IBM Plex Sans" letter-spacing="0.5">BULLISH</text>
             </svg>
             <div class="gauge-caption">
@@ -3049,7 +3053,7 @@
     <footer class="statusbar">
       <div class="sb-left">
         <span class="sb-item"><span class="sb-dot"></span>Connected</span>
-        <span class="sb-item">Server: <b style="color:var(--paper-300);font-weight:500;">NY4</b></span>
+        <span class="sb-item">Server: <b style="color:var(--text-secondary);font-weight:500;">NY4</b></span>
         <span class="sb-item">Data: <span class="live-pill">LIVE</span></span>
       </div>
       <div class="sb-right">
@@ -3147,7 +3151,7 @@
   </div>
 
 
-<!-- ===================== MORE TIMEFRAMES DROPDOWN ===================== -->
+  <!-- ===================== MORE TIMEFRAMES DROPDOWN ===================== -->
   <div class="pop-menu tf-more-menu" id="tfMoreMenu">
     <div class="pop-menu-label">Timeframe</div>
     <button class="pop-item" data-tf="1m">1m</button>
@@ -3257,16 +3261,34 @@
       <button class="ind-cat active" data-cat="all">All</button>
       <button class="ind-cat" data-cat="classic">Classic Indicators</button>
       <button class="ind-cat" data-cat="chartprime">ChartPrime</button>
-      <button class="ind-cat flagship" data-cat="l1">Trade Flow Intelligence (L1)<span
-          class="ind-pro-badge">PRO</span></button>
-      <button class="ind-cat flagship" data-cat="l2">Order Book Intelligence (L2)<span
-          class="ind-pro-badge">PRO</span></button>
     </div>
-    <div class="ind-list-wrap">
-      <div class="ind-list" id="indicatorList"></div>
-      <div class="ind-empty" id="indEmpty" style="display:none;">
-        <span class="material-symbols-outlined" id="indEmptyIcon">search_off</span>
-        <span id="indEmptyText">No indicators match your search</span>
+    <div class="ind-panes">
+      <div class="ind-pane ind-pane-left">
+        <div class="ind-list-wrap">
+          <div class="ind-list" id="indicatorList"></div>
+          <div class="ind-empty" id="indEmpty" style="display:none;">
+            <span class="material-symbols-outlined" id="indEmptyIcon">search_off</span>
+            <span id="indEmptyText">No indicators match your search</span>
+          </div>
+        </div>
+      </div>
+      <div class="ind-pane-divider"></div>
+      <div class="ind-pane ind-pane-right">
+        <div class="ind-list-wrap ind-premium-wrap">
+          <div class="ind-list" id="indPremiumList"></div>
+        </div>
+        <div class="ind-lock-overlay" id="indProLockOverlay">
+          <div class="ind-lock-card">
+            <span class="material-symbols-outlined ind-lock-icon">lock</span>
+            <div class="ind-premium-head">
+              <span class="ind-premium-title">ChartPrime Intelligence™</span>
+              <span class="ind-pro-badge">PRO</span>
+            </div>
+            <p class="ind-lock-copy">L1 &amp; L2 deliver the deepest order flow and order book insight, available
+              exclusively on the Pro plan.</p>
+            <button class="ind-get-pro-btn" id="indGetProBtn">Get Pro</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="float-panel-footer">
@@ -4001,15 +4023,16 @@
         <div class="jc-grid" id="tjModalGrid"></div>
         <div class="jc-legend">
           <div class="jc-legend-item">
-            <span class="jc-legend-dot" style="background:rgba(43,212,126,.5);"></span>
+            <span class="jc-legend-dot" style="background:var(--long-border);"></span>
             Profitable day
           </div>
           <div class="jc-legend-item">
-            <span class="jc-legend-dot" style="background:rgba(242,73,92,.5);"></span>
+            <span class="jc-legend-dot" style="background:var(--short-border);"></span>
             Loss day
           </div>
           <div class="jc-legend-item">
-            <span class="jc-legend-dot" style="background:var(--ink-850);border:1px solid var(--line-2);"></span>
+            <span class="jc-legend-dot"
+              style="background:var(--bg-surface);border:1px solid var(--border-default);"></span>
             No trades
           </div>
         </div>
@@ -4070,7 +4093,8 @@
   <script src="js/workspace.js?v=5"></script>
   <script src="js/overlays.js"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=3"></script>
+  <script src="js/app.js?v=7"></script>
+  <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js"></script>
 
 </body>

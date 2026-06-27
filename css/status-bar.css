@@ -6,10 +6,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  background: var(--ink-900);
-  border-top: 1px solid var(--line-1);
+  background: var(--bg-base);
+  border-top: 1px solid var(--border-subtle);
   font-size: 11px;
-  color: var(--paper-500);
+  color: var(--text-muted);
 }
 
 .sb-left,

@@ -2,8 +2,8 @@
 .right-panel {
   width: 332px;
   flex-shrink: 0;
-  background: var(--ink-900);
-  border-left: 1px solid var(--line-1);
+  background: var(--bg-base);
+  border-left: 1px solid var(--border-subtle);
   overflow-y: auto;
   padding: 12px;
   display: flex;
@@ -24,15 +24,15 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--ink-800);
-  border: 1px solid var(--line-2);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
   border-radius: 7px;
   padding: 8px 10px;
 }
 
 .search-input .material-symbols-outlined {
   font-size: 16px;
-  color: var(--paper-500);
+  color: var(--text-muted);
 }
 
 .search-input span.symv {
@@ -42,7 +42,7 @@
 
 .pos-badge {
   font-size: 9.5px;
-  color: var(--paper-500);
+  color: var(--text-muted);
   letter-spacing: .05em;
   text-transform: uppercase;
   text-align: right;
@@ -51,19 +51,19 @@
 .pos-badge b {
   display: block;
   font-size: 14px;
-  color: var(--paper-100);
+  color: var(--text-primary);
   font-family: var(--sans);
 }
 
 .curr-row {
   font-size: 11px;
-  color: var(--paper-500);
+  color: var(--text-muted);
   margin-bottom: 10px;
 }
 
 .label-sm {
   font-size: var(--fs-label);
-  color: var(--paper-500);
+  color: var(--text-muted);
   letter-spacing: var(--ls-label);
   text-transform: uppercase;
   margin-bottom: 6px;
@@ -81,7 +81,7 @@
   padding-right: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--paper-300);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
@@ -94,8 +94,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--ink-800);
-  border: 1px solid var(--line-2);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
   border-radius: 7px;
   padding: 8px 10px;
   font-size: 12.5px;
@@ -104,12 +104,12 @@
 }
 
 .select-input:hover {
-  border-color: var(--line-3);
+  border-color: var(--border-strong);
 }
 
 .select-input .material-symbols-outlined {
   font-size: 16px;
-  color: var(--paper-500);
+  color: var(--text-muted);
 }
 
 .oco-field {
@@ -123,8 +123,8 @@
   width: 38px;
   height: 21px;
   border-radius: 11px;
-  background: var(--ink-750);
-  border: 1px solid var(--line-3);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-strong);
   position: relative;
   flex-shrink: 0;
   cursor: pointer;
@@ -138,13 +138,13 @@
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: var(--paper-300);
+  background: var(--text-secondary);
   transition: .18s;
 }
 
 .switch.on {
   background: var(--accent-dim);
-  border-color: rgba(227, 160, 57, .5);
+  border-color: var(--accent-border);
 }
 
 .switch.on::after {
@@ -180,7 +180,7 @@
 
 .bs-btn.buy {
   background: var(--long);
-  color: #0b1a12;
+  color: var(--on-long);
 }
 
 .bs-btn.buy:hover {
@@ -189,7 +189,7 @@
 
 .bs-btn.sell {
   background: var(--short);
-  color: #1c0608;
+  color: var(--on-short);
 }
 
 .bs-btn.sell:hover {
@@ -209,12 +209,12 @@
   text-align: center;
   font-size: var(--fs-sm);
   font-weight: var(--fw-semi);
-  background: var(--ink-800);
-  border: 1px solid var(--line-2);
-  color: var(--paper-300);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
 }
 
 .ghost-btn:hover {
-  color: var(--paper-100);
-  border-color: var(--line-3);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }

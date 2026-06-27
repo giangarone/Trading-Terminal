@@ -22,8 +22,40 @@
   --purple: #a78bfa;
   --purple-dim: rgba(167, 139, 250, .14);
   --purple-guide: rgba(167, 139, 250, .55);
-  --on-accent: #1d1406;
+  --on-accent: #fff;
   --on-signal: #0b0f10;
+  --on-long: #0b1a12;
+  --on-short: #1c0608;
+  --long-border: rgba(43, 212, 126, .45);
+  --short-border: rgba(242, 73, 92, .45);
+  --accent-border: rgba(227, 160, 57, .45);
+  --info: #3b82f6;
+  --info-dim: rgba(59, 130, 246, .14);
+  --info-border: rgba(59, 130, 246, .45);
+  --crosshair-line: rgba(152, 164, 172, .5);
+  --layout-icon-fill: rgba(233, 237, 240, .07);
+  --layout-icon-stroke: rgba(233, 237, 240, .18);
+  --border-hover: #3f4d59;
+  --scrim-color: rgba(4, 6, 8, .72);
+  --ghost-border: rgba(233, 237, 240, .16);
+  --surface-tint: rgba(255, 255, 255, .1);
+  --surface-tint-strong: rgba(255, 255, 255, .22);
+
+  /* ── Semantic surfaces (theme-aware; the raw ink, paper, and line tokens above are dark-mode literals only) ── */
+  --bg-base: var(--ink-900);
+  --bg-surface: var(--ink-850);
+  --bg-elevated: var(--ink-850);
+  --bg-sunken: var(--ink-950);
+  --bg-input: var(--ink-800);
+  --bg-hover: var(--ink-750);
+  --text-primary: var(--paper-100);
+  --text-secondary: var(--paper-300);
+  --text-muted: var(--paper-500);
+  --border-subtle: var(--line-1);
+  --border-default: var(--line-2);
+  --border-strong: var(--line-3);
+  --shadow-color: rgba(0, 0, 0, .55);
+
   --r-xs: 5px;
   --r-sm: 7px;
   --r-md: 10px;
@@ -76,6 +108,54 @@
   /* panel reveals, menus                      */
 }
 
+/* ====== Light theme overrides ======
+   Only the semantic + functional layer is redefined here — the raw ink, paper, and line
+   tokens stay dark-mode-only literals and must never be referenced directly by components. */
+[data-theme="light"] {
+  --bg-base: #f4f6f8;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-sunken: #e7eaed;
+  --bg-input: #eef1f3;
+  --bg-hover: #e3e7ea;
+  --text-primary: #161d22;
+  --text-secondary: #5b6670;
+  --text-muted: #8893a0;
+  --border-subtle: #e2e6ea;
+  --border-default: #d3d9de;
+  --border-strong: #b7bfc7;
+  --border-hover: #9aa3ac;
+  --shadow-color: rgba(15, 23, 32, .12);
+  --on-signal: #fff;
+
+  --long: #2DBD85;
+  --long-dim: #d7f0e2;
+  --long-border: rgba(19, 117, 63, .55);
+  --on-long: #fff;
+  --short: #F6475D;
+  --short-dim: #f8dde1;
+  --short-border: rgba(214, 50, 74, .55);
+  --on-short: #fff;
+  --accent: #e5920c;
+  --accent-dim: #f3e3c8;
+  --accent-border: rgba(156, 99, 8, .55);
+  --intel: #0b6f7c;
+  --intel-dim: #d6eef1;
+  --purple: #7c5cd6;
+  --purple-dim: #e8e1fa;
+  --purple-guide: rgba(124, 92, 214, .6);
+  --info: #2563eb;
+  --info-dim: #dbe7fc;
+  --info-border: rgba(37, 99, 235, .5);
+  --crosshair-line: rgba(70, 80, 90, .5);
+  --layout-icon-fill: rgba(20, 26, 32, .06);
+  --layout-icon-stroke: rgba(20, 26, 32, .18);
+  --scrim-color: rgba(15, 23, 32, .5);
+  --ghost-border: rgba(20, 26, 32, .16);
+  --surface-tint: rgba(15, 23, 32, .06);
+  --surface-tint-strong: rgba(15, 23, 32, .12);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -87,8 +167,8 @@ body {
 }
 
 body {
-  background: var(--ink-900);
-  color: var(--paper-100);
+  background: var(--bg-base);
+  color: var(--text-primary);
   font-family: var(--sans);
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
@@ -101,7 +181,7 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--line-3) transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -114,12 +194,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--line-3);
+  background: var(--border-strong);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f4d59;
+  background: var(--border-hover);
 }
 
 .material-symbols-outlined {
@@ -169,11 +249,11 @@ input {
 }
 
 .muted {
-  color: var(--paper-300);
+  color: var(--text-secondary);
 }
 
 .faint {
-  color: var(--paper-500);
+  color: var(--text-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {

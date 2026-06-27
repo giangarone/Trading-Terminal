@@ -8,6 +8,8 @@ An HTML/CSS/JS trading terminal UI designed to simulate a real trading platform,
 
 - Avoid using font weights above 600, except in very specific cases.
 
+- **The app supports both dark and light themes (`css/tokens.css`, toggled via the topbar sun/moon icon).** Every new implementation must be designed with both themes in mind and remain fully compatible with each. Use the semantic tokens (`--bg-*`, `--text-*`, `--border-*`, `--shadow-color`, and the functional `--long`/`--short`/`--accent`/`--intel`/`--purple`/`--info` colors and their `-dim`/`-border` variants) instead of hardcoded colors or the raw `--ink-*`/`--paper-*`/`--line-*` tokens — the raw tokens are dark-mode-only literals and will not adapt to light mode. If a new color need doesn't fit an existing token, add a themed pair (dark value in `:root`, light value in `[data-theme="light"]`) rather than hardcoding a literal value.
+
 
 ### Consistency rules
 
