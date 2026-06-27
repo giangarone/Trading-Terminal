@@ -22,7 +22,7 @@
   --purple: #a78bfa;
   --purple-dim: rgba(167, 139, 250, .14);
   --purple-guide: rgba(167, 139, 250, .55);
-  --on-accent: #fff;
+  --on-accent: #11161A;
   --on-signal: #0b0f10;
   --on-long: #0b1a12;
   --on-short: #1c0608;
@@ -144,6 +144,7 @@
   --purple: #7c5cd6;
   --purple-dim: #e8e1fa;
   --purple-guide: rgba(124, 92, 214, .6);
+  --on-accent: #fff;
   --info: #2563eb;
   --info-dim: #dbe7fc;
   --info-border: rgba(37, 99, 235, .5);
