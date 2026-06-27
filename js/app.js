@@ -2282,8 +2282,29 @@
   bindSimpleSegmented('qtDisplayModeGroup');
   bindSimpleSegmented('ctCrossIsolatedGroup');
   bindSimpleSegmented('ctDisplayModeGroup');
-  bindSimpleSegmented('alertDismissGroup');
   bindSimpleSegmented('pdCrossIsolatedGroup');
+
+  /* ---------- Alert email update button ---------- */
+  const alertEmailSave = document.getElementById('alertEmailSave');
+  if (alertEmailSave) {
+    alertEmailSave.addEventListener('click', () => {
+      alertEmailSave.textContent = 'Saved!';
+      alertEmailSave.classList.add('saved');
+      setTimeout(() => {
+        alertEmailSave.textContent = 'Update';
+        alertEmailSave.classList.remove('saved');
+      }, 2000);
+    });
+  }
+
+  /* ---------- Alert volume slider ---------- */
+  const alertVolumeSlider = document.getElementById('alertVolume');
+  const alertVolumeValue  = document.getElementById('alertVolumeValue');
+  if (alertVolumeSlider && alertVolumeValue) {
+    alertVolumeSlider.addEventListener('input', () => {
+      alertVolumeValue.textContent = alertVolumeSlider.value + '%';
+    });
+  }
 
   /* ---------- Position Defaults: size field tracks the selected sizing method ---------- */
   const PD_SIZE_MODES = {
@@ -2681,6 +2702,21 @@
         tfCustomInterval.focus();
       }
     }
+    /* Convert a timeframe code to a numeric sort key (in seconds) */
+    function tfSortKey(code) {
+      const match = code.match(/^(\d*)([mhDWMYR])$/);
+      if (!match) return Infinity;
+      const n = parseInt(match[1] || '1', 10);
+      const multipliers = { m: 60, h: 3600, D: 86400, W: 604800, M: 2592000, Y: 31536000, R: 1 };
+      return n * (multipliers[match[2]] ?? Infinity);
+    }
+    function insertMenuItemSorted(item) {
+      const newKey = tfSortKey(item.dataset.tf);
+      const existing = [...tfMoreMenu.querySelectorAll('.pop-item[data-tf]')];
+      const insertBefore = existing.find(el => tfSortKey(el.dataset.tf) > newKey);
+      tfMoreMenu.insertBefore(item, insertBefore ?? tfMenuDivider);
+    }
+
     function commitCustomTimeframe() {
       const n = parseInt(tfCustomInterval.value, 10);
       if (!n || n < 1) { tfCustomInterval.focus(); return; }
@@ -2696,7 +2732,7 @@
       item.className = 'pop-item';
       item.dataset.tf = code;
       item.textContent = code;
-      tfMoreMenu.insertBefore(item, tfMenuDivider);
+      insertMenuItemSorted(item);
       bindMenuItem(item);
       showCustomForm(false);
       selectTimeframe(code, item);

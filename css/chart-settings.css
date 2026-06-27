@@ -1536,3 +1536,123 @@
   background: var(--bg-surface);
   font-weight: var(--fw-ui);
 }
+
+/* ====== Alert Settings ====== */
+
+/* Notification toggle row: icon + label grouped on the left */
+.cs-notif-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cs-notif-icon {
+  font-size: 16px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* "Coming Soon" inline badge */
+.cs-coming-soon {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-well);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* Volume row: slider + percentage value */
+.cs-volume-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cs-volume-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-default);
+  outline: none;
+  cursor: pointer;
+}
+
+.cs-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  cursor: pointer;
+}
+
+.cs-volume-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: none;
+  cursor: pointer;
+}
+
+.cs-volume-value {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 32px;
+  text-align: right;
+}
+
+/* Email input muted state when not focused */
+.cs-email-inactive {
+  color: var(--text-muted);
+}
+
+.cs-email-inactive:focus {
+  color: var(--text-primary);
+}
+
+/* Email input + update button */
+.cs-email-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-email-input-row .cs-text-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.cs-email-save-btn {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--t-ui), border-color var(--t-ui), color var(--t-ui);
+  white-space: nowrap;
+}
+
+.cs-email-save-btn:hover {
+  background: var(--bg-well);
+  border-color: var(--border-strong);
+}
+
+.cs-email-save-btn.saved {
+  color: var(--accent);
+  border-color: var(--accent-border);
+}

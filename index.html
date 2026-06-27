@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="css/order-lines.css?v=4">
   <link rel="stylesheet" href="css/market-scanner.css?v=8">
   <link rel="stylesheet" href="css/indicators.css?v=8">
-  <link rel="stylesheet" href="css/chart-settings.css?v=5">
+  <link rel="stylesheet" href="css/chart-settings.css?v=8">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
 </head>
 
@@ -264,8 +264,6 @@
               <div class="cs-nav-label">General</div>
               <button class="cs-nav-item" data-cs-tab="general"><span
                   class="material-symbols-outlined">tune</span>General</button>
-              <button class="cs-nav-item" data-cs-tab="appearance"><span
-                  class="material-symbols-outlined">palette</span>Appearance</button>
               <button class="cs-nav-item" data-cs-tab="chart"><span
                   class="material-symbols-outlined">show_chart</span>Chart</button>
               <button class="cs-nav-item" data-cs-tab="data"><span class="material-symbols-outlined">sync</span>Data &
@@ -514,13 +512,6 @@
               </div>
             </div>
 
-            <div class="cs-pane" data-cs-pane="appearance">
-              <div class="cs-pane-head">
-                <h2>Appearance</h2>
-                <p>Theme and visual preferences.</p>
-              </div>
-              <div class="cs-empty">No settings here yet</div>
-            </div>
             <div class="cs-pane" data-cs-pane="chart">
               <div class="cs-pane-head">
                 <h2>Chart</h2>
@@ -723,7 +714,7 @@
             <div class="cs-pane" data-cs-pane="alerts">
               <div class="cs-pane-head">
                 <h2>Alerts</h2>
-                <p>Configure how and when you receive notifications for your trades and orders.</p>
+                <p>Configure how and when you receive notifications.</p>
               </div>
 
               <div class="cs-grid">
@@ -731,62 +722,58 @@
 
                   <div class="cs-card">
                     <div class="cs-card-head">
-                      <span class="cs-card-title">Email Alerts</span>
+                      <span class="cs-card-title">Notifications</span>
                     </div>
-                    <div class="cs-switch-row active" id="alertEmailEnabled">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Enable Email Alerts</span>
-                        <span class="cs-switch-desc">Receive trade notifications at the address below.</span>
+                    <div class="cs-switch-row active" id="alertDesktopNotif">
+                      <span class="cs-notif-left">
+                        <span class="material-symbols-outlined cs-notif-icon">notifications</span>
+                        <span class="cs-switch-title">Desktop Notifications</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Email Alerts"><span
+                      <button type="button" class="ui-toggle" aria-label="Toggle Desktop Notifications"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
-                    <div class="cs-field" style="margin-top:14px;">
-                      <label>Email Address</label>
-                      <input type="email" class="cs-text-input" id="alertEmailAddress" placeholder="you@example.com">
+                    <div class="cs-switch-row active" id="alertSoundToggle">
+                      <span class="cs-notif-left">
+                        <span class="material-symbols-outlined cs-notif-icon">volume_up</span>
+                        <span class="cs-switch-title">Sound</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Sound"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row" id="alertEmailToggle">
+                      <span class="cs-notif-left">
+                        <span class="material-symbols-outlined cs-notif-icon">mail</span>
+                        <span class="cs-switch-title">Email Notifications</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Email Notifications"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row" id="alertMobilePush">
+                      <span class="cs-notif-left">
+                        <span class="material-symbols-outlined cs-notif-icon">smartphone</span>
+                        <span class="cs-switch-title">Mobile Push <span class="cs-coming-soon">Coming Soon</span></span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Mobile Push" disabled><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
 
                   <div class="cs-card">
                     <div class="cs-card-head">
-                      <span class="cs-card-title">On-Screen Alerts</span>
+                      <span class="cs-card-title">Behavior</span>
                     </div>
-                    <div class="cs-switch-row active" id="alertToasts">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Show Toast Notifications</span>
-                        <span class="cs-switch-desc">Display brief overlay notifications for trade events.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Toasts"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-switch-row" id="alertSound">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Play Alert Sound</span>
-                        <span class="cs-switch-desc">Play an audio cue when a trade notification fires.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Alert Sound"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-field" style="margin-top:14px;">
-                      <label>Alert Sound</label>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="alertSoundType"><span
-                          class="cs-select-label">Chime</span><span class="material-symbols-outlined">expand_more</span>
-                      </div><select id="alertSoundType" style="display:none;">
-                        <option value="chime" selected>Chime</option>
-                        <option value="beep">Beep</option>
-                        <option value="ding">Ding</option>
-                        <option value="none">None</option>
-                      </select>
-                    </div>
-                    <div class="cs-field" style="margin-top:14px;">
-                      <label>Auto-dismiss After</label>
-                      <div class="cs-segmented" id="alertDismissGroup" style="margin-bottom:0;">
-                        <button type="button" class="cs-seg-btn" data-mode="3s">3s</button>
-                        <button type="button" class="cs-seg-btn active" data-mode="5s">5s</button>
-                        <button type="button" class="cs-seg-btn" data-mode="10s">10s</button>
-                        <button type="button" class="cs-seg-btn" data-mode="never">Never</button>
-                      </div>
-                    </div>
+                    <label class="cs-checkbox-row">
+                      <span class="chk-box checked" id="alertShowPopup"><span class="material-symbols-outlined">check</span></span>
+                      Show popup when alert triggers
+                    </label>
+                    <label class="cs-checkbox-row">
+                      <span class="chk-box checked" id="alertHighlightChart"><span class="material-symbols-outlined">check</span></span>
+                      Highlight alert on chart
+                    </label>
+                    <label class="cs-checkbox-row">
+                      <span class="chk-box checked" id="alertOncePerCandle"><span class="material-symbols-outlined">check</span></span>
+                      Only trigger once per candle
+                    </label>
                   </div>
 
                 </div>
@@ -794,72 +781,38 @@
 
                   <div class="cs-card">
                     <div class="cs-card-head">
-                      <span class="cs-card-title">Trade Notifications</span>
+                      <span class="cs-card-title">Sound</span>
                     </div>
-                    <div class="cs-switch-row active" id="alertEntryFilled">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Entry Filled</span>
-                        <span class="cs-switch-desc">Notify when a pending order is filled and a position opens.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Entry Filled"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    <div class="cs-field" style="margin-bottom:14px;">
+                      <label>Default Sound</label>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="alertSoundType"><span
+                          class="cs-select-label">Bell</span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="alertSoundType" style="display:none;">
+                        <option value="bell" selected>Bell</option>
+                        <option value="chime">Chime</option>
+                        <option value="beep">Beep</option>
+                        <option value="ding">Ding</option>
+                        <option value="none">None</option>
+                      </select>
                     </div>
-                    <div class="cs-switch-row active" id="alertTpHit">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Take Profit Hit</span>
-                        <span class="cs-switch-desc">Notify when a take profit target is reached.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Take Profit Hit"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-switch-row active" id="alertSlHit">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Stop Loss Hit</span>
-                        <span class="cs-switch-desc">Notify when the stop loss is triggered and position is
-                          closed.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Stop Loss Hit"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-switch-row" id="alertOrderCancelled">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Order Cancelled</span>
-                        <span class="cs-switch-desc">Notify when a pending order is cancelled or rejected.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Order Cancelled"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-switch-row" id="alertBreakeven">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Stop Moved to Breakeven</span>
-                        <span class="cs-switch-desc">Notify when the stop loss is automatically moved to entry
-                          price.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Breakeven"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    <div class="cs-field">
+                      <label>Volume</label>
+                      <div class="cs-volume-row">
+                        <input type="range" class="cs-volume-slider" id="alertVolume" min="0" max="100" value="70">
+                        <span class="cs-volume-value" id="alertVolumeValue">70%</span>
+                      </div>
                     </div>
                   </div>
 
                   <div class="cs-card">
                     <div class="cs-card-head">
-                      <span class="cs-card-title">Price Alerts</span>
+                      <span class="cs-card-title">Email Notifications</span>
                     </div>
-                    <div class="cs-switch-row active" id="alertPriceToast">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Show Notification</span>
-                        <span class="cs-switch-desc">Show an on-screen notification when a chart price alert
-                          fires.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Price Alert Toast"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-switch-row active" id="alertPriceEmail">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Email on Trigger</span>
-                        <span class="cs-switch-desc">Send an email when a chart price alert is triggered.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Price Alert Email"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    <p class="cs-helper">Email address used for alert notifications when email delivery is enabled.</p>
+                    <div class="cs-email-input-row">
+                      <input type="email" class="cs-text-input cs-email-inactive" id="alertEmailDisplay" placeholder="you@example.com" value="you@example.com">
+                      <button type="button" class="cs-email-save-btn" id="alertEmailSave">Update</button>
                     </div>
                   </div>
 
@@ -899,18 +852,6 @@
                       the chart.</div>
 
                     <div class="cs-field" id="csTargetTableWrap" style="display:none; margin-top:14px;">
-                      <div class="cs-field" style="margin-bottom:12px;">
-                        <label>Applies To</label>
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csTpslAppliesto">
-                          <span class="cs-select-label"></span>
-                          <span class="material-symbols-outlined">expand_more</span>
-                        </div>
-                        <select id="csTpslAppliesto" style="display:none;">
-                          <option value="both" selected>All</option>
-                          <option value="quicktrade">Quick Trade</option>
-                          <option value="chart">Chart Execution</option>
-                        </select>
-                      </div>
                       <div class="cs-target-table">
                         <div class="cs-target-row cs-target-head">
                           <span>Target</span><span>%</span><span>Risk</span><span>Type</span><span></span>
@@ -968,6 +909,7 @@
                             <option value="ticks">Ticks</option>
                             <option value="points">Points</option>
                             <option value="percent">%</option>
+                            <option value="fee">Fee Amount</option>
                           </select>
                         </div>
                       </div>
@@ -1292,6 +1234,7 @@
                           <option value="market" selected>Market</option>
                           <option value="limit">Limit</option>
                           <option value="stop">Stop</option>
+                          <option value="mit">MIT — Market if Touched</option>
                         </select>
                       </div>
                       <div class="cs-field">
@@ -4161,7 +4104,7 @@
   <script src="js/workspace.js?v=5"></script>
   <script src="js/overlays.js"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=18"></script>
+  <script src="js/app.js?v=21"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=2"></script>
 

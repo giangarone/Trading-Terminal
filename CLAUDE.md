@@ -30,6 +30,11 @@ When removing any element from `index.html` that has an `id`:
 3. Failure to do this crashes the entire settings initialization block silently — the settings gear stops opening, and no JS wired up after the broken line will work.
 
 
+## Editing CSS or JS files
+
+Most `<link>`/`<script>` tags in `index.html` are versioned (`?v=N`). Bump that number when you edit the file, or browsers may keep serving a cached copy.
+
+
 ## Git
 
 Do not push to GitHub unless explicitly asked to.
