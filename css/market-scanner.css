@@ -738,11 +738,11 @@ table.ms-scan-table tr[data-tags].hide-row {
   display: flex;
   align-items: center;
   gap: 5px;
-  height: 30px;
+  height: 26px;
   padding: 0 11px;
   border-radius: 7px;
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
   letter-spacing: .02em;
 }
@@ -752,7 +752,7 @@ table.ms-scan-table tr[data-tags].hide-row {
 }
 
 .ol-pill.neutral {
-  background: var(--bg-input);
+  background: var(--bg-sunken);
   border: 1px solid var(--border-default);
   color: var(--text-primary);
   cursor: pointer;
@@ -784,6 +784,8 @@ table.ms-scan-table tr[data-tags].hide-row {
   padding: 0;
   gap: 0;
   overflow: hidden;
+  height: 26px;
+  border-radius: 5px;
 }
 
 .ol-pill-seg {
@@ -792,7 +794,7 @@ table.ms-scan-table tr[data-tags].hide-row {
   height: 100%;
   padding: 0 11px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ol-pill-seg:hover {
@@ -801,7 +803,7 @@ table.ms-scan-table tr[data-tags].hide-row {
 
 .ol-pill-divider {
   width: 1px;
-  height: 16px;
+  height: 100%;
   background: var(--border-default);
   flex-shrink: 0;
 }
@@ -869,9 +871,9 @@ table.ms-scan-table tr[data-tags].hide-row {
   gap: 5px;
   height: 26px;
   padding: 0 9px;
-  border-radius: 6px;
+  border-radius: 5px;
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: .02em;
 }
 
@@ -886,14 +888,14 @@ table.ms-scan-table tr[data-tags].hide-row {
 }
 
 .ol-chip.tp {
-  background: var(--long-dim);
+  background: var(--bg-sunken);
   border: 1px solid var(--long-border);
   color: var(--long);
   cursor: ns-resize;
 }
 
 .ol-chip.sl {
-  background: var(--short-dim);
+  background: var(--bg-sunken);
   border: 1px solid var(--short-border);
   color: var(--short);
   cursor: ns-resize;
@@ -902,19 +904,27 @@ table.ms-scan-table tr[data-tags].hide-row {
 .ol-chip.tp.invalid,
 .ol-chip.sl.invalid {
   border-color: var(--accent-border);
-  box-shadow: 0 0 0 1px var(--accent-border) inset;
 }
 
 .ol-chip.ghost {
-  background: var(--bg-input);
+  background: var(--bg-sunken);
   color: var(--text-muted);
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--border-default);
 }
 
 .ol-chip.ghost.tp-add,
 .ol-chip.ghost.sl-add {
   cursor: ns-resize;
 }
+
+.ol-chip.ghost.tp-add {
+  color: var(--long);
+}
+
+.ol-chip.ghost.sl-add {
+  color: var(--short);
+}
+
 
 .ol-chip.ghost.tp-add:hover {
   border-color: var(--long);
@@ -956,15 +966,13 @@ table.ms-scan-table tr[data-tags].hide-row {
 }
 
 .ol-chip.entry.buy {
-  background: var(--long-dim);
-  border: 1px solid var(--long-border);
-  color: var(--long);
+  background: var(--long);
+  color: var(--on-accent);
 }
 
 .ol-chip.entry.sell {
-  background: var(--short-dim);
-  border: 1px solid var(--short-border);
-  color: var(--short);
+  background: var(--short);
+  color: var(--on-accent);
 }
 
 .ol-chip.entry.locked {
