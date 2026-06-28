@@ -338,6 +338,10 @@
   /* ---------------------------------------------------------------
      Small render helpers (return HTML strings)
      --------------------------------------------------------------- */
+  function capitalize(s) {
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  }
+
   function changeStr(n) {
     const cls = n > 0 ? 'msx-up' : n < 0 ? 'msx-down' : 'msx-muted';
     const sign = n > 0 ? '+' : '';
@@ -381,10 +385,6 @@
     return '<span class="msx-value">$' + a.price + '</span>';
   }
 
-  function tfCell(tf) {
-    return '<span class="msx-muted">' + tf.replace(' + Live', '') + '</span>';
-  }
-
   function signalBadge(sig) {
     const cls = sig === 'Buy' ? 'buy' : sig === 'Sell' ? 'sell' : 'neutral';
     return '<span class="signal-badge ' + cls + '">' + sig + '</span>';
@@ -399,14 +399,6 @@
     return '<span class="msx-impact ' + level + '">' + level + '</span>';
   }
 
-  function rowActions() {
-    return '<div class="msx-row-actions">' +
-      '<button class="msx-row-btn" data-act="chart" title="Open chart"><span class="material-symbols-outlined">show_chart</span></button>' +
-      '<button class="msx-row-btn" data-act="alert" title="Set alert"><span class="material-symbols-outlined">notifications</span></button>' +
-      '<button class="msx-row-btn" data-act="watch" title="Add to watchlist"><span class="material-symbols-outlined">star</span></button>' +
-      '</div>';
-  }
-
   /* ---------------------------------------------------------------
      Tab configuration — columns, chips, and how rows are built
      --------------------------------------------------------------- */
@@ -415,22 +407,23 @@
   const TABS = {
     livefeed: {
       chips: [['all', 'All'], ['bullish', 'Bullish'], ['bearish', 'Bearish'], ['breakout', 'Breakouts'], ['highvol', 'High Volume'], ['nearsupport', 'Near Support'], ['nearresistance', 'Near Resistance']],
+      // consolidated overview: one compact signal+metric stack per category
       columns: [
         { label: 'Asset', sortKey: 'sortSymbol', render: function (a) { return assetCell(a); } },
         { label: 'Price', cls: 'num', sortKey: 'sortPrice', render: function (a) { return priceCell(a); } },
         { label: 'Bias', sortKey: 'sortBias', render: function (a) { return biasCell(a.bias); } },
-        { label: 'Strength', cls: 'num', sortKey: 'sortStrength', render: function (a) { return strengthCell(a.strength); } },
-        { label: 'Timeframe', render: function (a) { return tfCell(a.tf); } },
-        { label: '', cls: 'num', render: function () { return rowActions(); } }
+        { label: 'Indicators', render: function (a) { return stackCell(a.indicator.signal, a.indicator.value, a.bias === 'bullish' ? 'msx-up' : a.bias === 'bearish' ? 'msx-down' : ''); } },
+        { label: 'Intelligence', render: function (a) { return stackCell(a.intel.signal, a.intel.value, 'msx-intel'); } },
+        { label: 'News', render: function (a) { return stackCell(a.news.headline, capitalize(a.news.impact)); } },
+        { label: 'Technical', render: function (a) { return stackCell(a.technical.setup, a.technical.level); } }
       ],
-      rows: function () { return ASSETS.map(function (a) { return { a: a, tags: a.biasTags, sortSymbol: a.sym, sortPrice: parseFloat(a.price.replace(/,/g, '')), sortBias: a.bias, sortStrength: a.strength }; }); }
+      rows: function () { return ASSETS.map(function (a) { return { a: a, tags: a.biasTags, sortSymbol: a.sym, sortPrice: parseFloat(a.price.replace(/,/g, '')), sortBias: a.bias }; }); }
     },
     indicators: {
       chips: [['all', 'All'], ['momentum', 'Momentum'], ['oscillators', 'Oscillators'], ['volume', 'Volume'], ['trend', 'Trend'], ['volatility', 'Volatility']],
       columns: [
         { label: 'Asset', sortKey: 'sortSymbol', render: function (a) { return assetCell(a); } },
         { label: 'Price', cls: 'num', sortKey: 'sortPrice', render: function (a) { return priceCell(a); } },
-        { label: 'Bias', sortKey: 'sortBias', render: function (a) { return biasCell(a.bias); } },
         { label: 'Signal', sortKey: 'sortSignal', render: function (a) { return stackCell(a.indicator.signal, null, a.bias === 'bullish' ? 'msx-up' : a.bias === 'bearish' ? 'msx-down' : ''); } },
         { label: 'Detail', render: function (a) { return '<span class="msx-muted">' + a.indicator.detail + '</span>'; } },
         { label: 'Value', cls: 'num', render: function (a) { return '<span class="msx-value">' + a.indicator.value + '</span>'; } },
@@ -444,7 +437,6 @@
       columns: [
         { label: 'Asset', sortKey: 'sortSymbol', render: function (a) { return assetCell(a); } },
         { label: 'Price', cls: 'num', sortKey: 'sortPrice', render: function (a) { return priceCell(a); } },
-        { label: 'Bias', sortKey: 'sortBias', render: function (a) { return biasCell(a.bias); } },
         { label: 'Signal', sortKey: 'sortSignal', render: function (a) { return stackCell(a.intel.signal, null, 'msx-intel'); } },
         { label: 'Details', render: function (a) { return '<span class="msx-muted">' + a.intel.sub + '</span>'; } },
         { label: 'Value', cls: 'num', render: function (a) { return '<span class="msx-value">' + a.intel.value + '</span>'; } },
@@ -458,7 +450,6 @@
       columns: [
         { label: 'Asset', sortKey: 'sortSymbol', render: function (a) { return assetCell(a); } },
         { label: 'Price', cls: 'num', sortKey: 'sortPrice', render: function (a) { return priceCell(a); } },
-        { label: 'Bias', sortKey: 'sortBias', render: function (a) { return biasCell(a.bias); } },
         { label: 'Headline', render: function (a) { return stackCell(a.news.headline, a.news.sub); } },
         { label: 'Impact', sortKey: 'sortImpact', render: function (a) { return impactCell(a.news.impact); } },
         { label: 'Price Reaction', cls: 'num', sortKey: 'sortChange', render: function (a) { return changeStr(a.news.reaction); } },
@@ -475,7 +466,6 @@
       columns: [
         { label: 'Asset', sortKey: 'sortSymbol', render: function (a) { return assetCell(a); } },
         { label: 'Price', cls: 'num', sortKey: 'sortPrice', render: function (a) { return priceCell(a); } },
-        { label: 'Bias', sortKey: 'sortBias', render: function (a) { return biasCell(a.bias); } },
         { label: 'Setup', sortKey: 'sortSetup', render: function (a) { return stackCell(a.technical.setup, null); } },
         { label: 'Details', render: function (a) { return '<span class="msx-muted">' + a.technical.detail + '</span>'; } },
         { label: 'Level', render: function (a) { return '<span class="msx-value">' + a.technical.level + '</span>'; } },
@@ -847,6 +837,11 @@
   searchEl.addEventListener('input', function () {
     state.search = searchEl.value;
     renderTable();
+  });
+
+  // detail pane: "Open Chart" simulates navigating to the chart by closing the scanner
+  detailEl.addEventListener('click', function (e) {
+    if (e.target.closest('.msx-d-btn.primary')) closeScanner();
   });
 
   if (aiForm) aiForm.addEventListener('submit', function (e) {

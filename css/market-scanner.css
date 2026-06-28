@@ -741,35 +741,6 @@ table.msx-table tbody tr.selected {
 }
 
 /* Inline row action buttons */
-.msx-row-actions {
-  display: flex;
-  gap: 2px;
-  justify-content: flex-end;
-}
-
-.msx-row-btn {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  border-radius: var(--r-xs);
-  cursor: pointer;
-  transition: color var(--t-ui), background var(--t-ui);
-}
-
-.msx-row-btn .material-symbols-outlined {
-  font-size: 16px;
-}
-
-.msx-row-btn:hover {
-  color: var(--accent);
-  background: var(--accent-dim);
-}
-
 /* Saved scans: run button */
 .msx-run-btn {
   display: inline-flex;
@@ -954,6 +925,7 @@ table.msx-table tbody tr.selected {
 }
 
 .msx-score-fill {
+  display: block;
   height: 100%;
   background: var(--purple);
   border-radius: 3px;
