@@ -1120,6 +1120,21 @@
       }
     }
   }
+  /* repositions just the entry line/bar without a full render() — used while a TP/SL drag is in progress,
+     since a pending Market order's entry tracks the live price tick but render() is suppressed mid-drag
+     to avoid wiping the drag's own DOM (see isDraggingOrderLine) */
+  function updateEntryLinePositionLive() {
+    if (!order) return;
+    const line = layer.querySelector('.ol-line.entry');
+    const bar = layer.querySelector('.ol-entry-bar');
+    if (!line || !bar) return;
+    const H = rectH();
+    const y = clamp(priceToY(order.entry, H), 10, H - 10);
+    line.style.top = y + 'px';
+    bar.style.top = y + 'px';
+    updateAllTpSlValidityLive();
+    updateAllTpSlReadoutsLive();
+  }
   /* a plain click (no movement) on the handle falls through to onClick (if given) instead of dragging — */
   /* lets a handle double as both a drag target and a menu/edit/place trigger (e.g. the size/type pills, .ol-amt) */
   function makeDraggable(handle, onDrag, onDrop, excludeSelector, onClick) {
@@ -1722,6 +1737,7 @@
         order.entry = last;
         if (order.sl && order.sl.trailing) applyTrailingStopPreview();
         if (!isDraggingOrderLine) render();
+        else updateEntryLinePositionLive();
       }
       if (order && !order.filled && !order.pendingConfirm && !order.filling) {
         const hitEntry = order.fillAbove ? last >= order.entry : last <= order.entry;
