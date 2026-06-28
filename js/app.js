@@ -3,6 +3,8 @@
    ================================================================ */
 (function () {
   const POINT_VALUE = 50;          // $ per point per contract (ES)
+  const FEE_RATE_MARKET = 0.0006;  // 0.06% taker fee (market / stop-market fills)
+  const FEE_RATE_LIMIT  = 0.0002;  // 0.02% maker fee (limit / stop-limit fills)
   let TICK = 0.25;
   const PX_PER_POINT = 22;         // vertical px per 1.0 point
   const BASE_PRICE = 4500.25;      // anchors chart's vertical price scale
@@ -1035,8 +1037,24 @@
     if (riskPerContract > 0) { order.qty = Math.max(0, Math.floor(order.sizeValues.risk / riskPerContract)); }
   }
 
+  /* ---------- TP fee & net PnL helpers ---------- */
+  /* Entry fee depends on order type (market fill vs limit fill); TP exit is always a limit order. */
+  function tpFeeCalc(tp, contracts) {
+    const dir = order.side === 'buy' ? 1 : -1;
+    const gross = dir * (tp.price - order.entry) * POINT_VALUE * contracts;
+    const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
+    const fee = (order.entry * entryFeeRate + tp.price * FEE_RATE_LIMIT) * contracts;
+    return { gross, fee, net: gross - fee };
+  }
+  function tpFeeTooltipHtml(gross, fee, net) {
+    const sign = v => v >= 0 ? '+' : '';
+    const cls  = v => v >= 0 ? 'up' : 'down';
+    return '<span class="tp-fee-row"><span class="tp-fee-lbl">Gross</span><span class="tp-fee-val ' + cls(gross) + '">' + sign(gross) + fmtMoney(gross) + '</span></span>' +
+      '<span class="tp-fee-row"><span class="tp-fee-lbl">Fee</span><span class="tp-fee-val">-' + fmtMoney(fee) + '</span></span>' +
+      '<span class="tp-fee-row tp-fee-row-net"><span class="tp-fee-lbl">Net</span><span class="tp-fee-val ' + cls(net) + '">' + sign(net) + fmtMoney(net) + '</span></span>';
+  }
+
   /* ---------- drag behaviour ---------- */
-  /* snap a TP/SL to the valid side of the entry, 25px above/below it on screen */
   /* a TP/SL is only valid on the correct side of entry: long TP above / SL below, short TP below / SL above */
   function tpSlSideOk(kind, price) {
     const dir = order.side === 'buy' ? 1 : -1;
@@ -1080,10 +1098,13 @@
       const amtEl = row.querySelector('.ol-amt');
       if (amtEl) {
         const contracts = Math.max(1, Math.round(order.qty * tp.pct / 100));
-        const profit = pts * POINT_VALUE * contracts;
-        amtEl.textContent = (profit >= 0 ? '+' : '-') + fmtMoney(Math.abs(profit));
-        amtEl.classList.toggle('up', profit >= 0);
-        amtEl.classList.toggle('down', profit < 0);
+        const { gross, fee, net } = tpFeeCalc(tp, contracts);
+        const valEl = amtEl.querySelector('.tp-amt-val');
+        if (valEl) valEl.textContent = (net >= 0 ? '+' : '') + fmtMoney(net);
+        amtEl.classList.toggle('up', net >= 0);
+        amtEl.classList.toggle('down', net < 0);
+        const tipEl = amtEl.querySelector('.tp-fee-tip');
+        if (tipEl) tipEl.innerHTML = tpFeeTooltipHtml(gross, fee, net);
       }
       const rEl = row.querySelector('.ol-rmult');
       if (rEl) {
@@ -1794,7 +1815,7 @@
         const dir = order.side === 'buy' ? 1 : -1;
         const pts = dir * (tp.price - order.entry);
         const contracts = Math.max(1, Math.round(order.qty * tp.pct / 100));
-        const profit = pts * POINT_VALUE * contracts;
+        const { gross: tpGross, fee: tpFee, net: tpNet } = tpFeeCalc(tp, contracts);
         const riskPerContractTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
         const rMultiple = riskPerContractTotal ? (pts * POINT_VALUE / riskPerContractTotal) : null;
         const tpInvalid = !tpSlSideOk('tp', tp.price);
@@ -1803,8 +1824,9 @@
         row.className = 'ol-side-row';
         row.dataset.tpId = tp.id;
         row.style.top = y + 'px';
+        const tpSign = tpNet >= 0 ? '+' : '';
         row.innerHTML =
-          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">warning</span>TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '<span class="ol-amt ' + (profit >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '">' + (profit >= 0 ? '+' : '-') + fmtMoney(Math.abs(profit)) + '</span></span>' +
+          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">warning</span>TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="tp-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="tp-fee-tip">' + tpFeeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span></span>' +
           '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
           '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
           '<span class="ol-gear" data-gear-tp="' + tp.id + '"><span class="material-symbols-outlined">settings</span></span>' +
