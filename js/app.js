@@ -3434,10 +3434,10 @@
       : noTps ? 'Requires at least 2 take profits'
         : (on && mode === 'breakeven' && order.sl.beTpId) ? 'Triggers on TP' + (order.tps.findIndex(t => t.id === order.sl.beTpId) + 1)
           : 'Move SL to entry once a TP is hit';
-    // only the selected mode's settings section is shown
-    document.getElementById('slTrailSettings').style.display = mode === 'trailing' ? '' : 'none';
-    document.getElementById('slAtrSettings').style.display = mode === 'atr' ? '' : 'none';
-    document.getElementById('slBeSettings').style.display = mode === 'breakeven' ? '' : 'none';
+    // a section's settings only expand once that behavior is actually enabled
+    document.getElementById('slTrailSettings').style.display = (on && mode === 'trailing') ? '' : 'none';
+    document.getElementById('slAtrSettings').style.display = (on && mode === 'atr') ? '' : 'none';
+    document.getElementById('slBeSettings').style.display = (on && mode === 'breakeven') ? '' : 'none';
     populateSlSettings();
   }
   function openSlGearMenu(anchorRect, trigger) {
