@@ -1,21 +1,70 @@
-/* ===== MARKET SCANNER MODAL ===== */
-/* shares position/display/header styling with .float-panel (Indicators); only the
-   width/height and the scanner-specific body below need their own rules. */
-.float-panel.scanner-modal {
-  width: 1040px;
-  max-height: 86vh;
+/* =====================================================================
+   MARKET SCANNER — full-screen workspace modal
+   A near-fullscreen scanner built on the same scrim/modal model as the
+   Chart Settings modal. All colors use semantic tokens so dark + light
+   themes both work. Class prefix: msx- (market scanner).
+   Shared components reused as-is: .signal-badge, .strength-dots .dot,
+   .filter-chip, .cs-dd-trigger (sort dropdown).
+   ===================================================================== */
+
+/* ---- Backdrop + modal shell ---- */
+.msx-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim-color);
+  backdrop-filter: blur(2px);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
 }
 
-.scanner-modal .float-panel-header {
-  cursor: move;
-  user-select: none;
+.msx-backdrop.show {
+  display: flex;
 }
 
-.ms-head-spacer {
-  flex: 1;
+.msx-modal {
+  width: min(1480px, 96vw);
+  height: min(900px, 96vh);
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  box-shadow: 0 30px 80px var(--shadow-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.ms-live-pill {
+/* ---- Top bar ---- */
+.msx-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.msx-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.msx-brand-icon {
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.msx-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--text-primary);
+}
+
+.msx-live-pill {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -23,22 +72,21 @@
   font-weight: 600;
   color: var(--long);
   background: var(--long-dim);
-  border: 1px solid var(--long-dim);
-  border-radius: 99px;
+  border-radius: var(--r-pill);
   padding: 2px 8px 2px 6px;
   letter-spacing: .02em;
 }
 
-.ms-live-dot {
+.msx-live-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--long);
-  animation: ms-pulse 1.5s ease-in-out infinite;
+  animation: msx-pulse 1.5s ease-in-out infinite;
   flex-shrink: 0;
 }
 
-@keyframes ms-pulse {
+@keyframes msx-pulse {
 
   0%,
   100% {
@@ -50,30 +98,125 @@
   }
 }
 
-/* ---- Overview strip ---- */
-.ms-overview {
+/* AI scan input — the centerpiece for custom scans */
+.msx-ai-bar {
+  flex: 1;
+  max-width: 680px;
+  margin: 0 auto;
   display: flex;
-  border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
-  background: var(--bg-surface);
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 6px 0 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--purple-guide);
+  border-radius: var(--r-pill);
+  transition: border-color var(--t-ui), box-shadow var(--t-ui);
 }
 
-.ms-metrics {
-  display: flex;
+.msx-ai-bar:focus-within {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px var(--purple-dim);
+}
+
+.msx-ai-icon {
+  font-size: 17px;
+  color: var(--purple);
+  flex-shrink: 0;
+}
+
+.msx-ai-input {
   flex: 1;
   min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 12.5px;
 }
 
-.ms-metric {
-  flex: 1;
-  padding: 15px 18px;
-  border-right: 1px solid var(--border-subtle);
+.msx-ai-input::placeholder {
+  color: var(--text-muted);
+}
+
+.msx-ai-btn {
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--purple);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter var(--t-ui);
+}
+
+.msx-ai-btn:hover {
+  filter: brightness(1.08);
+}
+
+.msx-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.msx-icon-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: color var(--t-ui), background var(--t-ui);
+}
+
+.msx-icon-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.msx-icon-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+
+.msx-close-btn:hover {
+  color: var(--short);
+  background: var(--short-dim);
+}
+
+/* ---- Market context band ---- */
+.msx-overview {
+  display: flex;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.msx-ov-item {
+  padding: 12px 20px;
   display: flex;
   flex-direction: column;
   gap: 5px;
+  border-right: 1px solid var(--border-subtle);
+  min-width: 0;
 }
 
-.ms-metric-lbl {
+.msx-ov-sectors {
+  flex: 1;
+  border-right: none;
+}
+
+.msx-ov-lbl {
   font-size: var(--fs-label);
   font-weight: var(--fw-mid);
   letter-spacing: var(--ls-label);
@@ -81,387 +224,952 @@
   color: var(--text-muted);
 }
 
-.ms-metric-val {
-  font-size: 20px;
+.msx-ov-val {
+  font-size: 18px;
   font-weight: 600;
   line-height: 1;
   color: var(--text-primary);
 }
 
-.ms-metric-val.risk-on {
-  color: var(--long);
+.msx-ov-delta {
+  font-size: 11.5px;
+  font-weight: 600;
 }
 
-.ms-metric-val.risk-off {
-  color: var(--short);
-}
-
-.ms-metric-val.warn {
-  color: var(--accent);
-}
-
-.ms-metric-sub {
+.msx-ov-sub {
   font-size: 10.5px;
   color: var(--text-muted);
   line-height: 1.3;
 }
 
-.ms-breadth {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.msx-pos {
+  color: var(--long);
 }
 
-.ms-breadth-track {
+.msx-neg {
+  color: var(--short);
+}
+
+.msx-breadth-track {
   height: 5px;
   border-radius: 3px;
   background: var(--short-dim);
   overflow: hidden;
+  margin: 2px 0;
+  min-width: 140px;
 }
 
-.ms-breadth-fill {
+.msx-breadth-fill {
   height: 100%;
   background: var(--long);
   border-radius: 3px;
 }
 
-.ms-breadth-nums {
+.msx-breadth-nums {
   display: flex;
   justify-content: space-between;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
 }
 
-/* Sector pulse column */
-.ms-sectors {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  padding: 15px 18px;
-  width: 258px;
-  flex-shrink: 0;
-}
-
-.ms-sectors-lbl {
-  font-size: var(--fs-label);
-  font-weight: var(--fw-semi);
-  letter-spacing: var(--ls-label);
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.ms-sector-pills {
+.msx-sector-pills {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
 }
 
-.ms-sector-pill {
-  display: flex;
-  align-items: center;
-  gap: 2px;
+.msx-sector-pill {
   font-size: 10.5px;
   font-weight: 600;
-  padding: 3px 7px;
-  border-radius: 5px;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
 }
 
-.ms-sector-pill .material-symbols-outlined {
-  font-size: 12px;
-}
-
-.ms-sector-pill.up {
+.msx-sector-pill.up {
   color: var(--long);
   background: var(--long-dim);
 }
 
-.ms-sector-pill.down {
+.msx-sector-pill.down {
   color: var(--short);
   background: var(--short-dim);
 }
 
-.ms-sector-pill.neutral {
+.msx-sector-pill.neutral {
   color: var(--text-secondary);
   background: var(--bg-input);
 }
 
-/* ---- Top Opportunities ---- */
-.ms-opps-wrap {
-  padding: 14px 16px 16px;
+/* ---- Category tabs ---- */
+.msx-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 0 12px;
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
-.ms-opps-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--fs-label);
-  font-weight: var(--fw-mid);
-  letter-spacing: var(--ls-label);
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  margin-bottom: 12px;
+.msx-tabs::-webkit-scrollbar {
+  display: none;
 }
 
-.ms-opps-head .material-symbols-outlined {
-  font-size: 15px;
-  color: var(--accent);
-}
-
-.ms-opps-head-sub {
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--text-muted);
-  text-transform: none;
-  letter-spacing: 0;
-  margin-left: 2px;
-}
-
-.ms-opps {
-  display: flex;
-  gap: 10px;
-}
-
-.ms-opp-card {
-  flex: 1;
-  background: var(--bg-input);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  transition: border-color .12s, box-shadow .12s;
-}
-
-.ms-opp-card:hover {
-  border-color: var(--border-strong);
-}
-
-.ms-opp-accent-bar {
-  height: 3px;
-  flex-shrink: 0;
-}
-
-.ms-opp-card.long .ms-opp-accent-bar {
-  background: var(--long);
-}
-
-.ms-opp-card.short .ms-opp-accent-bar {
-  background: var(--short);
-}
-
-.ms-opp-card.watch .ms-opp-accent-bar {
-  background: var(--accent);
-}
-
-.ms-opp-body {
-  padding: 12px 14px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-}
-
-.ms-opp-row1 {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.ms-opp-sym {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: .01em;
-  line-height: 1;
-}
-
-.ms-opp-price-row {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-}
-
-.ms-opp-price {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.ms-opp-chg {
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.ms-opp-setup {
-  font-size: 11px;
-  color: var(--text-muted);
-  line-height: 1.3;
-}
-
-.ms-opp-foot {
+.msx-tab {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin-top: 2px;
-}
-
-.ms-strength-lbl {
-  font-size: 10.5px;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
   color: var(--text-muted);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color var(--t-ui), border-color var(--t-ui);
 }
 
-/* ---- Signal Table ---- */
-.ms-table-section {
+.msx-tab .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.msx-tab:hover {
+  color: var(--text-secondary);
+}
+
+.msx-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent);
+}
+
+.msx-tab.active .material-symbols-outlined {
+  color: var(--accent);
+}
+
+.msx-tab-count {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-input);
+  border-radius: var(--r-pill);
+  padding: 1px 7px;
+}
+
+.msx-tab.active .msx-tab-count {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.msx-tab-ai .material-symbols-outlined {
+  color: var(--purple);
+}
+
+.msx-tab-ai.active {
+  border-bottom-color: var(--purple);
+}
+
+.msx-tab-ai.active .material-symbols-outlined {
+  color: var(--purple);
+}
+
+/* ---- Body: results + detail ---- */
+.msx-body {
   flex: 1;
+  display: flex;
   min-height: 0;
+}
+
+.msx-main {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
-.ms-filter-bar {
+/* Toolbar: search, contextual chips, count, sort */
+.msx-toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 10px 16px;
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
 
-.ms-filter-lbl {
-  font-size: var(--fs-label);
-  font-weight: var(--fw-semi);
-  letter-spacing: var(--ls-label);
-  text-transform: uppercase;
-  color: var(--text-muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-  margin-right: 4px;
-}
-
-.ms-search-wrap {
-  position: relative;
-  flex-shrink: 0;
+.msx-search {
   display: flex;
   align-items: center;
-}
-
-.ms-search-icon {
-  position: absolute;
-  left: 8px;
-  font-size: 14px;
-  color: var(--text-muted);
-  pointer-events: none;
-  user-select: none;
-}
-
-.ms-search-input {
-  width: 160px;
-  height: 30px;
+  gap: 6px;
+  width: 240px;
+  flex-shrink: 0;
   background: var(--bg-input);
   border: 1px solid var(--border-default);
   border-radius: var(--r-sm);
-  color: var(--text-primary);
-  font-size: 12px;
-  font-family: inherit;
-  padding: 0 10px 0 28px;
-  outline: none;
+  padding: 0 10px;
+  height: 32px;
 }
 
-.ms-search-input::placeholder {
-  color: var(--text-muted);
-}
-
-.ms-search-input:focus {
+.msx-search:focus-within {
   border-color: var(--border-strong);
 }
 
-.ms-filter-chips {
+.msx-search .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
+.msx-search input {
+  flex: 1;
+  width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 12px;
+}
+
+.msx-search input::placeholder {
+  color: var(--text-muted);
+}
+
+.msx-chips {
   flex: 1;
   display: flex;
-  gap: 5px;
+  gap: 6px;
   overflow-x: auto;
   scrollbar-width: none;
   min-width: 0;
 }
 
-.ms-filter-chips::-webkit-scrollbar {
+.msx-chips::-webkit-scrollbar {
   display: none;
 }
 
-.ms-filter-count {
-  font-size: 10.5px;
-  color: var(--text-muted);
+.msx-chips .filter-chip {
   white-space: nowrap;
+  padding: 5px 11px;
+}
+
+.msx-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-shrink: 0;
 }
 
-.ms-table-wrap {
-  flex: 1;
-  overflow-y: auto;
+.msx-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
-table.ms-scan-table {
+.msx-sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.msx-sort-lbl {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-label);
+  color: var(--text-muted);
+}
+
+/* sort uses the shared .cs-dd-trigger engine; just size it here */
+.msx-sort-trigger {
+  min-width: 116px;
+  height: 30px;
+}
+
+/* ---- Results table ---- */
+.msx-table-host {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+table.msx-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
 }
 
-table.ms-scan-table th {
-  text-align: right;
-  font-size: var(--fs-label);
-  letter-spacing: var(--ls-label);
-  color: var(--text-muted);
-  text-transform: uppercase;
-  font-weight: var(--fw-semi);
-  padding: 12px 14px 10px;
+table.msx-table th {
   position: sticky;
   top: 0;
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border-subtle);
   z-index: 1;
-}
-
-table.ms-scan-table th:first-child,
-table.ms-scan-table td:first-child {
   text-align: left;
+  font-size: var(--fs-label);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  font-weight: var(--fw-semi);
+  color: var(--text-muted);
+  padding: 11px 16px 9px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
 }
 
-table.ms-scan-table td {
-  padding: 10px 14px;
+table.msx-table th.num,
+table.msx-table td.num {
   text-align: right;
+}
+
+table.msx-table td {
+  padding: 9px 16px;
   border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
   font-weight: 500;
+  vertical-align: middle;
+}
+
+table.msx-table tbody tr {
+  cursor: pointer;
+  transition: background var(--t-ui);
+}
+
+table.msx-table tbody tr:hover {
+  background: var(--bg-input);
+}
+
+table.msx-table tbody tr.selected {
+  background: var(--bg-hover);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.msx-up {
+  color: var(--long);
+}
+
+.msx-down {
+  color: var(--short);
+}
+
+.msx-muted {
+  color: var(--text-muted);
+}
+
+/* Asset cell */
+.msx-asset {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.msx-asset-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+}
+
+.msx-asset-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.msx-asset-sym {
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
-table.ms-scan-table tbody tr:last-child td {
-  border-bottom: none;
+.msx-asset-name {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
 
-table.ms-scan-table tbody tr:hover {
+/* Bias cell */
+.msx-bias {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.msx-bias .material-symbols-outlined {
+  font-size: 15px;
+}
+
+.msx-bias.bullish {
+  color: var(--long);
+}
+
+.msx-bias.bearish {
+  color: var(--short);
+}
+
+.msx-bias.mixed {
+  color: var(--text-secondary);
+}
+
+/* Evidence cell — reuses .strength-dots bar style */
+.msx-evidence {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.msx-ev-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.1;
+}
+
+.msx-ev-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.msx-ev-score {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Two-line text cell (signal name + sub) */
+.msx-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.msx-stack-main {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.msx-stack-sub {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.msx-stack-main.msx-up {
+  color: var(--long);
+}
+
+.msx-stack-main.msx-down {
+  color: var(--short);
+}
+
+.msx-stack-main.msx-intel {
+  color: var(--intel);
+}
+
+/* News impact pill */
+.msx-impact {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  text-transform: capitalize;
+}
+
+.msx-impact.high {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.msx-impact.medium {
+  color: var(--info);
+  background: var(--info-dim);
+}
+
+.msx-impact.low {
+  color: var(--text-secondary);
   background: var(--bg-input);
+}
+
+/* Quality stars (technical) */
+.msx-stars {
+  display: inline-flex;
+  gap: 1px;
+  color: var(--accent);
+}
+
+.msx-stars .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.msx-stars .off {
+  color: var(--border-strong);
+}
+
+/* Value emphasis */
+.msx-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Inline row action buttons */
+.msx-row-actions {
+  display: flex;
+  gap: 2px;
+  justify-content: flex-end;
+}
+
+.msx-row-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  transition: color var(--t-ui), background var(--t-ui);
+}
+
+.msx-row-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.msx-row-btn:hover {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* Saved scans: run button */
+.msx-run-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border: 1px solid var(--long-border);
+  background: var(--long-dim);
+  color: var(--long);
+  border-radius: var(--r-sm);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--sans);
   cursor: pointer;
 }
 
-.ms-sym-name {
-  font-weight: 600;
-  font-size: 12.5px;
+.msx-run-btn .material-symbols-outlined {
+  font-size: 14px;
 }
 
-.ms-sym-setup {
-  font-size: 10px;
+/* Empty / placeholder state (AI tab before a scan) */
+.msx-empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 40px;
   color: var(--text-muted);
-  margin-top: 2px;
 }
 
-table.ms-scan-table tr[data-tags].hide-row {
-  display: none;
+.msx-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--purple-dim);
+  color: var(--purple);
 }
 
+.msx-empty-icon .material-symbols-outlined {
+  font-size: 28px;
+}
+
+.msx-empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.msx-empty-sub {
+  font-size: 12px;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.msx-empty-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.msx-example-chip {
+  font-size: 11px;
+  color: var(--purple);
+  background: var(--purple-dim);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color var(--t-ui);
+}
+
+.msx-example-chip:hover {
+  border-color: var(--purple);
+}
+
+/* AI results banner (parsed query summary) */
+.msx-ai-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 16px;
+  background: var(--purple-dim);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.msx-ai-banner-icon {
+  color: var(--purple);
+  flex-shrink: 0;
+}
+
+.msx-ai-banner-icon .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.msx-ai-banner-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.msx-ai-banner-query {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.msx-ai-criteria {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.msx-criteria-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-pill);
+  padding: 3px 9px;
+}
+
+.msx-criteria-chip .material-symbols-outlined {
+  font-size: 13px;
+  color: var(--purple);
+}
+
+.msx-ai-clear {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border-radius: var(--r-sm);
+  padding: 5px 10px;
+  font-size: 11px;
+  font-family: var(--sans);
+  cursor: pointer;
+}
+
+.msx-ai-clear:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.msx-ai-clear .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* AI rank cell */
+.msx-rank {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--purple);
+}
+
+.msx-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.msx-score-bar {
+  width: 54px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.msx-score-fill {
+  height: 100%;
+  background: var(--purple);
+  border-radius: 3px;
+}
+
+.msx-score-num {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* ---- Detail pane ---- */
+.msx-detail {
+  width: 344px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.msx-d-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-muted);
+  padding: 40px 24px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.msx-d-empty .material-symbols-outlined {
+  font-size: 30px;
+  opacity: .6;
+}
+
+.msx-d-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.msx-d-head .msx-asset-badge {
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+}
+
+.msx-d-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.msx-d-sym {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.msx-d-name {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.msx-d-meta {
+  display: flex;
+  gap: 18px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.msx-d-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.msx-d-price {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.msx-d-change {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.msx-d-section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.msx-d-section:last-child {
+  border-bottom: none;
+}
+
+.msx-d-label {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.msx-d-bias-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.msx-d-why-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.msx-d-why-item {
+  display: flex;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.msx-d-why-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.msx-d-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.msx-d-row:last-child {
+  margin-bottom: 0;
+}
+
+.msx-d-row-main {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.msx-d-row-sub {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.msx-d-row-val {
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.msx-d-actions {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.msx-d-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 38px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: border-color var(--t-ui), background var(--t-ui);
+}
+
+.msx-d-btn .material-symbols-outlined {
+  font-size: 17px;
+}
+
+.msx-d-btn:hover {
+  border-color: var(--border-strong);
+}
+
+.msx-d-btn.primary {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+
+.msx-d-btn.primary:hover {
+  filter: brightness(1.08);
+}
+
+.msx-d-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.msx-d-btn-row .msx-d-btn {
+  flex: 1;
+  font-size: 11.5px;
+}
+
+/* =====================================================================
+   Chart news markers (overlay on the chart) — unrelated to the scanner,
+   preserved from the original file.
+   ===================================================================== */
 .news-marker {
   position: absolute;
   top: 0;

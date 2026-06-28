@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="css/quick-trade.css?v=3">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=4">
-  <link rel="stylesheet" href="css/market-scanner.css?v=8">
+  <link rel="stylesheet" href="css/market-scanner.css?v=10">
   <link rel="stylesheet" href="css/indicators.css?v=8">
   <link rel="stylesheet" href="css/chart-settings.css?v=8">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
@@ -3251,296 +3251,126 @@
   </div>
 
   <!-- ===================== MARKET SCANNER MODAL ===================== -->
-  <div class="pop-menu float-panel scanner-modal" id="marketScannerPopup">
+  <div class="msx-backdrop" id="marketScannerModal">
+    <div class="msx-modal">
 
-    <!-- Header -->
-    <div class="float-panel-header">
-      <span class="float-panel-title"><span class="material-symbols-outlined"
-          style="font-size:14px;vertical-align:-2px;">manage_search</span> Market Scanner</span>
-      <div class="ms-live-pill"><span class="ms-live-dot"></span>Live</div>
-      <div class="ms-head-spacer"></div>
-      <button class="ct-icon" id="marketScannerRefresh" style="width:26px;height:26px;" title="Refresh">
-        <span class="material-symbols-outlined" style="font-size:15px;">refresh</span>
-      </button>
-      <button class="float-panel-close" id="marketScannerClose">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </div>
-
-    <!-- Market Overview Strip -->
-    <div class="ms-overview">
-      <div class="ms-metrics">
-        <div class="ms-metric">
-          <div class="ms-metric-lbl">Session Regime</div>
-          <div class="ms-metric-val risk-on">Risk-On</div>
-          <div class="ms-metric-sub">Equity bulls in control</div>
+      <!-- Top bar: brand, AI scan input, window actions -->
+      <div class="msx-topbar">
+        <div class="msx-brand">
+          <span class="material-symbols-outlined msx-brand-icon">radar</span>
+          <span class="msx-title">Market Scanner</span>
+          <span class="msx-live-pill"><span class="msx-live-dot"></span>Live</span>
         </div>
-        <div class="ms-metric">
-          <div class="ms-metric-lbl">Market Breadth</div>
-          <div class="ms-breadth">
-            <div class="ms-breadth-track">
-              <div class="ms-breadth-fill" style="width:65%"></div>
-            </div>
-            <div class="ms-breadth-nums"><span class="up">65% Adv</span><span class="down">35% Dec</span></div>
-          </div>
-          <div class="ms-metric-sub">A/D 1.87 &middot; 142 new highs &middot; 28 new lows</div>
-        </div>
-        <div class="ms-metric">
-          <div class="ms-metric-lbl">Volatility</div>
-          <div class="ms-metric-val risk-off">High</div>
-          <div class="ms-metric-sub">VIX above 20-day average</div>
+        <form class="msx-ai-bar" id="msxAiForm" autocomplete="off">
+          <span class="material-symbols-outlined msx-ai-icon">auto_awesome</span>
+          <input type="text" id="msxAiInput" class="msx-ai-input"
+            placeholder="Ask AI to scan the market…  e.g. &ldquo;top 100 cryptos with bullish divergence near major support&rdquo;">
+          <button type="submit" class="msx-ai-btn" id="msxAiBtn">Scan</button>
+        </form>
+        <div class="msx-topbar-actions">
+          <button class="msx-icon-btn" id="msxRefresh" title="Refresh">
+            <span class="material-symbols-outlined">refresh</span>
+          </button>
+          <button class="msx-icon-btn" id="msxColumns" title="Columns">
+            <span class="material-symbols-outlined">view_column</span>
+          </button>
+          <button class="msx-icon-btn" id="msxExport" title="Export">
+            <span class="material-symbols-outlined">ios_share</span>
+          </button>
+          <button class="msx-icon-btn msx-close-btn" id="msxClose" title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
         </div>
       </div>
-      <div class="ms-sectors">
-        <div class="ms-sectors-lbl">Sector Pulse</div>
-        <div class="ms-sector-pills">
-          <div class="ms-sector-pill up"><span class="material-symbols-outlined">arrow_upward</span>Tech</div>
-          <div class="ms-sector-pill up"><span class="material-symbols-outlined">arrow_upward</span>Energy</div>
-          <div class="ms-sector-pill up"><span class="material-symbols-outlined">arrow_upward</span>Financials</div>
-          <div class="ms-sector-pill neutral"><span class="material-symbols-outlined">remove</span>Healthcare</div>
-          <div class="ms-sector-pill down"><span class="material-symbols-outlined">arrow_downward</span>Utilities</div>
-          <div class="ms-sector-pill down"><span class="material-symbols-outlined">arrow_downward</span>Bonds</div>
+
+      <!-- Market context band -->
+      <div class="msx-overview">
+        <div class="msx-ov-item">
+          <div class="msx-ov-lbl">Session Regime</div>
+          <div class="msx-ov-val msx-pos">Risk-On</div>
+          <div class="msx-ov-sub">Equity bulls in control</div>
         </div>
-      </div>
-    </div>
-
-    <!-- Top Opportunities -->
-    <div class="ms-opps-wrap">
-      <div class="ms-opps-head">Top Opportunities</div>
-      <div class="ms-opps">
-
-        <div class="ms-opp-card long">
-          <div class="ms-opp-accent-bar"></div>
-          <div class="ms-opp-body">
-            <div class="ms-opp-row1">
-              <span class="ms-opp-sym">NQU5</span>
-              <span class="signal-badge buy">Buy</span>
-            </div>
-            <div class="ms-opp-price-row">
-              <span class="ms-opp-price">18,624.50</span>
-              <span class="ms-opp-chg up">+0.52%</span>
-            </div>
-            <div class="ms-opp-setup">Breakout &middot; Bullish Flow</div>
-            <div class="ms-opp-foot">
-              <span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                  class="dot on"></span></span>
-              <span class="ms-strength-lbl">Strong</span>
-            </div>
+        <div class="msx-ov-item">
+          <div class="msx-ov-lbl">Market Breadth</div>
+          <div class="msx-breadth-track"><div class="msx-breadth-fill" style="width:62%"></div></div>
+          <div class="msx-breadth-nums"><span class="msx-pos">62% Adv</span><span class="msx-neg">38% Dec</span></div>
+        </div>
+        <div class="msx-ov-item">
+          <div class="msx-ov-lbl">Volatility &middot; VIX</div>
+          <div class="msx-ov-val">14.2 <span class="msx-pos msx-ov-delta">-4.07%</span></div>
+          <div class="msx-ov-sub">Below 20-day average (18.5)</div>
+        </div>
+        <div class="msx-ov-item msx-ov-sectors">
+          <div class="msx-ov-lbl">Sector Pulse</div>
+          <div class="msx-sector-pills">
+            <span class="msx-sector-pill up">Tech</span>
+            <span class="msx-sector-pill up">Energy</span>
+            <span class="msx-sector-pill up">Financials</span>
+            <span class="msx-sector-pill neutral">Health</span>
+            <span class="msx-sector-pill down">Utilities</span>
+            <span class="msx-sector-pill down">Bonds</span>
           </div>
         </div>
+      </div>
 
-        <div class="ms-opp-card long">
-          <div class="ms-opp-accent-bar"></div>
-          <div class="ms-opp-body">
-            <div class="ms-opp-row1">
-              <span class="ms-opp-sym">BTCUSD</span>
-              <span class="signal-badge buy">Buy</span>
+      <!-- Category tabs -->
+      <div class="msx-tabs" id="msxTabs">
+        <button class="msx-tab active" data-tab="livefeed">
+          <span class="material-symbols-outlined">bolt</span>Live Feed
+          <span class="msx-tab-count" id="msxTabCount">128</span>
+        </button>
+        <button class="msx-tab" data-tab="indicators">
+          <span class="material-symbols-outlined">monitoring</span>Indicators
+        </button>
+        <button class="msx-tab" data-tab="chartprime">
+          <span class="material-symbols-outlined">hub</span>ChartPrime Intelligence
+        </button>
+        <button class="msx-tab" data-tab="news">
+          <span class="material-symbols-outlined">feed</span>News
+        </button>
+        <button class="msx-tab" data-tab="technical">
+          <span class="material-symbols-outlined">candlestick_chart</span>Technical Analysis
+        </button>
+        <button class="msx-tab" data-tab="saved">
+          <span class="material-symbols-outlined">bookmark</span>Saved Scans
+        </button>
+        <button class="msx-tab msx-tab-ai" data-tab="ai">
+          <span class="material-symbols-outlined">auto_awesome</span>AI Results
+        </button>
+      </div>
+
+      <!-- Body: results table + asset detail pane -->
+      <div class="msx-body">
+        <div class="msx-main">
+          <div class="msx-toolbar">
+            <div class="msx-search">
+              <span class="material-symbols-outlined">search</span>
+              <input type="text" id="msxSearch" placeholder="Search symbol or name&hellip;" autocomplete="off">
             </div>
-            <div class="ms-opp-price-row">
-              <span class="ms-opp-price">63,245.00</span>
-              <span class="ms-opp-chg up">+1.18%</span>
-            </div>
-            <div class="ms-opp-setup">Bullish Flow &middot; High Volume</div>
-            <div class="ms-opp-foot">
-              <span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                  class="dot on"></span></span>
-              <span class="ms-strength-lbl">Strong</span>
+            <div class="msx-chips" id="msxChips"></div>
+            <div class="msx-toolbar-right">
+              <span class="msx-count" id="msxCount">0 results</span>
+              <div class="msx-sort-wrap">
+                <span class="msx-sort-lbl">Sort</span>
+                <div class="select-input pop-trigger cs-dd-trigger msx-sort-trigger" data-target="msxSort">
+                  <span class="cs-select-label">Rank</span>
+                  <span class="material-symbols-outlined">expand_more</span>
+                </div>
+                <select id="msxSort" style="display:none;">
+                  <option value="rank" selected>Rank</option>
+                  <option value="change">Change %</option>
+                  <option value="strength">Strength</option>
+                  <option value="symbol">Symbol</option>
+                </select>
+              </div>
             </div>
           </div>
+          <div class="msx-table-host" id="msxTableHost"></div>
         </div>
-
-        <div class="ms-opp-card short">
-          <div class="ms-opp-accent-bar"></div>
-          <div class="ms-opp-body">
-            <div class="ms-opp-row1">
-              <span class="ms-opp-sym">GCQ5</span>
-              <span class="signal-badge sell">Sell</span>
-            </div>
-            <div class="ms-opp-price-row">
-              <span class="ms-opp-price">2,346.30</span>
-              <span class="ms-opp-chg down">-0.18%</span>
-            </div>
-            <div class="ms-opp-setup">Near Resistance &middot; Rejection</div>
-            <div class="ms-opp-foot">
-              <span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                  class="dot"></span></span>
-              <span class="ms-strength-lbl">Medium</span>
-            </div>
-          </div>
-        </div>
-
+        <aside class="msx-detail" id="msxDetail"></aside>
       </div>
+
     </div>
-
-    <!-- Signal Table -->
-    <div class="ms-table-section">
-      <div class="ms-filter-bar">
-        <div class="ms-search-wrap">
-          <span class="material-symbols-outlined ms-search-icon">search</span>
-          <input type="text" id="scanSearch" class="ms-search-input" placeholder="Search symbol…" autocomplete="off">
-        </div>
-        <div class="ms-filter-chips" id="scanFilters">
-          <button class="filter-chip" data-tag="breakout">Breakouts</button>
-          <button class="filter-chip" data-tag="pullback">Pullbacks</button>
-          <button class="filter-chip" data-tag="reversal">Reversals</button>
-          <button class="filter-chip" data-tag="highvol">High Volume</button>
-          <button class="filter-chip" data-tag="bullflow">Bullish Flow</button>
-          <button class="filter-chip" data-tag="bearflow">Bearish Flow</button>
-          <button class="filter-chip" data-tag="nearsupport">Near Support</button>
-          <button class="filter-chip" data-tag="nearresistance">Near Resistance</button>
-        </div>
-        <span class="ms-filter-count" id="scnRowCount">12 symbols</span>
-      </div>
-      <div class="ms-table-wrap">
-        <table class="ms-scan-table">
-          <thead>
-            <tr>
-              <th>Symbol</th>
-              <th>Last</th>
-              <th>Chg %</th>
-              <th>Volume</th>
-              <th>Signal</th>
-              <th>Strength</th>
-            </tr>
-          </thead>
-          <tbody id="scanTableBody">
-            <tr data-tags="breakout bullflow highvol">
-              <td><span class="ms-sym-name">NQU5</span>
-                <div class="ms-sym-setup">Breakout</div>
-              </td>
-              <td>18,624.50</td>
-              <td class="up">+0.52%</td>
-              <td>3.2M</td>
-              <td><span class="signal-badge buy">Buy</span></td>
-              <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                    class="dot on"></span></span></td>
-            </tr>
-            <tr data-tags="bullflow highvol">
-              <td><span class="ms-sym-name">BTCUSD</span>
-                <div class="ms-sym-setup">Bullish Flow</div>
-              </td>
-              <td>63,245.0</td>
-              <td class="up">+1.18%</td>
-              <td>18.7K</td>
-              <td><span class="signal-badge buy">Buy</span></td>
-              <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                    class="dot on"></span></span></td>
-            </tr>
-            <tr data-tags="nearsupport pullback">
-              <td><span class="ms-sym-name">GCQ5</span>
-                <div class="ms-sym-setup">Near Support</div>
-              </td>
-              <td>2,346.30</td>
-              <td class="up">+0.18%</td>
-              <td>142K</td>
-              <td><span class="signal-badge neutral">Watch</span></td>
-              <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                    class="dot"></span></span></td>
-            </tr>
-            <tr data-tags="nearresistance reversal">
-              <td><span class="ms-sym-name">ETHUSD</span>
-                <div class="ms-sym-setup">Near Resistance</div>
-              </td>
-              <td>4,500.25</td>
-              <td class="up">+0.41%</td>
-              <td>9.4K</td>
-              <td><span class="signal-badge buy">Buy</span></td>
-              <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                    class="dot"></span></span></td>
-            </tr>
-            <tr data-tags="bearflow reversal nearresistance">
-              <td><span class="ms-sym-name">RTYU5</span>
-                <div class="ms-sym-setup">Reversal</div>
-              </td>
-              <td>2,078.40</td>
-              <td class="down">-0.12%</td>
-              <td>880K</td>
-              <td><span class="signal-badge sell">Sell</span></td>
-              <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                    class="dot"></span></span></td>
-            </tr>
-            <tr data-tags="bearflow highvol">
-              <td><span class="ms-sym-name">CLN5</span>
-                <div class="ms-sym-setup">Bearish Flow</div>
-              </td>
-              <td>78.24</td>
-              <td class="down">-0.45%</td>
-              <td>620K</td>
-              <td><span class="signal-badge sell">Sell</span></td>
-              <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span><span
-                    class="dot"></span></span></td>
-            </tr>
-            <tr data-tags="pullback bullflow">
-              <td><span class="ms-sym-name">YMU5</span>
-                <div class="ms-sym-setup">Pullback</div>
-              </td>
-              <td>39,865.00</td>
-              <td class="up">+0.27%</td>
-              <td>1.1M</td>
-              <td><span class="signal-badge buy">Buy</span></td>
-              <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                    class="dot"></span></span></td>
-            </tr>
-            <tr data-tags="nearsupport">
-              <td><span class="ms-sym-name">6EU5</span>
-                <div class="ms-sym-setup">Near Support</div>
-              </td>
-              <td>1.0843</td>
-              <td class="down">-0.21%</td>
-              <td>74K</td>
-              <td><span class="signal-badge neutral">Watch</span></td>
-              <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span><span
-                    class="dot"></span></span></td>
-            </tr>
-            <tr data-tags="breakout highvol bullflow">
-              <td><span class="ms-sym-name">AAPL</span>
-                <div class="ms-sym-setup">Breakout</div>
-              </td>
-              <td>187.45</td>
-              <td class="up">+0.97%</td>
-              <td>24.1M</td>
-              <td><span class="signal-badge buy">Buy</span></td>
-              <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                    class="dot on"></span></span></td>
-            </tr>
-            <tr data-tags="reversal bearflow">
-              <td><span class="ms-sym-name">NVDA</span>
-                <div class="ms-sym-setup">Reversal</div>
-              </td>
-              <td>924.20</td>
-              <td class="down">-2.11%</td>
-              <td>32.6M</td>
-              <td><span class="signal-badge sell">Sell</span></td>
-              <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                    class="dot"></span></span></td>
-            </tr>
-            <tr data-tags="pullback nearsupport">
-              <td><span class="ms-sym-name">SOLUSD</span>
-                <div class="ms-sym-setup">Pullback</div>
-              </td>
-              <td>142.20</td>
-              <td class="up">+3.25%</td>
-              <td>5.8K</td>
-              <td><span class="signal-badge buy">Buy</span></td>
-              <td><span class="strength-dots"><span class="dot on"></span><span class="dot on"></span><span
-                    class="dot"></span></span></td>
-            </tr>
-            <tr data-tags="highvol nearresistance">
-              <td><span class="ms-sym-name">TSLA</span>
-                <div class="ms-sym-setup">Near Resistance</div>
-              </td>
-              <td>248.70</td>
-              <td class="down">-1.12%</td>
-              <td>19.3M</td>
-              <td><span class="signal-badge neutral">Watch</span></td>
-              <td><span class="strength-dots"><span class="dot on"></span><span class="dot"></span><span
-                    class="dot"></span></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
   </div>
 
 
@@ -4102,11 +3932,12 @@
   <!-- ====== Scripts (order matters: utils → workspace → overlays → resize → app → right-panel) ====== -->
   <script src="js/utils.js"></script>
   <script src="js/workspace.js?v=5"></script>
-  <script src="js/overlays.js"></script>
+  <script src="js/overlays.js?v=1"></script>
   <script src="js/resize.js"></script>
   <script src="js/app.js?v=21"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=2"></script>
+  <script src="js/market-scanner.js?v=3"></script>
 
 </body>
 
