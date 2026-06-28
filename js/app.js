@@ -424,7 +424,7 @@
       const isSlippage = QT_SLIPPAGE_IDS.includes(input.id);
       const dataStep = input.dataset.step ? parseFloat(input.dataset.step) : null;
       const step = dataStep !== null ? dataStep : input.id === 'qtTrailDelta' ? 0.1 : isSlippage ? 0.05 : 0.25;
-      const min = isSlippage ? 0.1 : 0;
+      const min = input.id === 'qtLeverageInput' ? 1 : isSlippage ? 0.1 : 0;
       const cur = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
       const next = btn.classList.contains('ps-up') ? cur + step : Math.max(min, cur - step);
       if (dataStep !== null) {
@@ -441,7 +441,8 @@
       const step = parseFloat(input.dataset.step) || 1;
       const v = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
       const snapped = Math.round(v / step) * step;
-      input.value = Number.isInteger(step) ? String(Math.max(0, Math.round(snapped))) : Math.max(0, snapped).toFixed(2);
+      const min = input.id === 'qtLeverageInput' ? 1 : 0;
+      input.value = Number.isInteger(step) ? String(Math.max(min, Math.round(snapped))) : Math.max(min, snapped).toFixed(2);
     });
   });
 
@@ -452,6 +453,14 @@
   qtTpslToggle.addEventListener('click', () => {
     const enabled = qtTpslCheckbox.classList.toggle('checked');
     qtTpslBlock.style.display = enabled ? 'block' : 'none';
+  });
+  /* Leverage toggle — same reveal behavior as TP/SL; the value defaults to 10× even while collapsed */
+  const qtLeverageToggle = document.getElementById('qtLeverageToggle');
+  const qtLeverageCheckbox = document.getElementById('qtLeverageCheckbox');
+  const qtLeverageBlock = document.getElementById('qtLeverageBlock');
+  qtLeverageToggle.addEventListener('click', () => {
+    const enabled = qtLeverageCheckbox.classList.toggle('checked');
+    qtLeverageBlock.style.display = enabled ? 'block' : 'none';
   });
   document.querySelectorAll('#qtTpslBlock .tpsl-offset-unit').forEach(unit => {
     unit.addEventListener('click', (e) => {
@@ -489,18 +498,29 @@
   }
   qtBuyBtn.addEventListener('click', () => qtPlaceOrder('buy', qtActivePrice()));
   qtSellBtn.addEventListener('click', () => qtPlaceOrder('sell', qtActivePrice()));
+  /* the symbol currently shown in the top-bar selector — Close/Cancel All are scoped to it */
+  function currentSymbol() {
+    const el = document.getElementById('symSelectLabel');
+    return el ? el.textContent.trim() : '';
+  }
   document.getElementById('qtFlatten').addEventListener('click', () => {
-    const rows = document.querySelectorAll('.pos-row[data-pos-id]');
-    const hasChartOrder = !!order;
-    if (!rows.length && !hasChartOrder) { showToast('No open orders to close', 'info'); return; }
-    rows.forEach(r => r.remove());
-    if (hasChartOrder) cancelOrder();
-    showToast('All orders closed', 'check_circle');
+    const sym = currentSymbol();
+    let closedRow = false;
+    // The chart position is hardcoded to ETHUSD; close it (cancelOrder shows its own toast) only when filled.
+    if (order && order.filled && sym === 'ETHUSD') cancelOrder();
+    // Close any positions-tab rows for this symbol (static or graduated from a fill).
+    while (document.querySelector('.pos-row[data-pos-id="' + sym + '"]')) {
+      if (!window.closePositionPct(sym, 100)) break;
+      closedRow = true;
+    }
+    if (closedRow) showToast(sym + ' position closed', 'check_circle');
+    else if (!(order && order.filled && sym === 'ETHUSD')) showToast('No open ' + sym + ' positions to close', 'info');
   });
   document.getElementById('qtCancelAll').addEventListener('click', () => {
-    if (!order || order.filled) { showToast('No pending orders to cancel', 'info'); return; }
-    cancelOrder();
-    showToast('Pending orders cancelled', 'check_circle');
+    const sym = currentSymbol();
+    // Pending orders only ever exist for the ETHUSD chart order in this mockup.
+    if (order && !order.filled && sym === 'ETHUSD') cancelOrder();
+    else showToast('No pending ' + sym + ' orders to cancel', 'info');
   });
   /* ---------- amount type (Quantity / USD / % of Balance) ---------- */
   const QT_MODES = {

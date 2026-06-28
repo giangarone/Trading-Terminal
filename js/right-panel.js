@@ -132,6 +132,11 @@
       '<button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>' +
       '<button class="pos-quick-btn pos-quick-reverse" data-pos-reverse>Reverse</button></div>';
   }
+  /* leverage currently chosen in the Quick Trade panel — stamped onto positions opened from a fill */
+  function currentLeverage() {
+    const el = document.getElementById('qtLeverageInput');
+    return Math.max(1, parseInt(el && el.value, 10) || 1);
+  }
   function createPositionRow(sym, side, qty, price, dec) {
     const row = document.createElement('div');
     row.className = 'pos-row';
@@ -145,7 +150,8 @@
       '<div class="pos-sym-info"><div class="pos-sym-top">' +
       '<span class="pos-sym-ticker">' + sym + '</span>' +
       '<span class="pos-side-badge ' + sideCls + '">' + sideLabel + '</span>' +
-      '<span class="pos-type-badge">Crypto</span></div>' +
+      '<span class="pos-type-badge">Crypto</span>' +
+      '<span class="pos-lev-badge">' + currentLeverage() + '×</span></div>' +
       '<span class="pos-sym-sub">' + sym + ' (from chart)</span></div></div>' +
       '<div class="pos-col pos-col-size"><span class="pos-size-qty" id="posQty-' + sym + '">' + fmtQty(qty) + '</span><span class="pos-size-unit">Units</span></div>' +
       '<div class="pos-col pos-col-price"><span class="pos-entry" id="posAvg-' + sym + '">' + fmt(price, dec) + '</span><span class="pos-mark" id="posMark-' + sym + '">' + fmt(price, dec) + '</span></div>' +
