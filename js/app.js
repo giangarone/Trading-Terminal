@@ -330,7 +330,7 @@
         trailOverride: null
       }));
       if (chartSettings.defaultStopLoss) {
-        sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), trailing: false, beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
+        sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), enabled: false, mode: 'trailing', atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
       }
     }
     order = {
@@ -671,7 +671,7 @@
     if (!order || order.filled) return;
     order.filled = true;
     // Anchor trailing stop to actual fill price so it starts trailing from there
-    if (order.sl && order.sl.trailing) {
+    if (slTrailActive()) {
       const dir = order.side === 'buy' ? 1 : -1;
       const cfg = getEffectiveTrailConfig();
       order.sl.price = roundTick(order.entry - dir * computeTrailDist(cfg, order.entry));
@@ -782,16 +782,21 @@
   function getEffectiveTrailConfig() { return (order && order.sl && order.sl.trailOverride) || chartSettings.trailingStop; }
   function getEffectiveAtrConfig() { return chartSettings.atrStop; }
   function getEffectiveTpTrailConfig(tp) { return (tp && tp.trailOverride) || chartSettings.trailingTp; }
-  /* Each SL carries its own distance config (method + distance/ATR + trailing trigger), seeded from the global default */
+  /* ---- SL special-behavior model: one master toggle (enabled) + one selected mode ---- */
+  function slTrailActive() { return !!(order && order.sl && order.sl.enabled && order.sl.mode === 'trailing'); }
+  function slAtrActive() { return !!(order && order.sl && order.sl.enabled && order.sl.mode === 'atr'); }
+  function slBeActiveMode() { return !!(order && order.sl && order.sl.enabled && order.sl.mode === 'breakeven'); }
+  /* Each SL carries its own fixed-trailing distance config, seeded from the global default */
   function makeSlConfig() {
     const b = chartSettings.trailingStop;
-    return { method: b.method, distanceValue: b.distanceValue, distanceUnit: b.distanceUnit, start: b.start, startCustomR: b.startCustomR, atrMultiplier: b.atrMultiplier || 2.0 };
+    return { distanceValue: b.distanceValue, distanceUnit: b.distanceUnit === 'points' ? 'percent' : b.distanceUnit, start: b.start, startCustomR: b.startCustomR };
   }
   function ensureSlConfig() {
     if (!order || !order.sl) return null;
     if (!order.sl.trailOverride) order.sl.trailOverride = makeSlConfig();
     return order.sl.trailOverride;
   }
+  function slAtrMult() { return (order && order.sl && order.sl.atrMult) || chartSettings.atrStop.multiplier || 2.0; }
   /* current Entry↔SL gap expressed in the given unit (% of entry, or ticks) */
   function slGapDistance(unit) {
     if (!order || !order.sl) return 0;
@@ -806,35 +811,31 @@
   function slDistanceLabel(cfg) {
     return cfg.distanceUnit === 'percent' ? (+cfg.distanceValue).toFixed(2) + '%' : Math.round(cfg.distanceValue) + 't';
   }
-  /* one-line description of the SL's behavior for the entry bar */
-  function slSummaryText() {
-    if (!order || !order.sl) return '';
-    if (order.sl.beTpId || order.sl.beActive) return 'SL: Breakeven';
-    const cfg = order.sl.trailOverride || chartSettings.trailingStop;
-    if (cfg.method === 'atr') return 'SL: ATR' + (order.sl.trailing ? ' Trail' : '') + ' ' + (cfg.atrMultiplier || 2.0).toFixed(1) + 'x';
-    if (order.sl.trailing) return 'SL: Fixed Trail ' + slDistanceLabel(cfg);
-    return 'SL: ' + fmt(order.sl.price);
-  }
-  /* value-bearing badges shown inside the SL line chip */
-  function slBadgesHtml() {
-    if (!order || !order.sl) return '';
-    if (order.sl.beTpId) return '<span class="ol-badge be">SL → BE</span>';
-    const cfg = order.sl.trailOverride || chartSettings.trailingStop;
-    if (cfg.method === 'atr') return '<span class="ol-badge atr">ATR ' + (cfg.atrMultiplier || 2.0).toFixed(1) + 'x' + (order.sl.trailing ? ' · TRAIL' : '') + '</span>';
-    if (order.sl.trailing) return '<span class="ol-badge trail">TRAIL ' + slDistanceLabel(cfg) + '</span>';
-    return '';
+  /* badge shown inside the SL chip — text + style class, and it opens the SL settings */
+  function slBadgeInfo() {
+    if (!order || !order.sl) return { text: 'Fixed', cls: 'fixed' };
+    if (!order.sl.enabled) return { text: 'Fixed', cls: 'fixed' };
+    if (order.sl.mode === 'breakeven') return { text: order.sl.beActive ? 'SL → BE' : 'Breakeven', cls: 'be' };
+    if (order.sl.mode === 'atr') return { text: 'ATR ' + slAtrMult().toFixed(1) + 'x', cls: 'atr' };
+    return { text: 'Trailing ' + slDistanceLabel(ensureSlConfig()), cls: 'trail' };
   }
   let simTickCounter = 0;
-  /* Shared helper: compute trailing distance in price units from a reference price */
+  /* Shared helper: compute fixed trailing distance in price units from a reference price */
   function computeTrailDist(cfg, refPrice) {
-    if (cfg.method === 'atr') return atrStopDistance({ multiplier: cfg.atrMultiplier || 2.0 });
     if (cfg.distanceUnit === 'percent') return refPrice * cfg.distanceValue / 100;
     return cfg.distanceValue * TICK;
   }
-  /* Reposition an unfilled order's SL to sit exactly at the configured distance from the entry reference */
+  /* Place an unfilled order's static ATR stop at the ATR distance from entry */
+  function placeAtrStop() {
+    if (!order || !order.sl) return;
+    const dir = order.side === 'buy' ? 1 : -1;
+    order.sl.price = roundTick(order.entry - dir * atrStopDistance({ multiplier: slAtrMult() }));
+    syncQtyFromRisk();
+  }
+  /* Reposition an unfilled order's trailing SL to sit at the configured distance from the entry reference */
   function repositionSlFromConfig() {
     if (!order || !order.sl || order.filled) return;
-    if (order.sl.beTpId || order.sl.beActive) return;
+    if (!slTrailActive()) return;
     const cfg = ensureSlConfig();
     const dir = order.side === 'buy' ? 1 : -1;
     const refPrice = order.orderType === 'Market' ? qtCurrentPrice() : order.entry;
@@ -844,10 +845,9 @@
 
   /* For filled positions: move SL only in the favorable direction (ratchet) */
   function applyTrailingStop(currentPrice) {
-    if (!order || !order.sl || !order.sl.trailing || !order.filled) return;
+    if (!slTrailActive() || !order.filled) return;
     const cfg = getEffectiveTrailConfig();
-    // ATR trails immediately (no Start Trailing trigger); Fixed honors the configured start condition
-    if (cfg.method !== 'atr' && cfg.start !== 'immediate' && !meetsTriggerCondition(cfg.start, cfg.startCustomR, currentPrice)) return;
+    if (cfg.start !== 'immediate' && !meetsTriggerCondition(cfg.start, cfg.startCustomR, currentPrice)) return;
     const dir = order.side === 'buy' ? 1 : -1;
     const candidate = roundTick(currentPrice - dir * computeTrailDist(cfg, currentPrice));
     const improvement = dir * (candidate - order.sl.price);
@@ -857,9 +857,9 @@
     }
   }
 
-  /* For unfilled orders: always show SL exactly at trailing distance from entry reference */
+  /* For unfilled orders: keep the trailing SL at the configured distance from entry reference */
   function applyTrailingStopPreview() {
-    if (!order || !order.sl || !order.sl.trailing || order.filled) return;
+    if (!slTrailActive() || order.filled) return;
     const dir = order.side === 'buy' ? 1 : -1;
     const cfg = getEffectiveTrailConfig();
     const refPrice = order.orderType === 'Market' ? qtCurrentPrice() : order.entry;
@@ -1297,7 +1297,7 @@
           order.tps.push({ id: newId, price: finalPrice, pct: 100, trailing: false, trailOverride: null });
           rebalanceTpAllocations(newId);
         } else {
-          order.sl = { price: finalPrice, trailing: false, beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
+          order.sl = { price: finalPrice, enabled: false, mode: 'trailing', atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
           order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
           syncQtyFromRisk();
         }
@@ -1799,7 +1799,8 @@
       if (order && order.filled) checkSlHit(last);
       if (order && !order.filled && order.pendingConfirm && order.orderType === 'Market') {
         order.entry = last;
-        if (order.sl && order.sl.trailing) applyTrailingStopPreview();
+        if (slTrailActive()) applyTrailingStopPreview();
+        else if (slAtrActive()) placeAtrStop();
         if (!isDraggingOrderLine) render();
         else updateEntryLinePositionLive();
       }
@@ -1959,48 +1960,61 @@
         const loss = pts * POINT_VALUE * order.qty;
         const slInvalid = !tpSlSideOk('sl', order.sl.price);
 
+        const badge = slBadgeInfo();
         const row = document.createElement('div');
         row.className = 'ol-side-row';
         row.style.top = y + 'px';
         row.innerHTML =
-          '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">warning</span>SL' + slBadgesHtml() + '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span></span>' +
+          '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + '">' +
+            '<span class="material-symbols-outlined ol-chip-warning">warning</span>SL' +
+            '<span class="ol-badge ' + badge.cls + '" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
+            '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
+            '<button class="sl-chip-toggle' + (order.sl.enabled ? ' on' : '') + '" id="slChipToggle" type="button" title="Enable/disable special SL behavior"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>' +
+          '</span>' +
           '<span class="ol-rmult">-1.0R</span>' +
           '<span class="ol-pct-chip">100%</span>' +
-          '<span class="ol-gear" id="slGearTrigger"><span class="material-symbols-outlined">settings</span></span>' +
           '<span class="ol-gear ol-danger" id="slDeleteTrigger" title="Remove SL"><span class="material-symbols-outlined">delete</span></span>';
         layer.appendChild(row);
 
         const slChipEl = row.querySelector('.ol-chip');
         bindHandleHover(slChipEl, 'sl');
-        // Dragging the SL line redefines the (fixed) distance; ATR auto-reverts to Fixed %
-        function syncSlDistanceFromDrag() {
-          const cfg = ensureSlConfig();
-          if (!cfg) return;
-          if (cfg.method === 'atr') { cfg.method = 'fixed'; cfg.distanceUnit = 'percent'; }
-          cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(cfg.distanceUnit === 'percent' ? 2 : 0);
-          const pill = document.getElementById('slSummaryPill');
-          if (pill) pill.textContent = slSummaryText();
+        // Dragging the SL line: trailing redefines its distance; a manual drag detaches an ATR stop
+        function syncSlOnDrag() {
+          if (slTrailActive()) {
+            const cfg = ensureSlConfig();
+            cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(cfg.distanceUnit === 'percent' ? 2 : 0);
+          } else if (slAtrActive()) {
+            order.sl.enabled = false;
+          }
+          const badgeEl = document.getElementById('slBadgeTrigger');
+          if (badgeEl) { const info = slBadgeInfo(); badgeEl.textContent = info.text; badgeEl.className = 'ol-badge ' + info.cls; }
+          const togEl = document.getElementById('slChipToggle');
+          if (togEl) togEl.classList.toggle('on', order.sl.enabled);
         }
         function onDragSl(cy, h) {
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
           order.sl.price = roundTick(yToPrice(cy, h));
-          syncSlDistanceFromDrag();
+          syncSlOnDrag();
           updateAllTpSlValidityLive();
           updateAllTpSlReadoutsLive();
           drawPriceChart();
         }
         function onDropSl(cy, h) {
           order.sl.price = roundTick(yToPrice(cy, h));
-          syncSlDistanceFromDrag();
+          syncSlOnDrag();
           syncQtyFromRisk();
           render();
         }
-        makeDraggable(slChipEl, onDragSl, onDropSl);
+        makeDraggable(slChipEl, onDragSl, onDropSl, '.ol-badge, .sl-chip-toggle');
         makeDraggable(line, onDragSl, onDropSl);
 
-        row.querySelector('#slGearTrigger').addEventListener('click', (e) => {
+        row.querySelector('#slBadgeTrigger').addEventListener('click', (e) => {
           e.stopPropagation();
           openSlGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+        row.querySelector('#slChipToggle').addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleSlEnabled();
         });
         row.querySelector('#slDeleteTrigger').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -2024,9 +2038,10 @@
       function onDragEntry(cy, h) {
         bar.style.top = cy + 'px'; line.style.top = cy + 'px';
         order.entry = roundTick(yToPrice(cy, h));
-        // Keep trailing SL anchored to entry while dragging for non-market orders
-        if (order.sl && order.sl.trailing && order.orderType !== 'Market') {
-          applyTrailingStopPreview();
+        // Keep an automated SL anchored to entry while dragging for non-market orders
+        if (order.orderType !== 'Market') {
+          if (slTrailActive()) applyTrailingStopPreview();
+          else if (slAtrActive()) placeAtrStop();
         }
         updateAllTpSlValidityLive();
         updateAllTpSlReadoutsLive();
@@ -2047,7 +2062,6 @@
       const sideLabel = side === 'buy' ? 'BUY' : 'SELL';
       const tpAddHandleHtml = '<span class="ol-chip ghost tp-add" id="tpAddHandle">TP</span>';
       const slAddHandleHtml = !order.sl ? '<span class="ol-chip ghost sl-add" id="slAddHandle">SL</span>' : '';
-      const slSummaryHtml = order.sl ? '<span class="ol-pill sl-summary" id="slSummaryPill" title="Edit stop loss">' + slSummaryText() + '</span>' : '';
       const sizeLabel = order.sizeMode === 'contracts' ? String(order.qty)
         : order.sizeMode === 'dollar' ? '$' + fmt(order.sizeValues.dollar, 0)
           : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
@@ -2068,7 +2082,7 @@
         bar.innerHTML =
           '<span class="' + entryClass + '" id="entryPriceHandle" title="' + entryTitle + '">' +
           '<span class="ol-chip-fill"></span><span class="ol-chip-lbl">' + sideLabel + '</span></span>' +
-          tpAddHandleHtml + slAddHandleHtml + slSummaryHtml +
+          tpAddHandleHtml + slAddHandleHtml +
           '<span class="ol-pill neutral combo" id="orderConfigPill">' +
           '<span class="ol-pill-seg" id="sizePillTrigger">' + sizeLabel + '</span>' +
           '<span class="ol-pill-divider"></span>' +
@@ -2082,7 +2096,7 @@
         const pnlHtml = '<span class="ol-entry-pnl ' + (pnl >= 0 ? 'up' : 'down') + '">' + (pnl >= 0 ? '+' : '') + fmtMoney(pnl) + '</span>';
         bar.innerHTML =
           '<span class="ol-chip entry locked ' + side + '" id="entryPriceHandle">' + sideLabel + pnlHtml + '</span>' +
-          tpAddHandleHtml + slAddHandleHtml + slSummaryHtml +
+          tpAddHandleHtml + slAddHandleHtml +
           '<span class="ol-pill neutral combo locked" id="orderConfigPill">' +
           '<span class="ol-pill-seg" id="sizePillTrigger">' + order.qty + '</span>' +
           '<span class="ol-pill-divider"></span>' +
@@ -2096,13 +2110,6 @@
       if (tpAddHandle) { makeAddHandleDraggable(tpAddHandle, 'tp'); bindHandleHover(tpAddHandle, 'tp-add'); }
       const slAddHandle = bar.querySelector('#slAddHandle');
       if (slAddHandle) { makeAddHandleDraggable(slAddHandle, 'sl'); bindHandleHover(slAddHandle, 'sl-add'); }
-      const slSummaryPill = bar.querySelector('#slSummaryPill');
-      if (slSummaryPill) {
-        slSummaryPill.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openSlGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-        });
-      }
 
       const entryPriceHandle = bar.querySelector('#entryPriceHandle');
       if (entryPriceHandle) {
@@ -3357,15 +3364,17 @@
   bindTpTrailOverrideStepper('tpTrailOvActivationCustomR', 0.1, 50, 0.1, 'activationCustomR');
   bindTpTrailOverrideStepper('tpTrailOvDistance', 1, 2000, 5, 'distanceValue', PERCENT_DISTANCE_STEP);
 
-  /* ---------- SL gear menu ---------- */
+  /* ---------- SL gear menu (special-behavior settings) ---------- */
   const slGearMenu = document.getElementById('slGearMenu');
+  const slTrailRow = document.getElementById('slTrailRow');
+  const slAtrRow = document.getElementById('slAtrRow');
   const slBeToggle = document.getElementById('slBeToggle');
   const slBeSub = document.getElementById('slBeSub');
-  const slMethodSel = document.getElementById('slMethod');
   const slDistanceUnitSel = document.getElementById('slDistanceUnit');
   const slStartSel = document.getElementById('slStart');
-  const slTrailToggleRow = document.getElementById('slTrailToggleRow');
-  const slTrailToggle = document.getElementById('slTrailToggle');
+  const slBeOvTrigger = document.getElementById('slBeOvTrigger');
+  const slBeOvOffsetValue = document.getElementById('slBeOvOffsetValue');
+  const slBeOvOffsetUnit = document.getElementById('slBeOvOffsetUnit');
   /* resolves which TP arms breakeven, using the global default set in Chart Settings > Trade Management */
   function resolveBreakevenTpId() {
     if (!order || !order.tps.length) return null;
@@ -3387,61 +3396,50 @@
     }
     return order.tps[0].id;
   }
-  /* show/hide the Fixed vs ATR fields and the Start-Trailing field */
-  function updateSlSettingsConditional() {
-    const cfg = ensureSlConfig();
-    if (!cfg) return;
-    const isAtr = cfg.method === 'atr';
-    document.getElementById('slDistanceWrap').style.display = isAtr ? 'none' : '';
-    document.getElementById('slAtrMultiplierWrap').style.display = isAtr ? '' : 'none';
-    document.getElementById('slStartWrap').style.display = (!isAtr && order.sl.trailing) ? '' : 'none';
+  /* every SL gets its own editable breakeven settings, seeded from the global default */
+  function ensureBeOverride() {
+    if (!order || !order.sl) return null;
+    if (!order.sl.beOverride) {
+      const base = chartSettings.moveSlToBreakeven;
+      order.sl.beOverride = { trigger: base.trigger, customR: base.customR, offsetValue: base.offsetValue, offsetUnit: base.offsetUnit };
+    }
+    return order.sl.beOverride;
   }
-  /* reflect the SL's distance config in the gear-menu fields */
+  /* reflect the SL's settings in the gear-menu fields */
   function populateSlSettings() {
     const cfg = ensureSlConfig();
     if (!cfg) return;
-    slMethodSel.value = cfg.method;
     document.getElementById('slDistanceValue').value = cfg.distanceUnit === 'percent'
       ? (+cfg.distanceValue).toFixed(2) : Math.round(cfg.distanceValue);
     slDistanceUnitSel.value = cfg.distanceUnit;
-    document.getElementById('slAtrMultiplier').value = (cfg.atrMultiplier || 2.0).toFixed(1);
     slStartSel.value = cfg.start;
-    updateSlSettingsConditional();
+    document.getElementById('slAtrMultiplier').value = slAtrMult().toFixed(1);
+    const be = ensureBeOverride();
+    slBeOvTrigger.value = be.trigger;
+    slBeOvOffsetValue.value = be.offsetValue;
+    slBeOvOffsetUnit.value = be.offsetUnit;
     refreshAllCsDropdownLabels(slGearMenu);
   }
   function renderSlGearMenu() {
     if (!order || !order.sl) return;
     const noTps = order.tps.length < 2; // breakeven needs at least 2 TPs set
-    if (noTps && !order.sl.beActive) { order.sl.beTpId = null; }
-    const beArmed = !!order.sl.beTpId || order.sl.beActive;
-    const beLocked = noTps && !order.sl.beActive;
-    slBeToggle.classList.toggle('disabled', beLocked);
-    slBeToggle.classList.toggle('selected', beArmed);
-    slBeSub.textContent = order.sl.beActive
+    if (noTps && order.sl.mode === 'breakeven' && !order.sl.beActive) order.sl.beTpId = null;
+    const mode = order.sl.mode, on = order.sl.enabled;
+    slTrailRow.classList.toggle('selected', on && mode === 'trailing');
+    slAtrRow.classList.toggle('selected', on && mode === 'atr');
+    slBeToggle.classList.toggle('selected', on && mode === 'breakeven');
+    slBeToggle.classList.toggle('disabled', noTps);
+    slBeSub.textContent = (on && mode === 'breakeven' && order.sl.beActive)
       ? 'Active — SL moved to entry'
       : noTps ? 'Requires at least 2 take profits'
-        : beArmed ? 'Triggers on TP' + (order.tps.findIndex(t => t.id === order.sl.beTpId) + 1)
+        : (on && mode === 'breakeven' && order.sl.beTpId) ? 'Triggers on TP' + (order.tps.findIndex(t => t.id === order.sl.beTpId) + 1)
           : 'Move SL to entry once a TP is hit';
-    slTrailToggleRow.classList.toggle('on', !!order.sl.trailing);
-    document.getElementById('slBeOverrideTune').classList.toggle('active', !!order.sl.beOverride);
+    // only the selected mode's settings section is shown
+    document.getElementById('slTrailSettings').style.display = mode === 'trailing' ? '' : 'none';
+    document.getElementById('slAtrSettings').style.display = mode === 'atr' ? '' : 'none';
+    document.getElementById('slBeSettings').style.display = mode === 'breakeven' ? '' : 'none';
     populateSlSettings();
   }
-  slBeToggle.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!order || !order.sl) return;
-    if (slBeToggle.classList.contains('disabled')) return;
-    if (order.sl.beTpId || order.sl.beActive) {
-      order.sl.beTpId = null;
-      order.sl.beActive = false;
-    } else {
-      const resolvedTpId = resolveBreakevenTpId();
-      if (!resolvedTpId) return;
-      order.sl.beTpId = resolvedTpId;
-      order.sl.trailing = false;
-    }
-    renderSlGearMenu();
-    render();
-  });
   function openSlGearMenu(anchorRect, trigger) {
     if (trigger && slGearMenu.classList.contains('show') && slGearMenu._openTrigger === trigger) {
       closeAllPopovers();
@@ -3450,38 +3448,50 @@
     renderSlGearMenu();
     openNear(slGearMenu, anchorRect, 'right', trigger);
   }
-  /* Trail on/off toggle — enabling adopts the current gap (Fixed) without moving the SL */
-  slTrailToggle.addEventListener('click', (e) => {
-    e.stopPropagation();
+  /* place/adopt the SL for the currently-selected mode */
+  function applySlModePlacement() {
     if (!order || !order.sl) return;
-    order.sl.trailing = !order.sl.trailing;
-    if (order.sl.trailing) {
-      order.sl.beTpId = null; order.sl.beActive = false;
+    if (order.sl.mode === 'trailing') {
       const cfg = ensureSlConfig();
-      if (cfg.method === 'fixed') {
-        cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(cfg.distanceUnit === 'percent' ? 2 : 0);
-      }
+      cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(cfg.distanceUnit === 'percent' ? 2 : 0);
+    } else if (order.sl.mode === 'atr') {
+      placeAtrStop();
+    } else if (order.sl.mode === 'breakeven') {
+      order.sl.beActive = false;
+      order.sl.beTpId = resolveBreakevenTpId();
     }
-    renderSlGearMenu(); render();
-  });
-  /* Distance method: Fixed vs ATR */
-  slMethodSel.addEventListener('change', (e) => {
-    e.stopPropagation();
+  }
+  /* select a special behavior (mutually exclusive) and turn it on */
+  function selectSlMode(mode) {
     if (!order || !order.sl) return;
-    const cfg = ensureSlConfig();
-    cfg.method = slMethodSel.value;
-    const dir = order.side === 'buy' ? 1 : -1;
-    if (cfg.method === 'atr') {
-      // place the SL at the ATR distance from entry
-      order.sl.price = roundTick(order.entry - dir * atrStopDistance({ multiplier: cfg.atrMultiplier || 2.0 }));
-      syncQtyFromRisk();
+    if (mode === 'breakeven' && order.tps.length < 2) { showToast('Breakeven needs at least 2 take profits', 'info'); return; }
+    order.sl.mode = mode;
+    order.sl.enabled = true;
+    if (mode !== 'breakeven') { order.sl.beActive = false; order.sl.beTpId = null; }
+    applySlModePlacement();
+    renderSlGearMenu(); render();
+  }
+  /* master on/off for the SL chip toggle */
+  function toggleSlEnabled() {
+    if (!order || !order.sl) return;
+    if (!order.sl.enabled) {
+      if (order.sl.mode === 'breakeven' && order.tps.length < 2) { showToast('Breakeven needs at least 2 take profits', 'info'); return; }
+      order.sl.enabled = true;
+      applySlModePlacement();
     } else {
-      cfg.distanceUnit = 'percent';
-      cfg.distanceValue = +slGapDistance('percent').toFixed(2);
+      order.sl.enabled = false;
+      order.sl.beActive = false; order.sl.beTpId = null;
     }
     renderSlGearMenu(); render();
+  }
+  slTrailRow.addEventListener('click', (e) => { e.stopPropagation(); selectSlMode('trailing'); });
+  slAtrRow.addEventListener('click', (e) => { e.stopPropagation(); selectSlMode('atr'); });
+  slBeToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (slBeToggle.classList.contains('disabled')) return;
+    selectSlMode('breakeven');
   });
-  /* Distance unit: re-express the current gap so the SL line doesn't jump */
+  /* Trailing distance unit: re-express the current gap so the SL line doesn't jump */
   slDistanceUnitSel.addEventListener('change', (e) => {
     e.stopPropagation();
     const cfg = ensureSlConfig();
@@ -3496,7 +3506,16 @@
     const cfg = ensureSlConfig();
     if (cfg) cfg.start = slStartSel.value;
   });
-  /* Distance value stepper (% or ticks) */
+  /* Breakeven trigger / offset unit */
+  [slBeOvTrigger, slBeOvOffsetUnit].forEach(el => el.addEventListener('change', (e) => {
+    e.stopPropagation();
+    const ov = ensureBeOverride();
+    if (!ov) return;
+    ov.trigger = slBeOvTrigger.value;
+    ov.offsetUnit = slBeOvOffsetUnit.value;
+    if (slBeActiveMode() && !order.sl.beActive) { order.sl.beTpId = resolveBreakevenTpId(); renderSlGearMenu(); }
+  }));
+  /* Trailing distance value stepper (% or ticks) */
   {
     const input = document.getElementById('slDistanceValue');
     const inc = document.getElementById('slDistanceInc');
@@ -3520,14 +3539,9 @@
     const dec = document.getElementById('slAtrMultiplierDec');
     function clampVal(v) { return Math.min(20, Math.max(0.1, +parseFloat(v).toFixed(1))); }
     function commit() {
-      const cfg = ensureSlConfig();
-      if (!cfg) return;
-      cfg.atrMultiplier = parseFloat(input.value) || 2;
-      if (cfg.method === 'atr' && !order.filled) {
-        const dir = order.side === 'buy' ? 1 : -1;
-        order.sl.price = roundTick(order.entry - dir * atrStopDistance({ multiplier: cfg.atrMultiplier }));
-        syncQtyFromRisk();
-      }
+      if (!order || !order.sl) return;
+      order.sl.atrMult = parseFloat(input.value) || 2;
+      if (slAtrActive() && !order.filled) placeAtrStop();
       render();
     }
     input.removeAttribute('readonly');
@@ -3536,74 +3550,20 @@
     dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 2) - 0.1); commit(); });
     inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 2) + 0.1); commit(); });
   }
-
-  /* ---------- per-SL override panels (override the global Trade Management defaults for this stop loss only) ---------- */
-  function bindSlOverrideAccordion(tuneId, panelId) {
-    const tune = document.getElementById(tuneId);
-    const panel = document.getElementById(panelId);
-    tune.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!order || !order.sl) return;
-      const willOpen = !panel.classList.contains('open');
-      document.querySelectorAll('.gear-override-panel').forEach(p => p.classList.remove('open'));
-      panel.classList.toggle('open', willOpen);
-    });
-  }
-  bindSlOverrideAccordion('slBeOverrideTune', 'slBeOverridePanel');
-
-  function bindSlOverrideStepper(prefix, min, max, step, overrideKey, field, percentOverride) {
-    const input = document.getElementById(prefix + 'Value');
-    const dec = document.getElementById(prefix + 'Dec');
-    const inc = document.getElementById(prefix + 'Inc');
-    const unitSelect = document.getElementById(prefix + 'Unit');
-    function activeParams() {
-      if (percentOverride && unitSelect && unitSelect.value === 'percent') return percentOverride;
-      return { min, max, step };
-    }
-    function clampVal(v) {
-      const p = activeParams();
-      v = Math.round(v / p.step) * p.step;
-      v = Number.isInteger(p.step) ? Math.round(v) : +v.toFixed(2);
-      return Math.min(p.max, Math.max(p.min, v));
-    }
-    function commit() { if (order && order.sl && order.sl[overrideKey]) order.sl[overrideKey][field] = parseFloat(input.value) || 0; }
+  /* Breakeven offset stepper */
+  {
+    const input = document.getElementById('slBeOvOffsetValue');
+    const inc = document.getElementById('slBeOvOffsetInc');
+    const dec = document.getElementById('slBeOvOffsetDec');
+    function params() { return slBeOvOffsetUnit.value === 'percent' ? PERCENT_DISTANCE_STEP : { min: 0, max: 200, step: 1 }; }
+    function clampVal(v) { const p = params(); v = Math.round(v / p.step) * p.step; v = Number.isInteger(p.step) ? Math.round(v) : +v.toFixed(2); return Math.min(p.max, Math.max(p.min, v)); }
+    function commit() { const ov = ensureBeOverride(); if (ov) ov.offsetValue = parseFloat(input.value) || 0; }
     input.removeAttribute('readonly');
+    input.addEventListener('click', (e) => e.stopPropagation());
     input.addEventListener('change', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value) || 0); commit(); });
-    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') - activeParams().step); commit(); });
-    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') + activeParams().step); commit(); });
+    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 0) - params().step); commit(); });
+    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 0) + params().step); commit(); });
   }
-
-  /* -- Move to Break Even override -- */
-  const slBeOvTrigger = document.getElementById('slBeOvTrigger');
-  const slBeOvOffsetValue = document.getElementById('slBeOvOffsetValue');
-  const slBeOvOffsetUnit = document.getElementById('slBeOvOffsetUnit');
-  /* every SL gets its own editable settings, seeded from the global Chart Settings default on first view */
-  function ensureBeOverride() {
-    if (!order || !order.sl) return null;
-    if (!order.sl.beOverride) {
-      const base = chartSettings.moveSlToBreakeven;
-      order.sl.beOverride = { trigger: base.trigger, customR: base.customR, offsetValue: base.offsetValue, offsetUnit: base.offsetUnit };
-    }
-    return order.sl.beOverride;
-  }
-  function populateBeOverrideForm() {
-    if (!order || !order.sl) return;
-    const cfg = ensureBeOverride();
-    slBeOvTrigger.value = cfg.trigger;
-    slBeOvOffsetValue.value = cfg.offsetValue;
-    slBeOvOffsetUnit.value = cfg.offsetUnit;
-    refreshAllCsDropdownLabels(document.getElementById('slBeOverridePanel'));
-  }
-  document.getElementById('slBeOverrideTune').addEventListener('click', () => { if (order && order.sl) populateBeOverrideForm(); });
-  [slBeOvTrigger, slBeOvOffsetUnit].forEach(el => el.addEventListener('change', (e) => {
-    e.stopPropagation();
-    const ov = ensureBeOverride();
-    if (ov) {
-      ov.trigger = slBeOvTrigger.value;
-      ov.offsetUnit = slBeOvOffsetUnit.value;
-    }
-  }));
-  bindSlOverrideStepper('slBeOvOffset', 0, 200, 1, 'beOverride', 'offsetValue', PERCENT_DISTANCE_STEP);
 
   document.getElementById('slRemove').addEventListener('click', () => {
     order.sl = null;

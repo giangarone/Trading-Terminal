@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="css/right-panel.css?v=3">
   <link rel="stylesheet" href="css/quick-trade.css?v=6">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=7">
+  <link rel="stylesheet" href="css/order-lines.css?v=8">
   <link rel="stylesheet" href="css/market-scanner.css?v=13">
   <link rel="stylesheet" href="css/indicators.css?v=8">
   <link rel="stylesheet" href="css/chart-settings.css?v=9">
@@ -3543,18 +3543,15 @@
 
   <!-- ===================== SL GEAR MENU ===================== -->
   <div class="pop-menu sl-gear-menu" id="slGearMenu" style="width:300px;">
-    <!-- Stop loss distance method + trailing -->
-    <div class="sl-settings-block">
+    <!-- Trailing Stop -->
+    <button class="pop-item sl-mode-row" id="slTrailRow" data-mode="trailing">
+      <span class="pop-icon"><span class="material-symbols-outlined">trending_down</span></span>
+      <span class="pop-text"><span class="pt-title">Trailing Stop</span><span class="pt-sub">Trail the stop at a fixed
+          distance</span></span>
+      <span class="sl-mode-check material-symbols-outlined">check</span>
+    </button>
+    <div class="sl-mode-settings" id="slTrailSettings">
       <div class="cs-field">
-        <label>Distance Method</label>
-        <div class="select-input pop-trigger cs-dd-trigger" data-target="slMethod"><span
-            class="cs-select-label">Fixed</span><span class="material-symbols-outlined">expand_more</span></div>
-        <select id="slMethod" style="display:none;">
-          <option value="fixed" selected>Fixed</option>
-          <option value="atr">ATR Based</option>
-        </select>
-      </div>
-      <div class="cs-field" id="slDistanceWrap">
         <label>Distance</label>
         <div class="cs-unit-pair">
           <div class="price-stepper cs-price-stepper">
@@ -3574,7 +3571,28 @@
           </select>
         </div>
       </div>
-      <div class="cs-field" id="slAtrMultiplierWrap" style="display:none;">
+      <div class="cs-field">
+        <label>Start Trailing</label>
+        <div class="select-input pop-trigger cs-dd-trigger" data-target="slStart"><span
+            class="cs-select-label">Immediately</span><span class="material-symbols-outlined">expand_more</span></div>
+        <select id="slStart" style="display:none;">
+          <option value="immediate" selected>Immediately</option>
+          <option value="tp1">After TP1 Hit</option>
+          <option value="tp2">After TP2 Hit</option>
+          <option value="tp3">After TP3 Hit</option>
+        </select>
+      </div>
+    </div>
+    <div class="pop-sep"></div>
+    <!-- ATR Stop -->
+    <button class="pop-item sl-mode-row" id="slAtrRow" data-mode="atr">
+      <span class="pop-icon"><span class="material-symbols-outlined">area_chart</span></span>
+      <span class="pop-text"><span class="pt-title">ATR Stop</span><span class="pt-sub">Place the stop at an ATR-based
+          distance</span></span>
+      <span class="sl-mode-check material-symbols-outlined">check</span>
+    </button>
+    <div class="sl-mode-settings" id="slAtrSettings">
+      <div class="cs-field">
         <label>ATR Multiplier</label>
         <div class="price-stepper cs-price-stepper">
           <input type="text" id="slAtrMultiplier" readonly value="2.0">
@@ -3587,66 +3605,45 @@
         </div>
       </div>
     </div>
-    <div class="sl-toggle-row" id="slTrailToggleRow">
-      <span class="sl-toggle-text"><span class="pt-title">Trailing Stop</span><span class="pt-sub">Trail the stop as
-          price moves in your favor</span></span>
-      <button class="ui-toggle" id="slTrailToggle" type="button"><span class="ui-toggle-track"><span
-            class="ui-toggle-thumb"></span></span></button>
-    </div>
-    <div class="cs-field sl-start-field" id="slStartWrap" style="display:none;">
-      <label>Start Trailing</label>
-      <div class="select-input pop-trigger cs-dd-trigger" data-target="slStart"><span
-          class="cs-select-label">Immediately</span><span class="material-symbols-outlined">expand_more</span></div>
-      <select id="slStart" style="display:none;">
-        <option value="immediate" selected>Immediately</option>
-        <option value="tp1">After TP1 Hit</option>
-        <option value="tp2">After TP2 Hit</option>
-        <option value="tp3">After TP3 Hit</option>
-      </select>
-    </div>
     <div class="pop-sep"></div>
-    <div class="gear-override-row">
-      <button class="pop-item" id="slBeToggle">
-        <span class="pop-icon"><span class="material-symbols-outlined">vertical_align_center</span></span>
-        <span class="pop-text"><span class="pt-title">Move to Break Even</span><span class="pt-sub" id="slBeSub">Move SL
-            to entry once a TP is hit</span></span>
-      </button>
-      <button class="gear-override-tune" id="slBeOverrideTune" title="Override for this stop loss"><span
-          class="material-symbols-outlined">tune</span></button>
-    </div>
-    <div class="settings-subpanel gear-override-panel" id="slBeOverridePanel">
-      <div class="gear-override-fields" id="slBeOverrideFields">
-        <div class="cs-field">
-          <label>Trigger</label>
-          <div class="select-input pop-trigger cs-dd-trigger" data-target="slBeOvTrigger"><span
-              class="cs-select-label">After TP1 Hit</span><span class="material-symbols-outlined">expand_more</span>
-          </div><select id="slBeOvTrigger" style="display:none;">
-            <option value="tp1">After TP1 Hit</option>
-            <option value="tp2">After TP2 Hit</option>
-            <option value="tp3">After TP3 Hit</option>
-            <option value="customR">Custom R Multiple</option>
-          </select>
-        </div>
-        <div class="cs-field">
-          <label>Breakeven Offset</label>
-          <div class="cs-unit-pair">
-            <div class="price-stepper cs-price-stepper">
-              <input type="text" id="slBeOvOffsetValue" readonly value="1">
-              <div class="price-stepper-arrows">
-                <button type="button" id="slBeOvOffsetInc"><span
-                    class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                <button type="button" id="slBeOvOffsetDec"><span
-                    class="material-symbols-outlined">keyboard_arrow_down</span></button>
-              </div>
+    <!-- Move to Break Even -->
+    <button class="pop-item sl-mode-row" id="slBeToggle" data-mode="breakeven">
+      <span class="pop-icon"><span class="material-symbols-outlined">vertical_align_center</span></span>
+      <span class="pop-text"><span class="pt-title">Move to Break Even</span><span class="pt-sub" id="slBeSub">Move SL
+          to entry once a TP is hit</span></span>
+      <span class="sl-mode-check material-symbols-outlined">check</span>
+    </button>
+    <div class="sl-mode-settings" id="slBeSettings">
+      <div class="cs-field">
+        <label>Trigger</label>
+        <div class="select-input pop-trigger cs-dd-trigger" data-target="slBeOvTrigger"><span
+            class="cs-select-label">After TP1 Hit</span><span class="material-symbols-outlined">expand_more</span>
+        </div><select id="slBeOvTrigger" style="display:none;">
+          <option value="tp1">After TP1 Hit</option>
+          <option value="tp2">After TP2 Hit</option>
+          <option value="tp3">After TP3 Hit</option>
+          <option value="customR">Custom R Multiple</option>
+        </select>
+      </div>
+      <div class="cs-field">
+        <label>Breakeven Offset</label>
+        <div class="cs-unit-pair">
+          <div class="price-stepper cs-price-stepper">
+            <input type="text" id="slBeOvOffsetValue" readonly value="1">
+            <div class="price-stepper-arrows">
+              <button type="button" id="slBeOvOffsetInc"><span
+                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
+              <button type="button" id="slBeOvOffsetDec"><span
+                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
             </div>
-            <div class="select-input pop-trigger cs-dd-trigger" data-target="slBeOvOffsetUnit"><span
-                class="cs-select-label">Ticks</span><span class="material-symbols-outlined">expand_more</span></div>
-            <select id="slBeOvOffsetUnit" style="display:none;">
-              <option value="ticks">Ticks</option>
-              <option value="points">Points</option>
-              <option value="percent">%</option>
-            </select>
           </div>
+          <div class="select-input pop-trigger cs-dd-trigger" data-target="slBeOvOffsetUnit"><span
+              class="cs-select-label">Ticks</span><span class="material-symbols-outlined">expand_more</span></div>
+          <select id="slBeOvOffsetUnit" style="display:none;">
+            <option value="ticks">Ticks</option>
+            <option value="points">Points</option>
+            <option value="percent">%</option>
+          </select>
         </div>
       </div>
     </div>
@@ -3889,7 +3886,7 @@
   <script src="js/workspace.js?v=5"></script>
   <script src="js/overlays.js?v=1"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=30"></script>
+  <script src="js/app.js?v=31"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=3"></script>
   <script src="js/market-scanner.js?v=7"></script>
