@@ -1066,6 +1066,39 @@
     }
     updateEntryPlaceableState();
   }
+  /* recompute every TP/SL chip's profit/loss amount and R-multiple without a full render() — used while
+     dragging Entry/TP/SL, since each of those moves changes the reward (TP↔entry) and/or risk (entry↔SL)
+     for every TP (same formulas as the initial render). SL's own "-1.0R" is fixed by definition. */
+  function updateAllTpSlReadoutsLive() {
+    if (!order) return;
+    const dir = order.side === 'buy' ? 1 : -1;
+    const riskPerContractTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
+    layer.querySelectorAll('.ol-side-row[data-tp-id]').forEach(row => {
+      const tp = order.tps.find(t => t.id === row.dataset.tpId);
+      if (!tp) return;
+      const pts = dir * (tp.price - order.entry);
+      const amtEl = row.querySelector('.ol-amt');
+      if (amtEl) {
+        const contracts = Math.max(1, Math.round(order.qty * tp.pct / 100));
+        const profit = pts * POINT_VALUE * contracts;
+        amtEl.textContent = (profit >= 0 ? '+' : '-') + fmtMoney(Math.abs(profit));
+        amtEl.classList.toggle('up', profit >= 0);
+        amtEl.classList.toggle('down', profit < 0);
+      }
+      const rEl = row.querySelector('.ol-rmult');
+      if (rEl) {
+        const rMultiple = riskPerContractTotal ? (pts * POINT_VALUE / riskPerContractTotal) : null;
+        rEl.textContent = rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R';
+      }
+    });
+    if (order.sl) {
+      const slAmtEl = layer.querySelector('.ol-chip.sl .ol-amt');
+      if (slAmtEl) {
+        const loss = dir * (order.entry - order.sl.price) * POINT_VALUE * order.qty;
+        slAmtEl.textContent = '-' + fmtMoney(Math.abs(loss));
+      }
+    }
+  }
   /* a plain click (no movement) on the handle falls through to onClick (if given) instead of dragging — */
   /* lets a handle double as both a drag target and a menu/edit/place trigger (e.g. the size/type pills, .ol-amt) */
   function makeDraggable(handle, onDrag, onDrop, excludeSelector, onClick) {
@@ -1778,19 +1811,13 @@
           '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" title="Remove TP"><span class="material-symbols-outlined">delete</span></span>';
         layer.appendChild(row);
 
-        const tpAmtEl = row.querySelector('.ol-amt');
         const tpChipEl = row.querySelector('.ol-chip');
         bindHandleHover(tpChipEl, 'tp:' + tp.id);
         function onDragTp(cy, h) {
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
           tp.price = roundTick(yToPrice(cy, h));
-          const liveDir = order.side === 'buy' ? 1 : -1;
-          const livePts = liveDir * (tp.price - order.entry);
-          const liveProfit = livePts * POINT_VALUE * contracts;
-          tpAmtEl.textContent = (liveProfit >= 0 ? '+' : '-') + fmtMoney(Math.abs(liveProfit));
-          tpAmtEl.classList.toggle('up', liveProfit >= 0);
-          tpAmtEl.classList.toggle('down', liveProfit < 0);
           updateAllTpSlValidityLive();
+          updateAllTpSlReadoutsLive();
           drawPriceChart();
         }
         function onDropTp(cy, h) {
@@ -1843,17 +1870,13 @@
           '<span class="ol-gear ol-danger" id="slDeleteTrigger" title="Remove SL"><span class="material-symbols-outlined">delete</span></span>';
         layer.appendChild(row);
 
-        const slAmtEl = row.querySelector('.ol-amt');
         const slChipEl = row.querySelector('.ol-chip');
         bindHandleHover(slChipEl, 'sl');
         function onDragSl(cy, h) {
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
           order.sl.price = roundTick(yToPrice(cy, h));
-          const liveDir = order.side === 'buy' ? 1 : -1;
-          const livePts = liveDir * (order.entry - order.sl.price);
-          const liveLoss = livePts * POINT_VALUE * order.qty;
-          slAmtEl.textContent = '-' + fmtMoney(Math.abs(liveLoss));
           updateAllTpSlValidityLive();
+          updateAllTpSlReadoutsLive();
           drawPriceChart();
         }
         function onDropSl(cy, h) {
@@ -1895,6 +1918,7 @@
           applyTrailingStopPreview();
         }
         updateAllTpSlValidityLive();
+        updateAllTpSlReadoutsLive();
         drawPriceChart();
       }
       function onDropEntry(cy, h) {
