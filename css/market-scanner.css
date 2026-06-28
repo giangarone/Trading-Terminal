@@ -376,16 +376,26 @@
   color: var(--purple);
 }
 
-/* ---- Body: results + detail ---- */
-.msx-body {
+/* ---- Content: left column (overview + tabs + table) alongside detail pane ---- */
+.msx-content {
   flex: 1;
   display: flex;
   min-height: 0;
 }
 
+.msx-left {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-subtle);
+}
+
 .msx-main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -455,37 +465,13 @@
   padding: 5px 11px;
 }
 
-.msx-toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
 .msx-count {
   font-size: 11px;
   color: var(--text-muted);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.msx-sort-wrap {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.msx-sort-lbl {
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: var(--ls-label);
-  color: var(--text-muted);
-}
-
-/* sort uses the shared .cs-dd-trigger engine; just size it here */
-.msx-sort-trigger {
-  min-width: 116px;
-  height: 30px;
-}
 
 /* ---- Results table ---- */
 .msx-table-host {
@@ -527,6 +513,36 @@ table.msx-table td {
   color: var(--text-primary);
   font-weight: 500;
   vertical-align: middle;
+}
+
+/* Sortable column headers */
+table.msx-table th.msx-th-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+table.msx-table th.msx-th-sortable:hover {
+  color: var(--text-secondary);
+}
+
+table.msx-table th.msx-th-asc .msx-sort-icon,
+table.msx-table th.msx-th-desc .msx-sort-icon {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.msx-sort-icon {
+  font-size: 12px;
+  vertical-align: middle;
+  margin-left: 3px;
+  opacity: .35;
+}
+
+/* Strength cell: dots + X/5 label */
+.msx-strength-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 
 table.msx-table tbody tr {
@@ -658,7 +674,7 @@ table.msx-table tbody tr.selected {
 
 .msx-stack-main {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -676,7 +692,7 @@ table.msx-table tbody tr.selected {
 }
 
 .msx-stack-main.msx-intel {
-  color: var(--intel);
+  color: var(--text-secondary);
 }
 
 /* News impact pill */
@@ -953,7 +969,6 @@ table.msx-table tbody tr.selected {
 .msx-detail {
   width: 344px;
   flex-shrink: 0;
-  border-left: 1px solid var(--border-subtle);
   background: var(--bg-surface);
   overflow-y: auto;
   display: flex;
@@ -1147,13 +1162,12 @@ table.msx-table tbody tr.selected {
 }
 
 .msx-d-btn.primary {
-  background: var(--purple);
-  border-color: var(--purple);
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .msx-d-btn.primary:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.1);
 }
 
 .msx-d-btn-row {

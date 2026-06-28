@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="css/quick-trade.css?v=3">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=4">
-  <link rel="stylesheet" href="css/market-scanner.css?v=10">
+  <link rel="stylesheet" href="css/market-scanner.css?v=12">
   <link rel="stylesheet" href="css/indicators.css?v=8">
   <link rel="stylesheet" href="css/chart-settings.css?v=8">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
@@ -3271,101 +3271,85 @@
           <button class="msx-icon-btn" id="msxRefresh" title="Refresh">
             <span class="material-symbols-outlined">refresh</span>
           </button>
-          <button class="msx-icon-btn" id="msxColumns" title="Columns">
-            <span class="material-symbols-outlined">view_column</span>
-          </button>
-          <button class="msx-icon-btn" id="msxExport" title="Export">
-            <span class="material-symbols-outlined">ios_share</span>
-          </button>
           <button class="msx-icon-btn msx-close-btn" id="msxClose" title="Close">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
       </div>
 
-      <!-- Market context band -->
-      <div class="msx-overview">
-        <div class="msx-ov-item">
-          <div class="msx-ov-lbl">Session Regime</div>
-          <div class="msx-ov-val msx-pos">Risk-On</div>
-          <div class="msx-ov-sub">Equity bulls in control</div>
-        </div>
-        <div class="msx-ov-item">
-          <div class="msx-ov-lbl">Market Breadth</div>
-          <div class="msx-breadth-track"><div class="msx-breadth-fill" style="width:62%"></div></div>
-          <div class="msx-breadth-nums"><span class="msx-pos">62% Adv</span><span class="msx-neg">38% Dec</span></div>
-        </div>
-        <div class="msx-ov-item">
-          <div class="msx-ov-lbl">Volatility &middot; VIX</div>
-          <div class="msx-ov-val">14.2 <span class="msx-pos msx-ov-delta">-4.07%</span></div>
-          <div class="msx-ov-sub">Below 20-day average (18.5)</div>
-        </div>
-        <div class="msx-ov-item msx-ov-sectors">
-          <div class="msx-ov-lbl">Sector Pulse</div>
-          <div class="msx-sector-pills">
-            <span class="msx-sector-pill up">Tech</span>
-            <span class="msx-sector-pill up">Energy</span>
-            <span class="msx-sector-pill up">Financials</span>
-            <span class="msx-sector-pill neutral">Health</span>
-            <span class="msx-sector-pill down">Utilities</span>
-            <span class="msx-sector-pill down">Bonds</span>
-          </div>
-        </div>
-      </div>
+      <!-- Content: left column (overview + tabs + table) | right detail pane -->
+      <div class="msx-content">
+        <div class="msx-left">
 
-      <!-- Category tabs -->
-      <div class="msx-tabs" id="msxTabs">
-        <button class="msx-tab active" data-tab="livefeed">
-          <span class="material-symbols-outlined">bolt</span>Live Feed
-          <span class="msx-tab-count" id="msxTabCount">128</span>
-        </button>
-        <button class="msx-tab" data-tab="indicators">
-          <span class="material-symbols-outlined">monitoring</span>Indicators
-        </button>
-        <button class="msx-tab" data-tab="chartprime">
-          <span class="material-symbols-outlined">hub</span>ChartPrime Intelligence
-        </button>
-        <button class="msx-tab" data-tab="news">
-          <span class="material-symbols-outlined">feed</span>News
-        </button>
-        <button class="msx-tab" data-tab="technical">
-          <span class="material-symbols-outlined">candlestick_chart</span>Technical Analysis
-        </button>
-        <button class="msx-tab" data-tab="saved">
-          <span class="material-symbols-outlined">bookmark</span>Saved Scans
-        </button>
-        <button class="msx-tab msx-tab-ai" data-tab="ai">
-          <span class="material-symbols-outlined">auto_awesome</span>AI Results
-        </button>
-      </div>
-
-      <!-- Body: results table + asset detail pane -->
-      <div class="msx-body">
-        <div class="msx-main">
-          <div class="msx-toolbar">
-            <div class="msx-search">
-              <span class="material-symbols-outlined">search</span>
-              <input type="text" id="msxSearch" placeholder="Search symbol or name&hellip;" autocomplete="off">
+          <!-- Market context band -->
+          <div class="msx-overview">
+            <div class="msx-ov-item">
+              <div class="msx-ov-lbl">Session Regime</div>
+              <div class="msx-ov-val msx-pos">Risk-On</div>
+              <div class="msx-ov-sub">Equity bulls in control</div>
             </div>
-            <div class="msx-chips" id="msxChips"></div>
-            <div class="msx-toolbar-right">
-              <span class="msx-count" id="msxCount">0 results</span>
-              <div class="msx-sort-wrap">
-                <span class="msx-sort-lbl">Sort</span>
-                <div class="select-input pop-trigger cs-dd-trigger msx-sort-trigger" data-target="msxSort">
-                  <span class="cs-select-label">Rank</span>
-                  <span class="material-symbols-outlined">expand_more</span>
-                </div>
-                <select id="msxSort" style="display:none;">
-                  <option value="rank" selected>Rank</option>
-                  <option value="change">Change %</option>
-                  <option value="strength">Strength</option>
-                  <option value="symbol">Symbol</option>
-                </select>
+            <div class="msx-ov-item">
+              <div class="msx-ov-lbl">Market Breadth</div>
+              <div class="msx-breadth-track"><div class="msx-breadth-fill" style="width:62%"></div></div>
+              <div class="msx-breadth-nums"><span class="msx-pos">62% Adv</span><span class="msx-neg">38% Dec</span></div>
+            </div>
+            <div class="msx-ov-item">
+              <div class="msx-ov-lbl">Volatility &middot; VIX</div>
+              <div class="msx-ov-val">14.2 <span class="msx-pos msx-ov-delta">-4.07%</span></div>
+              <div class="msx-ov-sub">Below 20-day average (18.5)</div>
+            </div>
+            <div class="msx-ov-item msx-ov-sectors">
+              <div class="msx-ov-lbl">Sector Pulse</div>
+              <div class="msx-sector-pills">
+                <span class="msx-sector-pill up">Tech</span>
+                <span class="msx-sector-pill up">Energy</span>
+                <span class="msx-sector-pill up">Financials</span>
+                <span class="msx-sector-pill neutral">Health</span>
+                <span class="msx-sector-pill down">Utilities</span>
+                <span class="msx-sector-pill down">Bonds</span>
               </div>
             </div>
           </div>
-          <div class="msx-table-host" id="msxTableHost"></div>
+
+          <!-- Category tabs -->
+          <div class="msx-tabs" id="msxTabs">
+            <button class="msx-tab active" data-tab="livefeed">
+              <span class="material-symbols-outlined">bolt</span>Live Feed
+              <span class="msx-tab-count" id="msxTabCount">128</span>
+            </button>
+            <button class="msx-tab" data-tab="indicators">
+              <span class="material-symbols-outlined">monitoring</span>Indicators
+            </button>
+            <button class="msx-tab" data-tab="chartprime">
+              <span class="material-symbols-outlined">hub</span>ChartPrime Intelligence
+            </button>
+            <button class="msx-tab" data-tab="news">
+              <span class="material-symbols-outlined">feed</span>News
+            </button>
+            <button class="msx-tab" data-tab="technical">
+              <span class="material-symbols-outlined">candlestick_chart</span>Technical Analysis
+            </button>
+            <button class="msx-tab" data-tab="saved">
+              <span class="material-symbols-outlined">bookmark</span>Saved Scans
+            </button>
+            <button class="msx-tab msx-tab-ai" data-tab="ai">
+              <span class="material-symbols-outlined">auto_awesome</span>AI Results
+            </button>
+          </div>
+
+          <!-- Results -->
+          <div class="msx-main">
+            <div class="msx-toolbar">
+              <div class="msx-search">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" id="msxSearch" placeholder="Search symbol or name&hellip;" autocomplete="off">
+              </div>
+              <div class="msx-chips" id="msxChips"></div>
+              <span class="msx-count" id="msxCount">0 results</span>
+            </div>
+            <div class="msx-table-host" id="msxTableHost"></div>
+          </div>
+
         </div>
         <aside class="msx-detail" id="msxDetail"></aside>
       </div>
@@ -3937,7 +3921,7 @@
   <script src="js/app.js?v=21"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=2"></script>
-  <script src="js/market-scanner.js?v=3"></script>
+  <script src="js/market-scanner.js?v=6"></script>
 
 </body>
 
