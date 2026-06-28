@@ -2,6 +2,11 @@
 
 An HTML/CSS/JS trading terminal UI designed to simulate a real trading platform, but functioning purely as a mockup.
 
+## Terminology
+
+- **"Quick trades"** = trades placed via the right panel (Quick Trade panel).
+- **"Chart trades"** = trades placed via the chart right-click menu.
+
 ## Design mandate
 
 - Every new feature and every edit to an existing one must match the current design exactly. The terminal has a deliberate, premium aesthetic; new elements must feel visually integrated, not bolted on.

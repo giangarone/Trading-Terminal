@@ -330,6 +330,7 @@
 .ol-chip.tp.invalid,
 .ol-chip.sl.invalid {
   border-color: var(--accent-border);
+  color: var(--accent);
 }
 
 .ol-chip.ghost {
@@ -423,6 +424,51 @@
 
 .ol-chip.entry.placeable {
   cursor: pointer;
+}
+
+/* Resting/working order: placed and waiting for price to reach entry.
+   Outlined (no solid fill) so it reads as a live status, not a "click to place" button. */
+.ol-chip.entry.working {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-sunken);
+}
+
+.ol-chip.entry.working.buy {
+  border: 1px solid var(--long-border);
+  color: var(--long);
+}
+
+.ol-chip.entry.working.sell {
+  border: 1px solid var(--short-border);
+  color: var(--short);
+}
+
+/* Button-wide progress fill: empty while resting, sweeps to 100% on fill trigger */
+.ol-chip-fill {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  transition: width 450ms ease-out;
+  pointer-events: none;
+}
+
+.ol-chip.entry.working.buy .ol-chip-fill {
+  background: var(--long-dim);
+}
+
+.ol-chip.entry.working.sell .ol-chip-fill {
+  background: var(--short-dim);
+}
+
+.ol-chip.entry.working.filling .ol-chip-fill {
+  width: 100%;
+}
+
+/* Label sits above the progress fill */
+.ol-chip-lbl {
+  position: relative;
+  z-index: 1;
 }
 
 .ol-chip.entry.disabled {

@@ -627,6 +627,19 @@
     }
     order = null; render(); closeAllPopovers();
   }
+  /* quick visual sweep of the entry chip's progress fill before the (instant) fill completes */
+  const FILL_SWEEP_MS = 450;
+  function startFillSweep() {
+    if (!order || order.filled || order.filling) return;
+    order.filling = true;
+    const chip = document.getElementById('entryPriceHandle');
+    if (chip) chip.classList.add('filling');   // CSS transitions the fill width 0 -> 100%
+    setTimeout(() => {
+      if (!order) return;
+      order.filling = false;
+      confirmOrderFill();                       // existing instant fill: history, position, locked render
+    }, FILL_SWEEP_MS);
+  }
   function confirmOrderFill() {
     if (!order || order.filled) return;
     order.filled = true;
@@ -1024,12 +1037,6 @@
 
   /* ---------- drag behaviour ---------- */
   /* snap a TP/SL to the valid side of the entry, 25px above/below it on screen */
-  function snappedSidePrice(kind, h) {
-    const dir = order.side === 'buy' ? 1 : -1;
-    const yDir = kind === 'tp' ? -dir : dir;
-    const entryY = priceToY(order.entry, h);
-    return roundTick(yToPrice(clamp(entryY + yDir * 25, 10, h - 10), h));
-  }
   /* a TP/SL is only valid on the correct side of entry: long TP above / SL below, short TP below / SL above */
   function tpSlSideOk(kind, price) {
     const dir = order.side === 'buy' ? 1 : -1;
@@ -1116,6 +1123,7 @@
       floatChip.className = 'ol-chip ' + kind + ' ol-drag-float';
       floatChip.style.left = originX + 'px';
       floatChip.innerHTML =
+        '<span class="material-symbols-outlined ol-chip-warning">warning</span>' +
         '<span class="ol-drag-float-label">' + kind.toUpperCase() + '</span>' +
         '<span class="ol-drag-float-amt"></span>';
       layer.appendChild(floatChip);
@@ -1133,6 +1141,7 @@
         const py = clamp(priceToY(price, rect.height), 10, rect.height - 10);
         guideLine.style.top = py + 'px';
         floatChip.style.top = py + 'px';
+        floatChip.classList.toggle('invalid', !valid);
         const pts = dir * (kind === 'tp' ? (price - order.entry) : (order.entry - price));
         const amount = pts * POINT_VALUE * order.qty;
         amtEl.textContent = (amount >= 0 ? '+' : '-') + fmtMoney(Math.abs(amount));
@@ -1149,7 +1158,7 @@
         guideLine.remove();
         floatChip.remove();
         handle.classList.remove('drag-source');
-        const finalPrice = last.valid ? last.price : snappedSidePrice(kind, rect.height);
+        const finalPrice = last.price;
         if (kind === 'tp') {
           const newId = 'tp' + (tpCounter++);
           order.tps.push({ id: newId, price: finalPrice, pct: 100, trailing: false, trailOverride: null });
@@ -1660,9 +1669,9 @@
         if (order.sl && order.sl.trailing) applyTrailingStopPreview();
         if (!isDraggingOrderLine) render();
       }
-      if (order && !order.filled && !order.pendingConfirm) {
+      if (order && !order.filled && !order.pendingConfirm && !order.filling) {
         const hitEntry = order.fillAbove ? last >= order.entry : last <= order.entry;
-        if (hitEntry) confirmOrderFill();
+        if (hitEntry) startFillSweep();
       }
       simTickCounter++;
       const isNewBarTick = (simTickCounter % 10 === 0);
@@ -1913,9 +1922,16 @@
         if (blocked) entryTitle = 'Fix invalid TP/SL before placing the order';
         else if (placeable) entryTitle = canDragEntry ? 'Drag to move, or click to place the order' : 'Click to place the order';
         else entryTitle = 'Drag to move entry';
-        const entryClass = 'ol-chip entry ' + side + (placeable ? ' placeable' : '') + (blocked ? ' disabled' : '');
+        // Resting/working order: placed and waiting for price to reach entry (not yet filled, no longer awaiting placement)
+        const working = !placeable;
+        const entryClass = 'ol-chip entry ' + side
+          + (placeable ? ' placeable' : '')
+          + (working ? ' working' : '')
+          + (order.filling ? ' filling' : '')   // keeps the progress fill at 100% if a re-render lands mid-sweep
+          + (blocked ? ' disabled' : '');
         bar.innerHTML =
-          '<span class="' + entryClass + '" id="entryPriceHandle" title="' + entryTitle + '">' + sideLabel + '</span>' +
+          '<span class="' + entryClass + '" id="entryPriceHandle" title="' + entryTitle + '">' +
+          '<span class="ol-chip-fill"></span><span class="ol-chip-lbl">' + sideLabel + '</span></span>' +
           tpAddHandleHtml + slAddHandleHtml +
           '<span class="ol-pill neutral combo" id="orderConfigPill">' +
           '<span class="ol-pill-seg" id="sizePillTrigger">' + sizeLabel + '</span>' +
