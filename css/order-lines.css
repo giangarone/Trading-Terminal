@@ -681,53 +681,19 @@
   color: var(--long);
 }
 
-/* The SL chip badge is clickable — it opens the SL settings */
-.ol-chip.sl .ol-badge {
+/* The SL chip badge is clickable (opens settings) and sits at the far right of the chip */
+.ol-chip.sl .sl-badge {
   cursor: pointer;
+  margin-left: auto;
 }
 
-.ol-chip.sl .ol-badge:hover {
+.ol-chip.sl .sl-badge:hover {
   filter: brightness(1.18);
 }
 
 .ol-badge.fixed {
   background: var(--bg-hover);
   color: var(--text-secondary);
-}
-
-/* Compact enable/disable toggle that lives inside the SL chip */
-.sl-chip-toggle {
-  background: none;
-  border: none;
-  padding: 0;
-  margin-left: 2px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.sl-chip-toggle .ui-toggle-track {
-  width: 26px;
-  height: 14px;
-  border-radius: 7px;
-}
-
-.sl-chip-toggle .ui-toggle-thumb {
-  width: 10px;
-  height: 10px;
-  top: 1px;
-  left: 1px;
-}
-
-.sl-chip-toggle.on .ui-toggle-track {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.sl-chip-toggle.on .ui-toggle-thumb {
-  transform: translateX(13px);
-  background: var(--on-accent);
 }
 
 /* SL gear-menu: selectable behavior rows + their settings sections */

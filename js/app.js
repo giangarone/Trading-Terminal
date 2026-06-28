@@ -1967,9 +1967,8 @@
         row.innerHTML =
           '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + '">' +
             '<span class="material-symbols-outlined ol-chip-warning">warning</span>SL' +
-            '<span class="ol-badge ' + badge.cls + '" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
             '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
-            '<button class="sl-chip-toggle' + (order.sl.enabled ? ' on' : '') + '" id="slChipToggle" type="button" title="Enable/disable special SL behavior"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>' +
+            '<span class="ol-badge sl-badge ' + badge.cls + '" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
           '</span>' +
           '<span class="ol-rmult">-1.0R</span>' +
           '<span class="ol-pct-chip">100%</span>' +
@@ -1987,9 +1986,7 @@
             order.sl.enabled = false;
           }
           const badgeEl = document.getElementById('slBadgeTrigger');
-          if (badgeEl) { const info = slBadgeInfo(); badgeEl.textContent = info.text; badgeEl.className = 'ol-badge ' + info.cls; }
-          const togEl = document.getElementById('slChipToggle');
-          if (togEl) togEl.classList.toggle('on', order.sl.enabled);
+          if (badgeEl) { const info = slBadgeInfo(); badgeEl.textContent = info.text; badgeEl.className = 'ol-badge sl-badge ' + info.cls; }
         }
         function onDragSl(cy, h) {
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
@@ -2005,16 +2002,12 @@
           syncQtyFromRisk();
           render();
         }
-        makeDraggable(slChipEl, onDragSl, onDropSl, '.ol-badge, .sl-chip-toggle');
+        makeDraggable(slChipEl, onDragSl, onDropSl, '.ol-badge');
         makeDraggable(line, onDragSl, onDropSl);
 
         row.querySelector('#slBadgeTrigger').addEventListener('click', (e) => {
           e.stopPropagation();
           openSlGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-        });
-        row.querySelector('#slChipToggle').addEventListener('click', (e) => {
-          e.stopPropagation();
-          toggleSlEnabled();
         });
         row.querySelector('#slDeleteTrigger').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -3461,27 +3454,20 @@
       order.sl.beTpId = resolveBreakevenTpId();
     }
   }
-  /* select a special behavior (mutually exclusive) and turn it on */
+  /* select a special behavior (mutually exclusive); clicking the active one again turns it off → plain Fixed SL */
   function selectSlMode(mode) {
     if (!order || !order.sl) return;
+    if (order.sl.enabled && order.sl.mode === mode) {
+      order.sl.enabled = false;
+      order.sl.beActive = false; order.sl.beTpId = null;
+      renderSlGearMenu(); render();
+      return;
+    }
     if (mode === 'breakeven' && order.tps.length < 2) { showToast('Breakeven needs at least 2 take profits', 'info'); return; }
     order.sl.mode = mode;
     order.sl.enabled = true;
     if (mode !== 'breakeven') { order.sl.beActive = false; order.sl.beTpId = null; }
     applySlModePlacement();
-    renderSlGearMenu(); render();
-  }
-  /* master on/off for the SL chip toggle */
-  function toggleSlEnabled() {
-    if (!order || !order.sl) return;
-    if (!order.sl.enabled) {
-      if (order.sl.mode === 'breakeven' && order.tps.length < 2) { showToast('Breakeven needs at least 2 take profits', 'info'); return; }
-      order.sl.enabled = true;
-      applySlModePlacement();
-    } else {
-      order.sl.enabled = false;
-      order.sl.beActive = false; order.sl.beTpId = null;
-    }
     renderSlGearMenu(); render();
   }
   slTrailRow.addEventListener('click', (e) => { e.stopPropagation(); selectSlMode('trailing'); });
