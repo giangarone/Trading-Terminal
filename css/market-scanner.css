@@ -668,6 +668,20 @@ table.msx-table tbody tr.selected {
   color: var(--text-muted);
 }
 
+/* Small inline directional bias icon prepended to signal/headline/setup cells */
+.msx-col-bias-icon {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.msx-col-bias-icon .material-symbols-outlined {
+  font-size: 12px;
+  line-height: 1;
+}
+
 /* Two-line text cell (signal name + sub) */
 .msx-stack {
   display: flex;
@@ -684,18 +698,7 @@ table.msx-table tbody tr.selected {
 .msx-stack-sub {
   font-size: 10.5px;
   color: var(--text-muted);
-}
-
-.msx-stack-main.msx-up {
-  color: var(--long);
-}
-
-.msx-stack-main.msx-down {
-  color: var(--short);
-}
-
-.msx-stack-main.msx-intel {
-  color: var(--text-secondary);
+  margin-left: 16px;
 }
 
 /* News impact pill */
