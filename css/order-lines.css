@@ -681,6 +681,54 @@
   color: var(--long);
 }
 
+/* Entry-bar SL summary pill — clickable shortcut into the SL settings */
+.ol-pill.sl-summary {
+  background: var(--bg-sunken);
+  border: 1px solid var(--short-border);
+  color: var(--short);
+  cursor: pointer;
+}
+
+.ol-pill.sl-summary:hover {
+  background: var(--short-dim);
+}
+
+/* SL gear-menu settings (distance method + trailing) */
+.sl-settings-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 12px 10px;
+}
+
+.sl-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+}
+
+.sl-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sl-start-field {
+  padding: 0 12px 12px;
+}
+
+.sl-toggle-row.on .ui-toggle-track {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.sl-toggle-row.on .ui-toggle-thumb {
+  transform: translateX(16px);
+  background: var(--on-accent);
+}
+
 /* Right-click context menu */
 .ctx-menu {
   position: fixed;
