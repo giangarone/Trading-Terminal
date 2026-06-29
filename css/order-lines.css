@@ -692,11 +692,6 @@
   margin-right: -6px;
 }
 
-.ol-badge.fixed {
-  background: var(--bg-hover);
-  color: var(--text-secondary);
-}
-
 /* SL badge shell (shown only when a special mode is active): a clickable label that opens
    SL settings, plus a small × button that disables the mode and reverts to Fixed. The two
    share the badge's background/color so they read as one pill. */

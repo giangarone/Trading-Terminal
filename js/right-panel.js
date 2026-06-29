@@ -67,26 +67,26 @@
       sym, qty, avgPrice,
       mark: mark0, mark0, anchor: mark0, step: step || 0.01, dec: dec || 2,
       pv, pnlOpen0, unitBase,
-      elQty:     document.getElementById('posQty-'     + sym),
-      elAvg:     document.getElementById('posAvg-'     + sym),
-      elMark:    document.getElementById('posMark-'    + sym),
+      elQty: document.getElementById('posQty-' + sym),
+      elAvg: document.getElementById('posAvg-' + sym),
+      elMark: document.getElementById('posMark-' + sym),
       elPnlOpen: document.getElementById('posPnlOpen-' + sym),
-      elPct:     document.getElementById('posPct-'     + sym),
+      elPct: document.getElementById('posPct-' + sym),
     };
   }
 
   const positions = [
     //                sym        qty       avgPrice   mark0      pnlOpen0  pct0   step    dec
-    makePosition('NQU5',       8,      29748.00,  29704.75,  -692.00,  -0.15,  0.25,   2),
-    makePosition('ESU5',       5,       6015.25,   6028.00,   -63.75,  -0.21,  0.25,   2),
-    makePosition('SOLUSD',   3084.19,     0.2136,    0.2195,   -83.55,  -8.35,  0.0001, 4),
-    makePosition('BTCUSD',      0.125, 66245.10,  67121.50,   109.55,   1.32,  0.5,    2),
-    makePosition('ETHUSD',      2.0,    3125.40,   3210.75,   170.70,   2.73,  0.05,   2),
-    makePosition('AAPL',       100,       185.27,    188.45,   318.00,   1.72,  0.05,   2),
+    makePosition('NQU5', 8, 29748.00, 29704.75, -692.00, -0.15, 0.25, 2),
+    makePosition('ESU5', 5, 6015.25, 6028.00, -63.75, -0.21, 0.25, 2),
+    makePosition('SOLUSD', 3084.19, 0.2136, 0.2195, -83.55, -8.35, 0.0001, 4),
+    makePosition('BTCUSD', 0.125, 66245.10, 67121.50, 109.55, 1.32, 0.5, 2),
+    makePosition('ETHUSD', 2.0, 3125.40, 3210.75, 170.70, 2.73, 0.05, 2),
+    makePosition('AAPL', 100, 185.27, 188.45, 318.00, 1.72, 0.05, 2),
   ];
 
   const totPnlOpenEl = document.getElementById('totPnlOpen');
-  const totPctEl     = document.getElementById('totPct');
+  const totPctEl = document.getElementById('totPct');
 
   function fmtQty(q) {
     let s = q.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
@@ -104,7 +104,7 @@
       return true;
     }
     const remainFrac = 1 - pct / 100;
-    p.qty      *= remainFrac;
+    p.qty *= remainFrac;
     p.pnlOpen0 *= remainFrac;
     p.unitBase *= remainFrac;
     if (p.elQty) p.elQty.textContent = fmtQty(p.qty);
@@ -122,7 +122,7 @@
       return 'closed';
     }
     const remainFrac = 1 - amount / p.qty;
-    p.qty      *= remainFrac;
+    p.qty *= remainFrac;
     p.pnlOpen0 *= remainFrac;
     p.unitBase *= remainFrac;
     if (p.elQty) p.elQty.textContent = fmtQty(p.qty);
@@ -132,10 +132,10 @@
   window.reversePosition = function (sym) {
     const p = positions.find(x => x.sym === sym);
     if (!p) return false;
-    p.pv       = -p.pv;
+    p.pv = -p.pv;
     p.avgPrice = p.mark;
-    p.mark0    = p.mark;
-    p.anchor   = p.mark;
+    p.mark0 = p.mark;
+    p.anchor = p.mark;
     p.pnlOpen0 = 0;
     if (p.elAvg) p.elAvg.textContent = fmt(p.avgPrice, p.dec);
     return true;
@@ -144,8 +144,8 @@
   /* ---------- graduate a filled chart order into a Positions-tab row ---------- */
   function quickCloseRowHtml() {
     return '<div class="pos-quick-btn-row">' +
-      '<button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>' +
-      '<button class="pos-quick-btn pos-quick-reverse" data-pos-reverse>Reverse</button></div>';
+      '<button class="pos-quick-btn pos-quick-reverse" data-pos-reverse>Reverse</button>' +
+      '<button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button></div>';
   }
   /* Market/Limit close controls for a dynamically-created (chart/quick-trade) position row */
   function detailCloseHtml(sym, qtyStr, unit, priceStr, amtStep, pxStep) {
@@ -258,7 +258,7 @@
       const chg = (s.last - s.prevClose) / s.prevClose * 100;
       const chgUp = chg >= 0;
       if (s.elLast) s.elLast.textContent = fmt(s.last, s.dec);
-      if (s.elChg)  { s.elChg.textContent = (chgUp ? '+' : '') + fmt(chg) + '%'; setUpDown(s.elChg, chgUp); }
+      if (s.elChg) { s.elChg.textContent = (chgUp ? '+' : '') + fmt(chg) + '%'; setUpDown(s.elChg, chgUp); }
       if (s.elLast) flashEl(s.elLast, isUp);
     });
 
@@ -272,11 +272,11 @@
         p.mark = Math.max(next, p.step);
 
         const deltaMark = p.mark - p.mark0;
-        const deltaPnl  = deltaMark * p.qty * p.pv;
-        const pnlOpen   = p.pnlOpen0 + deltaPnl;
-        const pct       = p.unitBase !== 0 ? pnlOpen / p.unitBase : 0;
+        const deltaPnl = deltaMark * p.qty * p.pv;
+        const pnlOpen = p.pnlOpen0 + deltaPnl;
+        const pct = p.unitBase !== 0 ? pnlOpen / p.unitBase : 0;
 
-        if (p.elMark)    p.elMark.textContent = fmt(p.mark, p.dec);
+        if (p.elMark) p.elMark.textContent = fmt(p.mark, p.dec);
         if (p.elPnlOpen) {
           p.elPnlOpen.textContent = (pnlOpen >= 0 ? '+' : '') + fmt(pnlOpen);
           setUpDown(p.elPnlOpen, pnlOpen >= 0);
@@ -287,7 +287,7 @@
         }
 
         sumPnlOpen += pnlOpen;
-        sumBase    += p.unitBase;
+        sumBase += p.unitBase;
       } catch (_) { /* guard against stale element refs mid-tick */ }
     });
 

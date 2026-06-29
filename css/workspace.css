@@ -690,7 +690,7 @@ table.bp-table tr.total-row td {
 }
 
 .pos-header-bar .pos-col-quickclose {
-  text-align: center;
+  text-align: right;
 }
 
 /* ── Rows scroll area ────────────────────────────────────── */

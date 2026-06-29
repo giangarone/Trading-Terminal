@@ -43,8 +43,11 @@
     trailingStop: { distanceValue: 1.0, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
     atrStop: { length: 14, multiplier: 2.0, timeframe: 'current', updateFreq: 'newbar', dynamic: true },
     trailingTp: { activation: 'tp1', activationCustomR: 1, method: 'fixed', distanceValue: 20, distanceUnit: 'ticks' },
-    globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true }
+    globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true, lockRR: false },
+    positionDefaults: { orderType: 'limit' }
   };
+  /* maps Position Defaults' generic order-type options to the actual order type strings used by the order object */
+  const PD_ORDER_TYPE_MAP = { market: 'Market', limit: 'Limit', stop: 'Stop Market', mit: 'MIT' };
   function cloneCsDefaults() { return JSON.parse(JSON.stringify(CS_DEFAULTS)); }
   function loadChartSettings() {
     try {
@@ -421,7 +424,7 @@
     const autoOrderType = side === 'buy'
       ? (fillAbove ? 'Stop Market' : 'Limit')
       : (fillAbove ? 'Limit' : 'Stop Market');
-    const orderType = isChartTrade ? 'Market' : autoOrderType;
+    const orderType = isChartTrade ? (PD_ORDER_TYPE_MAP[chartSettings.positionDefaults.orderType] || 'Market') : autoOrderType;
     // Market chart trades snap to live price immediately so TPs/SL are calculated correctly
     const entry = roundTick((isChartTrade && orderType === 'Market') ? currentPrice : entryPrice);
     const expanded = chartSettings.tpSlDisplayMode === 'expanded';
@@ -938,21 +941,23 @@
     { mode: 'atr',       label: 'ATR',   cls: 'atr' },
     { mode: 'breakeven', label: 'BE',    cls: 'be' },
   ];
-  /* badge shown inside the SL chip — text + style class, and it opens the SL settings */
+  /* badge shown inside the SL chip — text + style class, and it opens the SL settings.
+     A plain (non-special-mode) SL has no badge at all — null means "don't show one". */
   function slBadgeInfo() {
-    if (!order || !order.sl) return { text: 'Fixed', cls: 'fixed' };
-    if (!order.sl.enabled) return { text: 'Fixed', cls: 'fixed' };
+    if (!order || !order.sl || !order.sl.enabled) return null;
     if (order.sl.mode === 'breakeven') return { text: order.sl.beActive ? 'SL → BE' : 'BE', cls: 'be' };
-    if (order.sl.mode === 'atr') return { text: 'ATR ' + slAtrMult().toFixed(1) + 'x', cls: 'atr' };
+    if (order.sl.mode === 'atr') return { text: 'ATR ' + slAtrMult().toFixed(2) + 'x', cls: 'atr' };
     return { text: 'Trail ' + slDistanceLabel(ensureSlConfig()), cls: 'trail' };
   }
-  /* live-patch the on-chart SL chip badge without a full re-render (used by drag and by gear-menu field edits) */
+  /* live-patch the on-chart SL chip badge without a full re-render (used by drag and by gear-menu field edits).
+     If a drag detaches a special mode (e.g. manually dragging an ATR stop), the badge is removed outright
+     instead of relabeled, since a plain SL never shows a badge. */
   function refreshSlBadgeOnChart() {
-    const labelEl = document.getElementById('slBadgeTrigger');
     const shellEl = document.getElementById('slBadgeShell');
-    if (!labelEl || !shellEl) return;
     const info = slBadgeInfo();
-    labelEl.textContent = info.text;
+    if (!info) { if (shellEl) shellEl.remove(); return; }
+    if (!shellEl) return;
+    document.getElementById('slBadgeTrigger').textContent = info.text;
     shellEl.className = 'ol-badge sl-badge ' + info.cls;
   }
   let simTickCounter = 0;
@@ -1340,6 +1345,44 @@
     bar.style.top = y + 'px';
     updateAllTpSlValidityLive();
     updateAllTpSlReadoutsLive();
+  }
+  /* Lock RR (Chart Trades > Global Behavior): shifts every TP and the SL by the same amount the
+     entry just moved, so their distance from entry — and therefore their R-multiple — stays exactly
+     what it was before the move. */
+  function applyLockRRShift(deltaPrice) {
+    if (!order || !deltaPrice || !chartSettings.globalBehavior.lockRR) return;
+    order.tps.forEach(tp => { tp.price = roundTick(tp.price + deltaPrice); });
+    if (order.sl) order.sl.price = roundTick(order.sl.price + deltaPrice);
+  }
+  /* single setter for order.entry so every caller — manual drag or the live-price tracking of a
+     pending market order — gets the Lock RR shift applied consistently */
+  function setOrderEntryPrice(newEntry) {
+    const deltaPrice = newEntry - order.entry;
+    order.entry = newEntry;
+    applyLockRRShift(deltaPrice);
+  }
+  /* repositions every TP/SL line + row without a full render() — used alongside updateEntryLinePositionLive
+     while the entry is moving, since Lock RR shifts their prices in lockstep with it */
+  function updateAllTpSlLinePositionsLive() {
+    if (!order) return;
+    const H = rectH();
+    order.tps.forEach(tp => {
+      const row = layer.querySelector('.ol-side-row[data-tp-id="' + tp.id + '"]');
+      const line = row && row.previousElementSibling;
+      if (!row || !line) return;
+      const y = clamp(priceToY(tp.price, H), 10, H - 10);
+      row.style.top = y + 'px';
+      line.style.top = y + 'px';
+    });
+    if (order.sl) {
+      const slChip = layer.querySelector('.ol-chip.sl');
+      const row = slChip && slChip.closest('.ol-side-row');
+      const line = row && row.previousElementSibling;
+      if (!row || !line) return;
+      const y = clamp(priceToY(order.sl.price, H), 10, H - 10);
+      row.style.top = y + 'px';
+      line.style.top = y + 'px';
+    }
   }
   /* a plain click (no movement) on the handle falls through to onClick (if given) instead of dragging — */
   /* lets a handle double as both a drag target and a menu/edit/place trigger (e.g. the size/type pills, .ol-amt) */
@@ -1940,11 +1983,11 @@
       checkTpFills(prevLast, last);
       if (order && order.filled) checkSlHit(last);
       if (order && !order.filled && order.pendingConfirm && order.orderType === 'Market') {
-        order.entry = last;
+        setOrderEntryPrice(last);
         if (slTrailActive()) applyTrailingStopPreview();
         else if (slAtrActive()) placeAtrStop();
         if (!isDraggingOrderLine) render();
-        else updateEntryLinePositionLive();
+        else { updateEntryLinePositionLive(); updateAllTpSlLinePositionsLive(); }
       }
       if (order && !order.filled && !order.pendingConfirm && !order.filling) {
         const hitEntry = order.fillAbove ? last >= order.entry : last <= order.entry;
@@ -2213,18 +2256,19 @@
 
       function onDragEntry(cy, h) {
         bar.style.top = cy + 'px'; line.style.top = cy + 'px';
-        order.entry = roundTick(yToPrice(cy, h));
+        setOrderEntryPrice(roundTick(yToPrice(cy, h)));
         // Keep an automated SL anchored to entry while dragging for non-market orders
         if (order.orderType !== 'Market') {
           if (slTrailActive()) applyTrailingStopPreview();
           else if (slAtrActive()) placeAtrStop();
         }
+        updateAllTpSlLinePositionsLive();
         updateAllTpSlValidityLive();
         updateAllTpSlReadoutsLive();
         drawPriceChart();
       }
       function onDropEntry(cy, h) {
-        order.entry = roundTick(yToPrice(cy, h));
+        setOrderEntryPrice(roundTick(yToPrice(cy, h)));
         syncQtyFromRisk();
         render();
       }
@@ -2575,14 +2619,13 @@
     const input = document.getElementById(valueId);
     const dec = document.getElementById(valueId + 'Dec');
     const inc = document.getElementById(valueId + 'Inc');
-    function clampVal(v) {
-      v = Math.round(v / step) * step;
-      v = Number.isInteger(step) ? Math.round(v) : +v.toFixed(2);
-      return Math.min(max, Math.max(min, v));
-    }
-    function set(v) { input.value = clampVal(v); if (onChange) onChange(); }
+    const isIntegerStep = Number.isInteger(step);
+    /* Arrow clicks snap to the step grid; manual typing only clamps to min/max and allows up to 2 decimals — same pattern as the SL gear menu's steppers */
+    function clampStep(v) { v = Math.round(v / step) * step; v = isIntegerStep ? Math.round(v) : +v.toFixed(2); return Math.min(max, Math.max(min, v)); }
+    function clampManual(v) { v = Math.min(max, Math.max(min, v)); return isIntegerStep ? Math.round(v) : +v.toFixed(2); }
+    function set(v) { input.value = clampStep(v); if (onChange) onChange(); }
     input.removeAttribute('readonly');
-    input.addEventListener('change', () => set(parseFloat(input.value) || 0));
+    input.addEventListener('change', () => { input.value = clampManual(parseFloat(input.value) || 0); if (onChange) onChange(); });
     dec.addEventListener('click', (e) => { e.stopPropagation(); set(parseFloat(input.value || '0') - step); });
     inc.addEventListener('click', (e) => { e.stopPropagation(); set(parseFloat(input.value || '0') + step); });
   }
@@ -2807,6 +2850,9 @@
     document.getElementById('csGbCancelOnClose').classList.toggle('checked', s.globalBehavior.cancelOnManualClose);
     document.getElementById('csGbRecalc').classList.toggle('checked', s.globalBehavior.recalcOnSizeChange);
     document.getElementById('csGbPersist').classList.toggle('checked', s.globalBehavior.persist);
+    document.getElementById('csGbLockRR').classList.toggle('checked', s.globalBehavior.lockRR);
+
+    document.getElementById('pdOrderType').value = s.positionDefaults.orderType;
 
     csUpdateConditionalFields();
     refreshAllCsDropdownLabels(document.getElementById('chartSettingsBackdrop'));
@@ -2847,6 +2893,10 @@
         cancelOnManualClose: document.getElementById('csGbCancelOnClose').classList.contains('checked'),
         recalcOnSizeChange: document.getElementById('csGbRecalc').classList.contains('checked'),
         persist: document.getElementById('csGbPersist').classList.contains('checked'),
+        lockRR: document.getElementById('csGbLockRR').classList.contains('checked'),
+      },
+      positionDefaults: {
+        orderType: document.getElementById('pdOrderType').value,
       }
     };
     persistChartSettingsIfEnabled();
@@ -3589,7 +3639,7 @@
     document.getElementById('slDistanceValue').value = (+cfg.distanceValue).toFixed(slDistanceParams(cfg.distanceUnit).dp);
     slDistanceUnitSel.value = cfg.distanceUnit;
     slStartSel.value = cfg.start;
-    document.getElementById('slAtrMultiplier').value = slAtrMult().toFixed(1);
+    document.getElementById('slAtrMultiplier').value = slAtrMult().toFixed(2);
     const be = ensureBeOverride();
     slBeOvTrigger.value = be.trigger;
     slBeOvOffsetValue.value = be.offsetValue;

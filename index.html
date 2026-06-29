@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="css/right-panel.css?v=3">
   <link rel="stylesheet" href="css/quick-trade.css?v=6">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=11">
+  <link rel="stylesheet" href="css/order-lines.css?v=12">
   <link rel="stylesheet" href="css/market-scanner.css?v=14">
   <link rel="stylesheet" href="css/indicators.css?v=8">
   <link rel="stylesheet" href="css/chart-settings.css?v=10">
@@ -1128,6 +1128,9 @@
                     <label class="cs-checkbox-row"><span class="chk-box" id="csGbPersist"><span
                           class="material-symbols-outlined">check</span></span>Persist trade management
                       settings on charts and layouts</label>
+                    <label class="cs-checkbox-row"><span class="chk-box" id="csGbLockRR"><span
+                          class="material-symbols-outlined">check</span></span>Lock TP/SL risk:reward
+                      when entry moves</label>
                   </div>
                 </div>
               </div>
@@ -1215,11 +1218,11 @@
                       <div class="cs-field">
                         <label>Default Order Type</label>
                         <div class="select-input pop-trigger cs-dd-trigger" data-target="pdOrderType"><span
-                            class="cs-select-label">Market</span><span
+                            class="cs-select-label">Limit</span><span
                             class="material-symbols-outlined">expand_more</span></div><select id="pdOrderType"
                           style="display:none;">
-                          <option value="market" selected>Market</option>
-                          <option value="limit">Limit</option>
+                          <option value="market">Market</option>
+                          <option value="limit" selected>Limit</option>
                           <option value="stop">Stop</option>
                           <option value="mit">MIT — Market if Touched</option>
                         </select>
@@ -1819,10 +1822,8 @@
 
                     <div class="plan-everything-banner">
                       <span class="material-symbols-outlined">verified</span>
-                      Every feature in Terminal Pro — included automatically
+                      Every feature in Terminal Pro
                     </div>
-
-                    <div class="plan-elite-divider">Elite-Exclusive Features</div>
 
                     <div class="plan-feature-group">
                       <div class="cs-tpsl-lbl">Market Data</div>
@@ -2172,7 +2173,7 @@
               <div class="pos-col pos-col-pnl">Unrealized P&amp;L</div>
               <div class="pos-col pos-col-margin">Margin</div>
               <div class="pos-col pos-col-liq">Liq. Price</div>
-              <div class="pos-col pos-col-quickclose">Close</div>
+              <div class="pos-col pos-col-quickclose">Reverse / Close</div>
               <div class="pos-col pos-col-actions"></div>
             </div>
 
@@ -2188,7 +2189,6 @@
                         <span class="pos-sym-ticker">NQU5</span>
                         <span class="pos-side-badge long">Long</span>
                         <span class="pos-type-badge">Futures</span>
-                        <span class="pos-lev-badge">20×</span>
                       </div>
                       <span class="pos-sym-sub">E-mini Nasdaq-100</span>
                     </div>
@@ -2213,8 +2213,8 @@
                   </div>
                   <div class="pos-col pos-col-quickclose">
                     <div class="pos-quick-btn-row">
-                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>
                       <button class="pos-quick-btn pos-quick-reverse" data-pos-reverse>Reverse</button>
+                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>
                     </div>
                   </div>
                   <div class="pos-col pos-col-actions">
@@ -2317,7 +2317,6 @@
                         <span class="pos-sym-ticker">ESU5</span>
                         <span class="pos-side-badge short">Short</span>
                         <span class="pos-type-badge">Futures</span>
-                        <span class="pos-lev-badge">20×</span>
                       </div>
                       <span class="pos-sym-sub">E-mini S&amp;P 500</span>
                     </div>
@@ -2342,8 +2341,8 @@
                   </div>
                   <div class="pos-col pos-col-quickclose">
                     <div class="pos-quick-btn-row">
-                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>
                       <button class="pos-quick-btn pos-quick-reverse" data-pos-reverse>Reverse</button>
+                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>
                     </div>
                   </div>
                   <div class="pos-col pos-col-actions">
@@ -2465,8 +2464,8 @@
                   </div>
                   <div class="pos-col pos-col-quickclose">
                     <div class="pos-quick-btn-row">
-                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>
                       <button class="pos-quick-btn pos-quick-reverse" data-pos-reverse>Reverse</button>
+                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>
                     </div>
                   </div>
                   <div class="pos-col pos-col-actions">
@@ -2588,8 +2587,8 @@
                   </div>
                   <div class="pos-col pos-col-quickclose">
                     <div class="pos-quick-btn-row">
-                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>
                       <button class="pos-quick-btn pos-quick-reverse" data-pos-reverse>Reverse</button>
+                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>
                     </div>
                   </div>
                   <div class="pos-col pos-col-actions">
@@ -2717,8 +2716,8 @@
                   </div>
                   <div class="pos-col pos-col-quickclose">
                     <div class="pos-quick-btn-row">
-                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>
                       <button class="pos-quick-btn pos-quick-reverse" data-pos-reverse>Reverse</button>
+                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>
                     </div>
                   </div>
                   <div class="pos-col pos-col-actions">
@@ -2846,8 +2845,8 @@
                   </div>
                   <div class="pos-col pos-col-quickclose">
                     <div class="pos-quick-btn-row">
-                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>
                       <button class="pos-quick-btn pos-quick-reverse" data-pos-reverse>Reverse</button>
+                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>
                     </div>
                   </div>
                   <div class="pos-col pos-col-actions">
@@ -4209,7 +4208,7 @@
   <script src="js/workspace.js?v=5"></script>
   <script src="js/overlays.js?v=1"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=49"></script>
+  <script src="js/app.js?v=52"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=11"></script>
   <script src="js/market-scanner.js?v=8"></script>
