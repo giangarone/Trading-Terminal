@@ -1254,7 +1254,7 @@
     if (riskPerContract > 0) { order.qty = Math.max(0, Math.floor(order.sizeValues.risk / riskPerContract)); }
   }
 
-  /* ---------- TP fee & net PnL helpers ---------- */
+  /* ---------- TP/SL fee & net PnL helpers ---------- */
   /* Entry fee depends on order type (market fill vs limit fill); TP exit is always a limit order. */
   function tpFeeCalc(tp, contracts) {
     const dir = order.side === 'buy' ? 1 : -1;
@@ -1263,12 +1263,20 @@
     const fee = (order.entry * entryFeeRate + tp.price * FEE_RATE_LIMIT) * contracts;
     return { gross, fee, net: gross - fee };
   }
-  function tpFeeTooltipHtml(gross, fee, net) {
+  /* SL exit is always a stop order (taker fill), unlike a TP's limit exit. */
+  function slFeeCalc() {
+    const dir = order.side === 'buy' ? 1 : -1;
+    const gross = dir * (order.sl.price - order.entry) * POINT_VALUE * order.qty;
+    const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
+    const fee = (order.entry * entryFeeRate + order.sl.price * FEE_RATE_MARKET) * order.qty;
+    return { gross, fee, net: gross - fee };
+  }
+  function feeTooltipHtml(gross, fee, net) {
     const sign = v => v >= 0 ? '+' : '';
     const cls = v => v >= 0 ? 'up' : 'down';
-    return '<span class="tp-fee-row"><span class="tp-fee-lbl">Gross</span><span class="tp-fee-val ' + cls(gross) + '">' + sign(gross) + fmtMoney(gross) + '</span></span>' +
-      '<span class="tp-fee-row"><span class="tp-fee-lbl">Fee</span><span class="tp-fee-val">-' + fmtMoney(fee) + '</span></span>' +
-      '<span class="tp-fee-row tp-fee-row-net"><span class="tp-fee-lbl">Net</span><span class="tp-fee-val ' + cls(net) + '">' + sign(net) + fmtMoney(net) + '</span></span>';
+    return '<span class="ol-fee-row"><span class="ol-fee-lbl">Gross</span><span class="ol-fee-val ' + cls(gross) + '">' + sign(gross) + fmtMoney(gross) + '</span></span>' +
+      '<span class="ol-fee-row"><span class="ol-fee-lbl">Fee</span><span class="ol-fee-val">-' + fmtMoney(fee) + '</span></span>' +
+      '<span class="ol-fee-row ol-fee-row-net"><span class="ol-fee-lbl">Net</span><span class="ol-fee-val ' + cls(net) + '">' + sign(net) + fmtMoney(net) + '</span></span>';
   }
 
   /* ---------- drag behaviour ---------- */
@@ -1320,12 +1328,12 @@
       if (amtEl) {
         const contracts = Math.max(1, Math.round(order.qty * tp.pct / 100));
         const { gross, fee, net } = tpFeeCalc(tp, contracts);
-        const valEl = amtEl.querySelector('.tp-amt-val');
+        const valEl = amtEl.querySelector('.ol-amt-val');
         if (valEl) valEl.textContent = (net >= 0 ? '+' : '') + fmtMoney(net);
         amtEl.classList.toggle('up', net >= 0);
         amtEl.classList.toggle('down', net < 0);
-        const tipEl = amtEl.querySelector('.tp-fee-tip');
-        if (tipEl) tipEl.innerHTML = tpFeeTooltipHtml(gross, fee, net);
+        const tipEl = amtEl.querySelector('.ol-fee-tip');
+        if (tipEl) tipEl.innerHTML = feeTooltipHtml(gross, fee, net);
       }
       const rEl = row.querySelector('.ol-rmult');
       if (rEl) {
@@ -1337,7 +1345,10 @@
       const slAmtEl = layer.querySelector('.ol-chip.sl .ol-amt');
       if (slAmtEl) {
         const loss = dir * (order.entry - order.sl.price) * POINT_VALUE * order.qty;
-        slAmtEl.textContent = '-' + fmtMoney(Math.abs(loss));
+        const valEl = slAmtEl.querySelector('.ol-amt-val');
+        if (valEl) valEl.textContent = '-' + fmtMoney(Math.abs(loss));
+        const tipEl = slAmtEl.querySelector('.ol-fee-tip');
+        if (tipEl) { const { gross, fee, net } = slFeeCalc(); tipEl.innerHTML = feeTooltipHtml(gross, fee, net); }
       }
     }
   }
@@ -2100,7 +2111,7 @@
         row.style.top = y + 'px';
         const tpSign = tpNet >= 0 ? '+' : '';
         row.innerHTML =
-          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">warning</span>TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="tp-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="tp-fee-tip">' + tpFeeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span></span>' +
+          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">warning</span>TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="ol-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span></span>' +
           '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
           '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
           '<span class="ol-gear" data-gear-tp="' + tp.id + '"><span class="material-symbols-outlined">settings</span></span>' +
@@ -2180,6 +2191,8 @@
             '</span>';
         }
 
+        const { gross: slGross, fee: slFee, net: slNet } = slFeeCalc();
+
         const row = document.createElement('div');
         row.className = 'ol-side-row';
         row.style.top = y + 'px';
@@ -2187,11 +2200,9 @@
           modeBtns +
           '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + '">' +
           '<span class="material-symbols-outlined ol-chip-warning">warning</span>SL' +
-          '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
+          '<span class="ol-amt down"><span class="ol-amt-val">-' + fmtMoney(Math.abs(loss)) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(slGross, slFee, slNet) + '</span></span>' +
           badgeHtml +
           '</span>' +
-          '<span class="ol-rmult">-1.0R</span>' +
-          '<span class="ol-pct-chip">100%</span>' +
           '<span class="ol-gear ol-danger" id="slDeleteTrigger" title="Remove SL"><span class="material-symbols-outlined">delete</span></span>';
         layer.appendChild(row);
 

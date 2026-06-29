@@ -506,8 +506,8 @@
   text-decoration-color: currentColor;
 }
 
-/* Fee breakdown tooltip — appears above the PnL amount on hover */
-.tp-fee-tip {
+/* Fee breakdown tooltip — appears above the PnL amount on hover (shared by TP and SL chips) */
+.ol-fee-tip {
   display: none;
   position: absolute;
   top: calc(100% + 6px);
@@ -525,48 +525,42 @@
   box-shadow: 0 8px 24px var(--shadow-color);
 }
 
-.ol-amt:hover .tp-fee-tip {
+.ol-amt:hover .ol-fee-tip {
   display: flex;
 }
 
-.tp-fee-row {
+.ol-fee-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 18px;
 }
 
-.tp-fee-row-net {
+.ol-fee-row-net {
   border-top: 1px solid var(--border-default);
   margin-top: 2px;
   padding-top: 4px;
 }
 
-.tp-fee-lbl {
+.ol-fee-lbl {
   font-size: 10.5px;
   font-weight: 500;
   color: var(--text-muted);
 }
 
-.tp-fee-val {
+.ol-fee-val {
   font-family: var(--sans);
   font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary);
 }
 
-.tp-fee-val.up {
+.ol-fee-val.up {
   color: var(--long);
 }
 
-.tp-fee-val.down {
+.ol-fee-val.down {
   color: var(--short);
-}
-
-.ol-chip.sl .ol-amt {
-  cursor: default;
-  pointer-events: none;
-  text-decoration: none;
 }
 
 .ol-pill.combo.locked {
