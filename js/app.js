@@ -938,7 +938,7 @@
     if (!order.sl.enabled) return { text: 'Fixed', cls: 'fixed' };
     if (order.sl.mode === 'breakeven') return { text: order.sl.beActive ? 'SL → BE' : 'Breakeven', cls: 'be' };
     if (order.sl.mode === 'atr') return { text: 'ATR ' + slAtrMult().toFixed(1) + 'x', cls: 'atr' };
-    return { text: 'Trailing ' + slDistanceLabel(ensureSlConfig()), cls: 'trail' };
+    return { text: 'Trail ' + slDistanceLabel(ensureSlConfig()), cls: 'trail' };
   }
   /* live-patch the on-chart SL chip badge without a full re-render (used by drag and by gear-menu field edits) */
   function refreshSlBadgeOnChart() {
@@ -3484,7 +3484,6 @@
   const slTrailRow = document.getElementById('slTrailRow');
   const slAtrRow = document.getElementById('slAtrRow');
   const slBeToggle = document.getElementById('slBeToggle');
-  const slBeSub = document.getElementById('slBeSub');
   const slDistanceUnitSel = document.getElementById('slDistanceUnit');
   const slStartSel = document.getElementById('slStart');
   const slBeOvTrigger = document.getElementById('slBeOvTrigger');
@@ -3543,11 +3542,6 @@
     slAtrRow.classList.toggle('selected', on && mode === 'atr');
     slBeToggle.classList.toggle('selected', on && mode === 'breakeven');
     slBeToggle.classList.toggle('disabled', noTps);
-    slBeSub.textContent = (on && mode === 'breakeven' && order.sl.beActive)
-      ? 'Active — SL moved to entry'
-      : noTps ? 'Requires at least 2 take profits'
-        : (on && mode === 'breakeven' && order.sl.beTpId) ? 'Triggers on TP' + (order.tps.findIndex(t => t.id === order.sl.beTpId) + 1)
-          : 'Move SL to entry once a TP is hit';
     // a section's settings only expand once that behavior is actually enabled
     document.getElementById('slTrailSettings').style.display = (on && mode === 'trailing') ? '' : 'none';
     document.getElementById('slAtrSettings').style.display = (on && mode === 'atr') ? '' : 'none';
@@ -3632,20 +3626,22 @@
       const cfg = ensureSlConfig();
       return slDistanceParams(cfg && cfg.distanceUnit);
     }
-    function clampVal(v) { const p = params(); v = Math.round(v / p.step) * p.step; v = p.dp ? +v.toFixed(p.dp) : Math.round(v); return Math.min(p.max, Math.max(p.min, v)); }
+    /* Arrow clicks snap to the step grid; manual typing only clamps to min/max and allows up to 2 decimals */
+    function clampStep(v) { const p = params(); v = Math.round(v / p.step) * p.step; v = p.dp ? +v.toFixed(p.dp) : Math.round(v); return Math.min(p.max, Math.max(p.min, v)); }
+    function clampManual(v) { const p = params(); v = Math.min(p.max, Math.max(p.min, v)); return +v.toFixed(p.dp ? 2 : 0); }
     function commit() { const cfg = ensureSlConfig(); if (cfg) cfg.distanceValue = parseFloat(input.value) || 0; repositionSlFromConfig(); render(); }
     input.removeAttribute('readonly');
     input.addEventListener('click', (e) => e.stopPropagation());
-    input.addEventListener('change', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value) || 0); commit(); });
-    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 0) - params().step); commit(); });
-    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 0) + params().step); commit(); });
+    input.addEventListener('change', (e) => { e.stopPropagation(); input.value = clampManual(parseFloat(input.value) || 0); commit(); });
+    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampStep((parseFloat(input.value) || 0) - params().step); commit(); });
+    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampStep((parseFloat(input.value) || 0) + params().step); commit(); });
   }
   /* ATR multiplier stepper */
   {
     const input = document.getElementById('slAtrMultiplier');
     const inc = document.getElementById('slAtrMultiplierInc');
     const dec = document.getElementById('slAtrMultiplierDec');
-    function clampVal(v) { return Math.min(20, Math.max(0.1, +parseFloat(v).toFixed(1))); }
+    function clampVal(v) { return Math.min(20, Math.max(0.1, +parseFloat(v).toFixed(2))); }
     function commit() {
       if (!order || !order.sl) return;
       order.sl.atrMult = parseFloat(input.value) || 2;
@@ -3664,20 +3660,16 @@
     const inc = document.getElementById('slBeOvOffsetInc');
     const dec = document.getElementById('slBeOvOffsetDec');
     function params() { return slBeOvOffsetUnit.value === 'percent' ? PERCENT_DISTANCE_STEP : { min: 0, max: 200, step: 1 }; }
-    function clampVal(v) { const p = params(); v = Math.round(v / p.step) * p.step; v = Number.isInteger(p.step) ? Math.round(v) : +v.toFixed(2); return Math.min(p.max, Math.max(p.min, v)); }
+    /* Arrow clicks snap to the step grid; manual typing only clamps to min/max and allows up to 2 decimals */
+    function clampStep(v) { const p = params(); v = Math.round(v / p.step) * p.step; v = Number.isInteger(p.step) ? Math.round(v) : +v.toFixed(2); return Math.min(p.max, Math.max(p.min, v)); }
+    function clampManual(v) { const p = params(); v = Math.min(p.max, Math.max(p.min, v)); return +v.toFixed(Number.isInteger(p.step) ? 0 : 2); }
     function commit() { const ov = ensureBeOverride(); if (ov) ov.offsetValue = parseFloat(input.value) || 0; }
     input.removeAttribute('readonly');
     input.addEventListener('click', (e) => e.stopPropagation());
-    input.addEventListener('change', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value) || 0); commit(); });
-    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 0) - params().step); commit(); });
-    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 0) + params().step); commit(); });
+    input.addEventListener('change', (e) => { e.stopPropagation(); input.value = clampManual(parseFloat(input.value) || 0); commit(); });
+    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampStep((parseFloat(input.value) || 0) - params().step); commit(); });
+    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampStep((parseFloat(input.value) || 0) + params().step); commit(); });
   }
-
-  document.getElementById('slRemove').addEventListener('click', () => {
-    order.sl = null;
-    closeAllPopovers(); render();
-    showToast('Stop loss removed', 'delete');
-  });
 
   /* ---------- size & mode dropdown ---------- */
   const sizeMenu = document.getElementById('sizeMenu');
