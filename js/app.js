@@ -39,7 +39,7 @@
       { pct: 25, r: 4.0, type: 'limit' }
     ],
     defaultStopLoss: { r: 1.0, type: 'stopMarket' },
-    moveSlToBreakeven: { trigger: 'tp1', customR: 1, offsetValue: 1, offsetUnit: 'ticks' },
+    moveSlToBreakeven: { trigger: 'tp1', customR: 1, offsetValue: 1, offsetUnit: 'fee' },
     trailingStop: { distanceValue: 1.0, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
     atrStop: { length: 14, multiplier: 2.0, timeframe: 'current', updateFreq: 'newbar', dynamic: true },
     trailingTp: { activation: 'tp1', activationCustomR: 1, method: 'fixed', distanceValue: 20, distanceUnit: 'ticks' },
@@ -856,9 +856,7 @@
       showToast('TP' + (idx + 1) + ' hit at ' + fmt(tp.price), 'check_circle');
       if (order.sl && order.sl.beTpId === tp.id && !order.sl.beActive) {
         const beCfg = getEffectiveBeConfig();
-        const offsetPrice = beCfg.offsetUnit === 'points' ? beCfg.offsetValue
-          : beCfg.offsetUnit === 'percent' ? order.entry * beCfg.offsetValue / 100
-            : beCfg.offsetValue * TICK;
+        const offsetPrice = breakevenOffsetPrice(beCfg);
         order.sl.price = roundTick(order.entry + dir * offsetPrice);
         order.sl.beActive = true;
         syncQtyFromRisk();
@@ -893,6 +891,18 @@
   }
   /* effective config = this SL's own override if set, otherwise the global Chart Settings default */
   function getEffectiveBeConfig() { return (order && order.sl && order.sl.beOverride) || chartSettings.moveSlToBreakeven; }
+  /* price distance for a breakeven offset config — 'fee' covers the round-trip entry+exit fee
+     (offsetValue is a multiplier on top of that, so 1 = exactly break even on fees) */
+  function breakevenOffsetPrice(beCfg) {
+    if (beCfg.offsetUnit === 'points') return beCfg.offsetValue;
+    if (beCfg.offsetUnit === 'percent') return order.entry * beCfg.offsetValue / 100;
+    if (beCfg.offsetUnit === 'fee') {
+      const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
+      const exitFeeRate = FEE_RATE_MARKET; // SL exits via a stop order (taker fill)
+      return order.entry * (entryFeeRate + exitFeeRate) * beCfg.offsetValue;
+    }
+    return beCfg.offsetValue * TICK; // ticks
+  }
   function getEffectiveTrailConfig() { return (order && order.sl && order.sl.trailOverride) || chartSettings.trailingStop; }
   function getEffectiveAtrConfig() { return chartSettings.atrStop; }
   function getEffectiveTpTrailConfig(tp) { return (tp && tp.trailOverride) || chartSettings.trailingTp; }
@@ -2589,7 +2599,7 @@
   });
   /* percentOverride/atrOverride let a field use a finer min/step/decimals when its unit dropdown is set to "%" or "ATR" —
      ticks/points distances are sensibly whole numbers, but percent and ATR-multiple distances need sub-1 decimals (e.g. 0.5%, 2.0x) */
-  function bindCsStepper(prefix, min, max, step, percentOverride, atrOverride) {
+  function bindCsStepper(prefix, min, max, step, percentOverride, atrOverride, feeOverride) {
     const input = document.getElementById(prefix + 'Value');
     const dec = document.getElementById(prefix + 'Dec');
     const inc = document.getElementById(prefix + 'Inc');
@@ -2597,6 +2607,7 @@
     function activeParams() {
       if (percentOverride && unitSelect && unitSelect.value === 'percent') return percentOverride;
       if (atrOverride && unitSelect && unitSelect.value === 'atr') return atrOverride;
+      if (feeOverride && unitSelect && unitSelect.value === 'fee') return feeOverride;
       return { min, max, step };
     }
     /* Arrow clicks snap to the step grid; manual typing only clamps to min/max and allows up to 2 decimals */
@@ -2618,7 +2629,8 @@
   }
   const PERCENT_DISTANCE_STEP = { min: 0.1, max: 50, step: 0.1 };
   const ATR_DISTANCE_STEP = { min: 0.01, max: 20, step: 0.1 };
-  bindCsStepper('csBeOffset', 0, 200, 1, PERCENT_DISTANCE_STEP);
+  const FEE_MULTIPLIER_STEP = { min: 0.1, max: 10, step: 0.1 };
+  bindCsStepper('csBeOffset', 0, 200, 1, PERCENT_DISTANCE_STEP, undefined, FEE_MULTIPLIER_STEP);
   bindCsStepper('csTsDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP, ATR_DISTANCE_STEP);
   bindCsStepper('csTtpDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP);
   function bindPlainStepper(valueId, min, max, step, onChange) {
@@ -3789,7 +3801,11 @@
     const input = document.getElementById('slBeOvOffsetValue');
     const inc = document.getElementById('slBeOvOffsetInc');
     const dec = document.getElementById('slBeOvOffsetDec');
-    function params() { return slBeOvOffsetUnit.value === 'percent' ? PERCENT_DISTANCE_STEP : { min: 0, max: 200, step: 1 }; }
+    function params() {
+      if (slBeOvOffsetUnit.value === 'percent') return PERCENT_DISTANCE_STEP;
+      if (slBeOvOffsetUnit.value === 'fee') return FEE_MULTIPLIER_STEP;
+      return { min: 0, max: 200, step: 1 };
+    }
     /* Arrow clicks snap to the step grid; manual typing only clamps to min/max and allows up to 2 decimals */
     function clampStep(v) { const p = params(); v = Math.round(v / p.step) * p.step; v = Number.isInteger(p.step) ? Math.round(v) : +v.toFixed(2); return Math.min(p.max, Math.max(p.min, v)); }
     function clampManual(v) { const p = params(); v = Math.min(p.max, Math.max(p.min, v)); return +v.toFixed(Number.isInteger(p.step) ? 0 : 2); }
