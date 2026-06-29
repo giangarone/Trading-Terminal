@@ -914,7 +914,7 @@
   /* min/max/step/decimal-places for a trailing distance value, by unit */
   function slDistanceParams(unit) {
     if (unit === 'ticks') return { min: 1, max: 2000, step: 1, dp: 0 };
-    if (unit === 'atr') return { min: 0.1, max: 20, step: 0.1, dp: 1 };
+    if (unit === 'atr') return { min: 0.01, max: 20, step: 0.1, dp: 2 };
     return { min: 0.1, max: 50, step: 0.1, dp: 2 }; // percent
   }
   function atrStopDistance(cfg) {
@@ -932,7 +932,7 @@
   /* short label for an SL's distance value, e.g. "1.25%", "8t", or "ATR 2.0x" */
   function slDistanceLabel(cfg) {
     if (cfg.distanceUnit === 'percent') return (+cfg.distanceValue).toFixed(2) + '%';
-    if (cfg.distanceUnit === 'atr') return 'ATR ' + (+cfg.distanceValue).toFixed(1) + 'x';
+    if (cfg.distanceUnit === 'atr') return 'ATR ' + (+cfg.distanceValue).toFixed(2) + 'x';
     return Math.round(cfg.distanceValue) + 't';
   }
   /* The special (non-Fixed) SL modes, shown as neutral buttons beside the SL chip. */
@@ -2599,19 +2599,25 @@
       if (atrOverride && unitSelect && unitSelect.value === 'atr') return atrOverride;
       return { min, max, step };
     }
-    function clampVal(v) {
+    /* Arrow clicks snap to the step grid; manual typing only clamps to min/max and allows up to 2 decimals */
+    function clampStep(v) {
       const p = activeParams();
       v = Math.round(v / p.step) * p.step;
-      if (Number.isInteger(p.step)) v = Math.round(v); else v = +v.toFixed(2);
+      v = Number.isInteger(p.step) ? Math.round(v) : +v.toFixed(2);
       return Math.min(p.max, Math.max(p.min, v));
     }
+    function clampManual(v) {
+      const p = activeParams();
+      v = Math.min(p.max, Math.max(p.min, v));
+      return Number.isInteger(p.step) ? Math.round(v) : +v.toFixed(2);
+    }
     input.removeAttribute('readonly');
-    input.addEventListener('change', () => { input.value = clampVal(parseFloat(input.value) || 0); });
-    dec.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') - activeParams().step); });
-    inc.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') + activeParams().step); });
+    input.addEventListener('change', () => { input.value = clampManual(parseFloat(input.value) || 0); });
+    dec.addEventListener('click', () => { input.value = clampStep(parseFloat(input.value || '0') - activeParams().step); });
+    inc.addEventListener('click', () => { input.value = clampStep(parseFloat(input.value || '0') + activeParams().step); });
   }
   const PERCENT_DISTANCE_STEP = { min: 0.1, max: 50, step: 0.1 };
-  const ATR_DISTANCE_STEP = { min: 0.1, max: 20, step: 0.1 };
+  const ATR_DISTANCE_STEP = { min: 0.01, max: 20, step: 0.1 };
   bindCsStepper('csBeOffset', 0, 200, 1, PERCENT_DISTANCE_STEP);
   bindCsStepper('csTsDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP, ATR_DISTANCE_STEP);
   bindCsStepper('csTtpDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP);
@@ -2630,7 +2636,7 @@
     inc.addEventListener('click', (e) => { e.stopPropagation(); set(parseFloat(input.value || '0') + step); });
   }
   bindPlainStepper('csAtrLength', 1, 200, 1);
-  bindPlainStepper('csAtrMultiplier', 0.1, 20, 0.1);
+  bindPlainStepper('csAtrMultiplier', 0.01, 20, 0.1);
   document.querySelectorAll('#chartSettingsBackdrop .cs-checkbox-row').forEach(row => {
     row.addEventListener('click', (e) => {
       e.preventDefault();
@@ -3765,7 +3771,7 @@
     const input = document.getElementById('slAtrMultiplier');
     const inc = document.getElementById('slAtrMultiplierInc');
     const dec = document.getElementById('slAtrMultiplierDec');
-    function clampVal(v) { return Math.min(20, Math.max(0.1, +parseFloat(v).toFixed(2))); }
+    function clampVal(v) { return Math.min(20, Math.max(0.01, +parseFloat(v).toFixed(2))); }
     function commit() {
       if (!order || !order.sl) return;
       order.sl.atrMult = parseFloat(input.value) || 2;
