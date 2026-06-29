@@ -676,6 +676,82 @@
   color: var(--accent);
 }
 
+/* ---- Trailing Take Profit: draggable "Trail" button, in-chip badge, offset line + tag ---- */
+
+/* Neutral pill on a TP row; drag it toward entry to set the trailing offset */
+.ol-tp-trail-btn {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  border: none;
+  cursor: ns-resize;
+  font-family: var(--sans);
+}
+
+.ol-tp-trail-btn:hover {
+  color: var(--text-primary);
+}
+
+/* The in-chip trailing badge (shown once trailing is on); click opens the offset settings */
+.ol-badge.tp-trail-badge {
+  cursor: pointer;
+}
+
+.ol-badge.tp-trail-badge:hover {
+  filter: brightness(1.2);
+}
+
+/* The gray dashed trailing-exit line drawn on the entry side of the TP */
+.ol-line.tp-trail {
+  border-color: var(--text-muted);
+}
+
+/* "TPn Trail" label sitting on the trailing-offset line, with a × to remove trailing */
+.ol-tp-trail-tag {
+  position: absolute;
+  right: 84px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-sunken);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  padding: 2px 4px 2px 8px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  font-family: var(--sans);
+  white-space: nowrap;
+  pointer-events: auto;
+  z-index: 5;
+}
+
+.ol-tp-trail-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.ol-tp-trail-remove:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.ol-tp-trail-remove .material-symbols-outlined {
+  font-size: 12px;
+}
+
 .ol-badge.be {
   background: var(--long-dim);
   color: var(--long);

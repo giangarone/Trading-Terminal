@@ -22,7 +22,11 @@
   <link rel="stylesheet" href="css/right-panel.css?v=3">
   <link rel="stylesheet" href="css/quick-trade.css?v=6">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
+<<<<<<< Updated upstream
   <link rel="stylesheet" href="css/order-lines.css?v=9">
+=======
+  <link rel="stylesheet" href="css/order-lines.css?v=12">
+>>>>>>> Stashed changes
   <link rel="stylesheet" href="css/market-scanner.css?v=14">
   <link rel="stylesheet" href="css/indicators.css?v=8">
   <link rel="stylesheet" href="css/chart-settings.css?v=10">
@@ -1051,47 +1055,11 @@
                       <span class="cs-card-title">Trailing Take Profit</span>
                     </div>
                     <div class="cs-fields-row">
-                      <div class="cs-field">
-                        <label>Activation</label>
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csTtpActivation"><span
-                            class="cs-select-label">After TP1 Hit</span><span
-                            class="material-symbols-outlined">expand_more</span></div><select id="csTtpActivation"
-                          style="display:none;">
-                          <option value="tp1">After TP1 Hit</option>
-                          <option value="tp2">After TP2 Hit</option>
-                          <option value="tp3">After TP3 Hit</option>
-                          <option value="customR">Custom R Multiple</option>
-                        </select>
-                      </div>
-                      <div class="cs-field" id="csTtpActivationCustomRWrap" style="display:none;">
-                        <label>Custom R Multiple</label>
-                        <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="csTtpActivationCustomRValue" value="1" data-step="0.1">
-                          <div class="price-stepper-arrows">
-                            <button type="button" class="ps-up" data-target="csTtpActivationCustomRValue"><span
-                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" class="ps-down" data-target="csTtpActivationCustomRValue"><span
-                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="cs-field">
-                        <label>Method</label>
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csTtpMethod"><span
-                            class="cs-select-label">Fixed Distance</span><span
-                            class="material-symbols-outlined">expand_more</span></div><select id="csTtpMethod"
-                          style="display:none;">
-                          <option value="fixed">Fixed Distance</option>
-                          <option value="atr">ATR Based</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="cs-fields-row">
                       <div class="cs-field" id="csTtpDistanceWrap">
-                        <label>Trail Distance</label>
+                        <label>Default Offset</label>
                         <div class="cs-unit-pair">
                           <div class="price-stepper cs-price-stepper">
-                            <input type="text" id="csTtpDistanceValue" readonly value="20">
+                            <input type="text" id="csTtpDistanceValue" readonly value="0.5">
                             <div class="price-stepper-arrows">
                               <button type="button" id="csTtpDistanceInc"><span
                                   class="material-symbols-outlined">keyboard_arrow_up</span></button>
@@ -1100,18 +1068,18 @@
                             </div>
                           </div>
                           <div class="select-input pop-trigger cs-dd-trigger" data-target="csTtpDistanceUnit"><span
-                              class="cs-select-label">Ticks</span><span
+                              class="cs-select-label">%</span><span
                               class="material-symbols-outlined">expand_more</span></div><select id="csTtpDistanceUnit"
                             style="display:none;">
-                            <option value="ticks">Ticks</option>
-                            <option value="points">Points</option>
                             <option value="percent">%</option>
+                            <option value="ticks">Ticks</option>
+                            <option value="atr">ATR</option>
                           </select>
                         </div>
                       </div>
                     </div>
-                    <div class="cs-helper">When activated, the trailing TP will manage the remaining position until
-                      exit.</div>
+                    <div class="cs-helper">A trailing TP holds at its level until price reaches it, then trails by this
+                      offset and closes its share when price retraces by the offset.</div>
                   </div>
 
 
@@ -3798,51 +3766,19 @@
     <div class="gear-override-row">
       <button class="pop-item" id="tpTrail">
         <span class="pop-icon"><span class="material-symbols-outlined">trending_up</span></span>
-        <span class="pop-text"><span class="pt-title">Trail This TP</span><span class="pt-sub" id="tpTrailSub">Trail
-            TP as price moves</span></span>
+        <span class="pop-text"><span class="pt-title">Trail This TP</span><span class="pt-sub" id="tpTrailSub">Hold,
+            then trail by the offset once the level is hit</span></span>
       </button>
       <button class="gear-override-tune" id="tpTrailOverrideTune" title="Override for this take profit"><span
           class="material-symbols-outlined">tune</span></button>
     </div>
     <div class="settings-subpanel gear-override-panel" id="tpTrailOverridePanel">
       <div class="gear-override-fields" id="tpTrailOverrideFields">
-        <div class="cs-field">
-          <label>Activation</label>
-          <div class="select-input pop-trigger cs-dd-trigger" data-target="tpTrailOvActivation"><span
-              class="cs-select-label">After TP1 Hit</span><span class="material-symbols-outlined">expand_more</span>
-          </div><select id="tpTrailOvActivation" style="display:none;">
-            <option value="tp1">After TP1 Hit</option>
-            <option value="tp2">After TP2 Hit</option>
-            <option value="tp3">After TP3 Hit</option>
-            <option value="customR">Custom R Multiple</option>
-          </select>
-        </div>
-        <div class="cs-field" id="tpTrailOvActivationCustomRWrap" style="display:none;">
-          <label>Custom R Multiple</label>
-          <div class="price-stepper cs-price-stepper">
-            <input type="text" id="tpTrailOvActivationCustomRValue" readonly value="1">
-            <div class="price-stepper-arrows">
-              <button type="button" id="tpTrailOvActivationCustomRInc"><span
-                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
-              <button type="button" id="tpTrailOvActivationCustomRDec"><span
-                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
-            </div>
-          </div>
-        </div>
-        <div class="cs-field">
-          <label>Method</label>
-          <div class="select-input pop-trigger cs-dd-trigger" data-target="tpTrailOvMethod"><span
-              class="cs-select-label">Fixed Distance</span><span class="material-symbols-outlined">expand_more</span>
-          </div><select id="tpTrailOvMethod" style="display:none;">
-            <option value="fixed">Fixed Distance</option>
-            <option value="atr">ATR Based</option>
-          </select>
-        </div>
         <div class="cs-field" id="tpTrailOvDistanceWrap">
-          <label>Distance</label>
+          <label>Offset</label>
           <div class="cs-unit-pair">
             <div class="price-stepper cs-price-stepper">
-              <input type="text" id="tpTrailOvDistanceValue" readonly value="20">
+              <input type="text" id="tpTrailOvDistanceValue" readonly value="0.5">
               <div class="price-stepper-arrows">
                 <button type="button" id="tpTrailOvDistanceInc"><span
                     class="material-symbols-outlined">keyboard_arrow_up</span></button>
@@ -3851,11 +3787,11 @@
               </div>
             </div>
             <div class="select-input pop-trigger cs-dd-trigger" data-target="tpTrailOvDistanceUnit"><span
-                class="cs-select-label">Ticks</span><span class="material-symbols-outlined">expand_more</span></div>
+                class="cs-select-label">%</span><span class="material-symbols-outlined">expand_more</span></div>
             <select id="tpTrailOvDistanceUnit" style="display:none;">
-              <option value="ticks">Ticks</option>
-              <option value="points">Points</option>
               <option value="percent">%</option>
+              <option value="ticks">Ticks</option>
+              <option value="atr">ATR</option>
             </select>
           </div>
         </div>
@@ -4209,7 +4145,11 @@
   <script src="js/workspace.js?v=5"></script>
   <script src="js/overlays.js?v=1"></script>
   <script src="js/resize.js"></script>
+<<<<<<< Updated upstream
   <script src="js/app.js?v=44"></script>
+=======
+  <script src="js/app.js?v=50"></script>
+>>>>>>> Stashed changes
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=11"></script>
   <script src="js/market-scanner.js?v=8"></script>
