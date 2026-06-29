@@ -2474,6 +2474,12 @@
       b.style.display = (!q || b.textContent.toLowerCase().includes(q)) ? '' : 'none';
     });
   });
+  document.getElementById('getPlanProBtn').addEventListener('click', () => {
+    showToast('Terminal Pro activated', 'workspace_premium');
+  });
+  document.getElementById('getPlanEliteBtn').addEventListener('click', () => {
+    showToast('Terminal Elite activated', 'workspace_premium');
+  });
   function csUpdateConditionalFields() {
     document.getElementById('csBeCustomRWrap').style.display = document.getElementById('csBeTrigger').value === 'customR' ? '' : 'none';
     document.getElementById('csTsStartCustomRWrap').style.display = document.getElementById('csTsStart').value === 'customR' ? '' : 'none';

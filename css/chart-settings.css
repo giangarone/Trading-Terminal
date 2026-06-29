@@ -1660,3 +1660,141 @@
   color: var(--accent);
   border-color: var(--accent-border);
 }
+
+/* ---- Plans & Pricing pane ---- */
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (max-width: 880px) {
+  .plans-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.plan-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+}
+
+.plan-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.plan-name {
+  font-size: 14.5px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+  font-family: var(--sans);
+}
+
+.plan-tier-badge {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-pill);
+  padding: 2px 9px;
+  line-height: 1.6;
+}
+
+.plan-tagline {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.plan-feature-area {
+  flex: 1;
+}
+
+.plan-feature-group + .plan-feature-group {
+  margin-top: 4px;
+}
+
+.plan-feature-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.plan-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.plan-feature .material-symbols-outlined {
+  font-size: 14px;
+  color: var(--long);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.plan-everything-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-md);
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: var(--fw-semi);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.plan-everything-banner .material-symbols-outlined {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.plan-elite-divider {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 10px;
+}
+
+.plan-cta {
+  width: 100%;
+  margin-top: 18px;
+  padding: 10px 0;
+  border-radius: var(--r-sm);
+  border: none;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 12.5px;
+  font-weight: var(--fw-semi);
+  font-family: inherit;
+  cursor: pointer;
+  transition: filter var(--t-ui);
+}
+
+.plan-cta:hover {
+  filter: brightness(1.1);
+}
