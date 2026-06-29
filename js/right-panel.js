@@ -111,6 +111,24 @@
     return true;
   };
 
+  /* close a custom amount (Market tab custom-amount field); returns 'closed' | 'reduced' | false */
+  window.closePositionAmount = function (sym, amount) {
+    const p = positions.find(x => x.sym === sym);
+    if (!p || !(amount > 0)) return false;
+    if (amount >= p.qty - 1e-9) {
+      positions.splice(positions.indexOf(p), 1);
+      const row = document.querySelector('.pos-row[data-pos-id="' + sym + '"]');
+      if (row) row.remove();
+      return 'closed';
+    }
+    const remainFrac = 1 - amount / p.qty;
+    p.qty      *= remainFrac;
+    p.pnlOpen0 *= remainFrac;
+    p.unitBase *= remainFrac;
+    if (p.elQty) p.elQty.textContent = fmtQty(p.qty);
+    return 'reduced';
+  };
+
   window.reversePosition = function (sym) {
     const p = positions.find(x => x.sym === sym);
     if (!p) return false;
@@ -125,12 +143,40 @@
 
   /* ---------- graduate a filled chart order into a Positions-tab row ---------- */
   function quickCloseRowHtml() {
-    return '<div class="pos-quick-slider-row">' +
-      '<input type="range" class="pos-quick-slider" min="5" max="100" step="5" value="100">' +
-      '<span class="pos-quick-pct">100%</span></div>' +
-      '<div class="pos-quick-btn-row">' +
+    return '<div class="pos-quick-btn-row">' +
       '<button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button>' +
       '<button class="pos-quick-btn pos-quick-reverse" data-pos-reverse>Reverse</button></div>';
+  }
+  /* Market/Limit close controls for a dynamically-created (chart/quick-trade) position row */
+  function detailCloseHtml(sym, qtyStr, unit, priceStr, amtStep, pxStep) {
+    function stepper(id, value, step, fieldUnit) {
+      return '<div class="price-stepper">' +
+        '<input type="text" id="' + id + '" value="' + value + '" data-step="' + step + '">' +
+        '<span class="qty-unit">' + fieldUnit + '</span>' +
+        '<div class="price-stepper-arrows">' +
+        '<button type="button" class="ps-up" data-target="' + id + '"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>' +
+        '<button type="button" class="ps-down" data-target="' + id + '"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>' +
+        '</div></div>';
+    }
+    const initLbl = '100% · ' + qtyStr + ' ' + unit;
+    function amtRow(lblId, lblText, sliderId) {
+      return '<div class="pos-close-amount-row">' +
+        '<span class="pos-close-field-label">Amount</span>' +
+        '<span class="pos-close-pct-label" id="' + lblId + '">' + lblText + '</span></div>' +
+        '<input type="range" class="pos-close-slider" id="' + sliderId + '" min="0" max="100" step="1" value="100">';
+    }
+    return '<div class="pos-detail-label">Close Position</div>' +
+      '<div class="pos-close-tabs">' +
+      '<button class="pos-close-tab active" data-close-tab="market">Market</button>' +
+      '<button class="pos-close-tab" data-close-tab="limit">Limit</button></div>' +
+      '<div class="pos-close-pane active" data-close-pane="market">' +
+      amtRow('posClosePctLbl-' + sym, initLbl, 'posCloseSlider-' + sym) +
+      '<button class="pos-close-primary" data-pos-close-market>Close Position</button></div>' +
+      '<div class="pos-close-pane" data-close-pane="limit">' +
+      amtRow('posClosePctLblLimit-' + sym, initLbl, 'posCloseSliderLimit-' + sym) +
+      '<div class="pos-close-field-label">Limit price</div>' +
+      stepper('posCloseLimitPx-' + sym, priceStr, pxStep, 'USD') +
+      '<button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button></div>';
   }
   /* leverage currently chosen in the Quick Trade panel — stamped onto positions opened from a fill */
   function currentLeverage() {
@@ -162,20 +208,19 @@
       '<div class="pos-col pos-col-actions"><button class="pos-expand-btn" title="Expand details"><span class="material-symbols-outlined pos-chevron">expand_more</span></button></div>' +
       '</div>' +
       '<div class="pos-row-detail"><div class="pos-detail-close">' +
-      '<div class="pos-detail-label">Close Position</div>' +
-      '<div class="pos-close-pct-row">' +
-      '<button class="pos-close-pct-btn" data-pos-close-pct="25">25%</button>' +
-      '<button class="pos-close-pct-btn" data-pos-close-pct="50">50%</button>' +
-      '<button class="pos-close-pct-btn" data-pos-close-pct="75">75%</button>' +
-      '<button class="pos-close-pct-btn pos-close-full" data-pos-close-pct="100">100%</button></div>' +
-      '<button class="pos-close-primary" data-pos-close-pct="100">Close Position</button>' +
-      '<button class="pos-reverse-btn" data-pos-reverse>Reverse</button>' +
+      detailCloseHtml(sym, fmtQty(qty), 'Units', fmt(price, dec), '0.001',
+        price < 1 ? '0.0001' : price < 100 ? '0.01' : '0.5') +
       '</div></div>';
     row.querySelector('.pos-row-summary').addEventListener('click', (e) => {
       if (e.target.closest('.pos-col-quickclose') || e.target.closest('.pos-sym-ticker')) return;
       row.classList.toggle('is-expanded');
     });
     document.querySelector('.pos-rows-scroll').prepend(row);
+    row.querySelectorAll('.pos-close-slider').forEach(s => {
+      if (window.decoratePosCloseSlider) window.decoratePosCloseSlider(s);
+      if (window.posCloseSliderFill) window.posCloseSliderFill(s);
+      if (window.updatePosCloseLabel) window.updatePosCloseLabel(s);
+    });
   }
   window.upsertPositionFromFill = function (sym, side, qty, price) {
     const dir = side === 'buy' ? 1 : -1;

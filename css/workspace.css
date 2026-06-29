@@ -827,7 +827,7 @@ table.bp-table tr.total-row td {
 }
 
 .pos-type-badge {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   background: var(--bg-hover);
 }
 
@@ -888,31 +888,10 @@ table.bp-table tr.total-row td {
 .pos-col-quickclose {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 6px;
   padding-top: 8px;
   padding-bottom: 8px;
-}
-
-.pos-quick-slider-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pos-quick-slider {
-  flex: 1;
-  width: auto;
-  height: 3px;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-.pos-quick-pct {
-  font-size: var(--fs-label);
-  color: var(--text-muted);
-  min-width: 30px;
-  text-align: right;
-  flex-shrink: 0;
 }
 
 .pos-quick-btn-row {
@@ -988,7 +967,7 @@ table.bp-table tr.total-row td {
 
 .pos-row-detail {
   display: none;
-  grid-template-columns: 200px 1fr 1fr 1fr;
+  grid-template-columns: 260px 1fr 1fr 1fr;
   border-top: 1px solid var(--border-default);
   background: var(--bg-surface);
 }
@@ -1018,50 +997,151 @@ table.bp-table tr.total-row td {
 }
 
 /* Close section */
-.pos-close-pct-row {
-  display: flex;
-  gap: 4px;
+
+/* Market / Limit segmented switch — mirrors the Quick Trade order-type tabs */
+.pos-close-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  padding: 3px;
+  margin-bottom: 11px;
+}
+
+.pos-close-tab {
+  height: 26px;
+  border-radius: var(--r-xs);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-mid);
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background var(--t-ui), color var(--t-ui);
+}
+
+.pos-close-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+
+.pos-close-tab.active {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.pos-close-pane {
+  display: none;
+}
+
+.pos-close-pane.active {
+  display: block;
+}
+
+.pos-close-field-label {
+  font-size: var(--fs-label);
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+/* spacing for the limit-price stepper inside the detail panel */
+.pos-detail-close .price-stepper {
   margin-bottom: 9px;
 }
 
-.pos-close-pct-btn {
-  flex: 1;
-  height: 26px;
-  border-radius: var(--r-xs);
-  background: var(--bg-input);
-  border: 1px solid var(--border-default);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semi);
-  color: var(--text-secondary);
-  transition: background var(--t-ui), border-color var(--t-ui), color var(--t-ui);
+/* Amount row — label on left, live percentage on right */
+.pos-close-amount-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
 }
 
-.pos-close-pct-btn:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-strong);
+.pos-close-pct-label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
   color: var(--text-primary);
 }
 
-.pos-close-full {
-  color: var(--short);
-  border-color: var(--short-border);
-}
-
-.pos-close-full:hover {
-  background: var(--short-dim);
-  border-color: var(--short-border);
-  color: var(--short);
-}
-
-.pos-close-est {
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
-  margin-bottom: 9px;
-}
-
-.pos-close-est strong {
+.pos-close-pct-amt {
   color: var(--text-secondary);
-  font-weight: var(--fw-mid);
+}
+
+/* Percentage slider — custom thumb over a track with embedded circular tick markers */
+.pos-close-slider-wrap {
+  position: relative;
+  height: 14px;
+  margin-bottom: 12px;
+}
+
+/* Visual track sits behind the (transparent) native input */
+.pos-close-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-default);
+  z-index: 0;
+}
+
+/* Markers are positioned at the thumb's real coordinates: 7px inset + travel */
+.pos-close-tick {
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  pointer-events: none;
+  border: 1px solid var(--border-strong);
+}
+
+.pos-close-tick.filled {
+  background: var(--text-secondary);
+  border: none;
+}
+
+.pos-close-slider {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 14px;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.pos-close-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  cursor: pointer;
+}
+
+.pos-close-slider::-moz-range-track {
+  background: transparent;
+}
+
+.pos-close-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: none;
+  cursor: pointer;
 }
 
 .pos-close-primary {
@@ -1080,23 +1160,6 @@ table.bp-table tr.total-row td {
 .pos-close-primary:hover {
   background: var(--short-dim);
   border-color: var(--short-border);
-}
-
-.pos-reverse-btn {
-  width: 100%;
-  height: 26px;
-  border-radius: var(--r-sm);
-  background: var(--bg-input);
-  border: 1px solid var(--border-default);
-  color: var(--text-secondary);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-mid);
-  transition: background var(--t-ui), color var(--t-ui);
-}
-
-.pos-reverse-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
 }
 
 /* Key-value grid inside detail sections */

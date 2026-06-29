@@ -4,7 +4,7 @@
 (function () {
   const POINT_VALUE = 50;          // $ per point per contract (ES)
   const FEE_RATE_MARKET = 0.0006;  // 0.06% taker fee (market / stop-market fills)
-  const FEE_RATE_LIMIT  = 0.0002;  // 0.02% maker fee (limit / stop-limit fills)
+  const FEE_RATE_LIMIT = 0.0002;  // 0.02% maker fee (limit / stop-limit fills)
   let TICK = 0.25;
   const PX_PER_POINT = 22;         // vertical px per 1.0 point
   const BASE_PRICE = 4500.25;      // anchors chart's vertical price scale
@@ -69,20 +69,20 @@
   let alerts = [];
   function nowTimeStr() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
   let orderHistory = [
-    { symbol: 'ETHUSD', side: 'buy',  qty: 2, price: 4486.50, status: 'filled',    type: 'Market', time: '09:15:32 AM', pnl: null },
-    { symbol: 'NQU5',   side: 'buy',  qty: 1, price: 18480.00, status: 'filled',   type: 'Market', time: '09:18:47 AM', pnl: null },
-    { symbol: 'RTYU5',  side: 'buy',  qty: 3, price: 2070.00,  status: 'cancelled', type: 'Market', time: '08:55:10 AM', pnl: null },
+    { symbol: 'ETHUSD', side: 'buy', qty: 2, price: 4486.50, status: 'filled', type: 'Market', time: '09:15:32 AM', pnl: null },
+    { symbol: 'NQU5', side: 'buy', qty: 1, price: 18480.00, status: 'filled', type: 'Market', time: '09:18:47 AM', pnl: null },
+    { symbol: 'RTYU5', side: 'buy', qty: 3, price: 2070.00, status: 'cancelled', type: 'Market', time: '08:55:10 AM', pnl: null },
   ];
 
   /* ---------- trade history state ----------
      Only actual fill executions — no cancels, no pending orders.
      pnl: realized P&L in dollars for closing trades; null for opening trades. */
   let tradeHistory = [
-    { symbol: 'ETHUSD', side: 'buy',  qty: 2, price: 4486.50,  pnl: null,       role: 'open',  type: 'Market',     time: '09:15:32 AM', fee: 2.50 },
-    { symbol: 'NQU5',   side: 'buy',  qty: 1, price: 18480.00, pnl: null,       role: 'open',  type: 'Market',     time: '09:18:47 AM', fee: 1.25 },
-    { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4562.25,  pnl: 3787.50,    role: 'close', type: 'Limit (TP)', time: '10:03:18 AM', fee: 1.25 },
-    { symbol: 'NQU5',   side: 'sell', qty: 1, price: 18560.00, pnl: 4000.00,    role: 'close', type: 'Limit (TP)', time: '10:41:55 AM', fee: 1.25 },
-    { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4495.00,  pnl: 425.00,     role: 'close', type: 'Market',     time: '11:12:40 AM', fee: 1.25 },
+    { symbol: 'ETHUSD', side: 'buy', qty: 2, price: 4486.50, pnl: null, role: 'open', type: 'Market', time: '09:15:32 AM', fee: 2.50 },
+    { symbol: 'NQU5', side: 'buy', qty: 1, price: 18480.00, pnl: null, role: 'open', type: 'Market', time: '09:18:47 AM', fee: 1.25 },
+    { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4562.25, pnl: 3787.50, role: 'close', type: 'Limit (TP)', time: '10:03:18 AM', fee: 1.25 },
+    { symbol: 'NQU5', side: 'sell', qty: 1, price: 18560.00, pnl: 4000.00, role: 'close', type: 'Limit (TP)', time: '10:41:55 AM', fee: 1.25 },
+    { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4495.00, pnl: 425.00, role: 'close', type: 'Market', time: '11:12:40 AM', fee: 1.25 },
   ];
 
   /* ---------- helpers ---------- */
@@ -269,6 +269,29 @@
       switchSymbol(tickerEl.closest('.pos-row').dataset.posId);
       return;
     }
+    /* Market / Limit tab switch inside an expanded row's close section */
+    const closeTab = e.target.closest('.pos-close-tab');
+    if (closeTab) {
+      const wrap = closeTab.closest('.pos-detail-close');
+      const tab = closeTab.dataset.closeTab;
+      wrap.querySelectorAll('.pos-close-tab').forEach(t => t.classList.toggle('active', t === closeTab));
+      wrap.querySelectorAll('.pos-close-pane').forEach(p => p.classList.toggle('active', p.dataset.closePane === tab));
+      return;
+    }
+    /* stepper arrows on the close-amount / limit-price fields (delegated so dynamic rows work) */
+    const stepBtn = e.target.closest('.pos-detail-close .ps-up, .pos-detail-close .ps-down');
+    if (stepBtn) {
+      const input = document.getElementById(stepBtn.dataset.target);
+      if (!input) return;
+      const raw = (input.value || '0').replace(/,/g, '');
+      const decimals = raw.includes('.') ? raw.split('.')[1].length : 0;
+      const step = parseFloat(input.dataset.step) || 1;
+      const cur = parseFloat(raw) || 0;
+      const next = stepBtn.classList.contains('ps-up') ? cur + step : Math.max(0, cur - step);
+      input.value = fmt(next, decimals);
+      return;
+    }
+    /* percentage chips + collapsed "Close" — immediate market close by percent */
     const closeBtn = e.target.closest('[data-pos-close-pct]');
     if (closeBtn) {
       const row = closeBtn.closest('.pos-row');
@@ -278,6 +301,28 @@
       showToast(sym + ' position ' + (pct >= 100 ? 'closed' : 'reduced by ' + pct + '%'), 'check_circle');
       return;
     }
+    /* Market tab — close by the percentage set on the slider */
+    const marketBtn = e.target.closest('[data-pos-close-market]');
+    if (marketBtn) {
+      const row = marketBtn.closest('.pos-row');
+      const sym = row.dataset.posId;
+      const slider = document.getElementById('posCloseSlider-' + sym);
+      const pct = slider ? parseInt(slider.value, 10) : 0;
+      if (pct <= 0) { showToast('Select an amount to close', 'error'); return; }
+      if (!window.closePositionPct(sym, pct)) return;
+      showToast(sym + ' position ' + (pct >= 100 ? 'closed' : 'reduced by ' + pct + '%'), 'check_circle');
+      return;
+    }
+    /* Limit tab — place a pending close order (position stays open) */
+    const limitBtn = e.target.closest('[data-pos-close-limit]');
+    if (limitBtn) {
+      const sym = limitBtn.closest('.pos-row').dataset.posId;
+      const limitSlider = document.getElementById('posCloseSliderLimit-' + sym);
+      const pct = limitSlider ? parseInt(limitSlider.value, 10) : 100;
+      const pctStr = pct < 100 ? ' (' + pct + '%)' : '';
+      showToast(sym + ' limit close order placed' + pctStr, 'pending_actions');
+      return;
+    }
     const reverseBtn = e.target.closest('[data-pos-reverse]');
     if (reverseBtn) {
       const sym = reverseBtn.closest('.pos-row').dataset.posId;
@@ -285,12 +330,74 @@
       showToast(sym + ' position reversed', 'sync_alt');
     }
   });
+  /* wrap a raw slider with its track + 5 embedded circular tick markers (idempotent) */
+  function decoratePosCloseSlider(slider) {
+    if (slider.parentElement && slider.parentElement.classList.contains('pos-close-slider-wrap')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'pos-close-slider-wrap';
+    slider.parentNode.insertBefore(wrap, slider);
+    const track = document.createElement('div');
+    track.className = 'pos-close-track';
+    wrap.appendChild(track);
+    wrap.appendChild(slider);
+    [0, 25, 50, 75, 100].forEach(v => {
+      const tick = document.createElement('span');
+      tick.className = 'pos-close-tick';
+      tick.dataset.tick = v;
+      /* match the thumb: 5px inset (half the 10px thumb) + proportional travel */
+      tick.style.left = 'calc(5px + (100% - 10px) * ' + (v / 100) + ')';
+      wrap.appendChild(tick);
+    });
+  }
+  window.decoratePosCloseSlider = decoratePosCloseSlider;
+
+  function posCloseSliderFill(slider) {
+    const wrap = slider.closest('.pos-close-slider-wrap');
+    if (!wrap) return;
+    const pct = parseInt(slider.value, 10);
+    /* fill transition lands exactly at the thumb centre, same coordinate as the ticks */
+    const pos = 'calc(5px + (100% - 10px) * ' + (pct / 100) + ')';
+    const track = wrap.querySelector('.pos-close-track');
+    if (track) {
+      track.style.background = 'linear-gradient(to right, var(--border-strong) ' + pos + ', var(--border-default) ' + pos + ')';
+    }
+    wrap.querySelectorAll('.pos-close-tick').forEach(t => {
+      t.classList.toggle('filled', pct >= parseInt(t.dataset.tick, 10));
+    });
+  }
+  window.posCloseSliderFill = posCloseSliderFill;
+
+  function updatePosCloseLabel(slider) {
+    const pane = slider.closest('.pos-close-pane');
+    const lbl = pane && pane.querySelector('.pos-close-pct-label');
+    if (!lbl) return;
+    const pct = parseInt(slider.value, 10);
+    const row = slider.closest('.pos-row');
+    const qtyEl = row && document.getElementById('posQty-' + row.dataset.posId);
+    const unitEl = row && row.querySelector('.pos-size-unit');
+    if (qtyEl && unitEl) {
+      const qty = parseFloat(qtyEl.textContent.replace(/,/g, '')) || 0;
+      const amt = qty * pct / 100;
+      const amtStr = Number.isInteger(amt) ? String(Math.round(amt))
+        : parseFloat(amt.toFixed(4)).toString();
+      lbl.innerHTML = '<span>' + pct + '%</span><span class="pos-close-pct-amt"> · ' + amtStr + ' ' + unitEl.textContent.trim() + '</span>';
+    } else {
+      lbl.innerHTML = '<span>' + pct + '%</span>';
+    }
+  }
+  window.updatePosCloseLabel = updatePosCloseLabel;
+
   posPanel.addEventListener('input', e => {
-    const slider = e.target.closest('.pos-quick-slider');
+    const slider = e.target.closest('.pos-close-slider');
     if (!slider) return;
-    const cluster = slider.closest('.pos-col-quickclose');
-    cluster.querySelector('.pos-quick-pct').textContent = slider.value + '%';
-    cluster.querySelector('.pos-quick-close').dataset.posClosePct = slider.value;
+    posCloseSliderFill(slider);
+    updatePosCloseLabel(slider);
+  });
+
+  document.querySelectorAll('.pos-close-slider').forEach(s => {
+    decoratePosCloseSlider(s);
+    posCloseSliderFill(s);
+    updatePosCloseLabel(s);
   });
   document.getElementById('ctxAlert').addEventListener('click', () => { addAlert(pendingClickPrice); closeAllPopovers(); });
   document.getElementById('ctxReset').addEventListener('click', () => {
@@ -424,6 +531,8 @@
   const QT_SLIPPAGE_IDS = ['qtStopMarketSlippage', 'qtMitSlippage'];
   document.querySelectorAll('.price-stepper-arrows .ps-up, .price-stepper-arrows .ps-down').forEach(btn => {
     btn.addEventListener('click', () => {
+      /* position close fields are handled by their own delegated stepper in the positions panel */
+      if (btn.closest('.pos-detail-close')) return;
       const input = document.getElementById(btn.dataset.target);
       if (!input || input.disabled) return;
       const isSlippage = QT_SLIPPAGE_IDS.includes(input.id);
@@ -442,6 +551,8 @@
 
   /* ensure all data-step stepper inputs accept typed values */
   document.querySelectorAll('.price-stepper input[data-step]').forEach(input => {
+    /* position close fields keep their own decimals/units; skip the QT snap-to-step rule */
+    if (input.closest('.pos-detail-close')) return;
     input.addEventListener('change', () => {
       const step = parseFloat(input.dataset.step) || 1;
       const v = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
@@ -744,7 +855,7 @@
         const beCfg = getEffectiveBeConfig();
         const offsetPrice = beCfg.offsetUnit === 'points' ? beCfg.offsetValue
           : beCfg.offsetUnit === 'percent' ? order.entry * beCfg.offsetValue / 100
-          : beCfg.offsetValue * TICK;
+            : beCfg.offsetValue * TICK;
         order.sl.price = roundTick(order.entry + dir * offsetPrice);
         order.sl.beActive = true;
         syncQtyFromRisk();
@@ -878,7 +989,7 @@
       if (!meetsTriggerCondition(cfg.activation, cfg.activationCustomR, currentPrice)) return;
       const distPrice = cfg.method === 'atr' ? atrStopDistance()
         : cfg.distanceUnit === 'percent' ? currentPrice * cfg.distanceValue / 100
-        : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
+          : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
       const candidate = roundTick(currentPrice + dir * distPrice);
       const improvement = dir * (candidate - tp.price);
       if (improvement > 0) { tp.price = candidate; }
@@ -921,7 +1032,7 @@
   /* Resolve icon class and 2-char initials for any symbol */
   function symMeta(sym) {
     const u = sym.toUpperCase();
-    if (/AAPL|TSLA|NVDA|MSFT|AMZN|GOOGL/.test(u)) return { cls: 'pos-icon-stock',   init: u.slice(0, 2) };
+    if (/AAPL|TSLA|NVDA|MSFT|AMZN|GOOGL/.test(u)) return { cls: 'pos-icon-stock', init: u.slice(0, 2) };
     if (/USD|BTC|ETH|SOL|XRP|BNB|DOGE|JUP/.test(u)) return { cls: 'pos-icon-crypto', init: u.slice(0, 2) };
     return { cls: 'pos-icon-futures', init: u.slice(0, 2) };
   }
@@ -931,14 +1042,14 @@
     const m = symMeta(sym);
     return (
       '<div class="ord-sym-cell">' +
-        '<div class="pos-sym-icon ' + m.cls + '">' + m.init + '</div>' +
-        '<div class="pos-sym-info">' +
-          '<div class="pos-sym-top">' +
-            '<span class="pos-sym-ticker">' + sym + '</span>' +
-            (sideCls ? '<span class="pos-side-badge ' + sideCls + '">' + sideLabel + '</span>' : '') +
-          '</div>' +
-          (subText ? '<span class="pos-sym-sub">' + subText + '</span>' : '') +
-        '</div>' +
+      '<div class="pos-sym-icon ' + m.cls + '">' + m.init + '</div>' +
+      '<div class="pos-sym-info">' +
+      '<div class="pos-sym-top">' +
+      '<span class="pos-sym-ticker">' + sym + '</span>' +
+      (sideCls ? '<span class="pos-side-badge ' + sideCls + '">' + sideLabel + '</span>' : '') +
+      '</div>' +
+      (subText ? '<span class="pos-sym-sub">' + subText + '</span>' : '') +
+      '</div>' +
       '</div>'
     );
   }
@@ -980,9 +1091,9 @@
     const rows = [];
 
     if (order) {
-      const sideCls  = order.side === 'buy' ? 'long' : 'short';
+      const sideCls = order.side === 'buy' ? 'long' : 'short';
       const sideLabel = order.side === 'buy' ? 'Buy' : 'Sell';
-      const closeSideCls  = order.side === 'buy' ? 'short' : 'long';
+      const closeSideCls = order.side === 'buy' ? 'short' : 'long';
       const closeSideLabel = order.side === 'buy' ? 'Sell' : 'Buy';
 
       /* Entry row — only while still unfilled; once filled, it's a position, not an order */
@@ -1050,7 +1161,7 @@
       return;
     }
     body.innerHTML = orderHistory.map(h => {
-      const sideCls   = h.side === 'buy' ? 'long' : 'short';
+      const sideCls = h.side === 'buy' ? 'long' : 'short';
       const sideLabel = h.side === 'buy' ? 'Buy' : 'Sell';
       const statusLabel = h.status.charAt(0).toUpperCase() + h.status.slice(1);
       return (
@@ -1074,13 +1185,13 @@
       return;
     }
     body.innerHTML = tradeHistory.map(t => {
-      const sideCls   = t.side === 'buy' ? 'long' : 'short';
+      const sideCls = t.side === 'buy' ? 'long' : 'short';
       const sideLabel = t.side === 'buy' ? 'Buy' : 'Sell';
       const subText = t.role === 'open'
         ? 'Open · ' + t.type
         : t.type === 'Limit (TP)' ? 'Take Profit · Close'
-        : t.type === 'Stop (SL)'  ? 'Stop Loss · Close'
-        : 'Market Close';
+          : t.type === 'Stop (SL)' ? 'Stop Loss · Close'
+            : 'Market Close';
       return (
         '<tr>' +
         '<td>' + symCell(t.symbol, sideCls, sideLabel, subText) + '</td>' +
@@ -1112,7 +1223,7 @@
   }
   function tpFeeTooltipHtml(gross, fee, net) {
     const sign = v => v >= 0 ? '+' : '';
-    const cls  = v => v >= 0 ? 'up' : 'down';
+    const cls = v => v >= 0 ? 'up' : 'down';
     return '<span class="tp-fee-row"><span class="tp-fee-lbl">Gross</span><span class="tp-fee-val ' + cls(gross) + '">' + sign(gross) + fmtMoney(gross) + '</span></span>' +
       '<span class="tp-fee-row"><span class="tp-fee-lbl">Fee</span><span class="tp-fee-val">-' + fmtMoney(fee) + '</span></span>' +
       '<span class="tp-fee-row tp-fee-row-net"><span class="tp-fee-lbl">Net</span><span class="tp-fee-val ' + cls(net) + '">' + sign(net) + fmtMoney(net) + '</span></span>';
@@ -1966,9 +2077,9 @@
         row.style.top = y + 'px';
         row.innerHTML =
           '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + '">' +
-            '<span class="material-symbols-outlined ol-chip-warning">warning</span>SL' +
-            '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
-            '<span class="ol-badge sl-badge ' + badge.cls + '" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
+          '<span class="material-symbols-outlined ol-chip-warning">warning</span>SL' +
+          '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
+          '<span class="ol-badge sl-badge ' + badge.cls + '" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
           '</span>' +
           '<span class="ol-rmult">-1.0R</span>' +
           '<span class="ol-pct-chip">100%</span>' +
@@ -2457,7 +2568,7 @@
 
   /* ---------- Alert volume slider ---------- */
   const alertVolumeSlider = document.getElementById('alertVolume');
-  const alertVolumeValue  = document.getElementById('alertVolumeValue');
+  const alertVolumeValue = document.getElementById('alertVolumeValue');
   if (alertVolumeSlider && alertVolumeValue) {
     alertVolumeSlider.addEventListener('input', () => {
       alertVolumeValue.textContent = alertVolumeSlider.value + '%';
@@ -2716,14 +2827,14 @@
   const chartPaneArea = document.getElementById('chartPaneArea');
 
   const LAYOUT_CSS = {
-    'Single':     '',
-    '2 Columns':  'layout-2col',
-    '2 Rows':     'layout-2row',
-    '4 Grid':     'layout-4grid',
-    'Large + 2':  'layout-large2',
-    '2 + Large':  'layout-2large',
-    '3 Columns':  'layout-3col',
-    'Top + 2':    'layout-top2',
+    'Single': '',
+    '2 Columns': 'layout-2col',
+    '2 Rows': 'layout-2row',
+    '4 Grid': 'layout-4grid',
+    'Large + 2': 'layout-large2',
+    '2 + Large': 'layout-2large',
+    '3 Columns': 'layout-3col',
+    'Top + 2': 'layout-top2',
     '2 + Bottom': 'layout-2bottom',
   };
   const LAYOUT_PANES = {
@@ -3732,7 +3843,7 @@
     return pv > 0 ? clamp(Math.round(dollar / pv * 100), 0, 100) : 0;
   }
 
-function syncExitModeInputs() {
+  function syncExitModeInputs() {
     if (!exitModal) return;
     exitPctSlider.value = exitModal.pct;
     exitPctDisplay.textContent = exitModal.pct + '%';
