@@ -696,21 +696,39 @@
   color: var(--text-primary);
 }
 
-/* The in-chip trailing badge (shown once trailing is on); click opens the offset settings */
-.ol-badge.tp-trail-badge {
+/* TP trail badge shell (leftmost in chip): flex pill matching the SL badge pattern */
+.ol-chip.tp .tp-trail-badge-shell {
+  margin-right: 2px;
+}
+
+.tp-trail-badge-label {
+  display: flex;
+  align-items: center;
+  padding: 1px 4px 1px 6px;
   cursor: pointer;
 }
 
-.ol-badge.tp-trail-badge:hover {
+.tp-trail-badge-label:hover {
   filter: brightness(1.2);
 }
 
 /* The gray dashed trailing-exit line drawn on the entry side of the TP */
 .ol-line.tp-trail {
   border-color: var(--text-muted);
+  pointer-events: auto;
+  cursor: ns-resize;
 }
 
-/* "TPn Trail" label sitting on the trailing-offset line, with a × to remove trailing */
+.ol-line.tp-trail::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -4px;
+  bottom: -4px;
+}
+
+/* "TPn Trail" label sitting on the trailing-offset line — draggable, with × to remove */
 .ol-tp-trail-tag {
   position: absolute;
   right: 84px;
@@ -729,6 +747,7 @@
   font-family: var(--sans);
   white-space: nowrap;
   pointer-events: auto;
+  cursor: ns-resize;
   z-index: 5;
 }
 

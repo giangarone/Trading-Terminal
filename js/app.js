@@ -954,6 +954,12 @@
     if (unit === 'atr') return { min: 0.1, max: 20, step: 0.1, dp: 1 };
     return { min: 0.1, max: 50, step: 0.1, dp: 2 }; // percent
   }
+  /* Looser params for TP trailing offset — allows values below 0.1% */
+  function tpTrailDistanceParams(unit) {
+    if (unit === 'ticks') return { min: 1, max: 2000, step: 1, dp: 0 };
+    if (unit === 'atr') return { min: 0.1, max: 20, step: 0.1, dp: 1 };
+    return { min: 0.01, max: 50, step: 0.01, dp: 2 }; // percent: supports values like 0.05%
+  }
   function atrStopDistance(cfg) {
     cfg = cfg || getEffectiveAtrConfig();
     return 7.5 * (cfg.multiplier / 2);
@@ -2098,34 +2104,45 @@
           }
         }
 
+        // Trail badge (leftmost in chip, shown when trailing): flex shell with label + × button.
+        const trailBadge = trailing
+          ? '<span class="ol-badge sl-badge trail tp-trail-badge-shell">' +
+            '<span class="sl-badge-label tp-trail-badge-label" data-trail-badge="' + tp.id + '" title="Edit trailing offset">' + tpTrailLabel(tp) + '</span>' +
+            '<button type="button" class="sl-badge-remove" data-trail-badge-remove="' + tp.id + '" title="Disable trailing"><span class="material-symbols-outlined">close</span></button>' +
+            '</span>'
+          : '';
+        // Trail button (leftmost in row, shown when not trailing): drag toward entry to set offset.
+        const trailBtn = trailing
+          ? ''
+          : '<button type="button" class="ol-tp-trail-btn" data-trail-btn="' + tp.id + '" title="Drag toward entry to set a trailing offset">Trail</button>';
+
         const row = document.createElement('div');
         row.className = 'ol-side-row';
         row.dataset.tpId = tp.id;
         row.style.top = y + 'px';
         const tpSign = tpNet >= 0 ? '+' : '';
-        const trailBadge = trailing
-          ? '<span class="ol-badge trail tp-trail-badge" data-trail-badge="' + tp.id + '" title="Edit trailing">' + tpTrailLabel(tp) + '</span>'
-          : '';
-        const trailBtn = trailing
-          ? ''
-          : '<button type="button" class="ol-tp-trail-btn" data-trail-btn="' + tp.id + '" title="Drag toward entry to set a trailing offset">Trail</button>';
         row.innerHTML =
-          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">warning</span>TP' + (idx + 1) + trailBadge + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="tp-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="tp-fee-tip">' + tpFeeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span></span>' +
+          trailBtn +
+          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '">' +
+          '<span class="material-symbols-outlined ol-chip-warning">warning</span>' +
+          trailBadge +
+          'TP' + (idx + 1) +
+          '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="tp-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="tp-fee-tip">' + tpFeeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span>' +
+          '</span>' +
           '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
           '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
-          trailBtn +
-          '<span class="ol-gear" data-gear-tp="' + tp.id + '"><span class="material-symbols-outlined">settings</span></span>' +
           '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" title="Remove TP"><span class="material-symbols-outlined">delete</span></span>';
         layer.appendChild(row);
 
-        // Gray dashed trailing-offset line + "TPn Trail" label with a × to remove trailing.
+        // Gray dashed trailing-offset line + "TPn Trail" tag (draggable, with × to remove).
+        let tline = null, ttag = null;
         if (trailing) {
           const ty = clamp(priceToY(trailLineP, H), 10, H - 10);
-          const tline = document.createElement('div');
+          tline = document.createElement('div');
           tline.className = 'ol-line tp-trail';
           tline.style.top = ty + 'px';
           layer.appendChild(tline);
-          const ttag = document.createElement('div');
+          ttag = document.createElement('div');
           ttag.className = 'ol-tp-trail-tag';
           ttag.style.top = ty + 'px';
           ttag.innerHTML = 'TP' + (idx + 1) + ' Trail' +
@@ -2136,6 +2153,22 @@
             disableTpTrailing(tp);
             render();
           });
+          // Dragging the tag repositions the trail offset; dragging computes the new offset from
+          // the distance between the cursor and the TP price (entry-side only).
+          function onDragTrailTag(cy, h) {
+            const dragPrice = yToPrice(cy, h);
+            const offsetPrice = Math.max(TICK, dir * (tp.price - dragPrice));
+            const cfg = ensureTpTrailOffset(tp);
+            const p = tpTrailDistanceParams(cfg.distanceUnit);
+            let v = priceToTrailUnit(offsetPrice, cfg.distanceUnit, tp.price);
+            v = Math.min(p.max, Math.max(p.min, p.dp ? +v.toFixed(p.dp) : Math.round(v)));
+            cfg.distanceValue = v;
+            const trailY = clamp(priceToY(roundTick(tp.price - dir * offsetPrice), h), 10, h - 10);
+            tline.style.top = trailY + 'px';
+            ttag.style.top = trailY + 'px';
+          }
+          function onDropTrailTag() { render(); }
+          makeDraggable(ttag, onDragTrailTag, onDropTrailTag, '.ol-tp-trail-remove');
         }
 
         const tpChipEl = row.querySelector('.ol-chip');
@@ -2143,6 +2176,13 @@
         function onDragTp(cy, h) {
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
           tp.price = roundTick(yToPrice(cy, h));
+          // Keep the trail line at the configured offset as the TP moves.
+          if (trailing && tline && ttag) {
+            const o = computeTrailDist(ensureTpTrailOffset(tp), tp.price);
+            const trailY = clamp(priceToY(tp.price - dir * o, h), 10, h - 10);
+            tline.style.top = trailY + 'px';
+            ttag.style.top = trailY + 'px';
+          }
           updateAllTpSlValidityLive();
           updateAllTpSlReadoutsLive();
           drawPriceChart();
@@ -2151,7 +2191,7 @@
           tp.price = roundTick(yToPrice(cy, h));
           render();
         }
-        makeDraggable(tpChipEl, onDragTp, onDropTp, '.tp-trail-badge');
+        makeDraggable(tpChipEl, onDragTp, onDropTp, '.tp-trail-badge-shell');
         makeDraggable(line, onDragTp, onDropTp);
 
         row.querySelector('[data-edit-tp]').addEventListener('click', (e) => {
@@ -2162,23 +2202,26 @@
           e.stopPropagation();
           openEditExitModal(tp.id, e.currentTarget.getBoundingClientRect(), e.currentTarget);
         });
-        row.querySelector('[data-gear-tp]').addEventListener('click', (e) => {
-          e.stopPropagation();
-          activeGearTpId = tp.id;
-          openTpGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-        });
         row.querySelector('[data-remove-tp]').addEventListener('click', (e) => {
           e.stopPropagation();
           removeTp(tp.id);
         });
 
-        // Clicking the trailing badge opens the offset settings.
-        const trailBadgeEl = row.querySelector('[data-trail-badge]');
-        if (trailBadgeEl) {
-          trailBadgeEl.addEventListener('click', (e) => {
+        // Trail badge label click → open offset settings; × button → disable trailing.
+        const trailBadgeLabelEl = row.querySelector('[data-trail-badge]');
+        if (trailBadgeLabelEl) {
+          trailBadgeLabelEl.addEventListener('click', (e) => {
             e.stopPropagation();
             activeGearTpId = tp.id;
             openTpTrailSettings(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+          });
+        }
+        const trailBadgeRemoveEl = row.querySelector('[data-trail-badge-remove]');
+        if (trailBadgeRemoveEl) {
+          trailBadgeRemoveEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            disableTpTrailing(tp);
+            render();
           });
         }
 
@@ -2190,7 +2233,7 @@
             const offsetPrice = Math.max(TICK, dir * (tp.price - dragPrice)); // entry-side only
             tp.trailing = true;
             const cfg = ensureTpTrailOffset(tp);
-            const p = slDistanceParams(cfg.distanceUnit);
+            const p = tpTrailDistanceParams(cfg.distanceUnit);
             let v = priceToTrailUnit(offsetPrice, cfg.distanceUnit, tp.price);
             v = Math.min(p.max, Math.max(p.min, p.dp ? +v.toFixed(p.dp) : Math.round(v)));
             cfg.distanceValue = v;
@@ -3492,80 +3535,29 @@
     });
   });
 
-  /* ---------- TP gear menu ---------- */
+  /* ---------- TP trailing offset settings popup ---------- */
   const tpGearMenu = document.getElementById('tpGearMenu');
   function activeGearTp() { return order && order.tps.find(t => t.id === activeGearTpId); }
-  function renderTpGearMenu() {
-    const tp = activeGearTp();
-    if (!tp) return;
-    document.getElementById('tpTrail').classList.toggle('selected', !!tp.trailing);
-    document.getElementById('tpTrailOverrideTune').classList.toggle('active', !!tp.trailing);
-  }
-  function openTpGearMenu(anchorRect, trigger) {
+  /* Open the offset settings popup (called when the Trail badge label is clicked on the chart) */
+  function openTpTrailSettings(anchorRect, trigger) {
     if (trigger && tpGearMenu.classList.contains('show') && tpGearMenu._openTrigger === trigger) {
       closeAllPopovers();
       return;
     }
-    renderTpGearMenu();
-    openNear(tpGearMenu, anchorRect, 'right', trigger);
-  }
-  /* Open the gear menu straight to the trailing-offset settings (used by the on-chart Trail badge) */
-  function openTpTrailSettings(anchorRect, trigger) {
-    const tp = activeGearTp();
-    if (!tp) return;
-    tp.trailing = true;
-    renderTpGearMenu();
-    document.querySelectorAll('.gear-override-panel').forEach(p => p.classList.remove('open'));
     populateTpTrailOffsetForm();
-    document.getElementById('tpTrailOverridePanel').classList.add('open');
     openNear(tpGearMenu, anchorRect, 'right', trigger);
   }
-  document.getElementById('tpAdd').addEventListener('click', () => {
-    if (!order) return;
-    const dir = order.side === 'buy' ? 1 : -1;
-    const farthest = order.tps.reduce((m, t) => Math.max(m, dir * (t.price - order.entry)), 0);
-    const newPrice = roundTick(order.entry + dir * (farthest + 50 / PX_PER_POINT));
-    const newId = 'tp' + (tpCounter++);
-    order.tps.push({ id: newId, price: newPrice, pct: 25, trailing: false, trailOffset: null });
-    rebalanceTpAllocations(newId);
-    closeAllPopovers(); render();
-    showToast('Take profit added', 'add_circle');
-  });
-  document.getElementById('tpTrail').addEventListener('click', (e) => {
-    e.stopPropagation();
-    const tp = activeGearTp();
-    if (tp) { if (tp.trailing) disableTpTrailing(tp); else { tp.trailing = true; ensureTpTrailOffset(tp); } }
-    renderTpGearMenu(); render();
-  });
-  document.getElementById('tpRemove').addEventListener('click', () => {
-    order.tps = order.tps.filter(t => t.id !== activeGearTpId);
-    closeAllPopovers(); render();
-    showToast('Take profit removed', 'delete');
-  });
 
-  /* -- Trailing Take Profit offset settings (just the offset distance + unit) -- */
+  /* -- Trailing offset distance + unit fields -- */
   const tpTrailOvDistanceUnit = document.getElementById('tpTrailOvDistanceUnit');
   function populateTpTrailOffsetForm() {
     const tp = activeGearTp();
     if (!tp) return;
     const cfg = ensureTpTrailOffset(tp);
-    document.getElementById('tpTrailOvDistanceValue').value = (+cfg.distanceValue).toFixed(slDistanceParams(cfg.distanceUnit).dp);
+    document.getElementById('tpTrailOvDistanceValue').value = (+cfg.distanceValue).toFixed(tpTrailDistanceParams(cfg.distanceUnit).dp);
     tpTrailOvDistanceUnit.value = cfg.distanceUnit;
-    refreshAllCsDropdownLabels(document.getElementById('tpTrailOverridePanel'));
+    refreshAllCsDropdownLabels(tpGearMenu);
   }
-  document.getElementById('tpTrailOverrideTune').addEventListener('click', (e) => {
-    e.stopPropagation();
-    const tp = activeGearTp();
-    if (!tp) return;
-    tp.trailing = true; ensureTpTrailOffset(tp); // tuning the offset implies trailing is on
-    renderTpGearMenu();
-    const panel = document.getElementById('tpTrailOverridePanel');
-    const willOpen = !panel.classList.contains('open');
-    document.querySelectorAll('.gear-override-panel').forEach(p => p.classList.remove('open'));
-    if (willOpen) populateTpTrailOffsetForm();
-    panel.classList.toggle('open', willOpen);
-    render();
-  });
   tpTrailOvDistanceUnit.addEventListener('change', (e) => {
     e.stopPropagation();
     const cfg = ensureTpTrailOffset(activeGearTp());
@@ -3574,7 +3566,7 @@
       const ref = order ? order.entry : 1;
       const offsetPrice = computeTrailDist(cfg, ref);
       cfg.distanceUnit = tpTrailOvDistanceUnit.value;
-      cfg.distanceValue = +priceToTrailUnit(offsetPrice, cfg.distanceUnit, ref).toFixed(slDistanceParams(cfg.distanceUnit).dp);
+      cfg.distanceValue = +priceToTrailUnit(offsetPrice, cfg.distanceUnit, ref).toFixed(tpTrailDistanceParams(cfg.distanceUnit).dp);
     }
     populateTpTrailOffsetForm();
     render();
@@ -3583,7 +3575,7 @@
     const input = document.getElementById('tpTrailOvDistanceValue');
     const inc = document.getElementById('tpTrailOvDistanceInc');
     const dec = document.getElementById('tpTrailOvDistanceDec');
-    function params() { const cfg = ensureTpTrailOffset(activeGearTp()); return slDistanceParams(cfg && cfg.distanceUnit); }
+    function params() { const cfg = ensureTpTrailOffset(activeGearTp()); return tpTrailDistanceParams(cfg && cfg.distanceUnit); }
     function clampStep(v) { const p = params(); v = Math.round(v / p.step) * p.step; v = p.dp ? +v.toFixed(p.dp) : Math.round(v); return Math.min(p.max, Math.max(p.min, v)); }
     function clampManual(v) { const p = params(); v = Math.min(p.max, Math.max(p.min, v)); return +v.toFixed(p.dp ? 2 : 0); }
     function commit() { const cfg = ensureTpTrailOffset(activeGearTp()); if (cfg) cfg.distanceValue = parseFloat(input.value) || 0; render(); }

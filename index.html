@@ -25,7 +25,7 @@
 <<<<<<< Updated upstream
   <link rel="stylesheet" href="css/order-lines.css?v=9">
 =======
-  <link rel="stylesheet" href="css/order-lines.css?v=12">
+  <link rel="stylesheet" href="css/order-lines.css?v=13">
 >>>>>>> Stashed changes
   <link rel="stylesheet" href="css/market-scanner.css?v=14">
   <link rel="stylesheet" href="css/indicators.css?v=8">
@@ -3757,51 +3757,29 @@
         class="pop-text"><span class="pt-title">Pink</span></span></button>
   </div>
 
-  <!-- ===================== TP GEAR MENU ===================== -->
-  <div class="pop-menu" id="tpGearMenu">
-    <button class="pop-item add" id="tpAdd">
-      <span class="pop-icon"><span class="material-symbols-outlined">add_circle</span></span>
-      <span class="pop-text"><span class="pt-title">Add Take Profit</span></span>
-    </button>
-    <div class="gear-override-row">
-      <button class="pop-item" id="tpTrail">
-        <span class="pop-icon"><span class="material-symbols-outlined">trending_up</span></span>
-        <span class="pop-text"><span class="pt-title">Trail This TP</span><span class="pt-sub" id="tpTrailSub">Hold,
-            then trail by the offset once the level is hit</span></span>
-      </button>
-      <button class="gear-override-tune" id="tpTrailOverrideTune" title="Override for this take profit"><span
-          class="material-symbols-outlined">tune</span></button>
-    </div>
-    <div class="settings-subpanel gear-override-panel" id="tpTrailOverridePanel">
-      <div class="gear-override-fields" id="tpTrailOverrideFields">
-        <div class="cs-field" id="tpTrailOvDistanceWrap">
-          <label>Offset</label>
-          <div class="cs-unit-pair">
-            <div class="price-stepper cs-price-stepper">
-              <input type="text" id="tpTrailOvDistanceValue" readonly value="0.5">
-              <div class="price-stepper-arrows">
-                <button type="button" id="tpTrailOvDistanceInc"><span
-                    class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                <button type="button" id="tpTrailOvDistanceDec"><span
-                    class="material-symbols-outlined">keyboard_arrow_down</span></button>
-              </div>
-            </div>
-            <div class="select-input pop-trigger cs-dd-trigger" data-target="tpTrailOvDistanceUnit"><span
-                class="cs-select-label">%</span><span class="material-symbols-outlined">expand_more</span></div>
-            <select id="tpTrailOvDistanceUnit" style="display:none;">
-              <option value="percent">%</option>
-              <option value="ticks">Ticks</option>
-              <option value="atr">ATR</option>
-            </select>
+  <!-- ===================== TP TRAIL SETTINGS ===================== -->
+  <div class="pop-menu tp-trail-settings-menu" id="tpGearMenu" style="padding:10px 12px;">
+    <div class="cs-field" id="tpTrailOvDistanceWrap">
+      <label>Trailing Offset</label>
+      <div class="cs-unit-pair">
+        <div class="price-stepper cs-price-stepper">
+          <input type="text" id="tpTrailOvDistanceValue" readonly value="0.5">
+          <div class="price-stepper-arrows">
+            <button type="button" id="tpTrailOvDistanceInc"><span
+                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+            <button type="button" id="tpTrailOvDistanceDec"><span
+                class="material-symbols-outlined">keyboard_arrow_down</span></button>
           </div>
         </div>
+        <div class="select-input pop-trigger cs-dd-trigger" data-target="tpTrailOvDistanceUnit"><span
+            class="cs-select-label">%</span><span class="material-symbols-outlined">expand_more</span></div>
+        <select id="tpTrailOvDistanceUnit" style="display:none;">
+          <option value="percent">%</option>
+          <option value="ticks">Ticks</option>
+          <option value="atr">ATR</option>
+        </select>
       </div>
     </div>
-    <div class="pop-sep"></div>
-    <button class="pop-item danger" id="tpRemove">
-      <span class="pop-icon"><span class="material-symbols-outlined">delete</span></span>
-      <span class="pop-text"><span class="pt-title">Remove This TP</span></span>
-    </button>
   </div>
 
   <!-- ===================== SL GEAR MENU ===================== -->
@@ -4148,7 +4126,7 @@
 <<<<<<< Updated upstream
   <script src="js/app.js?v=44"></script>
 =======
-  <script src="js/app.js?v=50"></script>
+  <script src="js/app.js?v=51"></script>
 >>>>>>> Stashed changes
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=11"></script>
