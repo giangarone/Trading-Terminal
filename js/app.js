@@ -437,7 +437,7 @@
         trailOverride: null
       }));
       if (chartSettings.defaultStopLoss) {
-        sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), enabled: false, mode: 'trailing', atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
+        sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), enabled: false, mode: 'trailing', autoTrailing: false, atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
       }
     }
     order = {
@@ -983,6 +983,7 @@
     const improvement = dir * (candidate - order.sl.price);
     if (improvement > 0) {
       order.sl.price = candidate;
+      order.sl.autoTrailing = true; // this move was the automation ratcheting, not a manual drag
       syncQtyFromRisk();
     }
   }
@@ -1254,6 +1255,10 @@
     const dir = order.side === 'buy' ? 1 : -1;
     return kind === 'tp' ? dir * (price - order.entry) > 0 : dir * (order.entry - price) > 0;
   }
+  /* a trailing SL legitimately ratchets past entry once price has moved far enough in your favor —
+     that's the stop automatically locking in profit, not a misconfiguration, so don't flag it as invalid.
+     A manual drag past entry is still a mistake (the stop would trigger immediately) and stays flagged. */
+  function slSideWarningSuppressed() { return slTrailActive() && !!order.sl.autoTrailing; }
   function orderTpSlValid() {
     if (!order) return true;
     return order.tps.every(tp => tpSlSideOk('tp', tp.price)) && (!order.sl || tpSlSideOk('sl', order.sl.price));
@@ -1274,7 +1279,7 @@
     });
     if (order.sl) {
       const slChip = layer.querySelector('.ol-chip.sl');
-      if (slChip) slChip.classList.toggle('invalid', !tpSlSideOk('sl', order.sl.price));
+      if (slChip) slChip.classList.toggle('invalid', !tpSlSideOk('sl', order.sl.price) && !slSideWarningSuppressed());
     }
     updateEntryPlaceableState();
   }
@@ -1427,7 +1432,7 @@
           order.tps.push({ id: newId, price: finalPrice, pct: 100, trailing: false, trailOverride: null });
           rebalanceTpAllocations(newId);
         } else {
-          order.sl = { price: finalPrice, enabled: false, mode: 'trailing', atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
+          order.sl = { price: finalPrice, enabled: false, mode: 'trailing', autoTrailing: false, atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
           order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
           syncQtyFromRisk();
         }
@@ -2088,7 +2093,7 @@
         const dir = order.side === 'buy' ? 1 : -1;
         const pts = dir * (order.entry - order.sl.price);
         const loss = pts * POINT_VALUE * order.qty;
-        const slInvalid = !tpSlSideOk('sl', order.sl.price);
+        const slInvalid = !tpSlSideOk('sl', order.sl.price) && !slSideWarningSuppressed();
 
         const badge = slBadgeInfo();
         const row = document.createElement('div');
@@ -2109,6 +2114,7 @@
         bindHandleHover(slChipEl, 'sl');
         // Dragging the SL line: trailing redefines its distance; a manual drag detaches an ATR stop
         function syncSlOnDrag() {
+          order.sl.autoTrailing = false; // a manual drag is never exempt from the side-of-entry check
           if (slTrailActive()) {
             const cfg = ensureSlConfig();
             cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(slDistanceParams(cfg.distanceUnit).dp);
@@ -3584,6 +3590,7 @@
     if (!order || !order.sl) return;
     if (order.sl.enabled && order.sl.mode === mode) {
       order.sl.enabled = false;
+      order.sl.autoTrailing = false;
       order.sl.beActive = false; order.sl.beTpId = null;
       renderSlGearMenu(); render();
       return;
@@ -3591,6 +3598,7 @@
     if (mode === 'breakeven' && order.tps.length < 2) { showToast('Breakeven needs at least 2 take profits', 'info'); return; }
     order.sl.mode = mode;
     order.sl.enabled = true;
+    order.sl.autoTrailing = false; // the automation hasn't moved it yet under this newly-selected mode
     if (mode !== 'breakeven') { order.sl.beActive = false; order.sl.beTpId = null; }
     applySlModePlacement();
     renderSlGearMenu(); render();
