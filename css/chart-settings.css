@@ -520,6 +520,10 @@
   line-height: 1.4;
 }
 
+.cs-radio-row.active .cs-radio-desc {
+  color: var(--text-secondary);
+}
+
 .cs-color-swatch {
   width: 18px;
   height: 18px;

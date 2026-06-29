@@ -40,7 +40,7 @@
     ],
     defaultStopLoss: { r: 1.0, type: 'stopMarket' },
     moveSlToBreakeven: { trigger: 'tp1', customR: 1, offsetValue: 1, offsetUnit: 'ticks' },
-    trailingStop: { method: 'fixed', distanceValue: 1.0, distanceUnit: 'percent', start: 'immediate', startCustomR: 1, atrMultiplier: 2.0 },
+    trailingStop: { distanceValue: 1.0, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
     atrStop: { length: 14, multiplier: 2.0, timeframe: 'current', updateFreq: 'newbar', dynamic: true },
     trailingTp: { activation: 'tp1', activationCustomR: 1, method: 'fixed', distanceValue: 20, distanceUnit: 'ticks' },
     globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true }
@@ -908,19 +908,29 @@
     return order.sl.trailOverride;
   }
   function slAtrMult() { return (order && order.sl && order.sl.atrMult) || chartSettings.atrStop.multiplier || 2.0; }
-  /* current Entry↔SL gap expressed in the given unit (% of entry, or ticks) */
-  function slGapDistance(unit) {
-    if (!order || !order.sl) return 0;
-    const gapPts = Math.abs(order.entry - order.sl.price);
-    return unit === 'percent' ? gapPts / order.entry * 100 : gapPts / TICK;
+  /* min/max/step/decimal-places for a trailing distance value, by unit */
+  function slDistanceParams(unit) {
+    if (unit === 'ticks') return { min: 1, max: 2000, step: 1, dp: 0 };
+    if (unit === 'atr') return { min: 0.1, max: 20, step: 0.1, dp: 1 };
+    return { min: 0.1, max: 50, step: 0.1, dp: 2 }; // percent
   }
   function atrStopDistance(cfg) {
     cfg = cfg || getEffectiveAtrConfig();
     return 7.5 * (cfg.multiplier / 2);
   }
-  /* short label for an SL's distance value, e.g. "1.25%" or "8t" */
+  /* current Entry↔SL gap expressed in the given unit (% of entry, ticks, or ATR multiples) */
+  function slGapDistance(unit) {
+    if (!order || !order.sl) return 0;
+    const gapPts = Math.abs(order.entry - order.sl.price);
+    if (unit === 'percent') return gapPts / order.entry * 100;
+    if (unit === 'atr') return gapPts / atrStopDistance({ multiplier: 1 });
+    return gapPts / TICK;
+  }
+  /* short label for an SL's distance value, e.g. "1.25%", "8t", or "ATR 2.0x" */
   function slDistanceLabel(cfg) {
-    return cfg.distanceUnit === 'percent' ? (+cfg.distanceValue).toFixed(2) + '%' : Math.round(cfg.distanceValue) + 't';
+    if (cfg.distanceUnit === 'percent') return (+cfg.distanceValue).toFixed(2) + '%';
+    if (cfg.distanceUnit === 'atr') return 'ATR ' + (+cfg.distanceValue).toFixed(1) + 'x';
+    return Math.round(cfg.distanceValue) + 't';
   }
   /* badge shown inside the SL chip — text + style class, and it opens the SL settings */
   function slBadgeInfo() {
@@ -930,10 +940,19 @@
     if (order.sl.mode === 'atr') return { text: 'ATR ' + slAtrMult().toFixed(1) + 'x', cls: 'atr' };
     return { text: 'Trailing ' + slDistanceLabel(ensureSlConfig()), cls: 'trail' };
   }
+  /* live-patch the on-chart SL chip badge without a full re-render (used by drag and by gear-menu field edits) */
+  function refreshSlBadgeOnChart() {
+    const badgeEl = document.getElementById('slBadgeTrigger');
+    if (!badgeEl) return;
+    const info = slBadgeInfo();
+    badgeEl.textContent = info.text;
+    badgeEl.className = 'ol-badge sl-badge ' + info.cls;
+  }
   let simTickCounter = 0;
-  /* Shared helper: compute fixed trailing distance in price units from a reference price */
+  /* Shared helper: compute trailing distance in price units from a reference price */
   function computeTrailDist(cfg, refPrice) {
     if (cfg.distanceUnit === 'percent') return refPrice * cfg.distanceValue / 100;
+    if (cfg.distanceUnit === 'atr') return atrStopDistance({ multiplier: cfg.distanceValue });
     return cfg.distanceValue * TICK;
   }
   /* Place an unfilled order's static ATR stop at the ATR distance from entry */
@@ -2092,12 +2111,11 @@
         function syncSlOnDrag() {
           if (slTrailActive()) {
             const cfg = ensureSlConfig();
-            cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(cfg.distanceUnit === 'percent' ? 2 : 0);
+            cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(slDistanceParams(cfg.distanceUnit).dp);
           } else if (slAtrActive()) {
             order.sl.enabled = false;
           }
-          const badgeEl = document.getElementById('slBadgeTrigger');
-          if (badgeEl) { const info = slBadgeInfo(); badgeEl.textContent = info.text; badgeEl.className = 'ol-badge sl-badge ' + info.cls; }
+          refreshSlBadgeOnChart();
         }
         function onDragSl(cy, h) {
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
@@ -2458,26 +2476,23 @@
   });
   function csUpdateConditionalFields() {
     document.getElementById('csBeCustomRWrap').style.display = document.getElementById('csBeTrigger').value === 'customR' ? '' : 'none';
-    const csTsMethodVal = document.getElementById('csTsMethod').value;
-    document.getElementById('csTsDistanceWrap').style.display = csTsMethodVal === 'atr' ? 'none' : '';
-    document.getElementById('csTsAtrMultiplierWrap').style.display = csTsMethodVal === 'atr' ? '' : 'none';
-    document.getElementById('csTsStartWrap').style.display = csTsMethodVal === 'atr' ? 'none' : '';
-    document.getElementById('csTsStartCustomRWrap').style.display = (csTsMethodVal !== 'atr' && document.getElementById('csTsStart').value === 'customR') ? '' : 'none';
+    document.getElementById('csTsStartCustomRWrap').style.display = document.getElementById('csTsStart').value === 'customR' ? '' : 'none';
     document.getElementById('csTtpDistanceWrap').style.display = document.getElementById('csTtpMethod').value === 'atr' ? 'none' : '';
     document.getElementById('csTtpActivationCustomRWrap').style.display = document.getElementById('csTtpActivation').value === 'customR' ? '' : 'none';
   }
-  ['csBeTrigger', 'csTsMethod', 'csTsStart', 'csTtpMethod', 'csTtpActivation'].forEach(id => {
+  ['csBeTrigger', 'csTsStart', 'csTtpMethod', 'csTtpActivation'].forEach(id => {
     document.getElementById(id).addEventListener('change', csUpdateConditionalFields);
   });
-  /* percentOverride lets a field use a finer min/step/decimals when its unit dropdown is set to "%" —
-     ticks/points distances are sensibly whole numbers, but a percent distance needs sub-1 decimals (e.g. 0.5%) */
-  function bindCsStepper(prefix, min, max, step, percentOverride) {
+  /* percentOverride/atrOverride let a field use a finer min/step/decimals when its unit dropdown is set to "%" or "ATR" —
+     ticks/points distances are sensibly whole numbers, but percent and ATR-multiple distances need sub-1 decimals (e.g. 0.5%, 2.0x) */
+  function bindCsStepper(prefix, min, max, step, percentOverride, atrOverride) {
     const input = document.getElementById(prefix + 'Value');
     const dec = document.getElementById(prefix + 'Dec');
     const inc = document.getElementById(prefix + 'Inc');
     const unitSelect = document.getElementById(prefix + 'Unit');
     function activeParams() {
       if (percentOverride && unitSelect && unitSelect.value === 'percent') return percentOverride;
+      if (atrOverride && unitSelect && unitSelect.value === 'atr') return atrOverride;
       return { min, max, step };
     }
     function clampVal(v) {
@@ -2492,9 +2507,9 @@
     inc.addEventListener('click', () => { input.value = clampVal(parseFloat(input.value || '0') + activeParams().step); });
   }
   const PERCENT_DISTANCE_STEP = { min: 0.1, max: 50, step: 0.1 };
+  const ATR_DISTANCE_STEP = { min: 0.1, max: 20, step: 0.1 };
   bindCsStepper('csBeOffset', 0, 200, 1, PERCENT_DISTANCE_STEP);
-  bindCsStepper('csTsDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP);
-  bindPlainStepper('csTsAtrMultiplier', 0.1, 20, 0.1);
+  bindCsStepper('csTsDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP, ATR_DISTANCE_STEP);
   bindCsStepper('csTtpDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP);
   function bindPlainStepper(valueId, min, max, step, onChange) {
     const input = document.getElementById(valueId);
@@ -2706,10 +2721,8 @@
     document.getElementById('csBeOffsetValue').value = s.moveSlToBreakeven.offsetValue;
     document.getElementById('csBeOffsetUnit').value = s.moveSlToBreakeven.offsetUnit;
 
-    document.getElementById('csTsMethod').value = s.trailingStop.method;
     document.getElementById('csTsDistanceValue').value = s.trailingStop.distanceValue;
     document.getElementById('csTsDistanceUnit').value = s.trailingStop.distanceUnit;
-    document.getElementById('csTsAtrMultiplier').value = s.trailingStop.atrMultiplier !== undefined ? s.trailingStop.atrMultiplier : 2.0;
     document.getElementById('csTsStart').value = s.trailingStop.start;
     document.getElementById('csTsStartCustomRValue').value = s.trailingStop.startCustomR;
 
@@ -2751,10 +2764,8 @@
         offsetUnit: document.getElementById('csBeOffsetUnit').value,
       },
       trailingStop: {
-        method: document.getElementById('csTsMethod').value,
         distanceValue: parseFloat(document.getElementById('csTsDistanceValue').value) || 1,
         distanceUnit: document.getElementById('csTsDistanceUnit').value,
-        atrMultiplier: parseFloat(document.getElementById('csTsAtrMultiplier').value) || 2.0,
         start: document.getElementById('csTsStart').value,
         startCustomR: parseFloat(document.getElementById('csTsStartCustomRValue').value) || 1,
       },
@@ -3513,8 +3524,7 @@
   function populateSlSettings() {
     const cfg = ensureSlConfig();
     if (!cfg) return;
-    document.getElementById('slDistanceValue').value = cfg.distanceUnit === 'percent'
-      ? (+cfg.distanceValue).toFixed(2) : Math.round(cfg.distanceValue);
+    document.getElementById('slDistanceValue').value = (+cfg.distanceValue).toFixed(slDistanceParams(cfg.distanceUnit).dp);
     slDistanceUnitSel.value = cfg.distanceUnit;
     slStartSel.value = cfg.start;
     document.getElementById('slAtrMultiplier').value = slAtrMult().toFixed(1);
@@ -3557,7 +3567,7 @@
     if (!order || !order.sl) return;
     if (order.sl.mode === 'trailing') {
       const cfg = ensureSlConfig();
-      cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(cfg.distanceUnit === 'percent' ? 2 : 0);
+      cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(slDistanceParams(cfg.distanceUnit).dp);
     } else if (order.sl.mode === 'atr') {
       placeAtrStop();
     } else if (order.sl.mode === 'breakeven') {
@@ -3594,8 +3604,9 @@
     const cfg = ensureSlConfig();
     if (!cfg) return;
     cfg.distanceUnit = slDistanceUnitSel.value;
-    cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(cfg.distanceUnit === 'percent' ? 2 : 0);
+    cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(slDistanceParams(cfg.distanceUnit).dp);
     populateSlSettings();
+    refreshSlBadgeOnChart();
   });
   /* Start-trailing trigger */
   slStartSel.addEventListener('change', (e) => {
@@ -3612,14 +3623,14 @@
     ov.offsetUnit = slBeOvOffsetUnit.value;
     if (slBeActiveMode() && !order.sl.beActive) { order.sl.beTpId = resolveBreakevenTpId(); renderSlGearMenu(); }
   }));
-  /* Trailing distance value stepper (% or ticks) */
+  /* Trailing distance value stepper (%, ticks, or ATR multiples) */
   {
     const input = document.getElementById('slDistanceValue');
     const inc = document.getElementById('slDistanceInc');
     const dec = document.getElementById('slDistanceDec');
     function params() {
       const cfg = ensureSlConfig();
-      return (cfg && cfg.distanceUnit === 'ticks') ? { min: 1, max: 2000, step: 1, dp: 0 } : { min: 0.1, max: 50, step: 0.1, dp: 2 };
+      return slDistanceParams(cfg && cfg.distanceUnit);
     }
     function clampVal(v) { const p = params(); v = Math.round(v / p.step) * p.step; v = p.dp ? +v.toFixed(p.dp) : Math.round(v); return Math.min(p.max, Math.max(p.min, v)); }
     function commit() { const cfg = ensureSlConfig(); if (cfg) cfg.distanceValue = parseFloat(input.value) || 0; repositionSlFromConfig(); render(); }

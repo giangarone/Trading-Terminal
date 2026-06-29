@@ -926,16 +926,6 @@
                       <span class="cs-card-title">Trailing Stop</span>
                     </div>
                     <div class="cs-fields-row">
-                      <div class="cs-field">
-                        <label>Method</label>
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csTsMethod"><span
-                            class="cs-select-label">Fixed Distance</span><span
-                            class="material-symbols-outlined">expand_more</span></div><select id="csTsMethod"
-                          style="display:none;">
-                          <option value="fixed">Fixed Distance</option>
-                          <option value="atr">ATR Based</option>
-                        </select>
-                      </div>
                       <div class="cs-field" id="csTsDistanceWrap">
                         <label>Distance</label>
                         <div class="cs-unit-pair">
@@ -953,19 +943,8 @@
                           </div><select id="csTsDistanceUnit" style="display:none;">
                             <option value="percent" selected>%</option>
                             <option value="ticks">Ticks</option>
+                            <option value="atr">ATR</option>
                           </select>
-                        </div>
-                      </div>
-                      <div class="cs-field" id="csTsAtrMultiplierWrap" style="display:none;">
-                        <label>ATR Multiplier</label>
-                        <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="csTsAtrMultiplier" readonly value="2.0">
-                          <div class="price-stepper-arrows">
-                            <button type="button" id="csTsAtrMultiplierInc"><span
-                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" id="csTsAtrMultiplierDec"><span
-                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -3694,6 +3673,7 @@
           <select id="slDistanceUnit" style="display:none;">
             <option value="percent" selected>%</option>
             <option value="ticks">Ticks</option>
+            <option value="atr">ATR</option>
           </select>
         </div>
       </div>
@@ -4012,7 +3992,7 @@
   <script src="js/workspace.js?v=5"></script>
   <script src="js/overlays.js?v=1"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=40"></script>
+  <script src="js/app.js?v=42"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=11"></script>
   <script src="js/market-scanner.js?v=8"></script>
