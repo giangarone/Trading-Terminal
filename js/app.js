@@ -932,11 +932,17 @@
     if (cfg.distanceUnit === 'atr') return 'ATR ' + (+cfg.distanceValue).toFixed(1) + 'x';
     return Math.round(cfg.distanceValue) + 't';
   }
+  /* The special (non-Fixed) SL modes, shown as neutral buttons beside the SL chip. */
+  const SL_MODE_BUTTONS = [
+    { mode: 'trailing',  label: 'Trail', cls: 'trail' },
+    { mode: 'atr',       label: 'ATR',   cls: 'atr' },
+    { mode: 'breakeven', label: 'BE',    cls: 'be' },
+  ];
   /* badge shown inside the SL chip — text + style class, and it opens the SL settings */
   function slBadgeInfo() {
     if (!order || !order.sl) return { text: 'Fixed', cls: 'fixed' };
     if (!order.sl.enabled) return { text: 'Fixed', cls: 'fixed' };
-    if (order.sl.mode === 'breakeven') return { text: order.sl.beActive ? 'SL → BE' : 'TP → BE', cls: 'be' };
+    if (order.sl.mode === 'breakeven') return { text: order.sl.beActive ? 'SL → BE' : 'BE', cls: 'be' };
     if (order.sl.mode === 'atr') return { text: 'ATR ' + slAtrMult().toFixed(1) + 'x', cls: 'atr' };
     return { text: 'Trail ' + slDistanceLabel(ensureSlConfig()), cls: 'trail' };
   }
@@ -2096,21 +2102,40 @@
         const loss = pts * POINT_VALUE * order.qty;
         const slInvalid = !tpSlSideOk('sl', order.sl.price) && !slSideWarningSuppressed();
 
-        const badge = slBadgeInfo();
+        // Which special mode (if any) is currently active — it shows as a badge inside the
+        // chip; every other mode shows as a neutral button to the left of the chip.
+        const activeMode = order.sl.enabled ? order.sl.mode : null;
+
+        let modeBtns = '';
+        SL_MODE_BUTTONS.forEach(m => {
+          if (m.mode === activeMode) return;
+          const locked = m.mode === 'breakeven' && order.tps.length < 2;
+          modeBtns +=
+            '<button type="button" class="ol-sl-mode-btn' + (locked ? ' disabled' : '') +
+            '" data-mode="' + m.mode + '">' + m.label + '</button>';
+        });
+
+        let badgeHtml = '';
+        if (activeMode) {
+          const badge = slBadgeInfo();
+          badgeHtml =
+            '<span class="ol-badge sl-badge ' + badge.cls + '" id="slBadgeShell">' +
+            '<span class="sl-badge-label" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
+            '<button type="button" class="sl-badge-remove" id="slBadgeRemove" title="Disable — back to Fixed SL" aria-label="Disable">' +
+            '<span class="material-symbols-outlined">close</span>' +
+            '</button>' +
+            '</span>';
+        }
+
         const row = document.createElement('div');
         row.className = 'ol-side-row';
         row.style.top = y + 'px';
         row.innerHTML =
+          modeBtns +
           '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + '">' +
           '<span class="material-symbols-outlined ol-chip-warning">warning</span>SL' +
           '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
-          '<span class="ol-badge sl-badge ' + badge.cls + '" id="slBadgeShell">' +
-          '<span class="sl-badge-label" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
-          '<span class="sl-badge-arrows">' +
-          '<button type="button" class="sl-badge-arrow" id="slBadgeCycleUp" title="Next SL mode" aria-label="Next SL mode"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>' +
-          '<button type="button" class="sl-badge-arrow" id="slBadgeCycleDown" title="Previous SL mode" aria-label="Previous SL mode"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>' +
-          '</span>' +
-          '</span>' +
+          badgeHtml +
           '</span>' +
           '<span class="ol-rmult">-1.0R</span>' +
           '<span class="ol-pct-chip">100%</span>' +
@@ -2147,17 +2172,25 @@
         makeDraggable(slChipEl, onDragSl, onDropSl, '.ol-badge');
         makeDraggable(line, onDragSl, onDropSl);
 
-        row.querySelector('#slBadgeTrigger').addEventListener('click', (e) => {
-          e.stopPropagation();
-          openSlGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-        });
-        row.querySelector('#slBadgeCycleUp').addEventListener('click', (e) => {
-          e.stopPropagation();
-          cycleSlMode(1);
-        });
-        row.querySelector('#slBadgeCycleDown').addEventListener('click', (e) => {
-          e.stopPropagation();
-          cycleSlMode(-1);
+        const slBadgeTrigger = row.querySelector('#slBadgeTrigger');
+        if (slBadgeTrigger) {
+          slBadgeTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openSlGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+          });
+        }
+        const slBadgeRemove = row.querySelector('#slBadgeRemove');
+        if (slBadgeRemove) {
+          slBadgeRemove.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectSlMode(order.sl.mode); // re-selecting the active mode turns it off → Fixed
+          });
+        }
+        row.querySelectorAll('.ol-sl-mode-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectSlMode(btn.dataset.mode);
+          });
         });
         row.querySelector('#slDeleteTrigger').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -3624,20 +3657,6 @@
     }
     if (mode === 'breakeven' && order.tps.length < 2) { showToast('Breakeven needs at least 2 take profits', 'info'); return; }
     applySlCycleMode(mode);
-    renderSlGearMenu(); render();
-  }
-  /* Fixed → Trail → BE → ATR → Fixed (looping); dir -1 cycles in reverse. Skips Breakeven if it's locked. */
-  const SL_MODE_CYCLE = ['fixed', 'trailing', 'breakeven', 'atr'];
-  function cycleSlMode(dir) {
-    if (!order || !order.sl) return;
-    let idx = order.sl.enabled ? SL_MODE_CYCLE.indexOf(order.sl.mode) : 0;
-    for (let i = 0; i < SL_MODE_CYCLE.length; i++) {
-      idx = (idx + dir + SL_MODE_CYCLE.length) % SL_MODE_CYCLE.length;
-      const candidate = SL_MODE_CYCLE[idx];
-      if (candidate === 'breakeven' && order.tps.length < 2) continue;
-      applySlCycleMode(candidate);
-      break;
-    }
     renderSlGearMenu(); render();
   }
   slTrailRow.addEventListener('click', (e) => { e.stopPropagation(); selectSlMode('trailing'); });

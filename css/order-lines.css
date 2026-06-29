@@ -325,7 +325,6 @@
   border: 1px solid var(--short-border);
   color: var(--short);
   cursor: ns-resize;
-  padding-right: 3px;
 }
 
 .ol-chip.tp.invalid,
@@ -690,6 +689,7 @@
 .ol-chip.sl .sl-badge {
   cursor: pointer;
   margin-left: auto;
+  margin-right: -6px;
 }
 
 .ol-badge.fixed {
@@ -697,8 +697,9 @@
   color: var(--text-secondary);
 }
 
-/* SL badge shell: a clickable label (opens SL settings) plus a stacked up/down arrow
-   column (cycles SL mode) that shares the label's background/color so it reads as one pill */
+/* SL badge shell (shown only when a special mode is active): a clickable label that opens
+   SL settings, plus a small × button that disables the mode and reverts to Fixed. The two
+   share the badge's background/color so they read as one pill. */
 .ol-badge.sl-badge {
   display: flex;
   align-items: stretch;
@@ -709,7 +710,7 @@
 .sl-badge-label {
   display: flex;
   align-items: center;
-  padding: 1px 6px;
+  padding: 3px 4px 3px 6px;
   cursor: pointer;
 }
 
@@ -717,31 +718,48 @@
   filter: brightness(1.2);
 }
 
-.sl-badge-arrows {
-  display: flex;
-  flex-direction: column;
-  opacity: .55;
-}
-
-.sl-badge-arrow {
+.sl-badge-remove {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 13px;
-  height: 9px;
   background: none;
   border: none;
-  padding: 0;
+  padding: 0 3px 0 1px;
   color: inherit;
   cursor: pointer;
+  opacity: .6;
 }
 
-.sl-badge-arrow:hover {
-  filter: brightness(1.2);
+.sl-badge-remove:hover {
+  opacity: 1;
 }
 
-.sl-badge-arrow .material-symbols-outlined {
-  font-size: 10px;
+.sl-badge-remove .material-symbols-outlined {
+  font-size: 11px;
+}
+
+/* Neutral SL-mode buttons that sit to the left of the SL chip; clicking one activates
+   that mode (it then moves into the chip as a colored badge). */
+.ol-sl-mode-btn {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  border: none;
+  cursor: pointer;
+  font-family: var(--sans);
+}
+
+.ol-sl-mode-btn:hover {
+  color: var(--text-primary);
+}
+
+.ol-sl-mode-btn.disabled {
+  opacity: .4;
+  cursor: default;
 }
 
 /* SL gear-menu: selectable behavior rows + their settings sections */
