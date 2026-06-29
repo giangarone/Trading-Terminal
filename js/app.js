@@ -936,7 +936,7 @@
   function slBadgeInfo() {
     if (!order || !order.sl) return { text: 'Fixed', cls: 'fixed' };
     if (!order.sl.enabled) return { text: 'Fixed', cls: 'fixed' };
-    if (order.sl.mode === 'breakeven') return { text: order.sl.beActive ? 'SL → BE' : 'Breakeven', cls: 'be' };
+    if (order.sl.mode === 'breakeven') return { text: order.sl.beActive ? 'SL → BE' : 'TP → BE', cls: 'be' };
     if (order.sl.mode === 'atr') return { text: 'ATR ' + slAtrMult().toFixed(1) + 'x', cls: 'atr' };
     return { text: 'Trail ' + slDistanceLabel(ensureSlConfig()), cls: 'trail' };
   }
@@ -2105,11 +2105,11 @@
           '<span class="material-symbols-outlined ol-chip-warning">warning</span>SL' +
           '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
           '<span class="ol-badge sl-badge ' + badge.cls + '" id="slBadgeShell">' +
-            '<span class="sl-badge-label" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
-            '<span class="sl-badge-arrows">' +
-              '<button type="button" class="sl-badge-arrow" id="slBadgeCycleUp" title="Next SL mode" aria-label="Next SL mode"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>' +
-              '<button type="button" class="sl-badge-arrow" id="slBadgeCycleDown" title="Previous SL mode" aria-label="Previous SL mode"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>' +
-            '</span>' +
+          '<span class="sl-badge-label" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
+          '<span class="sl-badge-arrows">' +
+          '<button type="button" class="sl-badge-arrow" id="slBadgeCycleUp" title="Next SL mode" aria-label="Next SL mode"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>' +
+          '<button type="button" class="sl-badge-arrow" id="slBadgeCycleDown" title="Previous SL mode" aria-label="Previous SL mode"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>' +
+          '</span>' +
           '</span>' +
           '</span>' +
           '<span class="ol-rmult">-1.0R</span>' +

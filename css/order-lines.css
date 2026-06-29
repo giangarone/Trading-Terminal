@@ -714,7 +714,7 @@
 }
 
 .sl-badge-label:hover {
-  filter: brightness(1.18);
+  filter: brightness(1.2);
 }
 
 .sl-badge-arrows {
@@ -737,7 +737,7 @@
 }
 
 .sl-badge-arrow:hover {
-  filter: brightness(1.18);
+  filter: brightness(1.2);
 }
 
 .sl-badge-arrow .material-symbols-outlined {
