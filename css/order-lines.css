@@ -400,6 +400,10 @@
   gap: 0;
 }
 
+.ol-chip.entry:hover {
+  filter: brightness(1.08);
+}
+
 .ol-chip.entry.buy {
   background: var(--long);
   color: var(--on-accent);

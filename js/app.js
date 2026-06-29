@@ -3490,6 +3490,9 @@
   const slTrailRow = document.getElementById('slTrailRow');
   const slAtrRow = document.getElementById('slAtrRow');
   const slBeToggle = document.getElementById('slBeToggle');
+  const slBeSub = document.getElementById('slBeSub');
+  const slBeSubDefaultText = slBeSub.textContent;
+  const slBeSubLockedText = 'Needs at least 2 take profits';
   const slDistanceUnitSel = document.getElementById('slDistanceUnit');
   const slStartSel = document.getElementById('slStart');
   const slBeOvTrigger = document.getElementById('slBeOvTrigger');
@@ -3548,6 +3551,7 @@
     slAtrRow.classList.toggle('selected', on && mode === 'atr');
     slBeToggle.classList.toggle('selected', on && mode === 'breakeven');
     slBeToggle.classList.toggle('disabled', noTps);
+    slBeSub.textContent = noTps ? slBeSubLockedText : slBeSubDefaultText;
     // a section's settings only expand once that behavior is actually enabled
     document.getElementById('slTrailSettings').style.display = (on && mode === 'trailing') ? '' : 'none';
     document.getElementById('slAtrSettings').style.display = (on && mode === 'atr') ? '' : 'none';
