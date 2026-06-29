@@ -325,6 +325,7 @@
   border: 1px solid var(--short-border);
   color: var(--short);
   cursor: ns-resize;
+  padding-right: 3px;
 }
 
 .ol-chip.tp.invalid,
@@ -664,9 +665,9 @@
 
 .ol-badge {
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   padding: 1px 5px;
-  border-radius: 8px;
+  border-radius: 4px;
   letter-spacing: .03em;
 }
 
@@ -691,13 +692,56 @@
   margin-left: auto;
 }
 
-.ol-chip.sl .sl-badge:hover {
-  filter: brightness(1.18);
-}
-
 .ol-badge.fixed {
   background: var(--bg-hover);
   color: var(--text-secondary);
+}
+
+/* SL badge shell: a clickable label (opens SL settings) plus a stacked up/down arrow
+   column (cycles SL mode) that shares the label's background/color so it reads as one pill */
+.ol-badge.sl-badge {
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+  overflow: hidden;
+}
+
+.sl-badge-label {
+  display: flex;
+  align-items: center;
+  padding: 1px 6px;
+  cursor: pointer;
+}
+
+.sl-badge-label:hover {
+  filter: brightness(1.18);
+}
+
+.sl-badge-arrows {
+  display: flex;
+  flex-direction: column;
+  opacity: .55;
+}
+
+.sl-badge-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 9px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sl-badge-arrow:hover {
+  filter: brightness(1.18);
+}
+
+.sl-badge-arrow .material-symbols-outlined {
+  font-size: 10px;
 }
 
 /* SL gear-menu: selectable behavior rows + their settings sections */

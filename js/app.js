@@ -942,11 +942,12 @@
   }
   /* live-patch the on-chart SL chip badge without a full re-render (used by drag and by gear-menu field edits) */
   function refreshSlBadgeOnChart() {
-    const badgeEl = document.getElementById('slBadgeTrigger');
-    if (!badgeEl) return;
+    const labelEl = document.getElementById('slBadgeTrigger');
+    const shellEl = document.getElementById('slBadgeShell');
+    if (!labelEl || !shellEl) return;
     const info = slBadgeInfo();
-    badgeEl.textContent = info.text;
-    badgeEl.className = 'ol-badge sl-badge ' + info.cls;
+    labelEl.textContent = info.text;
+    shellEl.className = 'ol-badge sl-badge ' + info.cls;
   }
   let simTickCounter = 0;
   /* Shared helper: compute trailing distance in price units from a reference price */
@@ -2103,7 +2104,13 @@
           '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + '">' +
           '<span class="material-symbols-outlined ol-chip-warning">warning</span>SL' +
           '<span class="ol-amt down">-' + fmtMoney(Math.abs(loss)) + '</span>' +
-          '<span class="ol-badge sl-badge ' + badge.cls + '" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
+          '<span class="ol-badge sl-badge ' + badge.cls + '" id="slBadgeShell">' +
+            '<span class="sl-badge-label" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
+            '<span class="sl-badge-arrows">' +
+              '<button type="button" class="sl-badge-arrow" id="slBadgeCycleUp" title="Next SL mode" aria-label="Next SL mode"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>' +
+              '<button type="button" class="sl-badge-arrow" id="slBadgeCycleDown" title="Previous SL mode" aria-label="Previous SL mode"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>' +
+            '</span>' +
+          '</span>' +
           '</span>' +
           '<span class="ol-rmult">-1.0R</span>' +
           '<span class="ol-pct-chip">100%</span>' +
@@ -2143,6 +2150,14 @@
         row.querySelector('#slBadgeTrigger').addEventListener('click', (e) => {
           e.stopPropagation();
           openSlGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+        row.querySelector('#slBadgeCycleUp').addEventListener('click', (e) => {
+          e.stopPropagation();
+          cycleSlMode(1);
+        });
+        row.querySelector('#slBadgeCycleDown').addEventListener('click', (e) => {
+          e.stopPropagation();
+          cycleSlMode(-1);
         });
         row.querySelector('#slDeleteTrigger').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -3585,22 +3600,44 @@
       order.sl.beTpId = resolveBreakevenTpId();
     }
   }
-  /* select a special behavior (mutually exclusive); clicking the active one again turns it off → plain Fixed SL */
-  function selectSlMode(mode) {
-    if (!order || !order.sl) return;
-    if (order.sl.enabled && order.sl.mode === mode) {
+  /* set the SL to a specific behavior ('fixed' = disabled/plain stop, otherwise enables that mode and places it) */
+  function applySlCycleMode(mode) {
+    if (mode === 'fixed') {
       order.sl.enabled = false;
       order.sl.autoTrailing = false;
       order.sl.beActive = false; order.sl.beTpId = null;
-      renderSlGearMenu(); render();
       return;
     }
-    if (mode === 'breakeven' && order.tps.length < 2) { showToast('Breakeven needs at least 2 take profits', 'info'); return; }
     order.sl.mode = mode;
     order.sl.enabled = true;
     order.sl.autoTrailing = false; // the automation hasn't moved it yet under this newly-selected mode
     if (mode !== 'breakeven') { order.sl.beActive = false; order.sl.beTpId = null; }
     applySlModePlacement();
+  }
+  /* select a special behavior (mutually exclusive); clicking the active one again turns it off → plain Fixed SL */
+  function selectSlMode(mode) {
+    if (!order || !order.sl) return;
+    if (order.sl.enabled && order.sl.mode === mode) {
+      applySlCycleMode('fixed');
+      renderSlGearMenu(); render();
+      return;
+    }
+    if (mode === 'breakeven' && order.tps.length < 2) { showToast('Breakeven needs at least 2 take profits', 'info'); return; }
+    applySlCycleMode(mode);
+    renderSlGearMenu(); render();
+  }
+  /* Fixed → Trail → BE → ATR → Fixed (looping); dir -1 cycles in reverse. Skips Breakeven if it's locked. */
+  const SL_MODE_CYCLE = ['fixed', 'trailing', 'breakeven', 'atr'];
+  function cycleSlMode(dir) {
+    if (!order || !order.sl) return;
+    let idx = order.sl.enabled ? SL_MODE_CYCLE.indexOf(order.sl.mode) : 0;
+    for (let i = 0; i < SL_MODE_CYCLE.length; i++) {
+      idx = (idx + dir + SL_MODE_CYCLE.length) % SL_MODE_CYCLE.length;
+      const candidate = SL_MODE_CYCLE[idx];
+      if (candidate === 'breakeven' && order.tps.length < 2) continue;
+      applySlCycleMode(candidate);
+      break;
+    }
     renderSlGearMenu(); render();
   }
   slTrailRow.addEventListener('click', (e) => { e.stopPropagation(); selectSlMode('trailing'); });
