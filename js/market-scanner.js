@@ -402,10 +402,6 @@
       (sub ? '<span class="msx-stack-sub">' + sub + '</span>' : '') + '</div>';
   }
 
-  function impactCell(level) {
-    return '<span class="msx-impact ' + level + '">' + level + '</span>';
-  }
-
   /* ---------------------------------------------------------------
      Tab configuration — columns, chips, and how rows are built
      --------------------------------------------------------------- */
@@ -419,67 +415,13 @@
         { label: 'Asset', sortKey: 'sortSymbol', render: function (a) { return assetCell(a); } },
         { label: 'Price', cls: 'num', sortKey: 'sortPrice', render: function (a) { return priceCell(a); } },
         { label: 'Bias', sortKey: 'sortBias', render: function (a) { return biasCell(a.bias); } },
+        { label: 'Evidence', cls: 'num', sortKey: 'sortStrength', render: function (a) { return strengthCell(a.strength); } },
         { label: 'Indicators', render: function (a) { return stackCell(a.indicator.signal, a.indicator.value, a.bias === 'bullish' ? 'msx-up' : a.bias === 'bearish' ? 'msx-down' : '', a.bias); } },
         { label: 'Intelligence', render: function (a) { return stackCell(a.intel.signal, a.intel.value, 'msx-intel', a.bias); } },
         { label: 'News', render: function (a) { var nb = a.news.reaction > 0.5 ? 'bullish' : a.news.reaction < -0.5 ? 'bearish' : 'mixed'; return stackCell(a.news.headline, capitalize(a.news.impact), '', nb); } },
         { label: 'Technical', render: function (a) { return stackCell(a.technical.setup, a.technical.level, '', a.bias); } }
       ],
-      rows: function () { return ASSETS.map(function (a) { return { a: a, tags: a.biasTags, sortSymbol: a.sym, sortPrice: parseFloat(a.price.replace(/,/g, '')), sortBias: a.bias }; }); }
-    },
-    indicators: {
-      chips: [['all', 'All'], ['momentum', 'Momentum'], ['oscillators', 'Oscillators'], ['volume', 'Volume'], ['trend', 'Trend'], ['volatility', 'Volatility']],
-      columns: [
-        { label: 'Asset', sortKey: 'sortSymbol', render: function (a) { return assetCell(a); } },
-        { label: 'Price', cls: 'num', sortKey: 'sortPrice', render: function (a) { return priceCell(a); } },
-        { label: 'Signal', sortKey: 'sortSignal', render: function (a) { return stackCell(a.indicator.signal, null, a.bias === 'bullish' ? 'msx-up' : a.bias === 'bearish' ? 'msx-down' : '', a.bias); } },
-        { label: 'Detail', render: function (a) { return '<span class="msx-muted">' + a.indicator.detail + '</span>'; } },
-        { label: 'Value', cls: 'num', render: function (a) { return '<span class="msx-value">' + a.indicator.value + '</span>'; } },
-        { label: 'Timeframe', render: function (a) { return '<span class="msx-muted">' + a.indicator.tf + '</span>'; } },
-        { label: 'Strength', cls: 'num', sortKey: 'sortStrength', render: function (a) { return strengthCell(a.strength); } }
-      ],
-      rows: function () { return ASSETS.map(function (a) { return { a: a, tags: [a.indicator.cat], sortSymbol: a.sym, sortPrice: parseFloat(a.price.replace(/,/g, '')), sortBias: a.bias, sortSignal: a.indicator.signal, sortStrength: a.strength }; }); }
-    },
-    chartprime: {
-      chips: [['all', 'All'], ['darkpool', 'Dark Pool'], ['blocktrades', 'Block Trades'], ['iceberg', 'Iceberg'], ['absorption', 'Absorption'], ['unusualflow', 'Unusual Flow'], ['liquidity', 'Liquidity']],
-      columns: [
-        { label: 'Asset', sortKey: 'sortSymbol', render: function (a) { return assetCell(a); } },
-        { label: 'Price', cls: 'num', sortKey: 'sortPrice', render: function (a) { return priceCell(a); } },
-        { label: 'Signal', sortKey: 'sortSignal', render: function (a) { return stackCell(a.intel.signal, null, 'msx-intel', a.bias); } },
-        { label: 'Details', render: function (a) { return '<span class="msx-muted">' + a.intel.sub + '</span>'; } },
-        { label: 'Value', cls: 'num', render: function (a) { return '<span class="msx-value">' + a.intel.value + '</span>'; } },
-        { label: 'Time', cls: 'num', render: function (a) { return '<span class="msx-muted">' + a.intel.time + '</span>'; } },
-        { label: 'Strength', cls: 'num', sortKey: 'sortStrength', render: function (a) { return strengthCell(a.strength); } }
-      ],
-      rows: function () { return ASSETS.map(function (a) { return { a: a, tags: [a.intel.cat], sortSymbol: a.sym, sortPrice: parseFloat(a.price.replace(/,/g, '')), sortBias: a.bias, sortSignal: a.intel.signal, sortStrength: a.strength }; }); }
-    },
-    news: {
-      chips: [['all', 'All'], ['earnings', 'Earnings'], ['economic', 'Economic'], ['regulatory', 'Regulatory'], ['product', 'Product']],
-      columns: [
-        { label: 'Asset', sortKey: 'sortSymbol', render: function (a) { return assetCell(a); } },
-        { label: 'Price', cls: 'num', sortKey: 'sortPrice', render: function (a) { return priceCell(a); } },
-        { label: 'Headline', render: function (a) { var nb = a.news.reaction > 0.5 ? 'bullish' : a.news.reaction < -0.5 ? 'bearish' : 'mixed'; return stackCell(a.news.headline, a.news.sub, '', nb); } },
-        { label: 'Impact', sortKey: 'sortImpact', render: function (a) { return impactCell(a.news.impact); } },
-        { label: 'Price Reaction', cls: 'num', sortKey: 'sortChange', render: function (a) { return changeStr(a.news.reaction); } },
-        { label: 'Time', cls: 'num', render: function (a) { return '<span class="msx-muted">' + a.news.time + '</span>'; } },
-        { label: 'Sector', render: function (a) { return '<span class="msx-muted">' + a.news.sector + '</span>'; } }
-      ],
-      rows: function () {
-        const impactRank = { high: 3, medium: 2, low: 1 };
-        return ASSETS.map(function (a) { return { a: a, tags: [a.news.cat], sortSymbol: a.sym, sortPrice: parseFloat(a.price.replace(/,/g, '')), sortBias: a.bias, sortChange: a.news.reaction, sortImpact: impactRank[a.news.impact] || 0, sortStrength: a.evidence }; });
-      }
-    },
-    technical: {
-      chips: [['all', 'All'], ['patterns', 'Patterns'], ['supportresistance', 'Support/Resistance'], ['breakouts', 'Breakouts'], ['channels', 'Channels']],
-      columns: [
-        { label: 'Asset', sortKey: 'sortSymbol', render: function (a) { return assetCell(a); } },
-        { label: 'Price', cls: 'num', sortKey: 'sortPrice', render: function (a) { return priceCell(a); } },
-        { label: 'Setup', sortKey: 'sortSetup', render: function (a) { return stackCell(a.technical.setup, null, '', a.bias); } },
-        { label: 'Details', render: function (a) { return '<span class="msx-muted">' + a.technical.detail + '</span>'; } },
-        { label: 'Level', render: function (a) { return '<span class="msx-value">' + a.technical.level + '</span>'; } },
-        { label: 'Timeframe', render: function (a) { return '<span class="msx-muted">' + a.technical.tf + '</span>'; } },
-        { label: 'Strength', cls: 'num', sortKey: 'sortStrength', render: function (a) { return strengthCell(a.technical.quality); } }
-      ],
-      rows: function () { return ASSETS.map(function (a) { return { a: a, tags: [a.technical.cat], sortSymbol: a.sym, sortPrice: parseFloat(a.price.replace(/,/g, '')), sortBias: a.bias, sortSetup: a.technical.setup, sortStrength: a.technical.quality }; }); }
+      rows: function () { return ASSETS.map(function (a) { return { a: a, tags: a.biasTags, sortSymbol: a.sym, sortPrice: parseFloat(a.price.replace(/,/g, '')), sortBias: a.bias, sortStrength: a.strength }; }); }
     },
     saved: {
       chips: [['all', 'All'], ['myscans', 'My Scans'], ['alerts', 'Alerts'], ['watchlists', 'Watchlists']],
