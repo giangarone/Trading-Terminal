@@ -1455,17 +1455,6 @@
   margin-top: 16px;
 }
 
-.md-premium-badge {
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-ui);
-  color: var(--accent);
-  background: var(--accent-dim);
-  border: 1px solid var(--accent-border);
-  border-radius: var(--r-pill);
-  padding: 2px 9px;
-  margin-left: 8px;
-}
-
 .md-plan-desc {
   font-size: 12px;
   color: var(--text-muted);
@@ -1694,7 +1683,7 @@
 
 .plan-name {
   font-size: 14.5px;
-  font-weight: var(--fw-semi);
+  font-weight: 500;
   color: var(--text-primary);
   font-family: var(--sans);
 }
@@ -1724,7 +1713,11 @@
 }
 
 .plan-feature-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
 }
 
 .plan-feature-group+.plan-feature-group {
@@ -1751,7 +1744,7 @@
 
 .plan-feature .material-symbols-outlined {
   font-size: 14px;
-  color: var(--long);
+  color: var(--accent);
   flex-shrink: 0;
   margin-top: 1px;
 }

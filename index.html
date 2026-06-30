@@ -15,7 +15,7 @@
 
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
   <link rel="stylesheet" href="css/tokens.css?v=8">
-  <link rel="stylesheet" href="css/topbar.css?v=3">
+  <link rel="stylesheet" href="css/topbar.css?v=5">
   <link rel="stylesheet" href="css/left-panel.css?v=3">
   <link rel="stylesheet" href="css/center-panel.css?v=4">
   <link rel="stylesheet" href="css/workspace.css?v=16">
@@ -36,7 +36,10 @@
     <!-- ===================== TOP BAR ===================== -->
     <header class="topbar">
       <div class="tb-logo-zone">
-        <div class="tb-logo"><img src="assets/chartprime-logo.webp" alt="ChartPrime"></div>
+        <div class="tb-logo">
+          <img class="tb-logo-dark" src="assets/logo-dark.png" alt="ChartPrime">
+          <img class="tb-logo-light" src="assets/logo-light.png" alt="ChartPrime">
+        </div>
       </div>
       <div class="tb-chart-zone">
         <div class="tb-left">
@@ -1638,7 +1641,7 @@
               <div class="cs-card md-plan-card">
                 <div class="cs-card-head">
                   <span class="cs-card-title">Current Plan</span>
-                  <span class="md-premium-badge">PRO</span>
+                  <span class="plan-tier-badge" style="margin-left: 8px;">PRO</span>
                   <button class="md-compare-btn" style="margin-left:auto;">
                     Compare Plans <span class="material-symbols-outlined">arrow_outward</span>
                   </button>
@@ -2067,6 +2070,30 @@
             </div>
           </div>
 
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">News</span>
+            <span class="news-filter">All <span class="material-symbols-outlined"
+                style="font-size:13px;">expand_more</span></span>
+          </div>
+          <div class="news-item">
+            <span class="news-time">09:42</span>
+            <span class="news-head">Institutional buying picks up in mega cap tech</span>
+          </div>
+          <div class="news-item">
+            <span class="news-time">09:27</span>
+            <span class="news-head">Strong absorption noted at 5,288 support level in ES</span>
+          </div>
+          <div class="news-item">
+            <span class="news-time">09:15</span>
+            <span class="news-head">FOMC expects rates unchanged, data dependent</span>
+          </div>
+          <div class="news-item">
+            <span class="news-time">09:05</span>
+            <span class="news-head">Energy sector rotation accelerates into the close</span>
+          </div>
         </div>
 
         <div class="pop-menu" id="tjDayMenu" style="width:130px;">
@@ -3259,30 +3286,6 @@
 
         <div class="card">
           <div class="card-head">
-            <span class="card-title">News</span>
-            <span class="news-filter">All <span class="material-symbols-outlined"
-                style="font-size:13px;">expand_more</span></span>
-          </div>
-          <div class="news-item">
-            <span class="news-time">09:42</span>
-            <span class="news-head">Institutional buying picks up in mega cap tech</span>
-          </div>
-          <div class="news-item">
-            <span class="news-time">09:27</span>
-            <span class="news-head">Strong absorption noted at 5,288 support level in ES</span>
-          </div>
-          <div class="news-item">
-            <span class="news-time">09:15</span>
-            <span class="news-head">FOMC expects rates unchanged, data dependent</span>
-          </div>
-          <div class="news-item">
-            <span class="news-time">09:05</span>
-            <span class="news-head">Energy sector rotation accelerates into the close</span>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-head">
             <span class="card-title">Market Health</span>
           </div>
           <div class="gauge-wrap">
@@ -4161,7 +4164,7 @@
   <script src="js/workspace.js?v=5"></script>
   <script src="js/overlays.js?v=1"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=64"></script>
+  <script src="js/app.js?v=65"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=11"></script>
   <script src="js/market-scanner.js?v=8"></script>

@@ -30,6 +30,18 @@
   display: block;
 }
 
+.tb-logo img.tb-logo-light {
+  display: none;
+}
+
+[data-theme="light"] .tb-logo img.tb-logo-dark {
+  display: none;
+}
+
+[data-theme="light"] .tb-logo img.tb-logo-light {
+  display: block;
+}
+
 .tb-chart-zone {
   flex: 1;
   display: flex;

@@ -1006,9 +1006,9 @@
   }
   /* The special (non-Fixed) SL modes, shown as neutral buttons beside the SL chip. */
   const SL_MODE_BUTTONS = [
-    { mode: 'trailing',  label: 'Trail', cls: 'trail' },
-    { mode: 'atr',       label: 'ATR',   cls: 'atr' },
-    { mode: 'breakeven', label: 'BE',    cls: 'be' },
+    { mode: 'trailing', label: 'Trail', cls: 'trail' },
+    { mode: 'atr', label: 'ATR', cls: 'atr' },
+    { mode: 'breakeven', label: 'BE', cls: 'be' },
   ];
   /* badge shown inside the SL chip — text + style class, and it opens the SL settings.
      A plain (non-special-mode) SL has no badge at all — null means "don't show one". */
@@ -2797,6 +2797,9 @@
   document.querySelectorAll('.cs-nav-item').forEach(btn => {
     btn.addEventListener('click', () => setCsTab(btn.dataset.csTab));
   });
+  document.querySelectorAll('.md-upgrade-btn, .md-compare-btn').forEach(btn => {
+    btn.addEventListener('click', () => setCsTab('plans'));
+  });
   document.getElementById('csSearchInput').addEventListener('input', (e) => {
     const q = e.target.value.trim().toLowerCase();
     document.querySelectorAll('.cs-nav-item').forEach(b => {
@@ -3499,6 +3502,7 @@
     { name: 'Large Lot / Block Trade Detector', desc: 'Highlights unusually large executed trades that may indicate institutional participation.', cat: 'l1' },
     { name: 'Aggressive Order Flow', desc: 'Measures whether buyers or sellers are controlling the tape through sustained market orders.', cat: 'l1' },
     { name: 'Smart Volume Spike Detector', desc: 'Detects abnormal volume and classifies whether it supports continuation, exhaustion, absorption, liquidation, or a fake breakout.', cat: 'l1' },
+    { name: 'Whale Movement', desc: 'Tracks large holder activity to flag accumulation or distribution before it shows up in price.', cat: 'l1' },
 
     { name: 'Limit Order Heatmap', desc: 'Shows resting bid/ask liquidity to identify support, resistance, liquidity walls, and breakout zones.', cat: 'l2' },
     { name: 'Iceberg Detector', desc: 'Detects hidden or refreshing institutional orders.', cat: 'l2' },
@@ -3513,9 +3517,9 @@
     { name: 'Smart Liquidity Sweep Detector', desc: 'Detects liquidity sweeps and determines whether the move is likely reversal or breakout continuation.', cat: 'l2' },
     { name: 'Delta Divergence Signal', desc: 'Detects when price and aggressive buying/selling pressure diverge, warning that momentum may be weakening.', cat: 'l2' },
 
-    { name: 'Market Oracle', desc: 'A trend and signal toolkit that helps traders act with more clarity as price moves.', cat: 'chartprime' },
+    { name: 'Market Oracle Plus', desc: 'A trend and signal toolkit that helps traders act with more clarity as price moves.', cat: 'chartprime' },
     { name: 'Market Dynamics', desc: 'A liquidity and structure toolkit that maps reaction zones, breakouts, gaps, and institutional areas in real time.', cat: 'chartprime' },
-    { name: 'Prime Oscillators', desc: 'A momentum toolkit that shows when momentum is building, fading, or flipping.', cat: 'chartprime' },
+    { name: 'Prime Oscillators Plus', desc: 'A momentum toolkit that shows when momentum is building, fading, or flipping.', cat: 'chartprime' },
     { name: 'Prime Screener', desc: 'An on-chart dashboard for scanning different assets and spotting opportunities at a glance.', cat: 'chartprime' },
   ];
 
