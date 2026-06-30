@@ -102,7 +102,7 @@
   let panX = 0, panY = 0; // panX: px shift of candles; panY: price shift applied to whole scale
   let panXInitialized = false; // on first draw, panX is set to push candles left, leaving more empty space on the right
   let crosshair = null; // {x,y} in CSS px relative to chart, within plot bounds, or null when not hovering
-  let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | 'tp-add' | 'sl-add' | null — which order-line handle is currently hovered
+  let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | 'offset:<id>' | 'tp-add' | 'sl-add' | null — which order-line handle is currently hovered/dragged
   let isDraggingOrderLine = false; // true for the duration of any order-line drag — blocks the price-tick auto-render from wiping live drag visuals
   let isHoveringBarControls = false; // true when pointer is over a non-drag interactive element inside an entry/TP/SL bar — suppresses the chart crosshair
   layer.addEventListener('mouseover', (e) => {
@@ -1470,12 +1470,15 @@
   }
   /* a plain click (no movement) on the handle falls through to onClick (if given) instead of dragging — */
   /* lets a handle double as both a drag target and a menu/edit/place trigger (e.g. the size/type pills, .ol-amt) */
-  function makeDraggable(handle, onDrag, onDrop, excludeSelector, onClick) {
+  function makeDraggable(handle, onDrag, onDrop, excludeSelector, onClick, hoverKey) {
     handle.addEventListener('mousedown', (e) => {
       if (excludeSelector && e.target.closest(excludeSelector)) return;
       e.preventDefault(); e.stopPropagation();
       closeAllPopovers();
       isDraggingOrderLine = true;
+      // Mark this handle as "hovered" for the drag's duration so the chart suppresses the
+      // crosshair and highlights this line's right-axis label (same mechanism as chip hover).
+      if (hoverKey) { hoveredHandle = hoverKey; if (crosshair) crosshair = null; scheduleDrawPriceChart(); }
       const rect = chart.getBoundingClientRect();
       const startX = e.clientX, startY = e.clientY;
       let dragging = false;
@@ -1491,6 +1494,7 @@
         document.removeEventListener('mousemove', move);
         document.removeEventListener('mouseup', up);
         isDraggingOrderLine = false;
+        if (hoverKey && hoveredHandle === hoverKey) { hoveredHandle = null; scheduleDrawPriceChart(); }
         if (!dragging) { if (onClick) onClick(); return; }
         const y = clamp(ev.clientY - rect.top, 10, rect.height - 10);
         onDrop(y, rect.height);
@@ -1894,7 +1898,7 @@
           const offsetPrice = (tp.activated && tp.exitPrice != null)
             ? tp.exitPrice
             : roundTick(tp.price - orderDir * tpOffsetDist(tp));
-          drawOrderAxisTagOutline(offsetPrice, offsetColor, false);
+          drawOrderAxisTagOutline(offsetPrice, offsetColor, hoveredHandle === 'offset:' + tp.id);
         }
       });
       if (order.sl) drawOrderAxisTagOutline(order.sl.price, downColor, hoveredHandle === 'sl');
@@ -2255,7 +2259,7 @@
           render();
         }
         makeDraggable(tpChipEl, onDragTp, onDropTp, '.ol-badge');
-        makeDraggable(line, onDragTp, onDropTp);
+        makeDraggable(line, onDragTp, onDropTp, undefined, undefined, 'tp:' + tp.id);
 
         // Dragging the offset line redefines the offset value (distance from the TP).
         if (offsetLineEl) {
@@ -2287,7 +2291,7 @@
             onDragOffset(cy, h);
             render();
           }
-          makeDraggable(offsetLineEl, onDragOffset, onDropOffset);
+          makeDraggable(offsetLineEl, onDragOffset, onDropOffset, undefined, undefined, 'offset:' + tp.id);
         }
 
         row.querySelector('[data-edit-tp]').addEventListener('click', (e) => {
@@ -2440,7 +2444,7 @@
           render();
         }
         makeDraggable(slChipEl, onDragSl, onDropSl, '.ol-badge');
-        makeDraggable(line, onDragSl, onDropSl);
+        makeDraggable(line, onDragSl, onDropSl, undefined, undefined, 'sl');
 
         const slBadgeTrigger = row.querySelector('#slBadgeTrigger');
         if (slBadgeTrigger) {
@@ -2499,7 +2503,7 @@
         syncQtyFromRisk();
         render();
       }
-      if (canDragEntry) makeDraggable(line, onDragEntry, onDropEntry);
+      if (canDragEntry) makeDraggable(line, onDragEntry, onDropEntry, undefined, undefined, 'entry');
 
       const bar = document.createElement('div');
       bar.className = 'ol-entry-bar';
