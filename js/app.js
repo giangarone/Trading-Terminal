@@ -1691,7 +1691,7 @@
     {
       idxFromEnd: -20,
       name: 'FOMC Rate Decision',
-      description: 'The Federal Reserve announces its decision on the benchmark interest rate, followed by Chair Powell’s press conference and updated economic projections. Markets are pricing in a high probability the Committee holds rates steady, with traders watching closely for any shift in forward guidance on the pace of future cuts.',
+      description: 'The Federal Reserve announces its benchmark interest rate decision, followed by Chair Powell’s press conference and updated economic projections. Markets expect rates to remain unchanged, with traders closely watching for any shift in guidance on the pace of future rate cuts.',
     },
   ];
   let newsMarkerEls = null;
@@ -1713,7 +1713,7 @@
         '<div class="news-marker-popup">' +
         '<div class="news-bar"></div>' +
         '<div class="news-main">' +
-        '<div class="news-row-top"><span class="news-src">' + ev.source + '</span><span class="news-sentiment">' + sentimentLabel + '</span><span class="news-time">' + ev.timeLabel + '</span></div>' +
+        '<div class="news-row-top"><span class="news-sentiment">' + sentimentLabel + '</span><span class="news-time">' + ev.timeLabel + '</span></div>' +
         '<div class="news-headline">' + ev.headline + '</div>' +
         '<div class="news-desc">' + ev.description + '</div>' +
         '</div>' +
