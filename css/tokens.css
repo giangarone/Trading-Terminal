@@ -1,16 +1,5 @@
 /* ====== Tokens ====== */
 :root {
-  --ink-950: #07090b;
-  --ink-900: #0c1014;
-  --ink-850: #11161a;
-  --ink-800: #161d22;
-  --ink-750: #1c2429;
-  --line-1: #1b2227;
-  --line-2: #262e35;
-  --line-3: #36414b;
-  --paper-100: #e9edf0;
-  --paper-300: #98a4ac;
-  --paper-500: #5c6770;
   --long: #2bd47e;
   --long-dim: rgba(43, 212, 126, .14);
   --short: #f2495c;
@@ -19,6 +8,7 @@
   --accent-dim: rgba(227, 160, 57, .14);
   --intel: #2bb8c9;
   --intel-dim: rgba(43, 184, 201, .14);
+  --intel-border: rgba(43, 184, 201, .45);
   --purple: #a78bfa;
   --purple-dim: rgba(167, 139, 250, .14);
   --purple-guide: rgba(167, 139, 250, .55);
@@ -41,19 +31,19 @@
   --surface-tint: rgba(255, 255, 255, .1);
   --surface-tint-strong: rgba(255, 255, 255, .22);
 
-  /* ── Semantic surfaces (theme-aware; the raw ink, paper, and line tokens above are dark-mode literals only) ── */
-  --bg-base: var(--ink-900);
-  --bg-surface: var(--ink-850);
-  --bg-elevated: var(--ink-850);
-  --bg-sunken: var(--ink-950);
-  --bg-input: var(--ink-800);
-  --bg-hover: var(--ink-750);
-  --text-primary: var(--paper-100);
-  --text-secondary: var(--paper-300);
-  --text-muted: var(--paper-500);
-  --border-subtle: var(--line-1);
-  --border-default: var(--line-2);
-  --border-strong: var(--line-3);
+  --bg-base: #0c1014;
+  --bg-surface: #11161a;
+  --bg-elevated: #11161a;
+  --bg-sunken: #07090b;
+  --bg-input: #161d22;
+  --bg-hover: #1c2429;
+  --text-primary: #e9edf0;
+  --text-secondary: #98a4ac;
+  --text-muted: #5c6770;
+  --border-subtle: #1b2227;
+  --border-default: #262e35;
+  --border-strong: #36414b;
+
   --shadow-color: rgba(0, 0, 0, .55);
 
   --r-xs: 5px;
@@ -141,6 +131,7 @@
   --accent-border: rgba(156, 99, 8, .55);
   --intel: #0b6f7c;
   --intel-dim: #d6eef1;
+  --intel-border: rgba(11, 111, 124, .55);
   --purple: #7c5cd6;
   --purple-dim: #e8e1fa;
   --purple-guide: rgba(124, 92, 214, .6);

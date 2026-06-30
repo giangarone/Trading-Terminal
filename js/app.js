@@ -16,6 +16,7 @@
   const MARGIN_PER_CONTRACT = 13200; // mock margin / contract (ballpark ES futures margin)
   const BUYING_POWER = 87643.20;   // matches Order Entry panel
   const ACCOUNT_BALANCE = 20000;   // mock, used for % of Account mode
+  const TP_TRAIL_DEFAULT = { offsetValue: 0.01, offsetUnit: 'percent' }; // seed for a TP's trailing offset
 
   const chart = document.getElementById('chartPlaceholder');
   const layer = document.getElementById('orderLineLayer');
@@ -26,7 +27,6 @@
   let order = null;
   let tpCounter = 1;
   let pendingClickPrice = BASE_PRICE;
-  let activeGearTpId = null;          // which TP a gear-menu / modal call refers to
   let exitModal = null;                // {tpId, mode, pct}
 
   /* ---------- Chart Settings: Trade Management defaults ---------- */
@@ -437,7 +437,9 @@
         price: roundTick(entry + dir * t.r * baseR),
         pct: t.pct,
         trailing: false,
-        trailOverride: null
+        trailOffset: { ...TP_TRAIL_DEFAULT },
+        activated: false,
+        exitPrice: null
       }));
       if (chartSettings.defaultStopLoss) {
         sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), enabled: false, mode: 'trailing', autoTrailing: false, atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
@@ -841,19 +843,35 @@
   function checkTpFills(prevPrice, currentPrice) {
     if (!order || !order.filled || !order.tps.length) return;
     const dir = order.side === 'buy' ? 1 : -1;
-    const hitTps = order.tps.filter(tp => dir === 1
-      ? (prevPrice < tp.price && currentPrice >= tp.price)
-      : (prevPrice > tp.price && currentPrice <= tp.price));
+    const hitTps = order.tps.filter(tp => {
+      if (tp.trailing) {
+        // Trailing TP not yet activated: reaching tp.price just triggers the trail — don't close.
+        if (!tp.activated || tp.exitPrice == null) return false;
+        // Activated trailing TP: close when price retraces to the trailing exit line.
+        return dir === 1
+          ? (prevPrice > tp.exitPrice && currentPrice <= tp.exitPrice)
+          : (prevPrice < tp.exitPrice && currentPrice >= tp.exitPrice);
+      }
+      // Normal TP: close when price reaches tp.price.
+      return dir === 1
+        ? (prevPrice < tp.price && currentPrice >= tp.price)
+        : (prevPrice > tp.price && currentPrice <= tp.price);
+    });
     if (!hitTps.length) return;
     hitTps.forEach(tp => {
       const idx = order.tps.indexOf(tp);
       const closingSide = order.side === 'buy' ? 'sell' : 'buy';
       const tpQty = Math.max(1, Math.round(order.qty * tp.pct / 100));
-      const tpPnl = (tp.price - order.entry) * tpQty * dir * POINT_VALUE;
-      orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: tp.price, status: 'filled', type: 'Limit (TP)', time: nowTimeStr(), pnl: tpPnl });
-      tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: tp.price, pnl: tpPnl, role: 'close', type: 'Limit (TP)', time: nowTimeStr(), fee: tpQty * QT_FEE_PER_CONTRACT });
+      const exitPrice = (tp.trailing && tp.exitPrice != null) ? tp.exitPrice : tp.price;
+      const tpPnl = (exitPrice - order.entry) * tpQty * dir * POINT_VALUE;
+      const tradeType = tp.trailing ? 'Trail TP' : 'Limit (TP)';
+      const toastMsg = tp.trailing
+        ? 'TP' + (idx + 1) + ' trail exit at ' + fmt(exitPrice)
+        : 'TP' + (idx + 1) + ' hit at ' + fmt(tp.price);
+      orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: exitPrice, status: 'filled', type: tradeType, time: nowTimeStr(), pnl: tpPnl });
+      tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: exitPrice, pnl: tpPnl, role: 'close', type: tradeType, time: nowTimeStr(), fee: tpQty * QT_FEE_PER_CONTRACT });
       window.closePositionPct('ETHUSD', tp.pct);
-      showToast('TP' + (idx + 1) + ' hit at ' + fmt(tp.price), 'check_circle');
+      showToast(toastMsg, 'check_circle');
       if (order.sl && order.sl.beTpId === tp.id && !order.sl.beActive) {
         const beCfg = getEffectiveBeConfig();
         const offsetPrice = breakevenOffsetPrice(beCfg);
@@ -905,7 +923,45 @@
   }
   function getEffectiveTrailConfig() { return (order && order.sl && order.sl.trailOverride) || chartSettings.trailingStop; }
   function getEffectiveAtrConfig() { return chartSettings.atrStop; }
-  function getEffectiveTpTrailConfig(tp) { return (tp && tp.trailOverride) || chartSettings.trailingTp; }
+  /* ---- Trailing-TP model: each TP carries a simple { offsetValue, offsetUnit } config.
+     The offset is the distance between the TP level and its draggable Offset line. ---- */
+  function ensureTpTrailOffset(tp) {
+    if (!tp) return null;
+    if (!tp.trailOffset) tp.trailOffset = { ...TP_TRAIL_DEFAULT };
+    if (tp.activated === undefined) tp.activated = false;
+    if (tp.exitPrice === undefined) tp.exitPrice = null;
+    return tp.trailOffset;
+  }
+  function tpTrailActive(tp) { return !!(tp && tp.trailing); }
+  /* min/step/decimal-places for an offset value, by unit (percent default, ticks optional) */
+  function tpOffsetParams(unit) {
+    if (unit === 'ticks') return { min: 1, max: 2000, step: 1, dp: 0 };
+    return { min: 0.01, max: 50, step: 0.01, dp: 2 }; // percent — fine-grained so small offsets stay precise
+  }
+  /* offset distance in price units, measured from the TP price */
+  function tpOffsetDist(tp) {
+    const cfg = ensureTpTrailOffset(tp);
+    if (cfg.offsetUnit === 'ticks') return cfg.offsetValue * TICK;
+    return tp.price * cfg.offsetValue / 100; // percent of the TP level
+  }
+  /* express a raw price gap (points) in the given offset unit */
+  function tpGapToOffset(gapPts, refPrice, unit) {
+    if (unit === 'ticks') return gapPts / TICK;
+    return gapPts / refPrice * 100; // percent
+  }
+  /* short label for an offset, e.g. "0.25%" or "20t" */
+  function tpOffsetLabel(tp) {
+    const cfg = ensureTpTrailOffset(tp);
+    if (cfg.offsetUnit === 'ticks') return Math.round(cfg.offsetValue) + 't';
+    return (+cfg.offsetValue).toFixed(2) + '%';
+  }
+  function tpBadgeText(tp) { return 'Trail ' + tpOffsetLabel(tp); }
+  /* live-patch a trailing-TP badge label + its Offset line during a drag (no full re-render) */
+  function refreshTpBadgeOnChart(tpId) {
+    const labelEl = layer.querySelector('[data-tp-badge-edit="' + tpId + '"]');
+    const tp = order && order.tps.find(t => t.id === tpId);
+    if (labelEl && tp) labelEl.textContent = tpBadgeText(tp);
+  }
   /* ---- SL special-behavior model: one master toggle (enabled) + one selected mode ---- */
   function slTrailActive() { return !!(order && order.sl && order.sl.enabled && order.sl.mode === 'trailing'); }
   function slAtrActive() { return !!(order && order.sl && order.sl.enabled && order.sl.mode === 'atr'); }
@@ -1027,14 +1083,18 @@
     const dir = order.side === 'buy' ? 1 : -1;
     order.tps.forEach(tp => {
       if (!tp.trailing) return;
-      const cfg = getEffectiveTpTrailConfig(tp);
-      if (!meetsTriggerCondition(cfg.activation, cfg.activationCustomR, currentPrice)) return;
-      const distPrice = cfg.method === 'atr' ? atrStopDistance()
-        : cfg.distanceUnit === 'percent' ? currentPrice * cfg.distanceValue / 100
-          : cfg.distanceValue * (cfg.distanceUnit === 'points' ? 1 : TICK);
-      const candidate = roundTick(currentPrice + dir * distPrice);
-      const improvement = dir * (candidate - tp.price);
-      if (improvement > 0) { tp.price = candidate; }
+      const distPrice = tpOffsetDist(tp);
+      if (!tp.activated) {
+        // Phase 1 — wait for price to reach the activation trigger (tp.price).
+        if (dir * (currentPrice - tp.price) >= 0) {
+          tp.activated = true;
+          tp.exitPrice = roundTick(currentPrice - dir * distPrice);
+        }
+      } else {
+        // Phase 2 — trail the exit price behind market; ratchet in the favorable direction only.
+        const candidate = roundTick(currentPrice - dir * distPrice);
+        if (dir * (candidate - tp.exitPrice) > 0) tp.exitPrice = candidate;
+      }
     });
   }
   /* ---------- auto-balance TP allocations so they always sum to exactly 100% ---------- */
@@ -1500,7 +1560,7 @@
         const finalPrice = last.price;
         if (kind === 'tp') {
           const newId = 'tp' + (tpCounter++);
-          order.tps.push({ id: newId, price: finalPrice, pct: 100, trailing: false, trailOverride: null });
+          order.tps.push({ id: newId, price: finalPrice, pct: 100, trailing: false, trailOffset: { ...TP_TRAIL_DEFAULT }, activated: false, exitPrice: null });
           rebalanceTpAllocations(newId);
         } else {
           order.sl = { price: finalPrice, enabled: false, mode: 'trailing', autoTrailing: false, atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
@@ -2105,34 +2165,109 @@
         const rMultiple = riskPerContractTotal ? (pts * POINT_VALUE / riskPerContractTotal) : null;
         const tpInvalid = !tpSlSideOk('tp', tp.price);
 
+        // When trailing is active, the Trail button is replaced by a colored badge inside the
+        // chip (mirrors the SL mode flow); otherwise a neutral Trail button sits to the left.
+        const tpTrailing = tpTrailActive(tp);
+        const modeBtnHtml = tpTrailing ? '' :
+          '<button type="button" class="ol-tp-mode-btn" data-tp-trail="' + tp.id + '">Trail</button>';
+        const badgeHtml = !tpTrailing ? '' :
+          '<span class="ol-badge tp-badge trail" data-tp-badge="' + tp.id + '">' +
+          '<span class="ol-badge-label" data-tp-badge-edit="' + tp.id + '" title="Edit trailing TP">' + tpBadgeText(tp) + '</span>' +
+          '<button type="button" class="ol-badge-remove" data-tp-badge-remove="' + tp.id + '" title="Disable trailing" aria-label="Disable">' +
+          '<span class="material-symbols-outlined">close</span>' +
+          '</button>' +
+          '</span>';
+
         const row = document.createElement('div');
         row.className = 'ol-side-row';
         row.dataset.tpId = tp.id;
         row.style.top = y + 'px';
         const tpSign = tpNet >= 0 ? '+' : '';
         row.innerHTML =
-          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">warning</span>TP' + (idx + 1) + (tp.trailing ? '<span class="ol-badge trail">TRAIL</span>' : '') + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="ol-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span></span>' +
+          modeBtnHtml +
+          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">warning</span>TP' + (idx + 1) + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="ol-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span>' + badgeHtml + '</span>' +
           '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
           '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
-          '<span class="ol-gear" data-gear-tp="' + tp.id + '"><span class="material-symbols-outlined">settings</span></span>' +
           '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" title="Remove TP"><span class="material-symbols-outlined">delete</span></span>';
         layer.appendChild(row);
+
+        // Offset line: a second draggable line sitting at the trailing offset distance toward entry,
+        // tagged with a small "TPn Trail" label so multiple trailing TPs stay distinguishable.
+        let offsetLineEl = null, offsetLabelEl = null;
+        if (tpTrailing) {
+          const offsetPrice = (tp.activated && tp.exitPrice != null)
+            ? tp.exitPrice
+            : roundTick(tp.price - dir * tpOffsetDist(tp));
+          const oy = clamp(priceToY(offsetPrice, H), 10, H - 10);
+          offsetLineEl = document.createElement('div');
+          offsetLineEl.className = 'ol-line offset';
+          offsetLineEl.style.top = oy + 'px';
+          layer.appendChild(offsetLineEl);
+
+          offsetLabelEl = document.createElement('span');
+          offsetLabelEl.className = 'ol-offset-label';
+          offsetLabelEl.textContent = 'TP' + (idx + 1) + ' Trail';
+          offsetLabelEl.style.top = oy + 'px';
+          layer.appendChild(offsetLabelEl);
+        }
+        function repositionOffsetLine(h) {
+          if (!offsetLineEl) return;
+          const op = (tp.activated && tp.exitPrice != null)
+            ? tp.exitPrice
+            : roundTick(tp.price - dir * tpOffsetDist(tp));
+          const oy = clamp(priceToY(op, h), 10, h - 10) + 'px';
+          offsetLineEl.style.top = oy;
+          offsetLabelEl.style.top = oy;
+        }
 
         const tpChipEl = row.querySelector('.ol-chip');
         bindHandleHover(tpChipEl, 'tp:' + tp.id);
         function onDragTp(cy, h) {
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
           tp.price = roundTick(yToPrice(cy, h));
+          repositionOffsetLine(h); // the offset line follows the TP, preserving the offset
           updateAllTpSlValidityLive();
           updateAllTpSlReadoutsLive();
           drawPriceChart();
         }
         function onDropTp(cy, h) {
           tp.price = roundTick(yToPrice(cy, h));
+          // Moving the activation trigger resets trailing state so it re-evaluates from scratch.
+          if (tp.trailing) { tp.activated = false; tp.exitPrice = null; }
           render();
         }
-        makeDraggable(tpChipEl, onDragTp, onDropTp);
+        makeDraggable(tpChipEl, onDragTp, onDropTp, '.ol-badge');
         makeDraggable(line, onDragTp, onDropTp);
+
+        // Dragging the offset line redefines the offset value (distance from the TP).
+        if (offsetLineEl) {
+          function onDragOffset(cy, h) {
+            if (tp.activated) {
+              // Activated: the offset line IS the exit — drag repositions exitPrice directly.
+              tp.exitPrice = roundTick(yToPrice(cy, h));
+              repositionOffsetLine(h);
+              drawPriceChart();
+            } else {
+              // Not yet activated: drag redefines the offset value (distance from the trigger).
+              const p = roundTick(yToPrice(cy, h));
+              const gapPts = Math.abs(tp.price - p);
+              const cfg = ensureTpTrailOffset(tp);
+              const params = tpOffsetParams(cfg.offsetUnit);
+              let v = tpGapToOffset(gapPts, tp.price, cfg.offsetUnit);
+              v = Math.max(params.min, Math.min(params.max, +v.toFixed(params.dp)));
+              cfg.offsetValue = v;
+              repositionOffsetLine(h);
+              refreshTpBadgeOnChart(tp.id);
+              syncTpTrailMenuValue(tp.id);
+              drawPriceChart();
+            }
+          }
+          function onDropOffset(cy, h) {
+            onDragOffset(cy, h);
+            render();
+          }
+          makeDraggable(offsetLineEl, onDragOffset, onDropOffset);
+        }
 
         row.querySelector('[data-edit-tp]').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -2142,10 +2277,20 @@
           e.stopPropagation();
           openEditExitModal(tp.id, e.currentTarget.getBoundingClientRect(), e.currentTarget);
         });
-        row.querySelector('[data-gear-tp]').addEventListener('click', (e) => {
+        const tpTrailBtn = row.querySelector('[data-tp-trail]');
+        if (tpTrailBtn) tpTrailBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          activeGearTpId = tp.id;
-          openTpGearMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+          selectTpTrail(tp.id);
+        });
+        const tpBadgeEdit = row.querySelector('[data-tp-badge-edit]');
+        if (tpBadgeEdit) tpBadgeEdit.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openTpTrailMenu(tp.id, e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+        const tpBadgeRemove = row.querySelector('[data-tp-badge-remove]');
+        if (tpBadgeRemove) tpBadgeRemove.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectTpTrail(tp.id); // re-toggle off → disables trailing, back to a plain TP
         });
         row.querySelector('[data-remove-tp]').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -2184,8 +2329,8 @@
           const badge = slBadgeInfo();
           badgeHtml =
             '<span class="ol-badge sl-badge ' + badge.cls + '" id="slBadgeShell">' +
-            '<span class="sl-badge-label" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
-            '<button type="button" class="sl-badge-remove" id="slBadgeRemove" title="Disable — back to Fixed SL" aria-label="Disable">' +
+            '<span class="ol-badge-label" id="slBadgeTrigger" title="Edit stop loss">' + badge.text + '</span>' +
+            '<button type="button" class="ol-badge-remove" id="slBadgeRemove" title="Disable — back to Fixed SL" aria-label="Disable">' +
             '<span class="material-symbols-outlined">close</span>' +
             '</button>' +
             '</span>';
@@ -3502,121 +3647,85 @@
     });
   });
 
-  /* ---------- TP gear menu ---------- */
-  const tpGearMenu = document.getElementById('tpGearMenu');
-  function activeGearTp() { return order && order.tps.find(t => t.id === activeGearTpId); }
-  function renderTpGearMenu() {
-    const tp = activeGearTp();
+  /* ---------- Trailing-TP settings popover (offset only) ---------- */
+  const tpTrailMenu = document.getElementById('tpTrailMenu');
+  const tpTrailRow = document.getElementById('tpTrailRow');
+  const tpOffsetUnitSel = document.getElementById('tpOffsetUnit');
+  const tpOffsetInput = document.getElementById('tpOffsetValue');
+  let activeTrailTpId = null;
+  function activeTrailTp() { return order && order.tps.find(t => t.id === activeTrailTpId); }
+  /* toggle trailing on/off for a specific TP (mirrors the SL re-select-to-disable flow) */
+  function selectTpTrail(id) {
+    const tp = order && order.tps.find(t => t.id === id);
     if (!tp) return;
-    document.getElementById('tpTrail').classList.toggle('selected', !!tp.trailing);
-    document.getElementById('tpTrailOverrideTune').classList.toggle('active', !!tp.trailOverride);
+    tp.trailing = !tp.trailing;
+    tp.activated = false;
+    tp.exitPrice = null;
+    if (tp.trailing) ensureTpTrailOffset(tp);
+    else if (activeTrailTpId === id) closeAllPopovers();
+    render();
   }
-  function openTpGearMenu(anchorRect, trigger) {
-    if (trigger && tpGearMenu.classList.contains('show') && tpGearMenu._openTrigger === trigger) {
+  /* reflect the active TP's offset in the popover fields */
+  function populateTpTrailMenu() {
+    const tp = activeTrailTp();
+    if (!tp) return;
+    const cfg = ensureTpTrailOffset(tp);
+    tpOffsetInput.value = (+cfg.offsetValue).toFixed(tpOffsetParams(cfg.offsetUnit).dp);
+    tpOffsetUnitSel.value = cfg.offsetUnit;
+    // The popover only opens while trailing is active, so the mode row always reads as selected
+    // (mirrors the SL gear menu's checkmark pattern); clicking it again disables trailing.
+    tpTrailRow.classList.toggle('selected', !!tp.trailing);
+    refreshAllCsDropdownLabels(tpTrailMenu);
+  }
+  tpTrailRow.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (activeTrailTpId) selectTpTrail(activeTrailTpId);
+  });
+  /* keep the popover's Offset input in lock-step with the Offset line while it's dragged */
+  function syncTpTrailMenuValue(id) {
+    if (activeTrailTpId !== id || !tpTrailMenu.classList.contains('show')) return;
+    const tp = activeTrailTp();
+    if (tp) tpOffsetInput.value = (+tp.trailOffset.offsetValue).toFixed(tpOffsetParams(tp.trailOffset.offsetUnit).dp);
+  }
+  function openTpTrailMenu(id, anchorRect, trigger) {
+    if (trigger && tpTrailMenu.classList.contains('show') && tpTrailMenu._openTrigger === trigger) {
       closeAllPopovers();
       return;
     }
-    renderTpGearMenu();
-    openNear(tpGearMenu, anchorRect, 'right', trigger);
+    activeTrailTpId = id;
+    populateTpTrailMenu();
+    openNear(tpTrailMenu, anchorRect, 'right', trigger);
   }
-  document.getElementById('tpAdd').addEventListener('click', () => {
-    if (!order) return;
-    const dir = order.side === 'buy' ? 1 : -1;
-    const farthest = order.tps.reduce((m, t) => Math.max(m, dir * (t.price - order.entry)), 0);
-    const newPrice = roundTick(order.entry + dir * (farthest + 50 / PX_PER_POINT));
-    const newId = 'tp' + (tpCounter++);
-    order.tps.push({ id: newId, price: newPrice, pct: 25, trailing: false, trailOverride: null });
-    rebalanceTpAllocations(newId);
-    closeAllPopovers(); render();
-    showToast('Take profit added', 'add_circle');
-  });
-  document.getElementById('tpTrail').addEventListener('click', (e) => {
+  /* switching unit re-expresses the current offset so the line doesn't jump */
+  tpOffsetUnitSel.addEventListener('change', (e) => {
     e.stopPropagation();
-    const tp = activeGearTp();
-    if (tp) { tp.trailing = !tp.trailing; }
-    renderTpGearMenu(); render();
-  });
-  document.getElementById('tpRemove').addEventListener('click', () => {
-    order.tps = order.tps.filter(t => t.id !== activeGearTpId);
-    closeAllPopovers(); render();
-    showToast('Take profit removed', 'delete');
-  });
-
-  /* -- Trailing Take Profit override -- */
-  const tpTrailOvActivation = document.getElementById('tpTrailOvActivation');
-  const tpTrailOvMethod = document.getElementById('tpTrailOvMethod');
-  const tpTrailOvDistanceUnit = document.getElementById('tpTrailOvDistanceUnit');
-  function updateTpTrailOvConditional() {
-    document.getElementById('tpTrailOvActivationCustomRWrap').style.display = tpTrailOvActivation.value === 'customR' ? '' : 'none';
-    document.getElementById('tpTrailOvDistanceWrap').style.display = tpTrailOvMethod.value === 'atr' ? 'none' : '';
-  }
-  function ensureTpTrailOverride(tp) {
-    if (!tp) return null;
-    if (!tp.trailOverride) {
-      const base = chartSettings.trailingTp;
-      tp.trailOverride = {
-        activation: base.activation, activationCustomR: base.activationCustomR,
-        method: base.method, distanceValue: base.distanceValue, distanceUnit: base.distanceUnit
-      };
-    }
-    return tp.trailOverride;
-  }
-  function populateTpTrailOverrideForm() {
-    const tp = activeGearTp();
+    const tp = activeTrailTp();
     if (!tp) return;
-    const cfg = ensureTpTrailOverride(tp);
-    tpTrailOvActivation.value = cfg.activation;
-    document.getElementById('tpTrailOvActivationCustomRValue').value = cfg.activationCustomR;
-    tpTrailOvMethod.value = cfg.method;
-    document.getElementById('tpTrailOvDistanceValue').value = cfg.distanceValue;
-    tpTrailOvDistanceUnit.value = cfg.distanceUnit;
-    updateTpTrailOvConditional();
-    refreshAllCsDropdownLabels(document.getElementById('tpTrailOverridePanel'));
-  }
-  document.getElementById('tpTrailOverrideTune').addEventListener('click', (e) => {
-    e.stopPropagation();
-    const tp = activeGearTp();
-    if (!tp) return;
-    const panel = document.getElementById('tpTrailOverridePanel');
-    const willOpen = !panel.classList.contains('open');
-    document.querySelectorAll('.gear-override-panel').forEach(p => p.classList.remove('open'));
-    if (willOpen) populateTpTrailOverrideForm();
-    panel.classList.toggle('open', willOpen);
+    const cfg = ensureTpTrailOffset(tp);
+    const distPts = tpOffsetDist(tp); // current offset in price points, before the unit change
+    cfg.offsetUnit = tpOffsetUnitSel.value;
+    const params = tpOffsetParams(cfg.offsetUnit);
+    const v = tpGapToOffset(distPts, tp.price, cfg.offsetUnit);
+    cfg.offsetValue = Math.max(params.min, Math.min(params.max, +v.toFixed(params.dp)));
+    populateTpTrailMenu();
+    refreshTpBadgeOnChart(tp.id);
+    render();
   });
-  [tpTrailOvActivation, tpTrailOvMethod, tpTrailOvDistanceUnit].forEach(el => el.addEventListener('change', (e) => {
-    e.stopPropagation();
-    if (el === tpTrailOvActivation || el === tpTrailOvMethod) updateTpTrailOvConditional();
-    const ov = ensureTpTrailOverride(activeGearTp());
-    if (ov) {
-      ov.activation = tpTrailOvActivation.value;
-      ov.method = tpTrailOvMethod.value;
-      ov.distanceUnit = tpTrailOvDistanceUnit.value;
-    }
-    renderTpGearMenu();
-  }));
-  function bindTpTrailOverrideStepper(prefix, min, max, step, field, percentOverride) {
-    const input = document.getElementById(prefix + 'Value');
-    const dec = document.getElementById(prefix + 'Dec');
-    const inc = document.getElementById(prefix + 'Inc');
-    const unitSelect = document.getElementById(prefix + 'Unit');
-    function activeParams() {
-      if (percentOverride && unitSelect && unitSelect.value === 'percent') return percentOverride;
-      return { min, max, step };
-    }
-    function clampVal(v) {
-      const p = activeParams();
-      v = Math.round(v / p.step) * p.step;
-      v = Number.isInteger(p.step) ? Math.round(v) : +v.toFixed(2);
-      return Math.min(p.max, Math.max(p.min, v));
-    }
-    function commit() { const ov = ensureTpTrailOverride(activeGearTp()); if (ov) ov[field] = parseFloat(input.value) || 0; renderTpGearMenu(); }
-    input.removeAttribute('readonly');
-    input.addEventListener('change', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value) || 0); commit(); });
-    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') - activeParams().step); commit(); });
-    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal(parseFloat(input.value || '0') + activeParams().step); commit(); });
+  /* Offset value stepper — writes to the active TP's trailOffset, keeping line + badge synced */
+  {
+    const inc = document.getElementById('tpOffsetInc');
+    const dec = document.getElementById('tpOffsetDec');
+    function params() { const tp = activeTrailTp(); return tpOffsetParams(tp ? tp.trailOffset.offsetUnit : 'percent'); }
+    /* Arrow clicks snap to the step grid; manual typing only clamps to min/max */
+    function clampStep(v) { const p = params(); v = Math.round(v / p.step) * p.step; v = p.dp ? +v.toFixed(p.dp) : Math.round(v); return Math.min(p.max, Math.max(p.min, v)); }
+    function clampManual(v) { const p = params(); v = Math.min(p.max, Math.max(p.min, v)); return +v.toFixed(p.dp); }
+    function commit() { const tp = activeTrailTp(); if (!tp) return; tp.trailOffset.offsetValue = parseFloat(tpOffsetInput.value) || params().min; refreshTpBadgeOnChart(tp.id); render(); }
+    tpOffsetInput.removeAttribute('readonly');
+    tpOffsetInput.addEventListener('click', (e) => e.stopPropagation());
+    tpOffsetInput.addEventListener('change', (e) => { e.stopPropagation(); tpOffsetInput.value = clampManual(parseFloat(tpOffsetInput.value) || 0); commit(); });
+    dec.addEventListener('click', (e) => { e.stopPropagation(); tpOffsetInput.value = clampStep((parseFloat(tpOffsetInput.value) || 0) - params().step); commit(); });
+    inc.addEventListener('click', (e) => { e.stopPropagation(); tpOffsetInput.value = clampStep((parseFloat(tpOffsetInput.value) || 0) + params().step); commit(); });
   }
-  bindTpTrailOverrideStepper('tpTrailOvActivationCustomR', 0.1, 50, 0.1, 'activationCustomR');
-  bindTpTrailOverrideStepper('tpTrailOvDistance', 1, 2000, 5, 'distanceValue', PERCENT_DISTANCE_STEP);
 
   /* ---------- SL gear menu (special-behavior settings) ---------- */
   const slGearMenu = document.getElementById('slGearMenu');

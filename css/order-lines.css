@@ -41,6 +41,7 @@
    the visible 1px line, so they can be dragged from anywhere along their length. */
 .ol-line.tp,
 .ol-line.sl,
+.ol-line.offset,
 .ol-line.entry.draggable {
   pointer-events: auto;
   cursor: ns-resize;
@@ -48,6 +49,7 @@
 
 .ol-line.tp::before,
 .ol-line.sl::before,
+.ol-line.offset::before,
 .ol-line.entry.draggable::before {
   content: '';
   position: absolute;
@@ -75,6 +77,34 @@
 
 .ol-line.sl {
   border-color: var(--short-border);
+}
+
+/* Trailing-TP offset line — sits between a trailing TP and entry, in the trail/intel color */
+.ol-line.offset {
+  border-color: var(--intel-border);
+}
+
+/* Tag on the left edge of an offset line, naming which TP it belongs to (e.g. "TP1 Trail") —
+   lets several trailing TPs stay distinguishable when their offset lines sit close together. */
+.ol-offset-label {
+  position: absolute;
+  left: 6px;
+  transform: translateY(-50%);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--intel-dim);
+  color: var(--intel);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* The trailing-TP popover holds a single Offset field; trim the shared settings padding so it
+   reads as one compact field inside the menu's own 8px padding. */
+.tp-trail-menu .ol-mode-settings {
+  padding: 4px 4px 2px;
 }
 
 .ol-line.ghost {
@@ -614,7 +644,7 @@
   border-radius: 9px;
   background: var(--bg-input);
   color: var(--text-secondary);
-  font-weight: 700;
+  font-weight: 600;
   font-family: var(--sans);
   cursor: pointer;
   text-decoration: underline dotted transparent;
@@ -679,35 +709,37 @@
   color: var(--long);
 }
 
-/* The SL chip badge is clickable (opens settings) and sits at the far right of the chip */
-.ol-chip.sl .sl-badge {
+/* The SL/TP chip badge is clickable (opens settings) and sits at the far right of the chip */
+.ol-chip.sl .sl-badge,
+.ol-chip.tp .tp-badge {
   cursor: pointer;
   margin-left: auto;
   margin-right: -6px;
 }
 
-/* SL badge shell (shown only when a special mode is active): a clickable label that opens
-   SL settings, plus a small × button that disables the mode and reverts to Fixed. The two
-   share the badge's background/color so they read as one pill. */
-.ol-badge.sl-badge {
+/* Interactive badge shell (shown when a special mode / trailing is active): a clickable label
+   that opens settings, plus a small × button that disables the mode. The two share the badge's
+   background/color so they read as one pill. Shared by the SL chip and the trailing-TP chip. */
+.ol-badge.sl-badge,
+.ol-badge.tp-badge {
   display: flex;
   align-items: stretch;
   padding: 0;
   overflow: hidden;
 }
 
-.sl-badge-label {
+.ol-badge-label {
   display: flex;
   align-items: center;
   padding: 3px 4px 3px 6px;
   cursor: pointer;
 }
 
-.sl-badge-label:hover {
+.ol-badge-label:hover {
   filter: brightness(1.2);
 }
 
-.sl-badge-remove {
+.ol-badge-remove {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -719,17 +751,18 @@
   opacity: .6;
 }
 
-.sl-badge-remove:hover {
+.ol-badge-remove:hover {
   opacity: 1;
 }
 
-.sl-badge-remove .material-symbols-outlined {
+.ol-badge-remove .material-symbols-outlined {
   font-size: 11px;
 }
 
-/* Neutral SL-mode buttons that sit to the left of the SL chip; clicking one activates
-   that mode (it then moves into the chip as a colored badge). */
-.ol-sl-mode-btn {
+/* Neutral mode buttons that sit to the left of the SL/TP chip; clicking one activates that
+   mode (it then moves into the chip as a colored badge). */
+.ol-sl-mode-btn,
+.ol-tp-mode-btn {
   font-size: 9px;
   font-weight: 600;
   letter-spacing: .03em;
@@ -742,21 +775,24 @@
   font-family: var(--sans);
 }
 
-.ol-sl-mode-btn:hover {
+.ol-sl-mode-btn:hover,
+.ol-tp-mode-btn:hover {
   color: var(--text-primary);
 }
 
-.ol-sl-mode-btn.disabled {
-  opacity: .4;
+.ol-sl-mode-btn.disabled,
+.ol-tp-mode-btn.disabled {
+  display: none;
   cursor: default;
 }
 
-/* SL gear-menu: selectable behavior rows + their settings sections */
-.sl-mode-row {
+/* Gear-menu: selectable behavior rows + their settings sections — shared by the SL and
+   trailing-TP popovers. */
+.ol-mode-row {
   position: relative;
 }
 
-.sl-mode-check {
+.ol-mode-check {
   margin-left: auto;
   font-size: 18px;
   color: var(--accent);
@@ -764,11 +800,11 @@
   flex-shrink: 0;
 }
 
-.sl-mode-row.selected .sl-mode-check {
+.ol-mode-row.selected .ol-mode-check {
   opacity: 1;
 }
 
-.sl-mode-settings {
+.ol-mode-settings {
   display: flex;
   flex-direction: column;
   gap: 10px;
