@@ -96,9 +96,10 @@
   font-size: 9px;
   font-weight: 600;
   letter-spacing: .03em;
-  padding: 1px 5px;
+  padding: 4px 5px;
   border-radius: 4px;
-  background: var(--intel-dim);
+  background: var(--bg-sunken);
+  border: 1px solid var(--intel-border);
   color: var(--intel);
   white-space: nowrap;
   pointer-events: none;

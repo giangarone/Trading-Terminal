@@ -1886,7 +1886,17 @@
       ctx.fillText(fmt(price), plotW + 8, y + 0.5);
     }
     if (isPrimary && order) {
-      order.tps.forEach(tp => drawOrderAxisTagOutline(tp.price, upColor, hoveredHandle === 'tp:' + tp.id));
+      const orderDir = order.side === 'buy' ? 1 : -1;
+      const offsetColor = themeColor('--intel');
+      order.tps.forEach(tp => {
+        drawOrderAxisTagOutline(tp.price, upColor, hoveredHandle === 'tp:' + tp.id);
+        if (tp.trailing) {
+          const offsetPrice = (tp.activated && tp.exitPrice != null)
+            ? tp.exitPrice
+            : roundTick(tp.price - orderDir * tpOffsetDist(tp));
+          drawOrderAxisTagOutline(offsetPrice, offsetColor, false);
+        }
+      });
       if (order.sl) drawOrderAxisTagOutline(order.sl.price, downColor, hoveredHandle === 'sl');
       drawOrderAxisTagOutline(order.entry, order.side === 'buy' ? upColor : downColor, hoveredHandle === 'entry');
     }
@@ -2210,7 +2220,7 @@
           offsetLabelEl = document.createElement('span');
           offsetLabelEl.className = 'ol-offset-label';
           offsetLabelEl.innerHTML =
-            '<span class="ol-offset-label-text">TP' + (idx + 1) + ' Trail</span>' +
+            '<span class="ol-offset-label-text">TP' + (idx + 1) + ' Trail · ' + tpOffsetLabel(tp) + '</span>' +
             '<button type="button" class="ol-offset-remove" data-tp-offset-remove="' + tp.id + '" title="Disable trailing" aria-label="Disable">' +
             '<span class="material-symbols-outlined">close</span></button>';
           offsetLabelEl.style.top = oy + 'px';
@@ -2224,6 +2234,8 @@
           const oy = clamp(priceToY(op, h), 10, h - 10) + 'px';
           offsetLineEl.style.top = oy;
           offsetLabelEl.style.top = oy;
+          const txtEl = offsetLabelEl.querySelector('.ol-offset-label-text');
+          if (txtEl) txtEl.textContent = 'TP' + (idx + 1) + ' Trail · ' + tpOffsetLabel(tp);
         }
 
         const tpChipEl = row.querySelector('.ol-chip');
@@ -2259,8 +2271,11 @@
               const gapPts = Math.abs(tp.price - p);
               const cfg = ensureTpTrailOffset(tp);
               const params = tpOffsetParams(cfg.offsetUnit);
+              // Clamp only — don't round to the unit's display precision, or the line would
+              // snap to a coarse grid (in percent, 0.01% can span ~2 ticks). The dragged price
+              // is already tick-snapped, so the line tracks the tick grid smoothly.
               let v = tpGapToOffset(gapPts, tp.price, cfg.offsetUnit);
-              v = Math.max(params.min, Math.min(params.max, +v.toFixed(params.dp)));
+              v = Math.max(params.min, Math.min(params.max, v));
               cfg.offsetValue = v;
               repositionOffsetLine(h);
               refreshTpBadgeOnChart(tp.id);
@@ -2309,8 +2324,10 @@
             const gapPts = Math.abs(tp.price - roundTick(yToPrice(cy, h)));
             const cfg = ensureTpTrailOffset(tp);
             const params = tpOffsetParams(cfg.offsetUnit);
+            // Clamp only (no display-precision rounding) so the offset line lands exactly on the
+            // tick where it was dropped, matching the smooth offset-line drag.
             let v = tpGapToOffset(gapPts, tp.price, cfg.offsetUnit);
-            v = Math.max(params.min, Math.min(params.max, +v.toFixed(params.dp)));
+            v = Math.max(params.min, Math.min(params.max, v));
             cfg.offsetValue = v;
             tp.trailing = true;
             tp.activated = false;
