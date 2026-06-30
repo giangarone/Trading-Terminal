@@ -1398,7 +1398,7 @@
         '<td>' + symCell(t.symbol, sideCls, sideLabel, subText) + '</td>' +
         '<td><span class="ord-val-primary">' + t.qty + '</span></td>' +
         '<td>' + fmt(t.price) + '</td>' +
-        '<td>' + pnlCellHtml(t.pnl) + '</td>' +
+        '<td>' + pnlCellHtml(t.pnl !== null ? t.pnl - t.fee : null) + '</td>' +
         '<td><span class="ord-val-sub" style="display:inline">' + fmtMoney(t.fee) + '</span></td>' +
         '<td><span class="ord-val-sub" style="display:inline">' + t.time + '</span></td>' +
         '</tr>'
