@@ -14,7 +14,7 @@
     rel="stylesheet">
 
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
-  <link rel="stylesheet" href="css/tokens.css?v=8">
+  <link rel="stylesheet" href="css/tokens.css?v=9">
   <link rel="stylesheet" href="css/topbar.css?v=5">
   <link rel="stylesheet" href="css/left-panel.css?v=3">
   <link rel="stylesheet" href="css/center-panel.css?v=4">
@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="css/order-lines.css?v=16">
   <link rel="stylesheet" href="css/market-scanner.css?v=14">
   <link rel="stylesheet" href="css/indicators.css?v=8">
-  <link rel="stylesheet" href="css/chart-settings.css?v=10">
+  <link rel="stylesheet" href="css/chart-settings.css?v=17">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
 </head>
 
@@ -302,13 +302,17 @@
             <div class="cs-nav-group">
               <div class="cs-nav-label">Advanced</div>
               <button class="cs-nav-item" data-cs-tab="remotesync"><span
-                  class="material-symbols-outlined">cloud_sync</span>Remote Sync</button>
+                  class="material-symbols-outlined">cloud_sync</span>Cloud &amp; Sync</button>
               <button class="cs-nav-item" data-cs-tab="developer"><span
                   class="material-symbols-outlined">code</span>Developer</button>
             </div>
 
             <div class="cs-nav-group">
               <div class="cs-nav-label">Account</div>
+              <button class="cs-nav-item" data-cs-tab="myaccount"><span
+                  class="material-symbols-outlined">person</span>My Account</button>
+              <button class="cs-nav-item" data-cs-tab="security"><span
+                  class="material-symbols-outlined">security</span>Security</button>
               <button class="cs-nav-item" data-cs-tab="plans"><span
                   class="material-symbols-outlined">workspace_premium</span>Plans &amp; Pricing</button>
             </div>
@@ -1667,14 +1671,125 @@
                 <h2>Webhooks</h2>
                 <p>Outbound webhook integrations.</p>
               </div>
-              <div class="cs-empty">No settings here yet</div>
+              <div class="cs-coming-soon-state">
+                <span class="cs-coming-soon-icon"><span class="material-symbols-outlined">webhook</span></span>
+                <h3 class="cs-coming-soon-title">Webhooks</h3>
+                <p class="cs-coming-soon-desc">Send real-time trade and alert events to your own endpoints.
+                  We're still building this out.</p>
+                <span class="badge badge--purple badge--uppercase">Coming Soon</span>
+              </div>
             </div>
             <div class="cs-pane" data-cs-pane="remotesync">
               <div class="cs-pane-head">
-                <h2>Remote Sync</h2>
-                <p>Sync settings across devices.</p>
+                <h2>Cloud &amp; Sync</h2>
+                <p>Keep your settings, workspaces, and data in sync across devices.</p>
               </div>
-              <div class="cs-empty">No settings here yet</div>
+
+              <div class="cs-card sync-status-card">
+                <div class="sync-status-item">
+                  <span class="acct-info-label">Cloud Status</span>
+                  <div class="sync-status-value sync-status-value--good">
+                    <span class="material-symbols-outlined">cloud_done</span>Connected
+                  </div>
+                  <span class="cs-helper">All systems operational.</span>
+                </div>
+                <div class="sync-status-item">
+                  <span class="acct-info-label">Last Sync</span>
+                  <div class="sync-status-value" id="syncLastSyncRelative">
+                    <span class="material-symbols-outlined">sync</span>3 minutes ago
+                  </div>
+                  <span class="cs-helper" id="syncLastSyncTime">Today, 10:24 AM</span>
+                </div>
+                <div class="sync-status-item">
+                  <span class="acct-info-label">Current Device</span>
+                  <div class="sync-status-value">
+                    <span class="material-symbols-outlined">laptop_mac</span>MacBook Pro
+                  </div>
+                  <span class="cs-helper">macOS 14.5</span>
+                </div>
+                <button type="button" class="sync-now-btn" id="syncNowBtn">
+                  <span class="material-symbols-outlined">sync</span>Sync Now
+                </button>
+              </div>
+
+              <div class="cs-card" style="margin-top:16px;">
+                <div class="cs-card-head">
+                  <span class="cs-card-title">What to Sync</span>
+                </div>
+                <p class="cs-helper" style="margin:0 0 14px;">Choose which data you want to sync across your
+                  devices.</p>
+
+                <div class="sync-items-grid">
+                  <label class="cs-checkbox-row sync-item-row">
+                    <span class="chk-box checked" id="syncItemSettings"><span
+                        class="material-symbols-outlined">check</span></span>
+                    <span class="sync-item-text">
+                      <span class="sync-item-title">Settings</span>
+                      <span class="sync-item-desc">Platform settings and preferences</span>
+                    </span>
+                  </label>
+
+                  <label class="cs-checkbox-row sync-item-row">
+                    <span class="chk-box checked" id="syncItemRisk"><span
+                        class="material-symbols-outlined">check</span></span>
+                    <span class="sync-item-text">
+                      <span class="sync-item-title">Risk Presets</span>
+                      <span class="sync-item-desc">Order defaults, SL/TP presets, position sizing</span>
+                    </span>
+                  </label>
+
+                  <label class="cs-checkbox-row sync-item-row">
+                    <span class="chk-box checked" id="syncItemWorkspaces"><span
+                        class="material-symbols-outlined">check</span></span>
+                    <span class="sync-item-text">
+                      <span class="sync-item-title">Workspaces &amp; Layouts</span>
+                      <span class="sync-item-desc">Charts, panels and workspace layouts</span>
+                    </span>
+                  </label>
+
+                  <label class="cs-checkbox-row sync-item-row">
+                    <span class="chk-box checked" id="syncItemAI"><span
+                        class="material-symbols-outlined">check</span></span>
+                    <span class="sync-item-text">
+                      <span class="sync-item-title">AI Preferences</span>
+                      <span class="sync-item-desc">AI settings and analysis preferences</span>
+                    </span>
+                  </label>
+
+                  <label class="cs-checkbox-row sync-item-row">
+                    <span class="chk-box checked" id="syncItemWatchlists"><span
+                        class="material-symbols-outlined">check</span></span>
+                    <span class="sync-item-text">
+                      <span class="sync-item-title">Watchlists</span>
+                      <span class="sync-item-desc">All your watchlists and symbols</span>
+                    </span>
+                  </label>
+
+                  <label class="cs-checkbox-row sync-item-row sync-item-row--disabled">
+                    <span class="chk-box" id="syncItemNotes"><span
+                        class="material-symbols-outlined">check</span></span>
+                    <span class="sync-item-text">
+                      <span class="sync-item-title">Notes &amp; Drawings</span>
+                      <span class="sync-item-desc">Chart drawings and notes</span>
+                    </span>
+                    <span class="badge badge--purple badge--uppercase">Coming Soon</span>
+                  </label>
+
+                  <label class="cs-checkbox-row sync-item-row">
+                    <span class="chk-box checked" id="syncItemAlerts"><span
+                        class="material-symbols-outlined">check</span></span>
+                    <span class="sync-item-text">
+                      <span class="sync-item-title">Alerts</span>
+                      <span class="sync-item-desc">Price alerts and custom notifications</span>
+                    </span>
+                  </label>
+                </div>
+
+                <p class="cs-helper sync-encrypted-note">
+                  <span class="material-symbols-outlined">lock</span>All data is encrypted and securely stored in
+                  the cloud.
+                </p>
+              </div>
             </div>
             <div class="cs-pane" data-cs-pane="developer">
               <div class="cs-pane-head">
@@ -1683,6 +1798,447 @@
               </div>
               <div class="cs-empty">No settings here yet</div>
             </div>
+            <div class="cs-pane" data-cs-pane="myaccount">
+              <div class="cs-pane-head">
+                <h2>My Account</h2>
+                <p>Manage your profile, account details, and account-level actions.</p>
+              </div>
+
+              <div class="cs-grid">
+
+                <div class="cs-col">
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Profile Information</span>
+                    </div>
+
+                    <div class="acct-avatar-row">
+                      <div class="acct-avatar-wrap">
+                        <div class="acct-avatar" id="acctAvatarInitials">AC</div>
+                        <button type="button" class="acct-avatar-edit" id="acctAvatarEdit"
+                          aria-label="Change profile photo">
+                          <span class="material-symbols-outlined">photo_camera</span>
+                        </button>
+                      </div>
+                      <div class="acct-avatar-hint">
+                        <span class="cs-field-val">Alex Carter</span>
+                        <span class="cs-helper" style="margin-top:2px;">JPG or PNG, up to 5MB.</span>
+                      </div>
+                    </div>
+
+                    <div class="cs-field" style="margin-top:14px;">
+                      <label>Full Name</label>
+                      <input type="text" class="cs-text-input" id="acctFullName" value="Alex Carter">
+                    </div>
+
+                    <div class="cs-field" style="margin-top:12px;">
+                      <label>Email</label>
+                      <div class="cs-email-input-row">
+                        <input type="email" class="cs-text-input cs-email-inactive" id="acctEmailDisplay"
+                          value="alex@chartprime.com">
+                        <button type="button" class="cs-email-save-btn" id="acctEmailSave">Change</button>
+                      </div>
+                    </div>
+
+                    <div class="cs-field" style="margin-top:12px;">
+                      <label>Username</label>
+                      <div class="cs-email-input-row">
+                        <input type="text" class="cs-text-input cs-email-inactive" id="acctUsernameDisplay"
+                          value="alex.carter">
+                        <button type="button" class="cs-email-save-btn" id="acctUsernameSave">Change</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="cs-col">
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Account Overview</span>
+                    </div>
+
+                    <div class="acct-info-row">
+                      <span class="acct-info-label">Plan</span>
+                      <div class="acct-info-value-row">
+                        <span class="plan-tier-badge">PRO</span>
+                      </div>
+                    </div>
+
+                    <div class="acct-info-row">
+                      <span class="acct-info-label">Renews On</span>
+                      <div class="acct-info-value-row">
+                        <span class="cs-field-val">Aug 15, 2026</span>
+                        <button type="button" class="acct-link-btn" id="acctManagePlanBtn">Manage Plan</button>
+                      </div>
+                    </div>
+
+                    <div class="acct-info-row">
+                      <span class="acct-info-label">Member Since</span>
+                      <div class="acct-info-value-row">
+                        <span class="cs-field-val">Feb 12, 2025</span>
+                      </div>
+                    </div>
+
+                    <div class="acct-info-row acct-info-row--last">
+                      <span class="acct-info-label">Account ID</span>
+                      <div class="acct-info-value-row">
+                        <span class="cs-field-val cs-field-val--muted" id="acctIdValue">CP-4F7B-9C2D</span>
+                        <button type="button" class="acct-copy-btn" id="acctCopyIdBtn" aria-label="Copy account ID">
+                          <span class="material-symbols-outlined">content_copy</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="cs-card" style="margin-top:16px;">
+                <div class="cs-card-head">
+                  <span class="cs-card-title">Account Actions</span>
+                </div>
+
+                <div class="cs-grid">
+                  <button type="button" class="acct-action-row" id="acctManageBtn">
+                    <span class="acct-action-icon">
+                      <span class="material-symbols-outlined">manage_accounts</span>
+                    </span>
+                    <span class="acct-action-text">
+                      <span class="acct-action-title">Manage Account</span>
+                      <span class="acct-action-desc">Update your email, username, and other account details.</span>
+                    </span>
+                    <span class="material-symbols-outlined acct-action-chevron">chevron_right</span>
+                  </button>
+
+                  <button type="button" class="acct-action-row acct-action-row--danger" id="acctDeleteBtn">
+                    <span class="acct-action-icon">
+                      <span class="material-symbols-outlined">delete</span>
+                    </span>
+                    <span class="acct-action-text">
+                      <span class="acct-action-title">Delete Account</span>
+                      <span class="acct-action-desc">Permanently delete your account and all data.</span>
+                    </span>
+                    <span class="material-symbols-outlined acct-action-chevron">chevron_right</span>
+                  </button>
+                </div>
+
+                <p class="cs-helper acct-security-note">
+                  Sensitive actions like changing your password are located in Security Settings.
+                  <button type="button" class="acct-link-btn" id="acctGoToSecurityBtn">Go to Security</button>
+                </p>
+              </div>
+            </div>
+
+            <div class="cs-pane" data-cs-pane="security">
+              <div class="cs-pane-head">
+                <h2>Security</h2>
+                <p>Manage your account security, sessions, and login activity.</p>
+              </div>
+
+              <div class="cs-grid">
+                <div class="cs-card">
+                  <div class="cs-card-head">
+                    <span class="cs-card-title">Authentication</span>
+                  </div>
+                  <p class="cs-helper" style="margin:-6px 0 14px;">Keep your account secure with strong
+                    authentication.</p>
+
+                  <button type="button" class="acct-action-row" id="secChangePasswordBtn">
+                    <span class="acct-action-icon">
+                      <span class="material-symbols-outlined">lock</span>
+                    </span>
+                    <span class="acct-action-text">
+                      <span class="acct-action-title">Password</span>
+                      <span class="acct-action-desc">Last changed: May 27, 2026</span>
+                    </span>
+                    <span class="badge badge--accent badge--solid">Change Password</span>
+                    <span class="material-symbols-outlined acct-action-chevron">chevron_right</span>
+                  </button>
+
+                  <button type="button" class="acct-action-row" id="secTwoFactorBtn" style="margin-top:10px;">
+                    <span class="acct-action-icon">
+                      <span class="material-symbols-outlined">gpp_good</span>
+                    </span>
+                    <span class="acct-action-text">
+                      <span class="acct-action-title">Two-Factor Authentication (2FA)</span>
+                      <span class="acct-action-desc">Protect your account with an additional layer of security.</span>
+                    </span>
+                    <span class="badge badge--good" id="secTwoFactorStatus">Enabled</span>
+                    <span class="material-symbols-outlined acct-action-chevron">chevron_right</span>
+                  </button>
+                </div>
+
+                <div class="cs-card">
+                  <div class="cs-card-head">
+                    <span class="cs-card-title">Security Score</span>
+                  </div>
+                  <p class="cs-helper" style="margin:-6px 0 14px;">Your account security rating.</p>
+
+                  <div class="sec-score-list">
+                    <div class="sec-score-item">
+                      <span class="material-symbols-outlined">check_circle</span>Password is strong
+                    </div>
+                    <div class="sec-score-item">
+                      <span class="material-symbols-outlined">check_circle</span>Two-factor authentication is
+                      enabled
+                    </div>
+                    <div class="sec-score-item">
+                      <span class="material-symbols-outlined">check_circle</span>No suspicious login activity
+                    </div>
+                    <div class="sec-score-item">
+                      <span class="material-symbols-outlined">check_circle</span>All security settings are up to
+                      date
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cs-card" style="margin-top:16px;">
+                <div class="cs-card-head">
+                  <span class="cs-card-title">Active Sessions</span>
+                </div>
+                <p class="cs-helper" style="margin:-6px 0 14px;">You are currently signed in on the following
+                  devices.</p>
+
+                <!-- Session overflow menu (shared, repositioned per row) -->
+                <div class="pop-menu" id="sessOverflowMenu">
+                  <button class="pop-item" id="sessMenuViewDetails">
+                    <span class="pop-icon"><span class="material-symbols-outlined">info</span></span>
+                    <span class="pop-text"><span class="pt-title">View Details</span></span>
+                  </button>
+                  <div class="pop-sep"></div>
+                  <button class="pop-item danger" id="sessMenuLogOut">
+                    <span class="pop-icon"><span class="material-symbols-outlined">logout</span></span>
+                    <span class="pop-text"><span class="pt-title">Log Out Device</span></span>
+                  </button>
+                </div>
+
+                <div class="bc-broker-list sess-list">
+                  <div class="bc-list-header">
+                    <span>Device</span>
+                    <span>Location</span>
+                    <span>IP Address</span>
+                    <span>Last Active</span>
+                    <span>Status</span>
+                    <span></span>
+                  </div>
+
+                  <div class="bc-broker-row" data-current="true">
+                    <div class="sess-device-cell">
+                      <span class="acct-action-icon sess-device-icon">
+                        <span class="material-symbols-outlined">laptop_mac</span>
+                      </span>
+                      <span class="sess-device-info">
+                        <span class="bc-broker-name">MacBook Pro</span>
+                        <span class="sess-current-tag">Current Device</span>
+                      </span>
+                    </div>
+                    <div class="sess-text-cell">New York, USA</div>
+                    <div class="sess-text-cell">73.45.***.21</div>
+                    <div class="sess-text-cell">Just now</div>
+                    <div class="bc-status-cell">
+                      <span class="bc-status-dot"></span>Active
+                    </div>
+                    <div class="bc-actions-cell">
+                      <button class="bc-overflow-btn pop-trigger sess-overflow-btn">
+                        <span class="material-symbols-outlined">more_horiz</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="bc-broker-row">
+                    <div class="sess-device-cell">
+                      <span class="acct-action-icon sess-device-icon">
+                        <span class="material-symbols-outlined">desktop_windows</span>
+                      </span>
+                      <span class="sess-device-info">
+                        <span class="bc-broker-name">Windows PC</span>
+                      </span>
+                    </div>
+                    <div class="sess-text-cell">Miami, USA</div>
+                    <div class="sess-text-cell">104.28.***.87</div>
+                    <div class="sess-text-cell">2 hours ago</div>
+                    <div class="bc-status-cell">
+                      <span class="bc-status-dot"></span>Active
+                    </div>
+                    <div class="bc-actions-cell">
+                      <button class="bc-overflow-btn pop-trigger sess-overflow-btn">
+                        <span class="material-symbols-outlined">more_horiz</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="bc-broker-row">
+                    <div class="sess-device-cell">
+                      <span class="acct-action-icon sess-device-icon">
+                        <span class="material-symbols-outlined">smartphone</span>
+                      </span>
+                      <span class="sess-device-info">
+                        <span class="bc-broker-name">iPhone 15 Pro</span>
+                      </span>
+                    </div>
+                    <div class="sess-text-cell">Dallas, USA</div>
+                    <div class="sess-text-cell">172.68.***.11</div>
+                    <div class="sess-text-cell">Yesterday, 8:42 PM</div>
+                    <div class="bc-status-cell">
+                      <span class="bc-status-dot"></span>Active
+                    </div>
+                    <div class="bc-actions-cell">
+                      <button class="bc-overflow-btn pop-trigger sess-overflow-btn">
+                        <span class="material-symbols-outlined">more_horiz</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="bc-broker-row">
+                    <div class="sess-device-cell">
+                      <span class="acct-action-icon sess-device-icon">
+                        <span class="material-symbols-outlined">tablet_mac</span>
+                      </span>
+                      <span class="sess-device-info">
+                        <span class="bc-broker-name">iPad Pro</span>
+                      </span>
+                    </div>
+                    <div class="sess-text-cell">Los Angeles, USA</div>
+                    <div class="sess-text-cell">172.70.***.44</div>
+                    <div class="sess-text-cell">May 26, 2026</div>
+                    <div class="bc-status-cell sess-status-inactive">
+                      <span class="bc-status-dot"></span>Inactive
+                    </div>
+                    <div class="bc-actions-cell">
+                      <button class="bc-overflow-btn pop-trigger sess-overflow-btn">
+                        <span class="material-symbols-outlined">more_horiz</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="sess-footer-note">
+                  <span class="cs-helper" style="margin:0;">Don't recognize a device?</span>
+                  <button type="button" class="acct-link-btn sec-danger-link" id="sessLogOutAllBtn">Log out of
+                    all other sessions</button>
+                </div>
+              </div>
+
+              <div class="cs-grid" style="margin-top:16px;">
+                <div class="cs-card">
+                  <div class="cs-card-head">
+                    <span class="cs-card-title">Security Settings</span>
+                  </div>
+                  <p class="cs-helper" style="margin:-6px 0 14px;">Additional security preferences for your
+                    account.</p>
+
+                  <div class="sec-settings-list">
+                    <div class="cs-switch-row sec-row active">
+                      <span class="acct-action-icon">
+                        <span class="material-symbols-outlined">mail</span>
+                      </span>
+                      <span class="acct-action-text">
+                        <span class="acct-action-title">Email Login Alerts</span>
+                        <span class="acct-action-desc">Get an email when a new device signs in to your account.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Email Login Alerts"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+
+                    <div class="cs-switch-row sec-row active">
+                      <span class="acct-action-icon">
+                        <span class="material-symbols-outlined">verified_user</span>
+                      </span>
+                      <span class="acct-action-text">
+                        <span class="acct-action-title">Withdrawal / Payout Confirmation</span>
+                        <span class="acct-action-desc">Require email confirmation for all withdrawal or payout
+                          requests.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Withdrawal Confirmation"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+
+                    <button type="button" class="sec-row sec-row--link" id="secApiKeysBtn">
+                      <span class="acct-action-icon">
+                        <span class="material-symbols-outlined">key</span>
+                      </span>
+                      <span class="acct-action-text">
+                        <span class="acct-action-title">API Key Access</span>
+                        <span class="acct-action-desc">Manage API keys and control their permissions.</span>
+                      </span>
+                      <span class="acct-link-btn sec-row-link-label">Manage API Keys</span>
+                      <span class="material-symbols-outlined acct-action-chevron">chevron_right</span>
+                    </button>
+
+                    <div class="sec-row">
+                      <span class="acct-action-icon">
+                        <span class="material-symbols-outlined">schedule</span>
+                      </span>
+                      <span class="acct-action-text">
+                        <span class="acct-action-title">Session Timeout</span>
+                        <span class="acct-action-desc">Automatically log out after a period of inactivity.</span>
+                      </span>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="secSessionTimeout"><span
+                          class="cs-select-label">30 minutes</span><span
+                          class="material-symbols-outlined">expand_more</span></div><select id="secSessionTimeout"
+                        style="display:none;">
+                        <option value="15">15 minutes</option>
+                        <option value="30" selected>30 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="240">4 hours</option>
+                        <option value="never">Never</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="cs-card">
+                  <div class="cs-card-head">
+                    <span class="cs-card-title">Recent Security Activity</span>
+                  </div>
+                  <p class="cs-helper" style="margin:-6px 0 14px;">Review important security-related events.</p>
+
+                  <div class="sec-timeline">
+                    <div class="sec-timeline-item">
+                      <span class="sec-timeline-dot sec-timeline-dot--good"><span
+                          class="material-symbols-outlined">check</span></span>
+                      <span class="sec-timeline-text">
+                        <span class="acct-action-title">Successful login</span>
+                        <span class="acct-action-desc">New York, USA</span>
+                      </span>
+                      <span class="sec-timeline-time">Just now</span>
+                    </div>
+                    <div class="sec-timeline-item">
+                      <span class="sec-timeline-dot sec-timeline-dot--good"><span
+                          class="material-symbols-outlined">check</span></span>
+                      <span class="sec-timeline-text">
+                        <span class="acct-action-title">2FA enabled</span>
+                        <span class="acct-action-desc">New York, USA</span>
+                      </span>
+                      <span class="sec-timeline-time">May 27, 2026</span>
+                    </div>
+                    <div class="sec-timeline-item">
+                      <span class="sec-timeline-dot sec-timeline-dot--info"><span
+                          class="material-symbols-outlined">info</span></span>
+                      <span class="sec-timeline-text">
+                        <span class="acct-action-title">Password changed</span>
+                        <span class="acct-action-desc">New York, USA</span>
+                      </span>
+                      <span class="sec-timeline-time">May 27, 2026</span>
+                    </div>
+                    <div class="sec-timeline-item sec-timeline-item--last">
+                      <span class="sec-timeline-dot sec-timeline-dot--good"><span
+                          class="material-symbols-outlined">check</span></span>
+                      <span class="sec-timeline-text">
+                        <span class="acct-action-title">Successful login</span>
+                        <span class="acct-action-desc">Miami, USA</span>
+                      </span>
+                      <span class="sec-timeline-time">May 27, 2026</span>
+                    </div>
+                  </div>
+
+                  <button type="button" class="acct-link-btn sec-view-all-btn" id="secViewFullActivityBtn">View
+                    full activity</button>
+                </div>
+              </div>
+            </div>
+
             <div class="cs-pane" data-cs-pane="plans">
               <div class="cs-pane-head">
                 <h2>Plans &amp; Pricing</h2>
@@ -4164,7 +4720,7 @@
   <script src="js/workspace.js?v=5"></script>
   <script src="js/overlays.js?v=1"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=65"></script>
+  <script src="js/app.js?v=69"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=11"></script>
   <script src="js/market-scanner.js?v=8"></script>

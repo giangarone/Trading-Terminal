@@ -2876,9 +2876,34 @@
   document.querySelectorAll('#chartSettingsBackdrop .cs-checkbox-row').forEach(row => {
     row.addEventListener('click', (e) => {
       e.preventDefault();
+      if (row.classList.contains('sync-item-row--disabled')) return;
       row.querySelector('.chk-box').classList.toggle('checked');
     });
   });
+
+  /* ---------- Cloud & Sync: Sync Now ---------- */
+  const syncNowBtn = document.getElementById('syncNowBtn');
+  const syncLastSyncTime = document.getElementById('syncLastSyncTime');
+  const syncLastSyncRelative = document.getElementById('syncLastSyncRelative');
+  if (syncNowBtn) {
+    syncNowBtn.addEventListener('click', () => {
+      if (syncNowBtn.classList.contains('syncing')) return;
+      syncNowBtn.classList.add('syncing');
+      syncNowBtn.disabled = true;
+      syncNowBtn.lastChild.textContent = 'Syncing...';
+      setTimeout(() => {
+        syncNowBtn.classList.remove('syncing');
+        syncNowBtn.disabled = false;
+        syncNowBtn.lastChild.textContent = 'Sync Now';
+        if (syncLastSyncRelative) syncLastSyncRelative.lastChild.textContent = 'Just now';
+        if (syncLastSyncTime) {
+          const now = new Date();
+          const time = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          syncLastSyncTime.textContent = `Today, ${time}`;
+        }
+      }, 1200);
+    });
+  }
 
   /* ---------- General / Appearance settings panes (visual only, no persistence) ---------- */
   document.querySelectorAll('#chartSettingsBackdrop .cs-switch-row .ui-toggle').forEach(btn => {
@@ -2923,6 +2948,97 @@
         alertEmailSave.textContent = 'Update';
         alertEmailSave.classList.remove('saved');
       }, 2000);
+    });
+  }
+
+  /* ---------- My Account: Email / Username change buttons ---------- */
+  function bindAcctSaveBtn(btnId) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      btn.textContent = 'Saved!';
+      btn.classList.add('saved');
+      setTimeout(() => {
+        btn.textContent = 'Change';
+        btn.classList.remove('saved');
+      }, 2000);
+    });
+  }
+  bindAcctSaveBtn('acctEmailSave');
+  bindAcctSaveBtn('acctUsernameSave');
+
+  /* ---------- My Account: copy account ID ---------- */
+  const acctCopyIdBtn = document.getElementById('acctCopyIdBtn');
+  const acctIdValue = document.getElementById('acctIdValue');
+  if (acctCopyIdBtn && acctIdValue) {
+    acctCopyIdBtn.addEventListener('click', () => {
+      navigator.clipboard?.writeText(acctIdValue.textContent.trim());
+      const icon = acctCopyIdBtn.querySelector('.material-symbols-outlined');
+      acctCopyIdBtn.classList.add('copied');
+      icon.textContent = 'check';
+      setTimeout(() => {
+        acctCopyIdBtn.classList.remove('copied');
+        icon.textContent = 'content_copy';
+      }, 1500);
+    });
+  }
+
+  /* ---------- My Account: jump to Plans & Pricing ---------- */
+  const acctManagePlanBtn = document.getElementById('acctManagePlanBtn');
+  if (acctManagePlanBtn) {
+    acctManagePlanBtn.addEventListener('click', () => setCsTab('plans'));
+  }
+
+  /* ---------- My Account: jump to Security ---------- */
+  const acctGoToSecurityBtn = document.getElementById('acctGoToSecurityBtn');
+  if (acctGoToSecurityBtn) {
+    acctGoToSecurityBtn.addEventListener('click', () => setCsTab('security'));
+  }
+
+  /* ---------- Security: 2FA status pill follows its row's toggle state ---------- */
+  const secTwoFactorBtn = document.getElementById('secTwoFactorBtn');
+  const secTwoFactorStatus = document.getElementById('secTwoFactorStatus');
+  if (secTwoFactorBtn && secTwoFactorStatus) {
+    secTwoFactorBtn.addEventListener('click', () => {
+      const enabled = secTwoFactorStatus.textContent === 'Enabled';
+      secTwoFactorStatus.textContent = enabled ? 'Disabled' : 'Enabled';
+      secTwoFactorStatus.classList.toggle('badge--good', !enabled);
+      secTwoFactorStatus.classList.toggle('badge--bad', enabled);
+    });
+  }
+
+  /* ---------- Security: Active Sessions overflow menu ---------- */
+  const sessOverflowMenu = document.getElementById('sessOverflowMenu');
+  if (sessOverflowMenu) {
+    document.querySelectorAll('.sess-overflow-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openNear(sessOverflowMenu, btn.getBoundingClientRect(), 'right', btn);
+        sessOverflowMenu._row = btn.closest('.bc-broker-row');
+      });
+    });
+    const sessMenuLogOut = document.getElementById('sessMenuLogOut');
+    if (sessMenuLogOut) {
+      sessMenuLogOut.addEventListener('click', () => {
+        const row = sessOverflowMenu._row;
+        if (row && row.dataset.current !== 'true') {
+          row.style.opacity = '0';
+          setTimeout(() => row.remove(), 200);
+        }
+        closeAllPopovers();
+      });
+    }
+  }
+
+  /* ---------- Security: log out of all other sessions ---------- */
+  const sessLogOutAllBtn = document.getElementById('sessLogOutAllBtn');
+  if (sessLogOutAllBtn) {
+    sessLogOutAllBtn.addEventListener('click', () => {
+      document.querySelectorAll('.sess-list .bc-broker-row').forEach(row => {
+        if (row.dataset.current === 'true') return;
+        row.style.opacity = '0';
+        setTimeout(() => row.remove(), 200);
+      });
     });
   }
 

@@ -248,6 +248,81 @@ input {
   color: var(--text-muted);
 }
 
+/* ====== Global badge ======
+   Small status/label pill. Pick a color with a `badge--*` modifier instead of
+   creating a new one-off badge class; add `badge--solid` for a filled CTA-style chip. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: var(--fw-semi);
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+  color: var(--text-muted);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+}
+
+.badge--uppercase {
+  font-size: var(--fs-label);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.badge--accent {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+}
+
+.badge--good {
+  color: var(--long);
+  background: var(--long-dim);
+  border-color: var(--long-border);
+}
+
+.badge--bad {
+  color: var(--short);
+  background: var(--short-dim);
+  border-color: var(--short-border);
+}
+
+.badge--info {
+  color: var(--info);
+  background: var(--info-dim);
+  border-color: var(--info-border);
+}
+
+.badge--purple {
+  color: var(--purple);
+  background: var(--purple-dim);
+  border-color: var(--purple-guide);
+}
+
+.badge--solid {
+  border-color: transparent;
+}
+
+.badge--solid.badge--accent {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.badge--solid.badge--good {
+  background: var(--long);
+  color: var(--on-accent);
+}
+
+.badge--solid.badge--bad {
+  background: var(--short);
+  color: var(--on-accent);
+}
+
 @media (prefers-reduced-motion: reduce) {
 
   .flash-up,

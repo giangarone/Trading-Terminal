@@ -24,6 +24,7 @@ An HTML/CSS/JS trading terminal UI designed to simulate a real trading platform,
   - **Dropdowns:** use the `.cs-dd-trigger` pattern — a hidden native `<select id="...">` (source of truth for value/options) paired with a visible `<div class="select-input pop-trigger cs-dd-trigger" data-target="..."><span class="cs-select-label">...</span><span class="material-symbols-outlined">expand_more</span></div>`. The generic engine in `js/app.js` (search `cs-dd-trigger`) wires it up automatically — no per-field JS needed.
   - **Number inputs:** use the `.price-stepper` pattern — a `type="text"` input (not `type="number"`, to avoid native spinners) inside `<div class="price-stepper">`, with `<div class="price-stepper-arrows"><button class="ps-up" data-target="...">` / `<button class="ps-down" data-target="...">` using `keyboard_arrow_up`/`keyboard_arrow_down` icons. The generic handler in `js/app.js` (search `price-stepper-arrows`) wires up the arrows automatically via `data-target` (and optional `data-step`) — no per-field JS needed.
   - If a field's behavior doesn't fit either generic engine, extend the existing engine rather than writing a parallel one-off implementation.
+- **Badges/status pills:** use the global `.badge` component (`css/tokens.css`) — `badge` + a color modifier (`badge--accent`, `badge--good`, `badge--bad`, `badge--info`, `badge--purple`), plus `badge--uppercase` and/or `badge--solid` as needed. Don't create a new one-off badge class; if no existing modifier fits, add one to `.badge` instead.
 
 
 ## Removing elements from the Settings panel
