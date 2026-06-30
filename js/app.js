@@ -595,9 +595,20 @@
 
   function qtPlaceOrder(side, price) {
     const { qty } = qtComputeAmount();
-    const prevVal = qtyInput.value;
-    qtyInput.value = Math.max(1, Math.round(qty));
+    const amount = Math.max(1, Math.round(qty));
     const tab = qtActiveTab();
+    const details = {
+      side,
+      orderType: QT_TAB_LABELS[tab] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market',
+      amount: amount + ' ' + QT_INSTRUMENT_UNIT,
+      leverage: qtLeverageCheckbox.classList.contains('checked') ? document.getElementById('qtLeverageInput').value + '×' : null,
+      price: '$' + fmt(price)
+    };
+    requestOrderConfirmation(details, () => qtPlaceOrderExecute(side, price, amount, tab));
+  }
+  function qtPlaceOrderExecute(side, price, amount, tab) {
+    const prevVal = qtyInput.value;
+    qtyInput.value = amount;
     createOrder(side, price, 'quick');
     if (order && tab === 'limit') order.orderType = 'Limit';
     if (tab === 'market') confirmOrderFill();
@@ -802,9 +813,69 @@
     render();
     showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
   }
+  /* ---------- Order Confirmation modal: gates every order placement behind a review step ---------- */
+  const ORDER_CONFIRM_KEY = 'tt_orderConfirm';
+  function orderConfirmEnabled() {
+    try { return localStorage.getItem(ORDER_CONFIRM_KEY) !== '0'; } catch (e) { return true; }
+  }
+  function setOrderConfirmEnabled(on) {
+    try { localStorage.setItem(ORDER_CONFIRM_KEY, on ? '1' : '0'); } catch (e) { /* storage unavailable */ }
+    const row = document.getElementById('csConfirmMarketOrders');
+    if (row) row.classList.toggle('active', on);
+  }
+
+  const ocBackdrop = document.getElementById('ocBackdrop');
+  let ocPendingProceed = null;
+
+  function requestOrderConfirmation(details, proceed) {
+    if (!orderConfirmEnabled()) { proceed(); return; }
+    openOrderConfirm(details, proceed);
+  }
+  function openOrderConfirm(details, proceed) {
+    ocPendingProceed = proceed;
+    const isSell = details.side === 'sell';
+    document.getElementById('ocSideText').textContent = isSell ? 'Sell' : 'Buy';
+    document.getElementById('ocSidePill').classList.toggle('sell', isSell);
+    document.getElementById('ocType').textContent = details.orderType;
+    document.getElementById('ocAmount').textContent = details.amount;
+    document.getElementById('ocPrice').textContent = details.price;
+    const leverageRow = document.getElementById('ocLeverageRow');
+    leverageRow.style.display = details.leverage ? '' : 'none';
+    if (details.leverage) document.getElementById('ocLeverage').textContent = details.leverage;
+    const confirmBtn = document.getElementById('ocConfirm');
+    confirmBtn.classList.toggle('buy', !isSell);
+    confirmBtn.classList.toggle('sell', isSell);
+    document.getElementById('ocDontShow').classList.remove('checked');
+    ocBackdrop.classList.add('show');
+  }
+  function closeOrderConfirm() {
+    ocBackdrop.classList.remove('show');
+    ocPendingProceed = null;
+  }
+  document.getElementById('ocDontShow').addEventListener('click', (e) => e.currentTarget.classList.toggle('checked'));
+  document.getElementById('ocConfirm').addEventListener('click', () => {
+    if (document.getElementById('ocDontShow').classList.contains('checked')) setOrderConfirmEnabled(false);
+    const proceed = ocPendingProceed;
+    closeOrderConfirm();
+    if (proceed) proceed();
+  });
+  document.getElementById('ocCancel').addEventListener('click', closeOrderConfirm);
+  document.getElementById('ocClose').addEventListener('click', closeOrderConfirm);
+  ocBackdrop.addEventListener('click', (e) => { if (e.target === ocBackdrop) closeOrderConfirm(); });
+
   /* clicking the BUY/SELL entry chip places a pending chart order — blocked while TP/SL sit on the wrong side of entry */
   function placeOrder() {
     if (!order || !order.pendingConfirm || !orderTpSlValid()) return;
+    const details = {
+      side: order.side,
+      orderType: order.orderType,
+      amount: order.qty + ' ' + QT_INSTRUMENT_UNIT,
+      leverage: qtLeverageCheckbox.classList.contains('checked') ? document.getElementById('qtLeverageInput').value + '×' : null,
+      price: '$' + fmt(order.entry)
+    };
+    requestOrderConfirmation(details, placeOrderExecute);
+  }
+  function placeOrderExecute() {
     order.pendingConfirm = false;
     if (order.orderType === 'Market') {
       confirmOrderFill();
@@ -2748,6 +2819,182 @@
     btn.addEventListener('click', (e) => { e.stopPropagation(); openBcConnectModal(); });
   });
 
+  /* ---------- Broker routing: Asset Type Defaults + Custom Rules ---------- */
+
+  const BC_ROUTING_DEFAULTS = {
+    spotCrypto:  { primary: 'bitget',       backup: 'blofin' },
+    perpFutures: { primary: 'bitget',       backup: 'blofin' },
+    usStocks:    { primary: 'tradestation', backup: '' },
+    options:     { primary: 'tradestation', backup: '' },
+    futures:     { primary: 'tradestation', backup: '' },
+    forex:       { primary: 'tradestation', backup: '' },
+    commodities: { primary: 'tradestation', backup: '' },
+  };
+
+  // Direct map of routing keys → select element IDs (avoids camelCase capitalisation mismatches)
+  const BC_ROUTING_IDS = {
+    spotCrypto:  { rp: 'bcRpSpotCrypto',  rb: 'bcRbSpotCrypto' },
+    perpFutures: { rp: 'bcRpPerpFutures', rb: 'bcRbPerpFutures' },
+    usStocks:    { rp: 'bcRpUSStocks',    rb: 'bcRbUSStocks' },
+    options:     { rp: 'bcRpOptions',     rb: 'bcRbOptions' },
+    futures:     { rp: 'bcRpFutures',     rb: 'bcRbFutures' },
+    forex:       { rp: 'bcRpForex',       rb: 'bcRbForex' },
+    commodities: { rp: 'bcRpCommodities', rb: 'bcRbCommodities' },
+  };
+
+  // Reset an asset row back to its compiled defaults
+  document.querySelectorAll('.bc-routing-reset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.bc-routing-row');
+      const key = row.dataset.routingKey;
+      const def = BC_ROUTING_DEFAULTS[key];
+      const ids = BC_ROUTING_IDS[key];
+      if (!def || !ids) return;
+      const rpId = ids.rp;
+      const rbId = ids.rb;
+      const rpSelect = document.getElementById(rpId);
+      const rbSelect = document.getElementById(rbId);
+      if (rpSelect) {
+        rpSelect.value = def.primary;
+        const rpTrigger = document.querySelector('[data-target="' + rpId + '"]');
+        if (rpTrigger) refreshCsDropdownTriggerLabel(rpTrigger);
+      }
+      if (rbSelect) {
+        rbSelect.value = def.backup;
+        const rbTrigger = document.querySelector('[data-target="' + rbId + '"]');
+        if (rbTrigger) refreshCsDropdownTriggerLabel(rbTrigger);
+      }
+    });
+  });
+
+  // Custom rules state — two pre-seeded examples
+  let bcCustomRules = [
+    { type: 'symbol',    value: 'BTCUSD', broker: 'bitget' },
+    { type: 'symbol',    value: 'AAPL',   broker: 'tradestation' },
+  ];
+
+  const BC_RULE_ASSET_OPTIONS = [
+    { value: 'spotCrypto',  label: 'Spot Crypto' },
+    { value: 'perpFutures', label: 'Perpetual Futures' },
+    { value: 'usStocks',    label: 'US Stocks' },
+    { value: 'options',     label: 'Options' },
+    { value: 'futures',     label: 'Futures' },
+    { value: 'forex',       label: 'Forex' },
+    { value: 'commodities', label: 'Commodities' },
+  ];
+
+  function renderBcCustomRules() {
+    const container = document.getElementById('bcCustomRulesContainer');
+    const badge = document.getElementById('bcRuleCountBadge');
+    if (!container) return;
+    if (badge) badge.textContent = bcCustomRules.length;
+
+    if (bcCustomRules.length === 0) {
+      container.innerHTML = '<div class="bc-rules-empty">No custom rules — asset type defaults apply to all trades.</div>';
+      return;
+    }
+
+    const brokerOpts = [
+      { value: 'bitget',       label: 'Bitget' },
+      { value: 'tradestation', label: 'TradeStation' },
+      { value: 'blofin',       label: 'BloFin' },
+    ];
+
+    function brokerSelectHtml(id, selected) {
+      return '<select id="' + id + '" style="display:none;" data-rule-field="broker">' +
+        brokerOpts.map(o => '<option value="' + o.value + '"' + (o.value === selected ? ' selected' : '') + '>' + o.label + '</option>').join('') +
+        '</select>';
+    }
+
+    let html = '<div class="bc-rules-header"><span>Condition</span><span>Match</span><span>Route To</span><span></span></div>';
+
+    bcCustomRules.forEach((rule, i) => {
+      const typeId   = 'bcRuleType' + i;
+      const brokerId = 'bcRuleBroker' + i;
+
+      const typeSelectHtml = '<select id="' + typeId + '" style="display:none;" data-rule-field="type" data-rule-idx="' + i + '">' +
+        '<option value="symbol"' + (rule.type === 'symbol' ? ' selected' : '') + '>Symbol is</option>' +
+        '<option value="assettype"' + (rule.type === 'assettype' ? ' selected' : '') + '>Asset type is</option>' +
+        '</select>';
+
+      let valueCell;
+      if (rule.type === 'assettype') {
+        const assetId = 'bcRuleAsset' + i;
+        const assetSelectHtml = '<select id="' + assetId + '" style="display:none;" data-rule-field="value" data-rule-idx="' + i + '">' +
+          BC_RULE_ASSET_OPTIONS.map(o => '<option value="' + o.value + '"' + (o.value === rule.value ? ' selected' : '') + '>' + o.label + '</option>').join('') +
+          '</select>';
+        valueCell = '<div><div class="select-input pop-trigger cs-dd-trigger" data-target="' + assetId + '"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>' + assetSelectHtml + '</div>';
+      } else {
+        valueCell = '<input type="text" class="bc-rule-value-input" placeholder="e.g. AAPL" value="' + escapeHtml(rule.value) + '" data-rule-idx="' + i + '">';
+      }
+
+      html += '<div class="bc-rule-row" data-idx="' + i + '">' +
+        '<div>' +
+          '<div class="select-input pop-trigger cs-dd-trigger" data-target="' + typeId + '"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>' +
+          typeSelectHtml +
+        '</div>' +
+        valueCell +
+        '<div>' +
+          '<div class="select-input pop-trigger cs-dd-trigger" data-target="' + brokerId + '"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>' +
+          brokerSelectHtml(brokerId, rule.broker) +
+        '</div>' +
+        '<button type="button" class="cs-target-del bc-rule-del" data-idx="' + i + '"><span class="material-symbols-outlined">delete</span></button>' +
+        '</div>';
+    });
+
+    container.innerHTML = html;
+    refreshAllCsDropdownLabels(container);
+
+    // Condition type change → re-render
+    container.querySelectorAll('[data-rule-field="type"]').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const idx = parseInt(sel.dataset.ruleIdx);
+        bcCustomRules[idx].type = sel.value;
+        bcCustomRules[idx].value = '';
+        renderBcCustomRules();
+      });
+    });
+
+    // Symbol value change
+    container.querySelectorAll('.bc-rule-value-input').forEach(inp => {
+      inp.addEventListener('change', () => {
+        bcCustomRules[parseInt(inp.dataset.ruleIdx)].value = inp.value.trim();
+      });
+    });
+
+    // Asset type value change
+    container.querySelectorAll('[data-rule-field="value"]').forEach(sel => {
+      sel.addEventListener('change', () => {
+        bcCustomRules[parseInt(sel.dataset.ruleIdx)].value = sel.value;
+      });
+    });
+
+    // Broker change
+    container.querySelectorAll('[data-rule-field="broker"]').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const row = sel.closest('.bc-rule-row');
+        if (row) bcCustomRules[parseInt(row.dataset.idx)].broker = sel.value;
+      });
+    });
+
+    // Delete
+    container.querySelectorAll('.bc-rule-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        bcCustomRules.splice(parseInt(btn.dataset.idx), 1);
+        renderBcCustomRules();
+      });
+    });
+  }
+
+  document.getElementById('bcAddRuleBtn').addEventListener('click', () => {
+    bcCustomRules.push({ type: 'symbol', value: '', broker: 'bitget' });
+    renderBcCustomRules();
+    const inputs = document.querySelectorAll('.bc-rule-value-input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
+
+  renderBcCustomRules();
+
   /* ---------- trade templates selector (UI-only — no settings are actually applied) ---------- */
   let templates = [
     { id: 'tpl1', name: 'Scalping' },
@@ -3008,6 +3255,14 @@
       btn.closest('.cs-switch-row').classList.toggle('active');
     });
   });
+  /* "Confirm Orders" toggle persists separately, since it gates the Order Confirmation modal */
+  const csConfirmMarketOrdersRow = document.getElementById('csConfirmMarketOrders');
+  if (csConfirmMarketOrdersRow) {
+    csConfirmMarketOrdersRow.classList.toggle('active', orderConfirmEnabled());
+    csConfirmMarketOrdersRow.querySelector('.ui-toggle').addEventListener('click', () => {
+      setOrderConfirmEnabled(csConfirmMarketOrdersRow.classList.contains('active'));
+    });
+  }
   document.querySelectorAll('#chartSettingsBackdrop .cs-radio-group').forEach(group => {
     group.querySelectorAll('.cs-radio-row').forEach(row => {
       row.addEventListener('click', () => {
@@ -3083,12 +3338,6 @@
   const acctManagePlanBtn = document.getElementById('acctManagePlanBtn');
   if (acctManagePlanBtn) {
     acctManagePlanBtn.addEventListener('click', () => setCsTab('plans'));
-  }
-
-  /* ---------- My Account: jump to Security ---------- */
-  const acctGoToSecurityBtn = document.getElementById('acctGoToSecurityBtn');
-  if (acctGoToSecurityBtn) {
-    acctGoToSecurityBtn.addEventListener('click', () => setCsTab('security'));
   }
 
   /* ---------- Security: 2FA status pill follows its row's toggle state ---------- */

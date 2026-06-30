@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="css/order-lines.css?v=17">
   <link rel="stylesheet" href="css/market-scanner.css?v=21">
   <link rel="stylesheet" href="css/indicators.css?v=8">
-  <link rel="stylesheet" href="css/chart-settings.css?v=17">
+  <link rel="stylesheet" href="css/chart-settings.css?v=20">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
 </head>
 
@@ -497,10 +497,10 @@
                     </div>
                     <div class="cs-switch-row active" id="csConfirmMarketOrders">
                       <span class="cs-switch-text">
-                        <span class="cs-switch-title">Confirm Market Orders</span>
-                        <span class="cs-switch-desc">Show confirmation before sending market orders.</span>
+                        <span class="cs-switch-title">Confirm Orders</span>
+                        <span class="cs-switch-desc">Show a confirmation popup before placing any order.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Confirm Market Orders"><span
+                      <button type="button" class="ui-toggle" aria-label="Toggle Confirm Orders"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csConfirmFlatten">
@@ -1448,6 +1448,175 @@
                   </div>
                 </div>
 
+                <!-- Asset Type Defaults -->
+                <div class="cs-card">
+                  <div class="cs-card-head">
+                    <span class="cs-card-title">Asset Type Defaults</span>
+                  </div>
+                  <p class="bc-routing-note">Set the primary and backup broker for each asset class. Custom rules below take priority.</p>
+
+                  <div class="bc-routing-header">
+                    <span>Asset Type</span>
+                    <span>Primary</span>
+                    <span>Backup</span>
+                    <span></span>
+                  </div>
+
+                  <!-- Spot Crypto -->
+                  <div class="bc-routing-row" data-routing-key="spotCrypto">
+                    <div class="bc-asset-info">
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#a855f7,#7c3aed);"><span class="material-symbols-outlined">currency_bitcoin</span></div>
+                      <div class="bc-asset-text">
+                        <span class="bc-asset-name">Spot Crypto</span>
+                        <span class="bc-asset-eg">e.g. BTC, ETH, SOL</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpSpotCrypto"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRpSpotCrypto" style="display:none;"><option value="">— None —</option><option value="bitget" selected>Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbSpotCrypto"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRbSpotCrypto" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin" selected>BloFin</option></select>
+                    </div>
+                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                  </div>
+
+                  <!-- Perpetual Futures -->
+                  <div class="bc-routing-row" data-routing-key="perpFutures">
+                    <div class="bc-asset-info">
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);"><span class="material-symbols-outlined">trending_up</span></div>
+                      <div class="bc-asset-text">
+                        <span class="bc-asset-name">Perpetual Futures</span>
+                        <span class="bc-asset-eg">e.g. BTCUSDT, ETHUSDT</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpPerpFutures"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRpPerpFutures" style="display:none;"><option value="">— None —</option><option value="bitget" selected>Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbPerpFutures"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRbPerpFutures" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin" selected>BloFin</option></select>
+                    </div>
+                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                  </div>
+
+                  <!-- US Stocks -->
+                  <div class="bc-routing-row" data-routing-key="usStocks">
+                    <div class="bc-asset-info">
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#22c55e,#15803d);"><span class="material-symbols-outlined">show_chart</span></div>
+                      <div class="bc-asset-text">
+                        <span class="bc-asset-name">US Stocks</span>
+                        <span class="bc-asset-eg">e.g. AAPL, TSLA</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpUSStocks"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRpUSStocks" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation" selected>TradeStation</option><option value="blofin">BloFin</option></select>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbUSStocks"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRbUSStocks" style="display:none;"><option value="" selected>— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                    </div>
+                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                  </div>
+
+                  <!-- Options -->
+                  <div class="bc-routing-row" data-routing-key="options">
+                    <div class="bc-asset-info">
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#06b6d4,#0e7490);"><span class="material-symbols-outlined">call_split</span></div>
+                      <div class="bc-asset-text">
+                        <span class="bc-asset-name">Options</span>
+                        <span class="bc-asset-eg">e.g. SPY, AAPL</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpOptions"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRpOptions" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation" selected>TradeStation</option><option value="blofin">BloFin</option></select>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbOptions"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRbOptions" style="display:none;"><option value="" selected>— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                    </div>
+                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                  </div>
+
+                  <!-- Futures -->
+                  <div class="bc-routing-row" data-routing-key="futures">
+                    <div class="bc-asset-info">
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#f59e0b,#b45309);"><span class="material-symbols-outlined">candlestick_chart</span></div>
+                      <div class="bc-asset-text">
+                        <span class="bc-asset-name">Futures</span>
+                        <span class="bc-asset-eg">e.g. ES, NQ, CL</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpFutures"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRpFutures" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation" selected>TradeStation</option><option value="blofin">BloFin</option></select>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbFutures"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRbFutures" style="display:none;"><option value="" selected>— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                    </div>
+                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                  </div>
+
+                  <!-- Forex -->
+                  <div class="bc-routing-row" data-routing-key="forex">
+                    <div class="bc-asset-info">
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#10b981,#047857);"><span class="material-symbols-outlined">currency_exchange</span></div>
+                      <div class="bc-asset-text">
+                        <span class="bc-asset-name">Forex</span>
+                        <span class="bc-asset-eg">e.g. EURUSD, GBPUSD</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpForex"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRpForex" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation" selected>TradeStation</option><option value="blofin">BloFin</option></select>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbForex"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRbForex" style="display:none;"><option value="" selected>— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                    </div>
+                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                  </div>
+
+                  <!-- Commodities -->
+                  <div class="bc-routing-row" data-routing-key="commodities">
+                    <div class="bc-asset-info">
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#f97316,#c2410c);"><span class="material-symbols-outlined">diamond</span></div>
+                      <div class="bc-asset-text">
+                        <span class="bc-asset-name">Commodities</span>
+                        <span class="bc-asset-eg">e.g. Gold, Silver, Oil</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpCommodities"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRpCommodities" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation" selected>TradeStation</option><option value="blofin">BloFin</option></select>
+                    </div>
+                    <div>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbCommodities"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
+                      <select id="bcRbCommodities" style="display:none;"><option value="" selected>— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                    </div>
+                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                  </div>
+                </div>
+
+                <!-- Custom Routing Rules -->
+                <div class="cs-card">
+                  <div class="cs-card-head">
+                    <span class="cs-card-title">Custom Routing Rules</span>
+                    <span class="bc-count-badge" id="bcRuleCountBadge">2</span>
+                  </div>
+                  <p class="bc-rules-note">Rules are evaluated top-to-bottom and override asset type defaults. Drag to reorder (coming soon).</p>
+                  <div id="bcCustomRulesContainer"></div>
+                  <button class="cs-add-target-btn" id="bcAddRuleBtn" style="margin-top:10px;">
+                    <span class="material-symbols-outlined">add</span>
+                    Add Custom Rule
+                  </button>
+                </div>
+
               </div> <!-- end cs-col -->
             </div>
             <div class="cs-pane" data-cs-pane="marketdata">
@@ -1888,44 +2057,16 @@
                         </button>
                       </div>
                     </div>
+
+                    <div class="acct-delete-row">
+                      <button type="button" class="acct-delete-link" id="acctDeleteBtn">
+                        <span class="material-symbols-outlined">delete</span>
+                        Delete account
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-              </div>
-
-              <div class="cs-card" style="margin-top:16px;">
-                <div class="cs-card-head">
-                  <span class="cs-card-title">Account Actions</span>
-                </div>
-
-                <div class="cs-grid">
-                  <button type="button" class="acct-action-row" id="acctManageBtn">
-                    <span class="acct-action-icon">
-                      <span class="material-symbols-outlined">manage_accounts</span>
-                    </span>
-                    <span class="acct-action-text">
-                      <span class="acct-action-title">Manage Account</span>
-                      <span class="acct-action-desc">Update your email, username, and other account details.</span>
-                    </span>
-                    <span class="material-symbols-outlined acct-action-chevron">chevron_right</span>
-                  </button>
-
-                  <button type="button" class="acct-action-row acct-action-row--danger" id="acctDeleteBtn">
-                    <span class="acct-action-icon">
-                      <span class="material-symbols-outlined">delete</span>
-                    </span>
-                    <span class="acct-action-text">
-                      <span class="acct-action-title">Delete Account</span>
-                      <span class="acct-action-desc">Permanently delete your account and all data.</span>
-                    </span>
-                    <span class="material-symbols-outlined acct-action-chevron">chevron_right</span>
-                  </button>
-                </div>
-
-                <p class="cs-helper acct-security-note">
-                  Sensitive actions like changing your password are located in Security Settings.
-                  <button type="button" class="acct-link-btn" id="acctGoToSecurityBtn">Go to Security</button>
-                </p>
               </div>
             </div>
 
@@ -4709,6 +4850,34 @@
     </div><!-- /.tj-modal-body -->
   </div><!-- /.tj-journal-panel -->
 
+  <!-- ===================== ORDER CONFIRMATION MODAL ===================== -->
+  <div class="oc-backdrop" id="ocBackdrop">
+    <div class="oc-dialog">
+      <div class="oc-dialog-head">
+        <div>
+          <div class="oc-dialog-title">Confirm Order</div>
+          <div class="oc-dialog-sub">Review the details before placing this trade.</div>
+        </div>
+        <button class="oc-close" id="ocClose"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="oc-side-pill" id="ocSidePill"><span id="ocSideText">Buy</span></div>
+      <div class="modal-summary">
+        <div class="row"><span class="l">Order Type</span><span class="v" id="ocType">Market</span></div>
+        <div class="row"><span class="l">Amount</span><span class="v" id="ocAmount">2 ETH</span></div>
+        <div class="row" id="ocLeverageRow"><span class="l">Leverage</span><span class="v" id="ocLeverage">10×</span></div>
+        <div class="row"><span class="l">Price</span><span class="v" id="ocPrice">$2,145.50</span></div>
+      </div>
+      <label class="cs-checkbox-row oc-dontshow">
+        <span class="chk-box" id="ocDontShow"><span class="material-symbols-outlined">check</span></span>
+        Don't show this confirmation again
+      </label>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="ocCancel">Cancel</button>
+        <button class="btn-save" id="ocConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== TOASTS ===================== -->
   <div class="toast-stack" id="toastStack"></div>
 
@@ -4721,7 +4890,7 @@
   <script src="js/workspace.js?v=6"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=77"></script>
+  <script src="js/app.js?v=81"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=11"></script>
   <script src="js/market-scanner.js?v=8"></script>

@@ -258,7 +258,7 @@ input {
   flex-shrink: 0;
   font-family: var(--sans);
   font-size: 11px;
-  font-weight: var(--fw-semi);
+  font-weight: 500;
   line-height: 1;
   padding: 4px 8px;
   border-radius: var(--r-pill);
