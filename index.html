@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="css/tokens.css?v=9">
   <link rel="stylesheet" href="css/topbar.css?v=5">
   <link rel="stylesheet" href="css/left-panel.css?v=3">
-  <link rel="stylesheet" href="css/center-panel.css?v=4">
+  <link rel="stylesheet" href="css/center-panel.css?v=5">
   <link rel="stylesheet" href="css/workspace.css?v=16">
   <link rel="stylesheet" href="css/right-panel.css?v=3">
   <link rel="stylesheet" href="css/quick-trade.css?v=6">
@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="css/order-lines.css?v=17">
   <link rel="stylesheet" href="css/market-scanner.css?v=21">
   <link rel="stylesheet" href="css/indicators.css?v=8">
-  <link rel="stylesheet" href="css/chart-settings.css?v=20">
+  <link rel="stylesheet" href="css/chart-settings.css?v=21">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
 </head>
 
@@ -220,16 +220,21 @@
       </div>
     </div>
 
-    <div class="pop-menu" id="templateNameMenu" style="width:260px; padding:14px;">
+    <div class="pop-menu" id="templateSettingsMenu" style="width:300px; padding:14px;">
       <div class="modal-head">
-        <span class="modal-title" id="templateNameMenuTitle">Save Template</span>
-        <span class="modal-close" id="templateNameMenuClose"><span class="material-symbols-outlined">close</span></span>
+        <span class="modal-title" id="templateSettingsTitle">Template Settings</span>
+        <span class="modal-close" id="templateSettingsClose"><span class="material-symbols-outlined">close</span></span>
       </div>
       <label class="modal-label">Template Name</label>
-      <input type="text" class="tpl-name-input" id="templateNameInput" maxlength="40" placeholder="e.g. Breakout Setup">
+      <input type="text" class="tpl-name-input" id="templateSettingsName" maxlength="40" placeholder="e.g. Breakout Setup">
+      <div class="tpl-opts-head">
+        <label class="modal-label" style="margin:0;">Save with this template</label>
+        <button type="button" class="tpl-opts-all" id="templateSettingsSelectAll">Select all</button>
+      </div>
+      <div id="templateSettingsOptions"></div>
       <div class="modal-actions">
-        <button type="button" class="btn-cancel" id="templateNameCancel">Cancel</button>
-        <button type="button" class="btn-save" id="templateNameSave">Save</button>
+        <button type="button" class="btn-cancel" id="templateSettingsCancel">Cancel</button>
+        <button type="button" class="btn-save" id="templateSettingsSave">Save</button>
       </div>
     </div>
 
@@ -2598,11 +2603,6 @@
           </div>
         </div>
         <div class="cs-footer">
-          <div class="select-input pop-trigger cs-footer-template-trigger" id="csFooterTemplateTrigger">
-            <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted);">bookmark</span>
-            <span class="cs-select-label" id="csFooterTemplateName">Scalping</span>
-            <span class="material-symbols-outlined">expand_more</span>
-          </div>
           <div class="cs-footer-actions">
             <button class="cs-btn-cancel" id="csCancelBtn">Cancel</button>
             <button class="cs-btn-save" id="csSaveBtn">Save Settings</button>
@@ -4890,7 +4890,7 @@
   <script src="js/workspace.js?v=6"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=81"></script>
+  <script src="js/app.js?v=82"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=11"></script>
   <script src="js/market-scanner.js?v=8"></script>

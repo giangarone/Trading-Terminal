@@ -2822,23 +2822,23 @@
   /* ---------- Broker routing: Asset Type Defaults + Custom Rules ---------- */
 
   const BC_ROUTING_DEFAULTS = {
-    spotCrypto:  { primary: 'bitget',       backup: 'blofin' },
-    perpFutures: { primary: 'bitget',       backup: 'blofin' },
-    usStocks:    { primary: 'tradestation', backup: '' },
-    options:     { primary: 'tradestation', backup: '' },
-    futures:     { primary: 'tradestation', backup: '' },
-    forex:       { primary: 'tradestation', backup: '' },
+    spotCrypto: { primary: 'bitget', backup: 'blofin' },
+    perpFutures: { primary: 'bitget', backup: 'blofin' },
+    usStocks: { primary: 'tradestation', backup: '' },
+    options: { primary: 'tradestation', backup: '' },
+    futures: { primary: 'tradestation', backup: '' },
+    forex: { primary: 'tradestation', backup: '' },
     commodities: { primary: 'tradestation', backup: '' },
   };
 
   // Direct map of routing keys → select element IDs (avoids camelCase capitalisation mismatches)
   const BC_ROUTING_IDS = {
-    spotCrypto:  { rp: 'bcRpSpotCrypto',  rb: 'bcRbSpotCrypto' },
+    spotCrypto: { rp: 'bcRpSpotCrypto', rb: 'bcRbSpotCrypto' },
     perpFutures: { rp: 'bcRpPerpFutures', rb: 'bcRbPerpFutures' },
-    usStocks:    { rp: 'bcRpUSStocks',    rb: 'bcRbUSStocks' },
-    options:     { rp: 'bcRpOptions',     rb: 'bcRbOptions' },
-    futures:     { rp: 'bcRpFutures',     rb: 'bcRbFutures' },
-    forex:       { rp: 'bcRpForex',       rb: 'bcRbForex' },
+    usStocks: { rp: 'bcRpUSStocks', rb: 'bcRbUSStocks' },
+    options: { rp: 'bcRpOptions', rb: 'bcRbOptions' },
+    futures: { rp: 'bcRpFutures', rb: 'bcRbFutures' },
+    forex: { rp: 'bcRpForex', rb: 'bcRbForex' },
     commodities: { rp: 'bcRpCommodities', rb: 'bcRbCommodities' },
   };
 
@@ -2869,17 +2869,17 @@
 
   // Custom rules state — two pre-seeded examples
   let bcCustomRules = [
-    { type: 'symbol',    value: 'BTCUSD', broker: 'bitget' },
-    { type: 'symbol',    value: 'AAPL',   broker: 'tradestation' },
+    { type: 'symbol', value: 'BTCUSD', broker: 'bitget' },
+    { type: 'symbol', value: 'AAPL', broker: 'tradestation' },
   ];
 
   const BC_RULE_ASSET_OPTIONS = [
-    { value: 'spotCrypto',  label: 'Spot Crypto' },
+    { value: 'spotCrypto', label: 'Spot Crypto' },
     { value: 'perpFutures', label: 'Perpetual Futures' },
-    { value: 'usStocks',    label: 'US Stocks' },
-    { value: 'options',     label: 'Options' },
-    { value: 'futures',     label: 'Futures' },
-    { value: 'forex',       label: 'Forex' },
+    { value: 'usStocks', label: 'US Stocks' },
+    { value: 'options', label: 'Options' },
+    { value: 'futures', label: 'Futures' },
+    { value: 'forex', label: 'Forex' },
     { value: 'commodities', label: 'Commodities' },
   ];
 
@@ -2895,9 +2895,9 @@
     }
 
     const brokerOpts = [
-      { value: 'bitget',       label: 'Bitget' },
+      { value: 'bitget', label: 'Bitget' },
       { value: 'tradestation', label: 'TradeStation' },
-      { value: 'blofin',       label: 'BloFin' },
+      { value: 'blofin', label: 'BloFin' },
     ];
 
     function brokerSelectHtml(id, selected) {
@@ -2909,7 +2909,7 @@
     let html = '<div class="bc-rules-header"><span>Condition</span><span>Match</span><span>Route To</span><span></span></div>';
 
     bcCustomRules.forEach((rule, i) => {
-      const typeId   = 'bcRuleType' + i;
+      const typeId = 'bcRuleType' + i;
       const brokerId = 'bcRuleBroker' + i;
 
       const typeSelectHtml = '<select id="' + typeId + '" style="display:none;" data-rule-field="type" data-rule-idx="' + i + '">' +
@@ -2930,13 +2930,13 @@
 
       html += '<div class="bc-rule-row" data-idx="' + i + '">' +
         '<div>' +
-          '<div class="select-input pop-trigger cs-dd-trigger" data-target="' + typeId + '"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>' +
-          typeSelectHtml +
+        '<div class="select-input pop-trigger cs-dd-trigger" data-target="' + typeId + '"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>' +
+        typeSelectHtml +
         '</div>' +
         valueCell +
         '<div>' +
-          '<div class="select-input pop-trigger cs-dd-trigger" data-target="' + brokerId + '"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>' +
-          brokerSelectHtml(brokerId, rule.broker) +
+        '<div class="select-input pop-trigger cs-dd-trigger" data-target="' + brokerId + '"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>' +
+        brokerSelectHtml(brokerId, rule.broker) +
         '</div>' +
         '<button type="button" class="cs-target-del bc-rule-del" data-idx="' + i + '"><span class="material-symbols-outlined">delete</span></button>' +
         '</div>';
@@ -2996,27 +2996,40 @@
   renderBcCustomRules();
 
   /* ---------- trade templates selector (UI-only — no settings are actually applied) ---------- */
+  const TEMPLATE_SAVE_OPTIONS = [
+    { key: 'symbols', label: 'Symbols' },
+    { key: 'timeframe', label: 'Timeframe' },
+    { key: 'chartTrade', label: 'Chart trade execution settings' },
+    { key: 'quickTrade', label: 'Quick trade execution settings' },
+    { key: 'exchanges', label: 'Active exchanges' },
+    { key: 'drawings', label: 'Chart drawings' },
+    { key: 'news', label: 'News layout settings' },
+    { key: 'layout', label: 'Chart layout' }
+  ];
+  function defaultSavedOptions() {
+    return Object.fromEntries(TEMPLATE_SAVE_OPTIONS.map(o => [o.key, true]));
+  }
   let templates = [
-    { id: 'tpl1', name: 'Scalping' },
-    { id: 'tpl2', name: 'Swing Trading' }
+    { id: 'tpl1', name: 'Scalping', saved: defaultSavedOptions() },
+    { id: 'tpl2', name: 'Swing Trading', saved: defaultSavedOptions() }
   ];
   let selectedTemplateId = 'tpl1';
   let templateIdCounter = 3;
-  let templateNameMode = null; // 'save' | 'rename'
-  let templateRenameTargetId = null;
+  let templateSettingsMode = null; // 'create' | 'edit'
+  let templateSettingsTargetId = null;
   const templatesSelectTrigger = document.getElementById('templatesSelectTrigger');
   const templatesSelectMenu = document.getElementById('templatesSelectMenu');
   const templatesSelectList = document.getElementById('templatesSelectList');
-  const templateNameMenu = document.getElementById('templateNameMenu');
-  const templateNameMenuTitle = document.getElementById('templateNameMenuTitle');
-  const templateNameInput = document.getElementById('templateNameInput');
-  const templateNameSaveBtn = document.getElementById('templateNameSave');
+  const templateSettingsMenu = document.getElementById('templateSettingsMenu');
+  const templateSettingsTitle = document.getElementById('templateSettingsTitle');
+  const templateSettingsName = document.getElementById('templateSettingsName');
+  const templateSettingsOptions = document.getElementById('templateSettingsOptions');
+  const templateSettingsSelectAll = document.getElementById('templateSettingsSelectAll');
+  const templateSettingsSaveBtn = document.getElementById('templateSettingsSave');
   function renderTemplatesSelect() {
     const active = templates.find(t => t.id === selectedTemplateId) || templates[0];
     const activeName = active ? active.name : 'Templates';
     document.getElementById('templatesSelectName').textContent = activeName;
-    const footerLabel = document.getElementById('csFooterTemplateName');
-    if (footerLabel) footerLabel.textContent = activeName;
     const canDelete = templates.length > 1;
     templatesSelectList.innerHTML = templates.map(t => {
       const isSelected = t.id === selectedTemplateId;
@@ -3025,7 +3038,7 @@
         '<span class="template-item-right">' +
         '' +
         '<span class="template-item-actions">' +
-        '<button type="button" class="template-action-btn" data-action="rename" data-template-id="' + t.id + '" title="Rename"><span class="material-symbols-outlined">edit</span></button>' +
+        '<button type="button" class="template-action-btn" data-action="settings" data-template-id="' + t.id + '" title="Template settings"><span class="material-symbols-outlined">settings</span></button>' +
         '<button type="button" class="template-action-btn danger' + (canDelete ? '' : ' disabled') + '" data-action="delete" data-template-id="' + t.id + '" title="' + (canDelete ? 'Delete' : 'At least one template is required') + '"><span class="material-symbols-outlined">delete</span></button>' +
         '</span>' +
         '</span>' +
@@ -3043,10 +3056,10 @@
         closeAllPopovers();
       });
     });
-    templatesSelectList.querySelectorAll('[data-action="rename"]').forEach(btn => {
+    templatesSelectList.querySelectorAll('[data-action="settings"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        openTemplateNamePrompt('rename', btn.dataset.templateId, btn.getBoundingClientRect(), btn);
+        openTemplateSettings('edit', btn.dataset.templateId, btn.getBoundingClientRect(), btn);
       });
     });
     templatesSelectList.querySelectorAll('[data-action="delete"]').forEach(btn => {
@@ -3062,37 +3075,67 @@
       });
     });
   }
-  function openTemplateNamePrompt(mode, targetId, anchorRect, trigger) {
-    templateNameMode = mode;
-    templateRenameTargetId = targetId;
-    if (mode === 'save') {
-      templateNameMenuTitle.textContent = 'Save as…';
-      templateNameInput.value = '';
-      templateNameSaveBtn.textContent = 'Save';
+  function renderTemplateSettingsOptions(saved) {
+    templateSettingsOptions.innerHTML = TEMPLATE_SAVE_OPTIONS.map(o =>
+      '<div class="tpl-opt-row' + (saved[o.key] ? ' active' : '') + '" data-opt-key="' + o.key + '">' +
+      '<span class="tpl-opt-label">' + o.label + '</span>' +
+      '<button type="button" class="ui-toggle" aria-label="Toggle ' + o.label + '"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>' +
+      '</div>'
+    ).join('');
+    templateSettingsOptions.querySelectorAll('.tpl-opt-row').forEach(row => {
+      row.querySelector('.ui-toggle').addEventListener('click', (e) => {
+        e.stopPropagation();
+        row.classList.toggle('active');
+        refreshTemplateSelectAllLabel();
+      });
+    });
+    refreshTemplateSelectAllLabel();
+  }
+  function refreshTemplateSelectAllLabel() {
+    const rows = templateSettingsOptions.querySelectorAll('.tpl-opt-row');
+    const allOn = rows.length > 0 && Array.from(rows).every(r => r.classList.contains('active'));
+    templateSettingsSelectAll.textContent = allOn ? 'Deselect all' : 'Select all';
+  }
+  function openTemplateSettings(mode, targetId, anchorRect, trigger) {
+    templateSettingsMode = mode;
+    templateSettingsTargetId = targetId;
+    if (mode === 'create') {
+      templateSettingsTitle.textContent = 'New Template';
+      templateSettingsName.value = '';
+      renderTemplateSettingsOptions(defaultSavedOptions());
     } else {
       const t = templates.find(x => x.id === targetId);
-      templateNameMenuTitle.textContent = 'Rename Template';
-      templateNameInput.value = t ? t.name : '';
-      templateNameSaveBtn.textContent = 'Rename';
+      templateSettingsTitle.textContent = 'Template Settings';
+      templateSettingsName.value = t ? t.name : '';
+      renderTemplateSettingsOptions(t ? t.saved : defaultSavedOptions());
     }
-    openNear(templateNameMenu, anchorRect, 'left', trigger);
-    templateNameInput.focus();
-    templateNameInput.select();
+    templateSettingsSaveBtn.textContent = 'Save';
+    openNear(templateSettingsMenu, anchorRect, 'left', trigger);
+    templateSettingsName.focus();
+    templateSettingsName.select();
   }
-  function closeTemplateNamePrompt() { closeAllPopoversExcept(templatesSelectMenu); }
-  function commitTemplateName() {
-    const name = templateNameInput.value.trim();
-    if (!name) { templateNameInput.focus(); return; }
-    if (templateNameMode === 'save') {
+  function closeTemplateSettings() { closeAllPopoversExcept(templatesSelectMenu); }
+  function collectTemplateSavedOptions() {
+    const saved = {};
+    templateSettingsOptions.querySelectorAll('.tpl-opt-row').forEach(row => {
+      saved[row.dataset.optKey] = row.classList.contains('active');
+    });
+    return saved;
+  }
+  function commitTemplateSettings() {
+    const name = templateSettingsName.value.trim();
+    if (!name) { templateSettingsName.focus(); return; }
+    const saved = collectTemplateSavedOptions();
+    if (templateSettingsMode === 'create') {
       const id = 'tpl' + (templateIdCounter++);
-      templates.push({ id, name });
+      templates.push({ id, name, saved });
       selectedTemplateId = id;
-      showToast('Template "' + name + '" saved', 'bookmark_added');
-    } else if (templateNameMode === 'rename') {
-      const t = templates.find(x => x.id === templateRenameTargetId);
-      if (t) { t.name = name; showToast('Template renamed to "' + name + '"', 'edit'); }
+      showToast('Template "' + name + '" created', 'bookmark_added');
+    } else if (templateSettingsMode === 'edit') {
+      const t = templates.find(x => x.id === templateSettingsTargetId);
+      if (t) { t.name = name; t.saved = saved; showToast('Template "' + name + '" updated', 'check_circle'); }
     }
-    closeTemplateNamePrompt();
+    closeTemplateSettings();
     renderTemplatesSelect();
   }
   renderTemplatesSelect();
@@ -3103,30 +3146,30 @@
     e.stopPropagation();
     openTemplatesMenu(templatesSelectTrigger.getBoundingClientRect(), templatesSelectTrigger);
   });
-  const csFooterTemplateTrigger = document.getElementById('csFooterTemplateTrigger');
-  if (csFooterTemplateTrigger) {
-    csFooterTemplateTrigger.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openTemplatesMenu(csFooterTemplateTrigger.getBoundingClientRect(), csFooterTemplateTrigger);
-    });
-  }
   document.getElementById('templateSaveCurrent').addEventListener('click', (e) => {
     e.stopPropagation();
-    openTemplateNamePrompt('save', null, e.currentTarget.getBoundingClientRect(), e.currentTarget);
+    openTemplateSettings('create', null, e.currentTarget.getBoundingClientRect(), e.currentTarget);
   });
   document.getElementById('templateApplyDefaults').addEventListener('click', (e) => {
     e.stopPropagation();
     closeAllPopovers();
     showToast('Defaults applied', 'restart_alt');
   });
-  templateNameSaveBtn.addEventListener('click', (e) => { e.stopPropagation(); commitTemplateName(); });
-  document.getElementById('templateNameCancel').addEventListener('click', (e) => { e.stopPropagation(); closeTemplateNamePrompt(); });
-  document.getElementById('templateNameMenuClose').addEventListener('click', (e) => { e.stopPropagation(); closeTemplateNamePrompt(); });
-  templateNameInput.addEventListener('click', (e) => e.stopPropagation());
-  templateNameInput.addEventListener('keydown', (e) => {
+  templateSettingsSelectAll.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (e.key === 'Enter') { e.preventDefault(); commitTemplateName(); }
-    if (e.key === 'Escape') { e.preventDefault(); closeTemplateNamePrompt(); }
+    const rows = templateSettingsOptions.querySelectorAll('.tpl-opt-row');
+    const allOn = Array.from(rows).every(r => r.classList.contains('active'));
+    rows.forEach(r => r.classList.toggle('active', !allOn));
+    refreshTemplateSelectAllLabel();
+  });
+  templateSettingsSaveBtn.addEventListener('click', (e) => { e.stopPropagation(); commitTemplateSettings(); });
+  document.getElementById('templateSettingsCancel').addEventListener('click', (e) => { e.stopPropagation(); closeTemplateSettings(); });
+  document.getElementById('templateSettingsClose').addEventListener('click', (e) => { e.stopPropagation(); closeTemplateSettings(); });
+  templateSettingsName.addEventListener('click', (e) => e.stopPropagation());
+  templateSettingsName.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') { e.preventDefault(); commitTemplateSettings(); }
+    if (e.key === 'Escape') { e.preventDefault(); closeTemplateSettings(); }
   });
 
   /* ---------- Chart Settings modal ---------- */

@@ -774,7 +774,7 @@
 
 .cs-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   gap: 10px;
   padding: 14px 22px;
@@ -795,12 +795,6 @@
   border: none;
   cursor: pointer;
   font-family: var(--sans);
-}
-
-.cs-footer-template-trigger {
-  width: fit-content;
-  background: var(--bg-surface);
-  gap: 7px;
 }
 
 .cs-btn-save {
@@ -1398,7 +1392,7 @@
   z-index: 2100;
 }
 
-#templateNameMenu {
+#templateSettingsMenu {
   z-index: 2200;
 }
 
