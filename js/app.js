@@ -1689,11 +1689,9 @@
   // future area (negative idxFromEnd = ahead of the last candle).
   const scheduledEvents = [
     {
-      idxFromEnd: -14,
+      idxFromEnd: -20,
       name: 'FOMC Rate Decision',
-      description: 'The Federal Reserve announces its decision on the benchmark interest rate, followed by Chair Powell’s press conference. Markets are pricing in a high probability the Committee holds rates steady.',
-      forecast: '5.50%',
-      previous: '5.50%',
+      description: 'The Federal Reserve announces its decision on the benchmark interest rate, followed by Chair Powell’s press conference and updated economic projections. Markets are pricing in a high probability the Committee holds rates steady, with traders watching closely for any shift in forward guidance on the pace of future cuts.',
     },
   ];
   let newsMarkerEls = null;
@@ -1777,14 +1775,11 @@
         '<div class="event-line-main">' +
         '<div class="event-line-header">' +
         '<div class="event-line-name">' + ev.name + '</div>' +
-        '<div class="event-line-meta"><span class="event-line-when">' + date + ' · ' + time + '</span><span class="event-line-countdown">' + eventCountdown(ev.idxFromEnd) + '</span></div>' +
+        '<div class="event-line-when">' + date + ' · ' + time + '</div>' +
+        '<div class="event-line-countdown">' + eventCountdown(ev.idxFromEnd) + '</div>' +
         '</div>' +
         '<div class="event-line-details">' +
         '<div class="event-line-desc">' + ev.description + '</div>' +
-        '<div class="event-line-stats">' +
-        '<div class="event-line-stat"><span class="event-line-stat-label">Forecast</span><span class="event-line-stat-value">' + ev.forecast + '</span></div>' +
-        '<div class="event-line-stat"><span class="event-line-stat-label">Previous</span><span class="event-line-stat-value">' + ev.previous + '</span></div>' +
-        '</div>' +
         '</div>' +
         '</div>' +
         '</div>';
@@ -1822,7 +1817,7 @@
     });
     // Cards are wider than the bar spacing, so stack collisions into vertical
     // lanes (left-to-right), growing upward from the bottom anchor.
-    const cardW = 178, gap = 8, laneH = 38;
+    const cardW = 148, gap = 8, laneH = 38;
     const laneRightEdge = [];
     visible.sort((a, b) => a.x - b.x).forEach(({ x, el }) => {
       let lane = 0;

@@ -1257,7 +1257,7 @@ table.msx-table tbody tr.selected {
   width: 260px;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
+  border-radius: var(--r-sm);
   box-shadow: 0 18px 44px var(--shadow-color);
   display: none;
   pointer-events: auto;
@@ -1342,7 +1342,7 @@ table.msx-table tbody tr.selected {
    Scheduled event lines — upcoming macro events (FOMC…) drawn as neutral
    vertical lines anchored near the bottom of the chart. The name/date/
    countdown header is always visible; clicking it expands the same card
-   in place to reveal the description and forecast/previous stats.
+   in place (and widens it) to reveal the description.
    ===================================================================== */
 .event-line {
   position: absolute;
@@ -1359,16 +1359,16 @@ table.msx-table tbody tr.selected {
   left: 0;
   width: 0;
   height: var(--rule-h, 100%);
-  border-left: 1px dashed var(--border-strong);
+  border-left: 1px dashed var(--purple-guide);
   opacity: .6;
 }
 
 .event-line-card {
   position: absolute;
-  bottom: var(--marker-bottom, 30px);
+  top: 24px;
   left: 0;
   transform: translateX(-50%);
-  width: 178px;
+  width: 148px;
   display: flex;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
@@ -1377,10 +1377,10 @@ table.msx-table tbody tr.selected {
   pointer-events: auto;
   z-index: 6;
   overflow: hidden;
-  transition: box-shadow .12s;
 }
 
 .event-line.active .event-line-card {
+  width: 250px;
   box-shadow: 0 18px 44px var(--shadow-color);
 }
 
@@ -1396,7 +1396,10 @@ table.msx-table tbody tr.selected {
 }
 
 .event-line-header {
-  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 11px;
   cursor: pointer;
 }
 
@@ -1408,14 +1411,6 @@ table.msx-table tbody tr.selected {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.event-line-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  margin-top: 3px;
 }
 
 .event-line-when {
@@ -1434,7 +1429,7 @@ table.msx-table tbody tr.selected {
 
 .event-line-details {
   display: none;
-  padding: 0 9px 10px;
+  padding: 0 11px 11px;
 }
 
 .event-line.active .event-line-details {
@@ -1445,36 +1440,6 @@ table.msx-table tbody tr.selected {
   font-size: 11px;
   color: var(--text-secondary);
   line-height: 1.5;
-  padding-top: 8px;
+  padding-top: 9px;
   border-top: 1px solid var(--border-subtle);
-}
-
-.event-line-stats {
-  display: flex;
-  gap: 8px;
-  margin-top: 9px;
-}
-
-.event-line-stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  background: var(--bg-input);
-  border-radius: var(--r-xs);
-  padding: 5px 7px;
-}
-
-.event-line-stat-label {
-  font-size: 9px;
-  color: var(--text-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: var(--ls-label);
-}
-
-.event-line-stat-value {
-  font-size: 11px;
-  color: var(--text-primary);
-  font-weight: 600;
 }
