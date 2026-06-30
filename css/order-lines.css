@@ -17,14 +17,16 @@
   pointer-events: none;
 }
 
-#newsMarkerLayer {
+#newsMarkerLayer,
+#eventLineLayer {
   position: absolute;
   inset: 0;
   pointer-events: none;
   display: none;
 }
 
-#newsMarkerLayer.show {
+#newsMarkerLayer.show,
+#eventLineLayer.show {
   display: block;
 }
 

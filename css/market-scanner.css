@@ -1181,42 +1181,44 @@ table.msx-table tbody tr.selected {
   --news-accent-dim: var(--short-dim);
 }
 
-.news-marker-guide {
+/* The signal group is anchored to the candle edge (--anchor-y, set per frame in JS):
+   bearish sits above the high pointing down, bullish below the low pointing up. */
+.news-marker-signal {
   position: absolute;
-  top: 0;
-  bottom: 24px;
+  top: var(--anchor-y, 50%);
   left: 0;
-  width: 0;
-  border-left: 1px dotted var(--news-accent);
-  opacity: 0;
-  transition: opacity .12s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 5;
 }
 
-.news-marker.hovered .news-marker-guide,
-.news-marker.active .news-marker-guide {
-  opacity: 1;
+.news-marker.bearish .news-marker-signal {
+  transform: translate(-50%, calc(-100% - 12px));
+}
+
+.news-marker.bullish .news-marker-signal {
+  flex-direction: column-reverse;
+  transform: translate(-50%, 12px);
 }
 
 .news-marker-icon {
-  position: absolute;
-  bottom: 30px;
-  left: 0;
-  transform: translateX(-50%);
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-xs);
   background: var(--bg-surface);
   border: 1px solid var(--news-accent);
   color: var(--news-accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: auto;
-  cursor: pointer;
-  z-index: 5;
+  transition: background .12s, color .12s;
 }
 
-.news-marker-icon:hover,
+.news-marker.hovered .news-marker-icon,
 .news-marker.active .news-marker-icon {
   background: var(--news-accent);
   color: var(--bg-sunken);
@@ -1226,9 +1228,30 @@ table.msx-table tbody tr.selected {
   font-size: 13px;
 }
 
+.news-marker-x {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Triangle caret that points at the candle (down for bearish, up for bullish). */
+.news-marker-caret {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+}
+
+.news-marker.bearish .news-marker-caret {
+  border-top: 5px solid var(--news-accent);
+}
+
+.news-marker.bullish .news-marker-caret {
+  border-bottom: 5px solid var(--news-accent);
+}
+
 .news-marker-popup {
   position: absolute;
-  bottom: 64px;
   left: 0;
   transform: translateX(-50%);
   width: 260px;
@@ -1240,6 +1263,18 @@ table.msx-table tbody tr.selected {
   pointer-events: auto;
   z-index: 6;
   overflow: hidden;
+}
+
+/* The popup continues past its signal, away from the candle: bearish opens further
+   up (above its marker), bullish opens further down (below its marker). */
+.news-marker.bearish .news-marker-popup {
+  top: var(--anchor-y, 50%);
+  transform: translate(-50%, calc(-100% - 49px));
+}
+
+.news-marker.bullish .news-marker-popup {
+  top: var(--anchor-y, 50%);
+  transform: translate(-50%, 49px);
 }
 
 .news-marker.active .news-marker-popup {
@@ -1301,4 +1336,145 @@ table.msx-table tbody tr.selected {
   font-size: 11.5px;
   color: var(--text-secondary);
   line-height: 1.5;
+}
+
+/* =====================================================================
+   Scheduled event lines — upcoming macro events (FOMC…) drawn as neutral
+   vertical lines anchored near the bottom of the chart. The name/date/
+   countdown header is always visible; clicking it expands the same card
+   in place to reveal the description and forecast/previous stats.
+   ===================================================================== */
+.event-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  pointer-events: none;
+}
+
+.event-line-rule {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: var(--rule-h, 100%);
+  border-left: 1px dashed var(--border-strong);
+  opacity: .6;
+}
+
+.event-line-card {
+  position: absolute;
+  bottom: var(--marker-bottom, 30px);
+  left: 0;
+  transform: translateX(-50%);
+  width: 178px;
+  display: flex;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  box-shadow: 0 8px 22px var(--shadow-color);
+  pointer-events: auto;
+  z-index: 6;
+  overflow: hidden;
+  transition: box-shadow .12s;
+}
+
+.event-line.active .event-line-card {
+  box-shadow: 0 18px 44px var(--shadow-color);
+}
+
+.event-line-bar {
+  width: 3px;
+  flex-shrink: 0;
+  background: var(--purple);
+}
+
+.event-line-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.event-line-header {
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.event-line-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-line-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.event-line-when {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.event-line-countdown {
+  font-size: 9.5px;
+  color: var(--purple);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.event-line-details {
+  display: none;
+  padding: 0 9px 10px;
+}
+
+.event-line.active .event-line-details {
+  display: block;
+}
+
+.event-line-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.event-line-stats {
+  display: flex;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.event-line-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg-input);
+  border-radius: var(--r-xs);
+  padding: 5px 7px;
+}
+
+.event-line-stat-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-label);
+}
+
+.event-line-stat-value {
+  font-size: 11px;
+  color: var(--text-primary);
+  font-weight: 600;
 }

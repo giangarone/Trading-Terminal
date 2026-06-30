@@ -1,10 +1,12 @@
 /* ---------- Market Scanner lives in js/market-scanner.js (full-screen workspace modal) ---------- */
 
-/* ---------- chart news visibility toggle ---------- */
+/* ---------- chart news + scheduled-event visibility toggle (one combined button) ---------- */
 const newsToggle = document.getElementById('newsToggle');
 const newsMarkerLayerEl = document.getElementById('newsMarkerLayer');
+const eventLineLayerEl = document.getElementById('eventLineLayer');
 function setNewsOverlay(show) {
   newsMarkerLayerEl.classList.toggle('show', show);
+  if (eventLineLayerEl) eventLineLayerEl.classList.toggle('show', show);
   newsToggle.classList.toggle('active', show);
 }
 if (newsToggle) newsToggle.addEventListener('click', () => {

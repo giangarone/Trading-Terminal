@@ -21,6 +21,7 @@
   const chart = document.getElementById('chartPlaceholder');
   const layer = document.getElementById('orderLineLayer');
   const newsMarkerLayer = document.getElementById('newsMarkerLayer');
+  const eventLineLayer = document.getElementById('eventLineLayer');
   const toastStack = document.getElementById('toastStack');
   const priceCanvas = document.getElementById('priceChartCanvas');
 
@@ -1629,6 +1630,8 @@
     const hrsStr = hrs % 1 === 0 ? hrs.toFixed(0) : hrs.toFixed(1);
     return mins > 0 ? hrsStr + 'h ago' : 'in ' + hrsStr + 'h';
   }
+  // Point-in-time news — each marker anchors to a past candle (idxFromEnd >= 0) and
+  // reads like a trade signal: bullish below the low, bearish above the high.
   // idxFromEnd values above ~60 sit just past the default-visible chart window on
   // first load — pan left to reveal them, same as scrolling back through older news.
   const newsEvents = [
@@ -1638,20 +1641,6 @@
       sentiment: 'bearish',
       headline: 'SEC Delays Ruling on Ether ETF Options Listing',
       description: 'The regulator pushed its decision window on the pending spot Ether ETF options proposal, citing the need for further review of market manipulation safeguards. Traders had priced in approval this week, raising the odds of near-term volatility.',
-    },
-    {
-      idxFromEnd: -8,
-      source: 'News',
-      sentiment: 'bullish',
-      headline: 'Ethereum Foundation Sets Fusaka Upgrade Mainnet Date',
-      description: 'The Foundation confirmed a mainnet activation date for the Fusaka upgrade, which bundles several EIPs aimed at boosting blob throughput and cutting L2 data costs. Validators are expected to begin client upgrades ahead of the rollout.',
-    },
-    {
-      idxFromEnd: -20,
-      source: 'News',
-      sentiment: 'bearish',
-      headline: 'FOMC Meeting Begins Tomorrow — Rate Decision Due Wednesday',
-      description: 'Markets are pricing in a 70% chance of a hold, with traders bracing for volatility around the 2:00 PM ET announcement and press conference.',
     },
     {
       idxFromEnd: 4,
@@ -1696,6 +1685,17 @@
       description: 'A hotter-than-forecast inflation print pressured rate-cut bets and sent risk assets lower.',
     },
   ].map(ev => Object.assign(ev, { timeLabel: newsTimeLabel(ev.idxFromEnd) }));
+  // Upcoming scheduled macro events — rendered as a neutral vertical line in the
+  // future area (negative idxFromEnd = ahead of the last candle).
+  const scheduledEvents = [
+    {
+      idxFromEnd: -14,
+      name: 'FOMC Rate Decision',
+      description: 'The Federal Reserve announces its decision on the benchmark interest rate, followed by Chair Powell’s press conference. Markets are pricing in a high probability the Committee holds rates steady.',
+      forecast: '5.50%',
+      previous: '5.50%',
+    },
+  ];
   let newsMarkerEls = null;
   let hoveringNewsMarker = false;
   function buildNewsMarkers() {
@@ -1704,9 +1704,14 @@
       const el = document.createElement('div');
       el.className = 'news-marker ' + ev.sentiment;
       const sentimentLabel = ev.sentiment === 'bullish' ? 'Bullish' : 'Bearish';
+      const sourceGlyph = ev.source === 'X'
+        ? '<span class="news-marker-x">X</span>'
+        : '<span class="material-symbols-outlined">article</span>';
       el.innerHTML =
-        '<div class="news-marker-guide"></div>' +
-        '<div class="news-marker-icon"><span class="material-symbols-outlined">article</span></div>' +
+        '<div class="news-marker-signal">' +
+        '<div class="news-marker-icon">' + sourceGlyph + '</div>' +
+        '<div class="news-marker-caret"></div>' +
+        '</div>' +
         '<div class="news-marker-popup">' +
         '<div class="news-bar"></div>' +
         '<div class="news-main">' +
@@ -1716,17 +1721,17 @@
         '</div>' +
         '</div>';
       newsMarkerLayer.appendChild(el);
-      const icon = el.querySelector('.news-marker-icon');
-      icon.addEventListener('mouseenter', () => {
+      const signal = el.querySelector('.news-marker-signal');
+      signal.addEventListener('mouseenter', () => {
         el.classList.add('hovered');
         hoveringNewsMarker = true;
         if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
       });
-      icon.addEventListener('mouseleave', () => {
+      signal.addEventListener('mouseleave', () => {
         el.classList.remove('hovered');
         hoveringNewsMarker = false;
       });
-      icon.addEventListener('click', (e) => {
+      signal.addEventListener('click', (e) => {
         e.stopPropagation();
         const wasActive = el.classList.contains('active');
         els.forEach(m => m.classList.remove('active'));
@@ -1739,19 +1744,91 @@
   document.addEventListener('click', () => {
     if (newsMarkerEls) newsMarkerEls.forEach(m => m.classList.remove('active'));
   });
-  function renderNewsMarkers(slot, baseIndexOffset, panX, plotW, ih, n) {
+  function renderNewsMarkers(slot, baseIndexOffset, panX, plotW, ih, n, h) {
     if (!newsMarkerLayer) return;
     if (!newsMarkerEls) newsMarkerEls = buildNewsMarkers();
     newsEvents.forEach((ev, i) => {
       const el = newsMarkerEls[i];
       const barIndex = (n - 1) - ev.idxFromEnd;
+      const bar = candleBars[barIndex];
       const x = slot * (barIndex - baseIndexOffset) + slot / 2 + panX;
-      if (x < -slot || x > plotW + slot) {
+      if (!bar || x < -slot || x > plotW + slot) {
         el.style.display = 'none';
-      } else {
-        el.style.display = '';
-        el.style.left = x + 'px';
+        return;
       }
+      // Anchor the signal to the candle: bullish below the low, bearish above the high.
+      const anchorY = ev.sentiment === 'bullish' ? priceToY(bar.low, h) : priceToY(bar.high, h);
+      el.style.display = '';
+      el.style.left = x + 'px';
+      el.style.setProperty('--anchor-y', clamp(anchorY, 14, ih - 14) + 'px');
+    });
+  }
+  let eventLineEls = null;
+  function buildEventLines() {
+    if (!eventLineLayer) return [];
+    const els = scheduledEvents.map(ev => {
+      const { date, time } = eventDateTime(ev.idxFromEnd);
+      const el = document.createElement('div');
+      el.className = 'event-line';
+      el.innerHTML =
+        '<div class="event-line-rule"></div>' +
+        '<div class="event-line-card">' +
+        '<div class="event-line-bar"></div>' +
+        '<div class="event-line-main">' +
+        '<div class="event-line-header">' +
+        '<div class="event-line-name">' + ev.name + '</div>' +
+        '<div class="event-line-meta"><span class="event-line-when">' + date + ' · ' + time + '</span><span class="event-line-countdown">' + eventCountdown(ev.idxFromEnd) + '</span></div>' +
+        '</div>' +
+        '<div class="event-line-details">' +
+        '<div class="event-line-desc">' + ev.description + '</div>' +
+        '<div class="event-line-stats">' +
+        '<div class="event-line-stat"><span class="event-line-stat-label">Forecast</span><span class="event-line-stat-value">' + ev.forecast + '</span></div>' +
+        '<div class="event-line-stat"><span class="event-line-stat-label">Previous</span><span class="event-line-stat-value">' + ev.previous + '</span></div>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+      eventLineLayer.appendChild(el);
+      const header = el.querySelector('.event-line-header');
+      header.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wasActive = el.classList.contains('active');
+        els.forEach(m => m.classList.remove('active'));
+        if (!wasActive) el.classList.add('active');
+      });
+      return el;
+    });
+    return els;
+  }
+  document.addEventListener('click', () => {
+    if (eventLineEls) eventLineEls.forEach(m => m.classList.remove('active'));
+  });
+  function renderEventLines(slot, baseIndexOffset, panX, plotW, ih, n) {
+    if (!eventLineLayer) return;
+    if (!eventLineEls) eventLineEls = buildEventLines();
+    const visible = [];
+    scheduledEvents.forEach((ev, i) => {
+      const el = eventLineEls[i];
+      const barIndex = (n - 1) - ev.idxFromEnd;
+      const x = slot * (barIndex - baseIndexOffset) + slot / 2 + panX;
+      if (x < 0 || x > plotW) {
+        el.style.display = 'none';
+        return;
+      }
+      el.style.display = '';
+      el.style.left = x + 'px';
+      el.style.setProperty('--rule-h', ih + 'px');
+      visible.push({ x, el });
+    });
+    // Cards are wider than the bar spacing, so stack collisions into vertical
+    // lanes (left-to-right), growing upward from the bottom anchor.
+    const cardW = 178, gap = 8, laneH = 38;
+    const laneRightEdge = [];
+    visible.sort((a, b) => a.x - b.x).forEach(({ x, el }) => {
+      let lane = 0;
+      while (lane < laneRightEdge.length && laneRightEdge[lane] > x - cardW / 2 - gap) lane++;
+      laneRightEdge[lane] = x + cardW / 2;
+      el.style.setProperty('--marker-bottom', (30 + lane * laneH) + 'px');
     });
   }
   function niceStep(raw) {
@@ -1764,6 +1841,23 @@
   function fmtBarTime(idxFromEnd) {
     const ts = Date.now() - idxFromEnd * BAR_INTERVAL_MIN * 60000;
     return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  function eventDateTime(idxFromEnd) {
+    const d = new Date(Date.now() - idxFromEnd * BAR_INTERVAL_MIN * 60000);
+    return {
+      date: d.toLocaleDateString([], { month: 'short', day: 'numeric' }),
+      time: d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+    };
+  }
+  function eventCountdown(idxFromEnd) {
+    const mins = -idxFromEnd * BAR_INTERVAL_MIN; // future events have negative idxFromEnd
+    if (mins <= 0) return 'now';
+    const hrs = mins / 60;
+    if (hrs < 24) {
+      const h = Math.round(hrs * 10) / 10;
+      return 'in ' + (h % 1 === 0 ? h.toFixed(0) : h.toFixed(1)) + 'h';
+    }
+    return 'in ' + Math.round(hrs / 24) + 'd';
   }
   let secondaryPanes = []; // [{canvas, container}] — live panes other than the primary
   window.ttRepaintChart = () => {
@@ -1845,7 +1939,10 @@
       if (x < 0 || x > plotW) continue;
       ctx.fillText(fmtBarTime((VISIBLE_BARS - 1) - vi), x, ih + 7);
     }
-    if (isPrimary) renderNewsMarkers(slot, baseIndexOffset, panX, plotW, ih, n);
+    if (isPrimary) {
+      renderNewsMarkers(slot, baseIndexOffset, panX, plotW, ih, n, h);
+      renderEventLines(slot, baseIndexOffset, panX, plotW, ih, n);
+    }
 
     /* ---- axis divider lines ---- */
     ctx.strokeStyle = axisLineColor;
