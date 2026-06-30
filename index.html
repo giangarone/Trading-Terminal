@@ -23,9 +23,9 @@
   <link rel="stylesheet" href="css/quick-trade.css?v=6">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=17">
-  <link rel="stylesheet" href="css/market-scanner.css?v=21">
+  <link rel="stylesheet" href="css/market-scanner.css?v=23">
   <link rel="stylesheet" href="css/indicators.css?v=8">
-  <link rel="stylesheet" href="css/chart-settings.css?v=21">
+  <link rel="stylesheet" href="css/chart-settings.css?v=22">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
 </head>
 
@@ -278,6 +278,8 @@
                 Updates</button>
               <button class="cs-nav-item" data-cs-tab="alerts"><span
                   class="material-symbols-outlined">notifications</span>Alerts</button>
+              <button class="cs-nav-item" data-cs-tab="news"><span
+                  class="material-symbols-outlined">newspaper</span>News & Events</button>
               <button class="cs-nav-item" data-cs-tab="hotkeys"><span
                   class="material-symbols-outlined">keyboard</span>Hotkeys</button>
             </div>
@@ -847,6 +849,152 @@
                 <p>Keyboard shortcuts.</p>
               </div>
               <div class="cs-empty">No settings here yet</div>
+            </div>
+
+            <div class="cs-pane" data-cs-pane="news">
+              <div class="cs-pane-head">
+                <h2>News & Events</h2>
+                <p>Control which news and events appear on the chart and how they are displayed.</p>
+              </div>
+
+              <div class="cs-grid">
+                <div class="cs-col">
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Chart Display</span>
+                    </div>
+
+                    <div class="cs-field" style="margin-bottom:14px;">
+                      <label>Marker Position</label>
+                      <div class="cs-segmented" id="csNewsPositionGroup">
+                        <button type="button" class="cs-seg-btn active" data-mode="by-sentiment">By Sentiment</button>
+                        <button type="button" class="cs-seg-btn" data-mode="always-above">Always Above</button>
+                        <button type="button" class="cs-seg-btn" data-mode="always-below">Always Below</button>
+                      </div>
+                    </div>
+
+                    <div class="cs-field" style="margin-bottom:14px;">
+                      <label>Sentiment Filter</label>
+                      <div class="cs-segmented" id="csNewsSentimentGroup">
+                        <button type="button" class="cs-seg-btn active" data-mode="all">All</button>
+                        <button type="button" class="cs-seg-btn" data-mode="bullish">Bullish Only</button>
+                        <button type="button" class="cs-seg-btn" data-mode="bearish">Bearish Only</button>
+                      </div>
+                    </div>
+
+                    <div class="cs-field" style="margin-bottom:0;">
+                      <label>Time Range</label>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="csNewsTimeRange"><span
+                          class="cs-select-label">All Time</span><span
+                          class="material-symbols-outlined">expand_more</span></div>
+                      <select id="csNewsTimeRange" style="display:none;">
+                        <option value="6h">Last 6 Hours</option>
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="3d">Last 3 Days</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="all" selected>All Time</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Importance</span>
+                    </div>
+                    <div class="cs-switch-row active" id="csNewsImpHigh">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">High Importance</span>
+                        <span class="cs-switch-desc">Major market-moving events and breaking news.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle High Importance"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csNewsImpMedium">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Medium Importance</span>
+                        <span class="cs-switch-desc">Notable events with moderate market impact.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Medium Importance"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csNewsImpLow">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Low Importance</span>
+                        <span class="cs-switch-desc">Minor events with limited market impact.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Low Importance"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                  </div>
+
+                </div>
+                <div class="cs-col">
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Event Types</span>
+                    </div>
+                    <label class="cs-checkbox-row">
+                      <span class="chk-box checked" id="csNewsTypeNews"><span
+                          class="material-symbols-outlined">check</span></span>
+                      News
+                    </label>
+                    <label class="cs-checkbox-row">
+                      <span class="chk-box checked" id="csNewsTypeSocial"><span
+                          class="material-symbols-outlined">check</span></span>
+                      Social Media (e.g. Tweets)
+                    </label>
+                    <label class="cs-checkbox-row">
+                      <span class="chk-box checked" id="csNewsTypeGeo"><span
+                          class="material-symbols-outlined">check</span></span>
+                      Geopolitical Events
+                    </label>
+                    <label class="cs-checkbox-row">
+                      <span class="chk-box checked" id="csNewsTypeCorp"><span
+                          class="material-symbols-outlined">check</span></span>
+                      Corporate News
+                    </label>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Behavior</span>
+                    </div>
+
+                    <div class="cs-field" style="margin-bottom:14px;">
+                      <label>Max Events on Chart</label>
+                      <div class="price-stepper cs-price-stepper">
+                        <input type="text" id="csNewsMaxEvents" value="20" data-step="1">
+                        <div class="price-stepper-arrows">
+                          <button type="button" class="ps-up" data-target="csNewsMaxEvents"><span
+                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                          <button type="button" class="ps-down" data-target="csNewsMaxEvents"><span
+                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="cs-switch-row active" id="csNewsShowPast">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Show Past Events</span>
+                        <span class="cs-switch-desc">Display historical news markers on past candles.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Show Past Events"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csNewsShowUpcoming">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Show Upcoming Events</span>
+                        <span class="cs-switch-desc">Display scheduled future events such as FOMC.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Show Upcoming Events"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
             </div>
 
             <div class="cs-pane active" data-cs-pane="trademgmt">
@@ -4878,7 +5026,7 @@
   <script src="js/workspace.js?v=6"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=82"></script>
+  <script src="js/app.js?v=86"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=11"></script>
   <script src="js/market-scanner.js?v=9"></script>

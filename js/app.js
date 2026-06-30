@@ -45,7 +45,17 @@
     atrStop: { length: 14, multiplier: 2.0, timeframe: 'current', updateFreq: 'newbar', dynamic: true },
     trailingTp: { activation: 'tp1', activationCustomR: 1, method: 'fixed', distanceValue: 20, distanceUnit: 'ticks' },
     globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true, lockRR: false },
-    positionDefaults: { orderType: 'limit' }
+    positionDefaults: { orderType: 'limit' },
+    news: {
+      position: 'by-sentiment',
+      sentimentFilter: 'all',
+      timeRange: 'all',
+      maxEvents: 20,
+      showPast: true,
+      showUpcoming: true,
+      importance: { high: true, medium: true, low: true },
+      types: { news: true, social: true, geopolitical: true, corporate: true }
+    }
   };
   /* maps Position Defaults' generic order-type options to the actual order type strings used by the order object */
   const PD_ORDER_TYPE_MAP = { market: 'Market', limit: 'Limit', stop: 'Stop Market', mit: 'MIT' };
@@ -57,6 +67,16 @@
         const merged = Object.assign(cloneCsDefaults(), JSON.parse(raw));
         // 'Points' was removed as a trailing-distance unit — migrate any persisted value to %
         if (merged.trailingStop && merged.trailingStop.distanceUnit === 'points') merged.trailingStop.distanceUnit = 'percent';
+        // Migrate old news type keys (breaking/marketMoving → news) and remove removed settings
+        if (merged.news) {
+          if (!merged.news.types) merged.news.types = {};
+          if (merged.news.types.news === undefined) {
+            merged.news.types.news = !!(merged.news.types.breaking !== false && merged.news.types.marketMoving !== false);
+            delete merged.news.types.breaking;
+            delete merged.news.types.marketMoving;
+          }
+          delete merged.news.showCatalysts;
+        }
         return merged;
       }
     } catch (e) { /* ignore corrupt storage */ }
@@ -1710,6 +1730,8 @@
       idxFromEnd: 14,
       source: 'News',
       sentiment: 'bearish',
+      importance: 'high',
+      type: 'news',
       headline: 'SEC Delays Ruling on Ether ETF Options Listing',
       description: 'The regulator pushed its decision window on the pending spot Ether ETF options proposal, citing the need for further review of market manipulation safeguards. Traders had priced in approval this week, raising the odds of near-term volatility.',
     },
@@ -1717,6 +1739,8 @@
       idxFromEnd: 4,
       source: 'X',
       sentiment: 'bullish',
+      importance: 'medium',
+      type: 'social',
       headline: '@realDonaldTrump: "We are going to make the United States the bitcoin and crypto capital of the world!"',
       description: 'Pro-crypto rhetoric reignites optimism around friendlier U.S. digital asset policy.',
     },
@@ -1724,13 +1748,26 @@
       idxFromEnd: 9,
       source: 'News',
       sentiment: 'bullish',
+      importance: 'high',
+      type: 'news',
       headline: 'Fed Chair Signals Openness to September Rate Cut',
       description: 'Comments at a policy forum boosted bets on imminent easing, lifting risk assets broadly.',
+    },
+    {
+      idxFromEnd: 20,
+      source: 'X',
+      sentiment: 'bullish',
+      importance: 'high',
+      type: 'social',
+      headline: '@saylor: "MicroStrategy just added 10,000 more Bitcoin. Institutional conviction has never been higher."',
+      description: 'Saylor\'s latest purchase announcement reinforces the institutional demand narrative, driving fresh optimism across crypto markets.',
     },
     {
       idxFromEnd: 27,
       source: 'X',
       sentiment: 'bullish',
+      importance: 'medium',
+      type: 'social',
       headline: '@elonmusk: "Had a constructive call with the SEC on crypto regulatory clarity."',
       description: 'Traders read the comment as a sign friendlier rules are coming.',
     },
@@ -1738,6 +1775,8 @@
       idxFromEnd: 42,
       source: 'News',
       sentiment: 'bullish',
+      importance: 'high',
+      type: 'news',
       headline: 'Nonfarm Payrolls Crush Estimates, Unemployment Falls',
       description: 'A blowout jobs report initially weighed on rate-cut bets, but risk assets recovered as the soft-landing narrative held.',
     },
@@ -1745,6 +1784,8 @@
       idxFromEnd: 58,
       source: 'X',
       sentiment: 'bearish',
+      importance: 'high',
+      type: 'geopolitical',
       headline: '@realDonaldTrump: "China is not living up to the deal. Tariffs going up substantially!"',
       description: 'Tariff-escalation rhetoric pressured risk assets across the board.',
     },
@@ -1752,6 +1793,8 @@
       idxFromEnd: 78,
       source: 'News',
       sentiment: 'bearish',
+      importance: 'high',
+      type: 'news',
       headline: 'US Core CPI Comes In Above Expectations',
       description: 'A hotter-than-forecast inflation print pressured rate-cut bets and sent risk assets lower.',
     },
@@ -1767,69 +1810,154 @@
   ];
   let newsMarkerEls = null;
   let hoveringNewsMarker = false;
+
+  const NEWS_TYPE_LABELS = {
+    'news':          'News',
+    'social':        'Social',
+    'geopolitical':  'Geopolitical',
+    'corporate':     'Corporate',
+  };
+
   function buildNewsMarkers() {
     if (!newsMarkerLayer) return [];
     const els = newsEvents.map(ev => {
       const el = document.createElement('div');
       el.className = 'news-marker ' + ev.sentiment;
-      const sentimentLabel = ev.sentiment === 'bullish' ? 'Bullish' : 'Bearish';
-      const sourceGlyph = ev.source === 'X'
-        ? '<span class="news-marker-x">X</span>'
-        : '<span class="material-symbols-outlined">article</span>';
+
+      const iconGlyph = '<span class="material-symbols-outlined">article</span>';
+
+      const sentimentIcon = ev.sentiment === 'bearish' ? 'arrow_downward' : 'arrow_upward';
+      const categoryLabel = NEWS_TYPE_LABELS[ev.type] || 'News';
+
       el.innerHTML =
         '<div class="news-marker-signal">' +
-        '<div class="news-marker-icon">' + sourceGlyph + '</div>' +
+        '<div class="news-marker-icon">' + iconGlyph + '</div>' +
         '<div class="news-marker-caret"></div>' +
         '</div>' +
         '<div class="news-marker-popup">' +
         '<div class="news-bar"></div>' +
         '<div class="news-main">' +
-        '<div class="news-row-top"><span class="news-sentiment">' + sentimentLabel + '</span><span class="news-time">' + ev.timeLabel + '</span></div>' +
+        '<div class="news-row-top">' +
+        '<span class="news-category ' + ev.sentiment + '">' +
+        '<span class="material-symbols-outlined news-sentiment-icon">' + sentimentIcon + '</span>' +
+        categoryLabel + '</span>' +
+        '<span class="news-time">' + ev.timeLabel + '</span>' +
+        '</div>' +
         '<div class="news-headline">' + ev.headline + '</div>' +
         '<div class="news-desc">' + ev.description + '</div>' +
         '</div>' +
         '</div>';
+
       newsMarkerLayer.appendChild(el);
+
+      const vline = document.createElement('div');
+      vline.className = 'news-vline ' + ev.sentiment;
+      newsMarkerLayer.appendChild(vline);
+      el._vline = vline;
+
       const signal = el.querySelector('.news-marker-signal');
+
       signal.addEventListener('mouseenter', () => {
         el.classList.add('hovered');
+        vline.classList.add('show');
         hoveringNewsMarker = true;
         if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
       });
       signal.addEventListener('mouseleave', () => {
         el.classList.remove('hovered');
+        if (!el.classList.contains('active')) vline.classList.remove('show');
         hoveringNewsMarker = false;
       });
       signal.addEventListener('click', (e) => {
         e.stopPropagation();
         const wasActive = el.classList.contains('active');
-        els.forEach(m => m.classList.remove('active'));
-        if (!wasActive) el.classList.add('active');
+        els.forEach(m => {
+          m.classList.remove('active');
+          if (m._vline && !m.classList.contains('hovered')) m._vline.classList.remove('show');
+        });
+        if (!wasActive) {
+          el.classList.add('active');
+          vline.classList.add('show');
+        }
       });
+
       return el;
     });
     return els;
   }
   document.addEventListener('click', () => {
-    if (newsMarkerEls) newsMarkerEls.forEach(m => m.classList.remove('active'));
+    if (newsMarkerEls) newsMarkerEls.forEach(m => {
+      m.classList.remove('active');
+      if (m._vline && !m.classList.contains('hovered')) m._vline.classList.remove('show');
+    });
   });
   function renderNewsMarkers(slot, baseIndexOffset, panX, plotW, ih, n, h) {
     if (!newsMarkerLayer) return;
     if (!newsMarkerEls) newsMarkerEls = buildNewsMarkers();
+
+    const ns = (chartSettings && chartSettings.news) ? chartSettings.news : CS_DEFAULTS.news;
+    const timeRangeHours = { '6h': 6, '24h': 24, '3d': 72, '7d': 168, 'all': Infinity }[ns.timeRange] ?? Infinity;
+
+    // First pass: determine which indices pass all filters, track past events for maxEvents trimming.
+    const filteredIndices = new Set();
+    const pastCandidates = [];
+
+    newsEvents.forEach((ev, i) => {
+      if (ev.idxFromEnd >= 0 && !ns.showPast) return;
+      if (ev.idxFromEnd < 0 && !ns.showUpcoming) return;
+      if (ns.sentimentFilter !== 'all' && ev.sentiment !== ns.sentimentFilter) return;
+      if (!ns.importance[ev.importance]) return;
+      if (!ns.types[ev.type]) return;
+      if (ev.idxFromEnd >= 0) {
+        const ageHours = (ev.idxFromEnd * BAR_INTERVAL_MIN) / 60;
+        if (ageHours > timeRangeHours) return;
+        pastCandidates.push({ i, age: ev.idxFromEnd });
+      } else {
+        filteredIndices.add(i);
+      }
+    });
+
+    pastCandidates.sort((a, b) => a.age - b.age);
+    pastCandidates.slice(0, ns.maxEvents).forEach(({ i }) => filteredIndices.add(i));
+
+    // Second pass: position or hide each marker.
+    const posMode = ns.position || 'by-sentiment';
     newsEvents.forEach((ev, i) => {
       const el = newsMarkerEls[i];
+      const vline = el._vline;
+
+      if (!filteredIndices.has(i)) {
+        el.style.display = 'none';
+        if (vline) vline.classList.remove('show');
+        return;
+      }
+
       const barIndex = (n - 1) - ev.idxFromEnd;
       const bar = candleBars[barIndex];
       const x = slot * (barIndex - baseIndexOffset) + slot / 2 + panX;
+
       if (!bar || x < -slot || x > plotW + slot) {
         el.style.display = 'none';
+        if (vline) vline.classList.remove('show');
         return;
       }
-      // Anchor the signal to the candle: bullish below the low, bearish above the high.
-      const anchorY = ev.sentiment === 'bullish' ? priceToY(bar.low, h) : priceToY(bar.high, h);
+
+      el.classList.remove('pos-above', 'pos-below');
+      let anchorY;
+      if (posMode === 'always-above') {
+        anchorY = priceToY(bar.high, h);
+        el.classList.add('pos-above');
+      } else if (posMode === 'always-below') {
+        anchorY = priceToY(bar.low, h);
+        el.classList.add('pos-below');
+      } else {
+        anchorY = ev.sentiment === 'bullish' ? priceToY(bar.low, h) : priceToY(bar.high, h);
+      }
+
       el.style.display = '';
       el.style.left = x + 'px';
       el.style.setProperty('--anchor-y', clamp(anchorY, 14, ih - 14) + 'px');
+      if (vline) vline.style.left = x + 'px';
     });
   }
   let eventLineEls = null;
@@ -3331,6 +3459,8 @@
   bindSimpleSegmented('ctCrossIsolatedGroup');
   bindSimpleSegmented('ctDisplayModeGroup');
   bindSimpleSegmented('pdCrossIsolatedGroup');
+  bindSimpleSegmented('csNewsPositionGroup');
+  bindSimpleSegmented('csNewsSentimentGroup');
 
   /* ---------- Alert email update button ---------- */
   const alertEmailSave = document.getElementById('alertEmailSave');
@@ -3600,6 +3730,21 @@
 
     document.getElementById('pdOrderType').value = s.positionDefaults.orderType;
 
+    const sn = s.news || CS_DEFAULTS.news;
+    document.querySelectorAll('#csNewsPositionGroup .cs-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === sn.position));
+    document.querySelectorAll('#csNewsSentimentGroup .cs-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === sn.sentimentFilter));
+    document.getElementById('csNewsTimeRange').value = sn.timeRange;
+    document.getElementById('csNewsMaxEvents').value = sn.maxEvents;
+    document.getElementById('csNewsImpHigh').classList.toggle('active', sn.importance.high);
+    document.getElementById('csNewsImpMedium').classList.toggle('active', sn.importance.medium);
+    document.getElementById('csNewsImpLow').classList.toggle('active', sn.importance.low);
+    document.getElementById('csNewsTypeNews').classList.toggle('checked', sn.types.news);
+    document.getElementById('csNewsTypeSocial').classList.toggle('checked', sn.types.social);
+    document.getElementById('csNewsTypeGeo').classList.toggle('checked', sn.types.geopolitical);
+    document.getElementById('csNewsTypeCorp').classList.toggle('checked', sn.types.corporate);
+    document.getElementById('csNewsShowPast').classList.toggle('active', sn.showPast);
+    document.getElementById('csNewsShowUpcoming').classList.toggle('active', sn.showUpcoming);
+
     csUpdateConditionalFields();
     refreshAllCsDropdownLabels(document.getElementById('chartSettingsBackdrop'));
   }
@@ -3643,8 +3788,28 @@
       },
       positionDefaults: {
         orderType: document.getElementById('pdOrderType').value,
-      }
+      },
+      news: {
+        position: document.querySelector('#csNewsPositionGroup .cs-seg-btn.active')?.dataset.mode || 'by-sentiment',
+        sentimentFilter: document.querySelector('#csNewsSentimentGroup .cs-seg-btn.active')?.dataset.mode || 'all',
+        timeRange: document.getElementById('csNewsTimeRange').value,
+        maxEvents: parseInt(document.getElementById('csNewsMaxEvents').value) || 20,
+        showPast: document.getElementById('csNewsShowPast').classList.contains('active'),
+        showUpcoming: document.getElementById('csNewsShowUpcoming').classList.contains('active'),
+        importance: {
+          high: document.getElementById('csNewsImpHigh').classList.contains('active'),
+          medium: document.getElementById('csNewsImpMedium').classList.contains('active'),
+          low: document.getElementById('csNewsImpLow').classList.contains('active'),
+        },
+        types: {
+          news: document.getElementById('csNewsTypeNews').classList.contains('checked'),
+          social: document.getElementById('csNewsTypeSocial').classList.contains('checked'),
+          geopolitical: document.getElementById('csNewsTypeGeo').classList.contains('checked'),
+          corporate: document.getElementById('csNewsTypeCorp').classList.contains('checked'),
+        },
+      },
     };
+    scheduleDrawPriceChart();
     persistChartSettingsIfEnabled();
   }
   const csSaveBtn = document.getElementById('csSaveBtn');
