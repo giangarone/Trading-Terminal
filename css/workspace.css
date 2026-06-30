@@ -922,7 +922,8 @@ table.bp-table tr.total-row td {
 }
 
 .pos-quick-btn.pos-quick-close:hover {
-  background: var(--short-border);
+  filter: brightness(1.08);
+  border: 1px solid var(--short);
 }
 
 /* ── Actions cell ────────────────────────────────────────── */
@@ -1158,8 +1159,8 @@ table.bp-table tr.total-row td {
 }
 
 .pos-close-primary:hover {
-  background: var(--short-dim);
-  border-color: var(--short-border);
+  filter: brightness(1.08);
+  border: 1px solid var(--short);
 }
 
 /* Key-value grid inside detail sections */

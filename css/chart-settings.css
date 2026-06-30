@@ -835,7 +835,7 @@
 }
 
 .bc-accounts-head {
-  margin-bottom: 14px;
+  margin-bottom: 24px;
 }
 
 .bc-count-badge {
@@ -866,7 +866,7 @@
 }
 
 .bc-connect-btn:hover {
-  opacity: .85;
+  filter: brightness(1.08);
 }
 
 .bc-connect-btn .material-symbols-outlined {
