@@ -87,6 +87,7 @@
     { symbol: 'NQU5', side: 'sell', qty: 1, price: 18560.00, pnl: 4000.00, role: 'close', type: 'Limit (TP)', time: '10:41:55 AM', fee: 1.25 },
     { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4495.00, pnl: 425.00, role: 'close', type: 'Market', time: '11:12:40 AM', fee: 1.25 },
   ];
+  window.tradeHistory = tradeHistory; // read by the Trading Journal (workspace.js) to build real journal entries
 
   /* ---------- helpers ---------- */
   function fmt(n, dec) {
@@ -761,6 +762,7 @@
         const closePnl = (closePrice - order.entry) * order.qty * dir * POINT_VALUE;
         orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
         tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: order.qty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
+        window.refreshTodayJournalCard();
         window.closePositionPct('ETHUSD', 100);
         showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position closed at ' + fmt(closePrice), 'check_circle');
       } else {
@@ -832,6 +834,7 @@
     const slPnl = (order.sl.price - order.entry) * order.qty * dir * POINT_VALUE;
     orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, status: 'filled', type: 'Stop (SL)', time: nowTimeStr(), pnl: slPnl });
     tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, pnl: slPnl, role: 'close', type: 'Stop (SL)', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
+    window.refreshTodayJournalCard();
     window.closePositionPct('ETHUSD', 100);
     showToast('Stop loss hit at ' + fmt(order.sl.price) + ' — position closed', 'stop_circle');
     order = null;
@@ -870,6 +873,7 @@
         : 'TP' + (idx + 1) + ' hit at ' + fmt(tp.price);
       orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: exitPrice, status: 'filled', type: tradeType, time: nowTimeStr(), pnl: tpPnl });
       tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: exitPrice, pnl: tpPnl, role: 'close', type: tradeType, time: nowTimeStr(), fee: tpQty * QT_FEE_PER_CONTRACT });
+      window.refreshTodayJournalCard();
       window.closePositionPct('ETHUSD', tp.pct);
       showToast(toastMsg, 'check_circle');
       if (order.sl && order.sl.beTpId === tp.id && !order.sl.beActive) {
@@ -4409,5 +4413,6 @@
   renderOrderHistory();
   renderTradeHistory();
   renderAlerts();
+  window.refreshTodayJournalCard(); // sync the Trading Journal with the seeded trade history on load
 
 })();

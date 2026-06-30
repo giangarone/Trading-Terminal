@@ -27,15 +27,41 @@
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitAsk(); } });
 })();
 
+/* ---------- trading journal: shared real-trade data helpers ----------
+   Quick trades and chart trades both fill through app.js's order engine, which
+   appends each closed round-trip to window.tradeHistory (role: 'close', with a
+   realized pnl). The journal treats one such entry as one logged trade. Pieces
+   below register a refresh callback so they all re-sync when app.js reports a
+   new close via window.refreshTodayJournalCard(). */
+function getJournalTrades() {
+  return (window.tradeHistory || []).filter(t => t.role === 'close');
+}
+function computeJournalStats(trades) {
+  if (!trades.length) return { pnl: 0, trades: 0, winRate: 0, best: 0, worst: 0 };
+  const pnls = trades.map(t => t.pnl);
+  const wins = pnls.filter(p => p >= 0).length;
+  return {
+    pnl: pnls.reduce((sum, p) => sum + p, 0),
+    trades: trades.length,
+    winRate: Math.round((wins / trades.length) * 100),
+    best: Math.max(...pnls),
+    worst: Math.min(...pnls)
+  };
+}
+const journalRefreshFns = [];
+function registerJournalRefresh(fn) { journalRefreshFns.push(fn); }
+window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => fn()); };
+
 /* ---------- trading journal: day selector ---------- */
 (function () {
   const journalDays = [
-    { label: 'Today', pnl: 2975.00, trades: 7, winRate: 71, best: 1420.00, worst: -310.00 },
+    { label: 'Today', pnl: 0, trades: 0, winRate: 0, best: 0, worst: 0 },
     { label: 'Jun 24', pnl: 1180.00, trades: 6, winRate: 67, best: 800.00, worst: -220.00 },
     { label: 'Jun 23', pnl: -640.00, trades: 5, winRate: 40, best: 510.00, worst: -560.00 },
     { label: 'Jun 20', pnl: 0.00, trades: 0, winRate: 0, best: 0.00, worst: 0.00 },
     { label: 'Jun 19', pnl: 2110.00, trades: 9, winRate: 78, best: 990.00, worst: -180.00 },
   ];
+  let selectedDayIdx = 0;
   const tjDaySelect = document.getElementById('tjDaySelect');
   const tjDayMenu = document.getElementById('tjDayMenu');
   const tjDayLabel = document.getElementById('tjDayLabel');
@@ -80,11 +106,17 @@
   });
   tjDayMenu.querySelectorAll('.pop-item').forEach(item => {
     item.addEventListener('click', () => {
+      selectedDayIdx = parseInt(item.dataset.day);
       tjDayMenu.querySelectorAll('.pop-item').forEach(i => i.classList.remove('selected'));
       item.classList.add('selected');
-      showJournalDay(parseInt(item.dataset.day));
+      showJournalDay(selectedDayIdx);
       closeAllPopoversLocal();
     });
+  });
+
+  registerJournalRefresh(function () {
+    journalDays[0] = Object.assign({ label: 'Today' }, computeJournalStats(getJournalTrades()));
+    if (selectedDayIdx === 0) showJournalDay(0);
   });
 })();
 
@@ -150,6 +182,17 @@
     return trades.sort((a, b) => a.time < b.time ? -1 : 1);
   }
 
+  /* tradeHistory close entries record the side of the closing leg, not the
+     position — flip it to show the position direction the journal trade represents. */
+  function realTodayTrades() {
+    return getJournalTrades().slice().reverse().map(t => ({
+      time: t.time,
+      sym: t.symbol,
+      side: t.side === 'sell' ? 'Long' : 'Short',
+      pnl: t.pnl
+    }));
+  }
+
   function showSidebarDay(data) {
     const isToday = data.day === today.getDate() && viewYear === today.getFullYear() && viewMonth === today.getMonth();
     sidebarDate.textContent = data.dateLbl + ', ' + viewYear;
@@ -170,8 +213,9 @@
 
     sidebarTradesCount.textContent = data.trades + ' trade' + (data.trades !== 1 ? 's' : '');
 
-    const rand = mulberry32(8800 + viewYear * 100 + viewMonth * 31 + data.day);
-    const tradeList = generateTrades(data, rand);
+    const tradeList = isToday
+      ? realTodayTrades()
+      : generateTrades(data, mulberry32(8800 + viewYear * 100 + viewMonth * 31 + data.day));
     sidebarTradeList.innerHTML = tradeList.map(t => {
       return '<div class="tj-trade-row">' +
         '<span class="tj-trade-time">' + t.time + '</span>' +
@@ -249,9 +293,13 @@
         let data = null;
 
         if (isToday) {
-          // Use the same data shown on the small card widget
-          const pnl = 2975, trades = 7, wins = 5;
-          data = { day, pnl, trades, wins, losses: 2, winRate: 71, dateLbl: MONTH_NAMES[viewMonth].slice(0, 3) + ' ' + day };
+          // Real trades placed this session, same source as the small card widget
+          const realTrades = getJournalTrades();
+          const stats = computeJournalStats(realTrades);
+          if (stats.trades > 0) {
+            const wins = realTrades.filter(t => t.pnl >= 0).length;
+            data = { day, pnl: stats.pnl, trades: stats.trades, wins, losses: stats.trades - wins, winRate: stats.winRate, dateLbl: MONTH_NAMES[viewMonth].slice(0, 3) + ' ' + day };
+          }
         } else {
           const hasTrades = rand() > 0.22;
           if (hasTrades) {
@@ -347,6 +395,12 @@
   prevBtn.addEventListener('click', () => { viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; } buildCalendar(); });
   nextBtn.addEventListener('click', () => { viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; } buildCalendar(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && backdrop.classList.contains('show')) closeModal(); });
+
+  registerJournalRefresh(function () {
+    if (!backdrop.classList.contains('show')) return;
+    if (viewYear !== today.getFullYear() || viewMonth !== today.getMonth()) return;
+    buildCalendar();
+  });
 
   /* Drag the panel by the header */
   (function enableDrag() {
