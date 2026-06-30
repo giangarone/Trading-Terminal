@@ -101,12 +101,6 @@
   pointer-events: none;
 }
 
-/* The trailing-TP popover holds a single Offset field; trim the shared settings padding so it
-   reads as one compact field inside the menu's own 8px padding. */
-.tp-trail-menu .ol-mode-settings {
-  padding: 4px 4px 2px;
-}
-
 .ol-line.ghost {
   border-color: var(--ghost-border);
 }

@@ -250,6 +250,10 @@
   margin: 6px 0;
 }
 
+#tjOpenModal {
+  margin-top: 16px;
+}
+
 .news-filter {
   font-size: 10.5px;
   color: var(--text-secondary);
