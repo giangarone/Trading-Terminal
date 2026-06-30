@@ -16,7 +16,7 @@
   const MARGIN_PER_CONTRACT = 13200; // mock margin / contract (ballpark ES futures margin)
   const BUYING_POWER = 87643.20;   // matches Order Entry panel
   const ACCOUNT_BALANCE = 20000;   // mock, used for % of Account mode
-  const TP_TRAIL_DEFAULT = { offsetValue: 0.01, offsetUnit: 'percent' }; // seed for a TP's trailing offset
+  const TP_TRAIL_DEFAULT = { offsetValue: 0.05, offsetUnit: 'percent' }; // seed for a TP's trailing offset
 
   const chart = document.getElementById('chartPlaceholder');
   const layer = document.getElementById('orderLineLayer');
@@ -950,10 +950,13 @@
     return gapPts / refPrice * 100; // percent
   }
   /* short label for an offset, e.g. "0.25%" or "20t" */
+  function formatTpOffset(value, unit) {
+    if (unit === 'ticks') return Math.round(value) + 't';
+    return (+value).toFixed(2) + '%';
+  }
   function tpOffsetLabel(tp) {
     const cfg = ensureTpTrailOffset(tp);
-    if (cfg.offsetUnit === 'ticks') return Math.round(cfg.offsetValue) + 't';
-    return (+cfg.offsetValue).toFixed(2) + '%';
+    return formatTpOffset(cfg.offsetValue, cfg.offsetUnit);
   }
   function tpBadgeText(tp) { return 'Trail ' + tpOffsetLabel(tp); }
   /* live-patch a trailing-TP badge label + its Offset line during a drag (no full re-render) */
@@ -1522,7 +1525,7 @@
       floatChip.className = 'ol-chip ' + kind + ' ol-drag-float';
       floatChip.style.left = originX + 'px';
       floatChip.innerHTML =
-        '<span class="material-symbols-outlined ol-chip-warning">warning</span>' +
+        '<span class="material-symbols-outlined ol-chip-warning">error</span>' +
         '<span class="ol-drag-float-label">' + kind.toUpperCase() + '</span>' +
         '<span class="ol-drag-float-amt"></span>';
       layer.appendChild(floatChip);
@@ -2185,7 +2188,7 @@
         const tpSign = tpNet >= 0 ? '+' : '';
         row.innerHTML =
           modeBtnHtml +
-          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">warning</span>TP' + (idx + 1) + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="ol-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span>' + badgeHtml + '</span>' +
+          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">error</span>TP' + (idx + 1) + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="ol-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span>' + badgeHtml + '</span>' +
           '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
           '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
           '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" title="Remove TP"><span class="material-symbols-outlined">delete</span></span>';
@@ -2206,7 +2209,10 @@
 
           offsetLabelEl = document.createElement('span');
           offsetLabelEl.className = 'ol-offset-label';
-          offsetLabelEl.textContent = 'TP' + (idx + 1) + ' Trail';
+          offsetLabelEl.innerHTML =
+            '<span class="ol-offset-label-text">TP' + (idx + 1) + ' Trail</span>' +
+            '<button type="button" class="ol-offset-remove" data-tp-offset-remove="' + tp.id + '" title="Disable trailing" aria-label="Disable">' +
+            '<span class="material-symbols-outlined">close</span></button>';
           offsetLabelEl.style.top = oy + 'px';
           layer.appendChild(offsetLabelEl);
         }
@@ -2277,11 +2283,44 @@
           e.stopPropagation();
           openEditExitModal(tp.id, e.currentTarget.getBoundingClientRect(), e.currentTarget);
         });
+        // The Trail button: a plain click enables trailing at the default offset; dragging it
+        // instead sets the offset in one gesture, with a live offset line + label as feedback.
         const tpTrailBtn = row.querySelector('[data-tp-trail]');
-        if (tpTrailBtn) tpTrailBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          selectTpTrail(tp.id);
-        });
+        if (tpTrailBtn) {
+          let dragLine = null, dragLabel = null;
+          function onTrailBtnDrag(cy, h) {
+            if (!dragLine) {
+              dragLine = document.createElement('div');
+              dragLine.className = 'ol-line offset';
+              layer.appendChild(dragLine);
+              dragLabel = document.createElement('span');
+              dragLabel.className = 'ol-offset-label';
+              layer.appendChild(dragLabel);
+            }
+            dragLine.style.top = cy + 'px';
+            dragLabel.style.top = cy + 'px';
+            const gapPts = Math.abs(tp.price - roundTick(yToPrice(cy, h)));
+            const cfg = ensureTpTrailOffset(tp);
+            const v = tpGapToOffset(gapPts, tp.price, cfg.offsetUnit);
+            dragLabel.innerHTML = '<span class="ol-offset-label-text">TP' + (idx + 1) + ' Trail · ' + formatTpOffset(v, cfg.offsetUnit) + '</span>';
+            drawPriceChart();
+          }
+          function onTrailBtnDrop(cy, h) {
+            const gapPts = Math.abs(tp.price - roundTick(yToPrice(cy, h)));
+            const cfg = ensureTpTrailOffset(tp);
+            const params = tpOffsetParams(cfg.offsetUnit);
+            let v = tpGapToOffset(gapPts, tp.price, cfg.offsetUnit);
+            v = Math.max(params.min, Math.min(params.max, +v.toFixed(params.dp)));
+            cfg.offsetValue = v;
+            tp.trailing = true;
+            tp.activated = false;
+            tp.exitPrice = null;
+            if (dragLine) dragLine.remove();
+            if (dragLabel) dragLabel.remove();
+            render();
+          }
+          makeDraggable(tpTrailBtn, onTrailBtnDrag, onTrailBtnDrop, null, () => selectTpTrail(tp.id));
+        }
         const tpBadgeEdit = row.querySelector('[data-tp-badge-edit]');
         if (tpBadgeEdit) tpBadgeEdit.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -2291,6 +2330,11 @@
         if (tpBadgeRemove) tpBadgeRemove.addEventListener('click', (e) => {
           e.stopPropagation();
           selectTpTrail(tp.id); // re-toggle off → disables trailing, back to a plain TP
+        });
+        const tpOffsetRemove = offsetLabelEl && offsetLabelEl.querySelector('[data-tp-offset-remove]');
+        if (tpOffsetRemove) tpOffsetRemove.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectTpTrail(tp.id); // quick-disable trailing straight from the offset line
         });
         row.querySelector('[data-remove-tp]').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -2344,7 +2388,7 @@
         row.innerHTML =
           modeBtns +
           '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + '">' +
-          '<span class="material-symbols-outlined ol-chip-warning">warning</span>SL' +
+          '<span class="material-symbols-outlined ol-chip-warning">error</span>SL' +
           '<span class="ol-amt down"><span class="ol-amt-val">-' + fmtMoney(Math.abs(loss)) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(slGross, slFee, slNet) + '</span></span>' +
           badgeHtml +
           '</span>' +
