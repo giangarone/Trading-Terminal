@@ -88,7 +88,8 @@
 }
 
 /* Tag on the left edge of the trailing TP's offset line. Only one TP can ever trail at a
-   time, so the label just names the concept ("Trailing Offset") rather than which TP it's for. */
+   time, so the label just names the concept ("Trailing Offset") rather than which TP it's for.
+   Clickable (opens the TP's trailing settings), same as clicking the TRL badge on the chip. */
 .ol-offset-label {
   position: absolute;
   right: 80px;
@@ -103,11 +104,9 @@
   background: var(--bg-sunken);
   color: var(--intel);
   white-space: nowrap;
-  pointer-events: none;
-}
-
-.ol-offset-label-arrow {
-  font-size: 11px;
+  pointer-events: auto;
+  cursor: pointer;
+  padding: 6px 0;
 }
 
 .ol-line.ghost {

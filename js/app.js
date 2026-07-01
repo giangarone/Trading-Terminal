@@ -1192,7 +1192,7 @@
     const cfg = ensureTpTrailOffset(tp);
     return formatTpOffset(cfg.offsetValue, cfg.offsetUnit);
   }
-  function tpBadgeText(tp) { return 'TRL ' + tpOffsetLabel(tp); }
+  function tpBadgeText(tp) { return 'TRL TRIGGER'; }
   /* live-patch a trailing-TP badge label + its Offset line during a drag (no full re-render) */
   function refreshTpBadgeOnChart(tpId) {
     const labelEl = layer.querySelector('[data-tp-badge-edit="' + tpId + '"]');
@@ -2683,11 +2683,13 @@
 
           offsetLabelEl = document.createElement('span');
           offsetLabelEl.className = 'ol-offset-label';
-          offsetLabelEl.innerHTML =
-            '<span class="ol-offset-label-text">TRAILING OFFSET</span>' +
-            '<span class="material-symbols-outlined ol-offset-label-arrow">arrow_forward</span>';
+          offsetLabelEl.innerHTML = '<span class="ol-offset-label-text">TRL OFFSET · ' + tpOffsetLabel(tp) + '</span>';
           offsetLabelEl.style.top = oy + 'px';
           layer.appendChild(offsetLabelEl);
+          offsetLabelEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openTpTrailMenu(tp.id, offsetLabelEl.getBoundingClientRect(), offsetLabelEl);
+          });
         }
         function repositionOffsetLine(h) {
           if (!offsetLineEl) return;
@@ -2695,6 +2697,8 @@
           const oy = clamp(priceToY(op, h), 10, h - 10) + 'px';
           offsetLineEl.style.top = oy;
           offsetLabelEl.style.top = oy;
+          const txtEl = offsetLabelEl.querySelector('.ol-offset-label-text');
+          if (txtEl) txtEl.textContent = 'TRL OFFSET · ' + tpOffsetLabel(tp);
         }
 
         const tpChipEl = row.querySelector('.ol-chip');
@@ -2777,9 +2781,12 @@
             }
             dragLine.style.top = cy + 'px';
             dragLabel.style.top = cy + 'px';
-            dragLabel.innerHTML =
-              '<span class="ol-offset-label-text">TRAILING OFFSET</span>' +
-              '<span class="material-symbols-outlined ol-offset-label-arrow">chevron_right</span>';
+            const gapPts = Math.abs(tp.price - roundTick(yToPrice(cy, h)));
+            const cfg = ensureTpTrailOffset(tp);
+            const params = tpOffsetParams(cfg.offsetUnit);
+            let v = tpGapToOffset(gapPts, tp.price, cfg.offsetUnit);
+            v = Math.max(params.min, Math.min(params.max, v));
+            dragLabel.innerHTML = '<span class="ol-offset-label-text">TRL OFFSET · ' + formatTpOffset(v, cfg.offsetUnit) + '</span>';
             drawPriceChart();
           }
           function onTrailBtnDrop(cy, h) {
