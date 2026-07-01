@@ -503,28 +503,17 @@
 
 .cs-radio-group {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 16px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .cs-radio-row {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 10px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-sm);
   cursor: pointer;
-}
-
-.cs-radio-row:hover {
-  border-color: var(--border-strong);
-}
-
-.cs-radio-row.active {
-  border-color: var(--accent);
-  background: var(--accent-dim);
 }
 
 .cs-radio-dot {

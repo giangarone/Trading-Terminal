@@ -4661,7 +4661,7 @@
   /* ---------- Trailing-TP settings popover (offset only) ---------- */
   const tpTrailMenu = document.getElementById('tpTrailMenu');
   const tpTrailRow = document.getElementById('tpTrailRow');
-  const tpOffsetUnitSel = document.getElementById('tpOffsetUnit');
+  const tpOffsetUnitToggle = document.getElementById('tpOffsetUnitToggle');
   const tpOffsetInput = document.getElementById('tpOffsetValue');
   let activeTrailTpId = null;
   function activeTrailTp() { return order && order.tps.find(t => t.id === activeTrailTpId); }
@@ -4683,11 +4683,10 @@
     if (!tp) return;
     const cfg = ensureTpTrailOffset(tp);
     tpOffsetInput.value = (+cfg.offsetValue).toFixed(tpOffsetParams(cfg.offsetUnit).dp);
-    tpOffsetUnitSel.value = cfg.offsetUnit;
+    tpOffsetUnitToggle.querySelectorAll('.cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === cfg.offsetUnit));
     // The popover only opens while trailing is active, so the mode row always reads as selected
     // (mirrors the SL gear menu's checkmark pattern); clicking it again disables trailing.
     tpTrailRow.classList.toggle('selected', !!tp.trailing);
-    refreshAllCsDropdownLabels(tpTrailMenu);
   }
   tpTrailRow.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -4709,19 +4708,22 @@
     openNear(tpTrailMenu, anchorRect, 'right', trigger);
   }
   /* switching unit re-expresses the current offset so the line doesn't jump */
-  tpOffsetUnitSel.addEventListener('change', (e) => {
-    e.stopPropagation();
-    const tp = activeTrailTp();
-    if (!tp) return;
-    const cfg = ensureTpTrailOffset(tp);
-    const distPts = tpOffsetDist(tp); // current offset in price points, before the unit change
-    cfg.offsetUnit = tpOffsetUnitSel.value;
-    const params = tpOffsetParams(cfg.offsetUnit);
-    const v = tpGapToOffset(distPts, tp.price, cfg.offsetUnit);
-    cfg.offsetValue = Math.max(params.min, Math.min(params.max, +v.toFixed(params.dp)));
-    populateTpTrailMenu();
-    refreshTpBadgeOnChart(tp.id);
-    render();
+  tpOffsetUnitToggle.querySelectorAll('.cs-radio-row').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const tp = activeTrailTp();
+      if (!tp) return;
+      const cfg = ensureTpTrailOffset(tp);
+      if (btn.dataset.unit === cfg.offsetUnit) return;
+      const distPts = tpOffsetDist(tp); // current offset in price points, before the unit change
+      cfg.offsetUnit = btn.dataset.unit;
+      const params = tpOffsetParams(cfg.offsetUnit);
+      const v = tpGapToOffset(distPts, tp.price, cfg.offsetUnit);
+      cfg.offsetValue = Math.max(params.min, Math.min(params.max, +v.toFixed(params.dp)));
+      populateTpTrailMenu();
+      refreshTpBadgeOnChart(tp.id);
+      render();
+    });
   });
   /* Offset value stepper — writes to the active TP's trailOffset, keeping line + badge synced */
   {
@@ -4747,8 +4749,8 @@
   const slBeSub = document.getElementById('slBeSub');
   const slBeSubDefaultText = slBeSub.textContent;
   const slBeSubLockedText = 'Needs at least 2 take profits';
-  const slDistanceUnitSel = document.getElementById('slDistanceUnit');
-  const slStartSel = document.getElementById('slStart');
+  const slDistanceUnitToggle = document.getElementById('slDistanceUnitToggle');
+  const slStartToggle = document.getElementById('slStartToggle');
   const slBeOvTrigger = document.getElementById('slBeOvTrigger');
   const slBeOvOffsetValue = document.getElementById('slBeOvOffsetValue');
   const slBeOvOffsetUnit = document.getElementById('slBeOvOffsetUnit');
@@ -4787,8 +4789,8 @@
     const cfg = ensureSlConfig();
     if (!cfg) return;
     document.getElementById('slDistanceValue').value = (+cfg.distanceValue).toFixed(slDistanceParams(cfg.distanceUnit).dp);
-    slDistanceUnitSel.value = cfg.distanceUnit;
-    slStartSel.value = cfg.start;
+    slDistanceUnitToggle.querySelectorAll('.cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === cfg.distanceUnit));
+    slStartToggle.querySelectorAll('.cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === cfg.start));
     document.getElementById('slAtrMultiplier').value = slAtrMult().toFixed(2);
     const be = ensureBeOverride();
     slBeOvTrigger.value = be.trigger;
@@ -4867,20 +4869,26 @@
     selectSlMode('breakeven');
   });
   /* Trailing distance unit: re-express the current gap so the SL line doesn't jump */
-  slDistanceUnitSel.addEventListener('change', (e) => {
-    e.stopPropagation();
-    const cfg = ensureSlConfig();
-    if (!cfg) return;
-    cfg.distanceUnit = slDistanceUnitSel.value;
-    cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(slDistanceParams(cfg.distanceUnit).dp);
-    populateSlSettings();
-    refreshSlBadgeOnChart();
+  slDistanceUnitToggle.querySelectorAll('.cs-radio-row').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cfg = ensureSlConfig();
+      if (!cfg || btn.dataset.unit === cfg.distanceUnit) return;
+      cfg.distanceUnit = btn.dataset.unit;
+      cfg.distanceValue = +slGapDistance(cfg.distanceUnit).toFixed(slDistanceParams(cfg.distanceUnit).dp);
+      populateSlSettings();
+      refreshSlBadgeOnChart();
+    });
   });
   /* Start-trailing trigger */
-  slStartSel.addEventListener('change', (e) => {
-    e.stopPropagation();
-    const cfg = ensureSlConfig();
-    if (cfg) cfg.start = slStartSel.value;
+  slStartToggle.querySelectorAll('.cs-radio-row').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cfg = ensureSlConfig();
+      if (!cfg || btn.dataset.unit === cfg.start) return;
+      cfg.start = btn.dataset.unit;
+      populateSlSettings();
+    });
   });
   /* Breakeven trigger / offset unit */
   [slBeOvTrigger, slBeOvOffsetUnit].forEach(el => el.addEventListener('change', (e) => {

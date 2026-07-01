@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="css/order-lines.css?v=25">
   <link rel="stylesheet" href="css/market-scanner.css?v=24">
   <link rel="stylesheet" href="css/indicators.css?v=9">
-  <link rel="stylesheet" href="css/chart-settings.css?v=23">
+  <link rel="stylesheet" href="css/chart-settings.css?v=26">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
 </head>
@@ -5014,22 +5014,24 @@
     <div class="ol-mode-settings">
       <div class="cs-field">
         <label>Offset</label>
-        <div class="cs-unit-pair">
-          <div class="price-stepper cs-price-stepper">
-            <input type="text" id="tpOffsetValue" readonly value="0.01">
-            <div class="price-stepper-arrows">
-              <button type="button" id="tpOffsetInc"><span
-                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
-              <button type="button" id="tpOffsetDec"><span
-                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
-            </div>
+        <div class="cs-radio-group" id="tpOffsetUnitToggle">
+          <div class="cs-radio-row active" data-unit="percent">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">%</span></span>
           </div>
-          <div class="select-input pop-trigger cs-dd-trigger" data-target="tpOffsetUnit"><span
-              class="cs-select-label">%</span><span class="material-symbols-outlined">expand_more</span></div>
-          <select id="tpOffsetUnit" style="display:none;">
-            <option value="percent" selected>%</option>
-            <option value="ticks">Ticks</option>
-          </select>
+          <div class="cs-radio-row" data-unit="ticks">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">Ticks</span></span>
+          </div>
+        </div>
+        <div class="price-stepper cs-price-stepper">
+          <input type="text" id="tpOffsetValue" readonly value="0.01">
+          <div class="price-stepper-arrows">
+            <button type="button" id="tpOffsetInc"><span
+                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+            <button type="button" id="tpOffsetDec"><span
+                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+          </div>
         </div>
       </div>
     </div>
@@ -5047,35 +5049,50 @@
     <div class="ol-mode-settings" id="slTrailSettings">
       <div class="cs-field">
         <label>Distance</label>
-        <div class="cs-unit-pair">
-          <div class="price-stepper cs-price-stepper">
-            <input type="text" id="slDistanceValue" readonly value="1.0">
-            <div class="price-stepper-arrows">
-              <button type="button" id="slDistanceInc"><span
-                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
-              <button type="button" id="slDistanceDec"><span
-                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
-            </div>
+        <div class="cs-radio-group" id="slDistanceUnitToggle">
+          <div class="cs-radio-row active" data-unit="percent">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">%</span></span>
           </div>
-          <div class="select-input pop-trigger cs-dd-trigger" data-target="slDistanceUnit"><span
-              class="cs-select-label">%</span><span class="material-symbols-outlined">expand_more</span></div>
-          <select id="slDistanceUnit" style="display:none;">
-            <option value="percent" selected>%</option>
-            <option value="ticks">Ticks</option>
-            <option value="atr">ATR</option>
-          </select>
+          <div class="cs-radio-row" data-unit="ticks">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">Ticks</span></span>
+          </div>
+          <div class="cs-radio-row" data-unit="atr">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">ATR</span></span>
+          </div>
+        </div>
+        <div class="price-stepper cs-price-stepper">
+          <input type="text" id="slDistanceValue" readonly value="1.0">
+          <div class="price-stepper-arrows">
+            <button type="button" id="slDistanceInc"><span
+                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+            <button type="button" id="slDistanceDec"><span
+                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+          </div>
         </div>
       </div>
       <div class="cs-field">
         <label>Start Trailing</label>
-        <div class="select-input pop-trigger cs-dd-trigger" data-target="slStart"><span
-            class="cs-select-label">Immediately</span><span class="material-symbols-outlined">expand_more</span></div>
-        <select id="slStart" style="display:none;">
-          <option value="immediate" selected>Immediately</option>
-          <option value="tp1">After TP1 Hit</option>
-          <option value="tp2">After TP2 Hit</option>
-          <option value="tp3">After TP3 Hit</option>
-        </select>
+        <div class="cs-radio-group" id="slStartToggle">
+          <div class="cs-radio-row active" data-unit="immediate">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">Immediately</span></span>
+          </div>
+          <div class="cs-radio-row" data-unit="tp1">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">After TP1 Hit</span></span>
+          </div>
+          <div class="cs-radio-row" data-unit="tp2">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">After TP2 Hit</span></span>
+          </div>
+          <div class="cs-radio-row" data-unit="tp3">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">After TP3 Hit</span></span>
+          </div>
+        </div>
       </div>
     </div>
     <div class="pop-sep"></div>
@@ -5425,7 +5442,7 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=112"></script>
+  <script src="js/app.js?v=115"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=12"></script>
   <script src="js/market-scanner.js?v=9"></script>
