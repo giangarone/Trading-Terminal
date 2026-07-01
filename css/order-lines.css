@@ -688,15 +688,16 @@
 }
 
 .ol-gear {
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
   cursor: pointer;
-  background: transparent;
+  background: var(--bg-sunken);
+  border: solid 1px var(--border-default);
   flex-shrink: 0;
 }
 
@@ -707,6 +708,7 @@
 
 .ol-gear.ol-danger:hover {
   color: var(--short);
+  border: solid 1px var(--short);
   background: var(--short-dim);
 }
 
@@ -716,7 +718,7 @@
 }
 
 .ol-gear .material-symbols-outlined {
-  font-size: 14px;
+  font-size: 11px;
 }
 
 .ol-badge {

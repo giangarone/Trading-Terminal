@@ -1814,10 +1814,10 @@
   let hoveringNewsMarker = false;
 
   const NEWS_TYPE_LABELS = {
-    'news':          'News',
-    'social':        'Social',
-    'geopolitical':  'Geopolitical',
-    'corporate':     'Corporate',
+    'news': 'News',
+    'social': 'Social',
+    'geopolitical': 'Geopolitical',
+    'corporate': 'Corporate',
   };
 
   function buildNewsMarkers() {
@@ -2501,10 +2501,10 @@
           modeBtnHtml +
           '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">error</span>TP' + (idx + 1) + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="ol-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span>' + badgeHtml + '</span>' +
           '<span class="ol-tp-meta">' +
-            '<span class="ol-tp-meta-pct" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
-            '<span class="ol-tp-meta-r">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
+          '<span class="ol-tp-meta-pct" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
+          '<span class="ol-tp-meta-r">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
           '</span>' +
-          '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" title="Remove TP"><span class="material-symbols-outlined">delete</span></span>';
+          '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" title="Remove TP"><span class="material-symbols-outlined">close</span></span>';
         layer.appendChild(row);
 
         // Offset line: a second draggable line sitting at the trailing offset distance toward entry,
@@ -2712,7 +2712,7 @@
           '<span class="ol-amt down"><span class="ol-amt-val">-' + fmtMoney(Math.abs(loss)) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(slGross, slFee, slNet) + '</span></span>' +
           badgeHtml +
           '</span>' +
-          '<span class="ol-gear ol-danger" id="slDeleteTrigger" title="Remove SL"><span class="material-symbols-outlined">delete</span></span>';
+          '<span class="ol-gear ol-danger" id="slDeleteTrigger" title="Remove SL"><span class="material-symbols-outlined">close</span></span>';
         layer.appendChild(row);
 
         const slChipEl = row.querySelector('.ol-chip');
@@ -2838,7 +2838,7 @@
           '<span class="ol-pill-divider"></span>' +
           '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
           '</span>' +
-          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Cancel Order"><span class="material-symbols-outlined">delete</span></span>';
+          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Cancel Order"><span class="material-symbols-outlined">close</span></span>';
       } else {
         const dir = order.side === 'buy' ? 1 : -1;
         const currentPrice = qtCurrentPrice();
@@ -2852,7 +2852,7 @@
           '<span class="ol-pill-divider"></span>' +
           '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
           '</span>' +
-          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">delete</span></span>';
+          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">close</span></span>';
       }
       layer.appendChild(bar);
 
@@ -3651,7 +3651,7 @@
         '<option value="limit"' + (t.type === 'limit' ? ' selected' : '') + '>Limit</option>' +
         '<option value="market"' + (t.type === 'market' ? ' selected' : '') + '>Market</option>' +
         '</select>' +
-        '<button type="button" class="cs-target-del" data-idx="' + i + '"><span class="material-symbols-outlined">delete</span></button>' +
+        '<button type="button" class="cs-target-del" data-idx="' + i + '"><span class="material-symbols-outlined">close</span></button>' +
         '</div>';
     }
     if (csSlDraft) {
@@ -3663,7 +3663,7 @@
         '<option value="stopMarket"' + (csSlDraft.type === 'stopMarket' ? ' selected' : '') + '>Stop Market</option>' +
         '<option value="stopLimit"' + (csSlDraft.type === 'stopLimit' ? ' selected' : '') + '>Stop Limit</option>' +
         '</select>' +
-        '<button type="button" class="cs-target-del" id="csSlDraftDel"><span class="material-symbols-outlined">delete</span></button>' +
+        '<button type="button" class="cs-target-del" id="csSlDraftDel"><span class="material-symbols-outlined">close</span></button>' +
         '</div>';
     } else {
       html += '<button type="button" class="cs-add-target-btn sl" id="csAddSlBtn"><span class="material-symbols-outlined">add</span>Add SL</button>';
