@@ -1651,11 +1651,13 @@
     if (order.sl) {
       const slAmtEl = layer.querySelector('.ol-chip.sl .ol-amt');
       if (slAmtEl) {
-        const loss = dir * (order.entry - order.sl.price) * POINT_VALUE * order.qty;
+        const { gross, fee, net } = slFeeCalc();
         const valEl = slAmtEl.querySelector('.ol-amt-val');
-        if (valEl) valEl.textContent = '-' + fmtMoney(Math.abs(loss));
+        if (valEl) valEl.textContent = (net >= 0 ? '+' : '') + fmtMoney(net);
+        slAmtEl.classList.toggle('up', net >= 0);
+        slAmtEl.classList.toggle('down', net < 0);
         const tipEl = slAmtEl.querySelector('.ol-fee-tip');
-        if (tipEl) { const { gross, fee, net } = slFeeCalc(); tipEl.innerHTML = feeTooltipHtml(gross, fee, net); }
+        if (tipEl) tipEl.innerHTML = feeTooltipHtml(gross, fee, net);
       }
     }
   }
@@ -2811,9 +2813,6 @@
         line.style.top = y + 'px';
         layer.appendChild(line);
 
-        const dir = order.side === 'buy' ? 1 : -1;
-        const pts = dir * (order.entry - order.sl.price);
-        const loss = pts * POINT_VALUE * order.qty;
         const slInvalid = !tpSlSideOk('sl', order.sl.price) && !slSideWarningSuppressed();
 
         // Which special mode (if any) is currently active — it shows as a badge inside the
@@ -2842,6 +2841,7 @@
         }
 
         const { gross: slGross, fee: slFee, net: slNet } = slFeeCalc();
+        const slSign = slNet >= 0 ? '+' : '';
 
         const row = document.createElement('div');
         row.className = 'ol-side-row';
@@ -2850,7 +2850,7 @@
           modeBtns +
           '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + '">' +
           '<span class="material-symbols-outlined ol-chip-warning">error</span>SL' +
-          '<span class="ol-amt down"><span class="ol-amt-val">-' + fmtMoney(Math.abs(loss)) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(slGross, slFee, slNet) + '</span></span>' +
+          '<span class="ol-amt ' + (slNet >= 0 ? 'up' : 'down') + '"><span class="ol-amt-val">' + slSign + fmtMoney(slNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(slGross, slFee, slNet) + '</span></span>' +
           badgeHtml +
           '</span>' +
           '<span class="ol-gear ol-danger" id="slDeleteTrigger" title="Remove SL"><span class="material-symbols-outlined">close</span></span>';
