@@ -4495,6 +4495,13 @@
   orderTypeMenu.querySelectorAll('.pop-item').forEach(it => {
     it.addEventListener('click', () => {
       order.orderType = it.dataset.type;
+      // Switching to Market snaps the entry to the live price at once (rather than waiting for the
+      // next chart tick to move it), mirroring the per-tick market-entry sync in the price loop.
+      if (order.orderType === 'Market' && !order.filled) {
+        setOrderEntryPrice(qtCurrentPrice());
+        if (slTrailActive()) applyTrailingStopPreview();
+        else if (slAtrActive()) placeAtrStop();
+      }
       closeAllPopovers();
       render();
     });
