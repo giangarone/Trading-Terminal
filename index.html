@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="css/indicators.css?v=9">
   <link rel="stylesheet" href="css/chart-settings.css?v=22">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
+  <link rel="stylesheet" href="css/market-sessions.css?v=7">
 </head>
 
 <body>
@@ -69,6 +70,8 @@
               style="font-size:15px;">fast_rewind</span>Replay</button>
           <button class="ct-action-btn pop-trigger" id="marketScannerTrigger"><span class="material-symbols-outlined"
               style="font-size:15px;">radar</span>Market Scanner</button>
+          <button class="ct-action-btn pop-trigger" id="marketSessionsTrigger"><span class="material-symbols-outlined"
+              style="font-size:15px;">schedule</span>Market Sessions</button>
           <button class="ct-action-btn" id="newsToggle"><span class="material-symbols-outlined"
               style="font-size:15px;">article</span>News</button>
         </div>
@@ -226,7 +229,8 @@
         <span class="modal-close" id="templateSettingsClose"><span class="material-symbols-outlined">close</span></span>
       </div>
       <label class="modal-label">Template Name</label>
-      <input type="text" class="tpl-name-input" id="templateSettingsName" maxlength="40" placeholder="e.g. Breakout Setup">
+      <input type="text" class="tpl-name-input" id="templateSettingsName" maxlength="40"
+        placeholder="e.g. Breakout Setup">
       <div class="tpl-opts-head">
         <label class="modal-label" style="margin:0;">Save with this template</label>
         <button type="button" class="tpl-opts-all" id="templateSettingsSelectAll">Select all</button>
@@ -1593,7 +1597,8 @@
                   <div class="cs-card-head">
                     <span class="cs-card-title">Asset Type Defaults</span>
                   </div>
-                  <p class="bc-routing-note">Set the primary and backup broker for each asset class. Custom rules below take priority.</p>
+                  <p class="bc-routing-note">Set the primary and backup broker for each asset class. Custom rules below
+                    take priority.</p>
 
                   <div class="bc-routing-header">
                     <span>Asset Type</span>
@@ -1605,141 +1610,253 @@
                   <!-- Spot Crypto -->
                   <div class="bc-routing-row" data-routing-key="spotCrypto">
                     <div class="bc-asset-info">
-                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#a855f7,#7c3aed);"><span class="material-symbols-outlined">currency_bitcoin</span></div>
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#a855f7,#7c3aed);"><span
+                          class="material-symbols-outlined">currency_bitcoin</span></div>
                       <div class="bc-asset-text">
                         <span class="bc-asset-name">Spot Crypto</span>
                         <span class="bc-asset-eg">e.g. BTC, ETH, SOL</span>
                       </div>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpSpotCrypto"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRpSpotCrypto" style="display:none;"><option value="">— None —</option><option value="bitget" selected>Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpSpotCrypto"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRpSpotCrypto" style="display:none;">
+                        <option value="">— None —</option>
+                        <option value="bitget" selected>Bitget</option>
+                        <option value="tradestation">TradeStation</option>
+                        <option value="blofin">BloFin</option>
+                      </select>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbSpotCrypto"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRbSpotCrypto" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin" selected>BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbSpotCrypto"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRbSpotCrypto" style="display:none;">
+                        <option value="">— None —</option>
+                        <option value="bitget">Bitget</option>
+                        <option value="tradestation">TradeStation</option>
+                        <option value="blofin" selected>BloFin</option>
+                      </select>
                     </div>
-                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                    <button class="bc-routing-reset" title="Reset to default"><span
+                        class="material-symbols-outlined">restart_alt</span></button>
                   </div>
 
                   <!-- Perpetual Futures -->
                   <div class="bc-routing-row" data-routing-key="perpFutures">
                     <div class="bc-asset-info">
-                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);"><span class="material-symbols-outlined">trending_up</span></div>
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);"><span
+                          class="material-symbols-outlined">trending_up</span></div>
                       <div class="bc-asset-text">
                         <span class="bc-asset-name">Perpetual Futures</span>
                         <span class="bc-asset-eg">e.g. BTCUSDT, ETHUSDT</span>
                       </div>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpPerpFutures"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRpPerpFutures" style="display:none;"><option value="">— None —</option><option value="bitget" selected>Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpPerpFutures"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRpPerpFutures" style="display:none;">
+                        <option value="">— None —</option>
+                        <option value="bitget" selected>Bitget</option>
+                        <option value="tradestation">TradeStation</option>
+                        <option value="blofin">BloFin</option>
+                      </select>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbPerpFutures"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRbPerpFutures" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin" selected>BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbPerpFutures"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRbPerpFutures" style="display:none;">
+                        <option value="">— None —</option>
+                        <option value="bitget">Bitget</option>
+                        <option value="tradestation">TradeStation</option>
+                        <option value="blofin" selected>BloFin</option>
+                      </select>
                     </div>
-                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                    <button class="bc-routing-reset" title="Reset to default"><span
+                        class="material-symbols-outlined">restart_alt</span></button>
                   </div>
 
                   <!-- US Stocks -->
                   <div class="bc-routing-row" data-routing-key="usStocks">
                     <div class="bc-asset-info">
-                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#22c55e,#15803d);"><span class="material-symbols-outlined">show_chart</span></div>
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#22c55e,#15803d);"><span
+                          class="material-symbols-outlined">show_chart</span></div>
                       <div class="bc-asset-text">
                         <span class="bc-asset-name">US Stocks</span>
                         <span class="bc-asset-eg">e.g. AAPL, TSLA</span>
                       </div>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpUSStocks"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRpUSStocks" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation" selected>TradeStation</option><option value="blofin">BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpUSStocks"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRpUSStocks" style="display:none;">
+                        <option value="">— None —</option>
+                        <option value="bitget">Bitget</option>
+                        <option value="tradestation" selected>TradeStation</option>
+                        <option value="blofin">BloFin</option>
+                      </select>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbUSStocks"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRbUSStocks" style="display:none;"><option value="" selected>— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbUSStocks"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRbUSStocks" style="display:none;">
+                        <option value="" selected>— None —</option>
+                        <option value="bitget">Bitget</option>
+                        <option value="tradestation">TradeStation</option>
+                        <option value="blofin">BloFin</option>
+                      </select>
                     </div>
-                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                    <button class="bc-routing-reset" title="Reset to default"><span
+                        class="material-symbols-outlined">restart_alt</span></button>
                   </div>
 
                   <!-- Options -->
                   <div class="bc-routing-row" data-routing-key="options">
                     <div class="bc-asset-info">
-                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#06b6d4,#0e7490);"><span class="material-symbols-outlined">call_split</span></div>
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#06b6d4,#0e7490);"><span
+                          class="material-symbols-outlined">call_split</span></div>
                       <div class="bc-asset-text">
                         <span class="bc-asset-name">Options</span>
                         <span class="bc-asset-eg">e.g. SPY, AAPL</span>
                       </div>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpOptions"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRpOptions" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation" selected>TradeStation</option><option value="blofin">BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpOptions"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRpOptions" style="display:none;">
+                        <option value="">— None —</option>
+                        <option value="bitget">Bitget</option>
+                        <option value="tradestation" selected>TradeStation</option>
+                        <option value="blofin">BloFin</option>
+                      </select>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbOptions"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRbOptions" style="display:none;"><option value="" selected>— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbOptions"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRbOptions" style="display:none;">
+                        <option value="" selected>— None —</option>
+                        <option value="bitget">Bitget</option>
+                        <option value="tradestation">TradeStation</option>
+                        <option value="blofin">BloFin</option>
+                      </select>
                     </div>
-                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                    <button class="bc-routing-reset" title="Reset to default"><span
+                        class="material-symbols-outlined">restart_alt</span></button>
                   </div>
 
                   <!-- Futures -->
                   <div class="bc-routing-row" data-routing-key="futures">
                     <div class="bc-asset-info">
-                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#f59e0b,#b45309);"><span class="material-symbols-outlined">candlestick_chart</span></div>
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#f59e0b,#b45309);"><span
+                          class="material-symbols-outlined">candlestick_chart</span></div>
                       <div class="bc-asset-text">
                         <span class="bc-asset-name">Futures</span>
                         <span class="bc-asset-eg">e.g. ES, NQ, CL</span>
                       </div>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpFutures"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRpFutures" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation" selected>TradeStation</option><option value="blofin">BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpFutures"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRpFutures" style="display:none;">
+                        <option value="">— None —</option>
+                        <option value="bitget">Bitget</option>
+                        <option value="tradestation" selected>TradeStation</option>
+                        <option value="blofin">BloFin</option>
+                      </select>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbFutures"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRbFutures" style="display:none;"><option value="" selected>— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbFutures"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRbFutures" style="display:none;">
+                        <option value="" selected>— None —</option>
+                        <option value="bitget">Bitget</option>
+                        <option value="tradestation">TradeStation</option>
+                        <option value="blofin">BloFin</option>
+                      </select>
                     </div>
-                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                    <button class="bc-routing-reset" title="Reset to default"><span
+                        class="material-symbols-outlined">restart_alt</span></button>
                   </div>
 
                   <!-- Forex -->
                   <div class="bc-routing-row" data-routing-key="forex">
                     <div class="bc-asset-info">
-                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#10b981,#047857);"><span class="material-symbols-outlined">currency_exchange</span></div>
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#10b981,#047857);"><span
+                          class="material-symbols-outlined">currency_exchange</span></div>
                       <div class="bc-asset-text">
                         <span class="bc-asset-name">Forex</span>
                         <span class="bc-asset-eg">e.g. EURUSD, GBPUSD</span>
                       </div>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpForex"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRpForex" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation" selected>TradeStation</option><option value="blofin">BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpForex"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRpForex" style="display:none;">
+                        <option value="">— None —</option>
+                        <option value="bitget">Bitget</option>
+                        <option value="tradestation" selected>TradeStation</option>
+                        <option value="blofin">BloFin</option>
+                      </select>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbForex"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRbForex" style="display:none;"><option value="" selected>— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbForex"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRbForex" style="display:none;">
+                        <option value="" selected>— None —</option>
+                        <option value="bitget">Bitget</option>
+                        <option value="tradestation">TradeStation</option>
+                        <option value="blofin">BloFin</option>
+                      </select>
                     </div>
-                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                    <button class="bc-routing-reset" title="Reset to default"><span
+                        class="material-symbols-outlined">restart_alt</span></button>
                   </div>
 
                   <!-- Commodities -->
                   <div class="bc-routing-row" data-routing-key="commodities">
                     <div class="bc-asset-info">
-                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#f97316,#c2410c);"><span class="material-symbols-outlined">diamond</span></div>
+                      <div class="bc-asset-icon" style="background:linear-gradient(135deg,#f97316,#c2410c);"><span
+                          class="material-symbols-outlined">diamond</span></div>
                       <div class="bc-asset-text">
                         <span class="bc-asset-name">Commodities</span>
                         <span class="bc-asset-eg">e.g. Gold, Silver, Oil</span>
                       </div>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpCommodities"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRpCommodities" style="display:none;"><option value="">— None —</option><option value="bitget">Bitget</option><option value="tradestation" selected>TradeStation</option><option value="blofin">BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRpCommodities"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRpCommodities" style="display:none;">
+                        <option value="">— None —</option>
+                        <option value="bitget">Bitget</option>
+                        <option value="tradestation" selected>TradeStation</option>
+                        <option value="blofin">BloFin</option>
+                      </select>
                     </div>
                     <div>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbCommodities"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>
-                      <select id="bcRbCommodities" style="display:none;"><option value="" selected>— None —</option><option value="bitget">Bitget</option><option value="tradestation">TradeStation</option><option value="blofin">BloFin</option></select>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="bcRbCommodities"><span
+                          class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span>
+                      </div>
+                      <select id="bcRbCommodities" style="display:none;">
+                        <option value="" selected>— None —</option>
+                        <option value="bitget">Bitget</option>
+                        <option value="tradestation">TradeStation</option>
+                        <option value="blofin">BloFin</option>
+                      </select>
                     </div>
-                    <button class="bc-routing-reset" title="Reset to default"><span class="material-symbols-outlined">restart_alt</span></button>
+                    <button class="bc-routing-reset" title="Reset to default"><span
+                        class="material-symbols-outlined">restart_alt</span></button>
                   </div>
                 </div>
 
@@ -1749,7 +1866,8 @@
                     <span class="cs-card-title">Custom Routing Rules</span>
                     <span class="bc-count-badge" id="bcRuleCountBadge">2</span>
                   </div>
-                  <p class="bc-rules-note">Rules are evaluated top-to-bottom and override asset type defaults. Drag to reorder (coming soon).</p>
+                  <p class="bc-rules-note">Rules are evaluated top-to-bottom and override asset type defaults. Drag to
+                    reorder (coming soon).</p>
                   <div id="bcCustomRulesContainer"></div>
                   <button class="cs-add-target-btn" id="bcAddRuleBtn" style="margin-top:10px;">
                     <span class="material-symbols-outlined">add</span>
@@ -2075,8 +2193,7 @@
                   </label>
 
                   <label class="cs-checkbox-row sync-item-row sync-item-row--disabled">
-                    <span class="chk-box" id="syncItemNotes"><span
-                        class="material-symbols-outlined">check</span></span>
+                    <span class="chk-box" id="syncItemNotes"><span class="material-symbols-outlined">check</span></span>
                     <span class="sync-item-text">
                       <span class="sync-item-title">Notes &amp; Drawings</span>
                       <span class="sync-item-desc">Chart drawings and notes</span>
@@ -4531,6 +4648,306 @@
   </div>
 
 
+  <!-- ===================== MARKET SESSIONS PANEL ===================== -->
+  <div class="pop-menu float-panel" id="marketSessionsMenu">
+    <div class="float-panel-header">
+      <span class="float-panel-title"><span class="material-symbols-outlined"
+          style="font-size:14px;vertical-align:-2px;">schedule</span> Market Sessions</span>
+      <button class="float-panel-close" id="sessCloseBtn" title="Close">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="sess-body" id="sessBody">
+
+      <!-- ===== VIEW 1: SETTINGS ===== -->
+      <div class="sess-view" id="sessViewSettings" data-view="settings">
+
+        <!-- Session Highlights -->
+        <section class="sess-card">
+          <div class="sess-card-head">
+            <span class="sess-card-title">Session Highlights</span>
+          </div>
+          <div class="sess-session-list">
+            <label class="sess-session-row">
+              <span class="chk-box checked"><span class="material-symbols-outlined">check</span></span>
+              <span class="sess-session-text">
+                <span class="sess-session-name">Asia</span>
+                <span class="sess-session-time">19:00 – 04:00 ET</span>
+              </span>
+            </label>
+            <label class="sess-session-row">
+              <span class="chk-box checked"><span class="material-symbols-outlined">check</span></span>
+              <span class="sess-session-text">
+                <span class="sess-session-name">London</span>
+                <span class="sess-session-time">03:00 – 11:30 ET</span>
+              </span>
+            </label>
+            <label class="sess-session-row">
+              <span class="chk-box checked"><span class="material-symbols-outlined">check</span></span>
+              <span class="sess-session-text">
+                <span class="sess-session-name">New York</span>
+                <span class="sess-session-time">09:30 – 16:00 ET</span>
+              </span>
+            </label>
+            <label class="sess-session-row">
+              <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+              <span class="sess-session-text">
+                <span class="sess-session-name">Overlap Zones</span>
+                <span class="sess-session-time">Highest volatility periods</span>
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Opening Range (ORB) -->
+        <section class="sess-card sess-card--orb active" id="sessOrbCard">
+          <div class="sess-card-head sess-card-head--switch">
+            <span class="sess-card-title">Opening Range (ORB)</span>
+            <button type="button" class="ui-toggle sess-card-toggle" id="sessOrbMasterToggle"
+              aria-label="Toggle Opening Range">
+              <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
+            </button>
+          </div>
+
+          <div class="sess-card-body" id="sessOrbBody">
+            <div class="sess-subrow">
+              <span class="sess-subrow-label">Apply to</span>
+              <div class="sess-seg-group" id="sessOrbSegGroup">
+                <button type="button" class="sess-seg-pill active" data-orb-session="ny">
+                  NY
+                  <span class="material-symbols-outlined sess-seg-check">check</span>
+                </button>
+                <button type="button" class="sess-seg-pill" data-orb-session="london">
+                  London
+                  <span class="material-symbols-outlined sess-seg-check">check</span>
+                </button>
+                <button type="button" class="sess-seg-pill" data-orb-session="asia">
+                  Asia
+                  <span class="material-symbols-outlined sess-seg-check">check</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="sess-subrow">
+              <span class="sess-subrow-label">Duration</span>
+              <div class="select-input pop-trigger cs-dd-trigger" data-target="sessOrbDuration">
+                <span class="cs-select-label">15 minutes</span>
+                <span class="material-symbols-outlined">expand_more</span>
+              </div>
+              <select id="sessOrbDuration" style="display:none;">
+                <option value="5">5 minutes</option>
+                <option value="15" selected>15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">1 hour</option>
+              </select>
+            </div>
+
+            <div class="sess-divider"></div>
+
+            <span class="sess-subrow-label sess-subrow-label--block">Chart Visuals</span>
+            <div class="sess-checkbox-grid">
+              <label class="cs-checkbox-row"><span class="chk-box checked"><span
+                    class="material-symbols-outlined">check</span></span>Range Box</label>
+              <label class="cs-checkbox-row"><span class="chk-box checked"><span
+                    class="material-symbols-outlined">check</span></span>Midline</label>
+              <label class="cs-checkbox-row"><span class="chk-box"><span
+                    class="material-symbols-outlined">check</span></span>Prior Day ORB</label>
+            </div>
+          </div>
+        </section>
+
+        <!-- ORB Intelligence -->
+        <section class="sess-card">
+          <div class="sess-card-head">
+            <span class="sess-card-title">ORB Intelligence</span>
+          </div>
+          <div class="cs-switch-row sess-switch-row active">
+            <span class="cs-switch-text">
+              <span class="cs-switch-title">ORB Delta Score</span>
+              <span class="cs-switch-desc">Net buying/selling during ORB formation</span>
+            </span>
+            <button type="button" class="ui-toggle" aria-label="Toggle ORB Delta Score">
+              <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
+            </button>
+          </div>
+          <div class="cs-switch-row sess-switch-row active">
+            <span class="cs-switch-text">
+              <span class="cs-switch-title">Smart Breakout</span>
+              <span class="cs-switch-desc">L2 validation, alerts &amp; failure detection</span>
+            </span>
+            <button type="button" class="ui-toggle" aria-label="Toggle Smart Breakout">
+              <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
+            </button>
+          </div>
+          <div class="cs-switch-row sess-switch-row">
+            <span class="cs-switch-text">
+              <span class="cs-switch-title">Smart Targets</span>
+              <span class="cs-switch-desc">L2-based TP levels from liquidity &amp; order flow</span>
+            </span>
+            <button type="button" class="ui-toggle" aria-label="Toggle Smart Targets">
+              <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
+            </button>
+          </div>
+          <div class="sess-info-callout">
+            <span class="material-symbols-outlined">info</span>
+            Requires L1/L2 data for real-time analysis
+          </div>
+        </section>
+
+        <!-- ORB Analysis Dashboard master toggle -->
+        <section class="sess-card sess-card--feature">
+          <div class="cs-switch-row sess-switch-row sess-switch-row--feature" id="sessDashboardToggleRow">
+            <span class="cs-switch-text">
+              <span class="cs-switch-title">ORB Analysis Dashboard</span>
+              <span class="cs-switch-desc">Quality score, stats, bias &amp; intel panel</span>
+            </span>
+            <button type="button" class="ui-toggle" id="sessDashboardToggle" aria-label="Toggle ORB Analysis Dashboard">
+              <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
+            </button>
+          </div>
+        </section>
+
+      </div><!-- /sessViewSettings -->
+
+      <!-- ===== VIEW 2: WAITING ===== -->
+      <div class="sess-view sess-view-waiting" id="sessViewWaiting" data-view="waiting" hidden>
+        <div class="sess-waiting-inner">
+          <span class="material-symbols-outlined sess-waiting-icon">hourglass_top</span>
+          <div class="sess-waiting-text">Market opens in <span id="sessWaitingCount">5</span> seconds</div>
+          <div class="sess-waiting-sub">Preparing today's ORB Analysis Dashboard…</div>
+        </div>
+      </div>
+
+      <!-- ===== VIEW 3: DASHBOARD ===== -->
+      <div class="sess-view" id="sessViewDashboard" data-view="dashboard" hidden>
+
+        <!-- Quality -->
+        <section class="sess-card">
+          <div class="sess-card-head"><span class="sess-card-title">Today's ORB Quality</span></div>
+          <div class="sess-quality-row">
+            <div class="sess-quality-score">
+              <span class="sess-score-num">82</span><span class="sess-score-max">/100</span>
+            </div>
+            <div class="sess-quality-meta">
+              <span class="badge badge--good badge--uppercase">Good Quality</span>
+            </div>
+          </div>
+          <ul class="sess-checklist">
+            <li class="sess-checklist-item sess-checklist-item--good">
+              <span class="material-symbols-outlined">check_circle</span>Low overnight volatility
+            </li>
+            <li class="sess-checklist-item sess-checklist-item--good">
+              <span class="material-symbols-outlined">check_circle</span>Above average opening volume (1.4x)
+            </li>
+            <li class="sess-checklist-item sess-checklist-item--good">
+              <span class="material-symbols-outlined">check_circle</span>Strong institutional participation
+            </li>
+            <li class="sess-checklist-item sess-checklist-item--good">
+              <span class="material-symbols-outlined">check_circle</span>Trend aligned with daily bias
+            </li>
+            <li class="sess-checklist-item sess-checklist-item--bad">
+              <span class="material-symbols-outlined">cancel</span>High news risk (FOMC @ 2pm)
+            </li>
+          </ul>
+        </section>
+
+        <!-- Stats -->
+        <section class="sess-card">
+          <div class="sess-card-head"><span class="sess-card-title">Today's Stats</span></div>
+          <div class="sess-stat-grid">
+            <div class="sess-stat-cell">
+              <span class="sess-stat-val">71%</span>
+              <span class="sess-stat-lbl">Historical Win Rate</span>
+            </div>
+            <div class="sess-stat-cell">
+              <span class="sess-stat-val up">+12.4k</span>
+              <span class="sess-stat-lbl">ORB Delta (net buying)</span>
+            </div>
+            <div class="sess-stat-cell">
+              <span class="sess-stat-val">19%</span>
+              <span class="sess-stat-lbl">Failure Rate (false breakouts)</span>
+            </div>
+            <div class="sess-stat-cell">
+              <span class="sess-stat-val">18m</span>
+              <span class="sess-stat-lbl">Avg Time to Break</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Bias -->
+        <section class="sess-card sess-bias-card sess-bias-card--bull">
+          <div class="sess-card-head"><span class="sess-card-title">Today's Bias</span></div>
+          <div class="sess-bias-head">
+            <span class="sess-bias-dir up"><span class="material-symbols-outlined">trending_up</span>BULLISH</span>
+            <span class="badge badge--good">84% confidence</span>
+          </div>
+          <p class="sess-bias-block">
+            <strong>Expected Scenario —</strong> Likely ORB breakout to the upside after a first pullback to the
+            range midpoint. Watch for a retest of the breakout level as an entry.
+          </p>
+          <p class="sess-bias-warn">
+            <span class="material-symbols-outlined">warning</span>
+            <strong>Avoid —</strong> Low conviction downside breaks. If a short setup triggers, wait for L2
+            confirmation before entry.
+          </p>
+        </section>
+
+        <!-- Smart Targets -->
+        <section class="sess-card">
+          <div class="sess-card-head"><span class="sess-card-title">Smart Targets</span></div>
+          <div class="sess-target-list">
+            <div class="sess-target-row">
+              <span class="sess-target-price">21,547</span>
+              <span class="sess-target-label">Liquidity cluster</span>
+              <span class="sess-target-pts up">+32 pts</span>
+            </div>
+            <div class="sess-target-row">
+              <span class="sess-target-price">21,583</span>
+              <span class="sess-target-label">Stacked asks</span>
+              <span class="sess-target-pts up">+68 pts</span>
+            </div>
+            <div class="sess-target-row sess-target-row--caution">
+              <span class="material-symbols-outlined sess-target-caution-icon">warning</span>
+              <span class="sess-target-price">21,612</span>
+              <span class="sess-target-label">Iceberg detected</span>
+              <span class="sess-target-pts up">+97 pts</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- L2 Confirmation (locked) -->
+        <section class="sess-card sess-l2-card">
+          <div class="sess-card-head">
+            <span class="sess-card-title">L2 Confirmation</span>
+            <span class="badge badge--purple badge--uppercase">Pro</span>
+          </div>
+          <div class="sess-l2-body">
+            <div class="sess-l2-placeholder" aria-hidden="true">
+              <div class="sess-l2-placeholder-row"></div>
+              <div class="sess-l2-placeholder-row"></div>
+              <div class="sess-l2-placeholder-row"></div>
+            </div>
+            <div class="sess-lock-overlay">
+              <span class="material-symbols-outlined sess-lock-icon">lock</span>
+              <p class="sess-lock-copy">Real-time order book confirmation is available on the Pro plan.</p>
+              <button class="sess-upgrade-btn" type="button">Upgrade to Pro</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <div class="sess-dashboard-footer">
+          <span class="sess-footer-text">ORB Closes: 9:45 AM <span class="sess-footer-count">(4m 32s)</span></span>
+          <span class="badge badge--accent badge--uppercase">Forming</span>
+        </div>
+
+      </div><!-- /sessViewDashboard -->
+
+    </div><!-- /sessBody -->
+  </div><!-- /marketSessionsMenu -->
+
+
   <!-- ===================== ORDER TYPE DROPDOWN ===================== -->
   <div class="pop-menu" id="orderTypeMenu">
     <button class="pop-item" data-type="Market">
@@ -5006,7 +5423,8 @@
       <div class="modal-summary">
         <div class="row"><span class="l">Order Type</span><span class="v" id="ocType">Market</span></div>
         <div class="row"><span class="l">Amount</span><span class="v" id="ocAmount">2 ETH</span></div>
-        <div class="row" id="ocLeverageRow"><span class="l">Leverage</span><span class="v" id="ocLeverage">10×</span></div>
+        <div class="row" id="ocLeverageRow"><span class="l">Leverage</span><span class="v" id="ocLeverage">10×</span>
+        </div>
         <div class="row"><span class="l">Price</span><span class="v" id="ocPrice">$2,145.50</span></div>
       </div>
       <label class="cs-checkbox-row oc-dontshow">
@@ -5036,6 +5454,7 @@
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=11"></script>
   <script src="js/market-scanner.js?v=9"></script>
+  <script src="js/market-sessions.js?v=4"></script>
 
 </body>
 
