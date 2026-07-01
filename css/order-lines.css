@@ -90,7 +90,7 @@
    lets several trailing TPs stay distinguishable when their offset lines sit close together. */
 .ol-offset-label {
   position: absolute;
-  left: 6px;
+  right: 84px;
   transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
