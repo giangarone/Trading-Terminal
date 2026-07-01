@@ -2675,10 +2675,7 @@
 
           offsetLabelEl = document.createElement('span');
           offsetLabelEl.className = 'ol-offset-label';
-          offsetLabelEl.innerHTML =
-            '<span class="ol-offset-label-text">TP' + (idx + 1) + ' OFFSET</span>' +
-            '<button type="button" class="ol-offset-remove" data-tp-offset-remove="' + tp.id + '" title="Disable trailing" aria-label="Disable">' +
-            '<span class="material-symbols-outlined">close</span></button>';
+          offsetLabelEl.innerHTML = '<span class="ol-offset-label-text">TP' + (idx + 1) + ' OFFSET</span>';
           offsetLabelEl.style.top = oy + 'px';
           layer.appendChild(offsetLabelEl);
         }
@@ -2799,11 +2796,6 @@
         if (tpBadgeRemove) tpBadgeRemove.addEventListener('click', (e) => {
           e.stopPropagation();
           selectTpTrail(tp.id); // re-toggle off → disables trailing, back to a plain TP
-        });
-        const tpOffsetRemove = offsetLabelEl && offsetLabelEl.querySelector('[data-tp-offset-remove]');
-        if (tpOffsetRemove) tpOffsetRemove.addEventListener('click', (e) => {
-          e.stopPropagation();
-          selectTpTrail(tp.id); // quick-disable trailing straight from the offset line
         });
         row.querySelector('[data-remove-tp]').addEventListener('click', (e) => {
           e.stopPropagation();

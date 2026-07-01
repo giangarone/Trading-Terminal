@@ -84,6 +84,7 @@
 /* Trailing-TP offset line — sits between a trailing TP and entry, in the trail/intel color */
 .ol-line.offset {
   border-color: var(--intel-border);
+  opacity: .5;
 }
 
 /* Tag on the left edge of an offset line, naming which TP it belongs to (e.g. "TP1 Trail") —
@@ -98,36 +99,11 @@
   font-size: 9px;
   font-weight: 600;
   letter-spacing: .03em;
-  padding: 4px 5px;
   border-radius: 4px;
   background: var(--bg-sunken);
-  border: 1px solid var(--intel-border);
   color: var(--intel);
   white-space: nowrap;
   pointer-events: none;
-}
-
-/* Quick-disable × on the offset label. The label itself is click-through (so the offset line
-   stays draggable along its length); only this button re-enables pointer events. */
-.ol-offset-remove {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  opacity: .6;
-}
-
-.ol-offset-remove:hover {
-  opacity: 1;
-}
-
-.ol-offset-remove .material-symbols-outlined {
-  font-size: 11px;
 }
 
 .ol-line.ghost {
