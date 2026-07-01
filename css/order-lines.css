@@ -208,7 +208,7 @@
   transform: translateY(-50%);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   pointer-events: auto;
   z-index: 6;
 }
@@ -330,7 +330,7 @@
   transform: translateY(-50%);
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
   pointer-events: auto;
   z-index: 5;
 }
@@ -631,15 +631,41 @@
   opacity: 0.45;
 }
 
-.ol-rmult {
-  font-size: 10px;
-  color: var(--text-primary);
-  font-family: var(--sans);
-  font-weight: 600;
+/* Combined TP metadata chip: position % (editable) + R-multiple (read-only), one pill.
+   Left segment opens the edit-exit modal; right segment is muted, informational only. */
+.ol-tp-meta {
+  display: inline-flex;
+  align-items: stretch;
   background: var(--bg-input);
   border: 1px solid var(--border-default);
-  padding: 2px 5px;
   border-radius: 4px;
+  overflow: hidden;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.ol-tp-meta-pct {
+  display: flex;
+  align-items: center;
+  padding: 3px 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-decoration: underline dotted transparent;
+}
+
+.ol-tp-meta-pct:hover {
+  text-decoration-color: currentColor;
+  color: var(--text-primary);
+}
+
+.ol-tp-meta-r {
+  display: flex;
+  align-items: center;
+  padding: 3px 4px;
+  color: var(--text-secondary);
+  border-left: 1px solid var(--border-default);
 }
 
 .ol-entry-pnl {
@@ -659,22 +685,6 @@
 .ol-entry-pnl.down {
   color: var(--short);
   background: var(--short-dim);
-}
-
-.ol-pct-chip {
-  font-size: 9.5px;
-  padding: 2px 6px;
-  border-radius: 9px;
-  background: var(--bg-input);
-  color: var(--text-secondary);
-  font-weight: 600;
-  font-family: var(--sans);
-  cursor: pointer;
-  text-decoration: underline dotted transparent;
-}
-
-.ol-pct-chip:hover {
-  text-decoration-color: currentColor;
 }
 
 .ol-gear {
@@ -787,16 +797,17 @@
 .ol-sl-mode-btn,
 .ol-tp-mode-btn {
   font-size: 9px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: .03em;
   padding: 3px 7px;
   border-radius: 4px;
-  background: var(--bg-hover);
-  color: var(--text-secondary);
-  border: none;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
   cursor: pointer;
   font-family: var(--sans);
 }
+
 
 .ol-sl-mode-btn:hover,
 .ol-tp-mode-btn:hover {

@@ -128,13 +128,13 @@
   let isDraggingOrderLine = false; // true for the duration of any order-line drag — blocks the price-tick auto-render from wiping live drag visuals
   let isHoveringBarControls = false; // true when pointer is over a non-drag interactive element inside an entry/TP/SL bar — suppresses the chart crosshair
   layer.addEventListener('mouseover', (e) => {
-    if (e.target.closest('.ol-pill-seg, .ol-gear, .ol-amt, .ol-pct-chip, .ol-entry-pnl')) {
+    if (e.target.closest('.ol-pill-seg, .ol-gear, .ol-amt, .ol-tp-meta, .ol-entry-pnl')) {
       isHoveringBarControls = true;
       if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
     }
   });
   layer.addEventListener('mouseout', (e) => {
-    if (!e.relatedTarget || !e.relatedTarget.closest('.ol-pill-seg, .ol-gear, .ol-amt, .ol-pct-chip, .ol-entry-pnl')) {
+    if (!e.relatedTarget || !e.relatedTarget.closest('.ol-pill-seg, .ol-gear, .ol-amt, .ol-tp-meta, .ol-entry-pnl')) {
       isHoveringBarControls = false;
     }
   });
@@ -1104,7 +1104,7 @@
   }
   /* The special (non-Fixed) SL modes, shown as neutral buttons beside the SL chip. */
   const SL_MODE_BUTTONS = [
-    { mode: 'trailing', label: 'Trail', cls: 'trail' },
+    { mode: 'trailing', label: 'TRL', cls: 'trail' },
     { mode: 'atr', label: 'ATR', cls: 'atr' },
     { mode: 'breakeven', label: 'BE', cls: 'be' },
   ];
@@ -1496,7 +1496,7 @@
         const tipEl = amtEl.querySelector('.ol-fee-tip');
         if (tipEl) tipEl.innerHTML = feeTooltipHtml(gross, fee, net);
       }
-      const rEl = row.querySelector('.ol-rmult');
+      const rEl = row.querySelector('.ol-tp-meta-r');
       if (rEl) {
         const rMultiple = riskPerContractTotal ? (pts * POINT_VALUE / riskPerContractTotal) : null;
         rEl.textContent = rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R';
@@ -2483,7 +2483,7 @@
         // chip (mirrors the SL mode flow); otherwise a neutral Trail button sits to the left.
         const tpTrailing = tpTrailActive(tp);
         const modeBtnHtml = tpTrailing ? '' :
-          '<button type="button" class="ol-tp-mode-btn" data-tp-trail="' + tp.id + '">Trail</button>';
+          '<button type="button" class="ol-tp-mode-btn" data-tp-trail="' + tp.id + '">TRL</button>';
         const badgeHtml = !tpTrailing ? '' :
           '<span class="ol-badge tp-badge trail" data-tp-badge="' + tp.id + '">' +
           '<span class="ol-badge-label" data-tp-badge-edit="' + tp.id + '" title="Edit trailing TP">' + tpBadgeText(tp) + '</span>' +
@@ -2500,8 +2500,10 @@
         row.innerHTML =
           modeBtnHtml +
           '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">error</span>TP' + (idx + 1) + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="ol-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span>' + badgeHtml + '</span>' +
-          '<span class="ol-rmult">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
-          '<span class="ol-pct-chip" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
+          '<span class="ol-tp-meta">' +
+            '<span class="ol-tp-meta-pct" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
+            '<span class="ol-tp-meta-r">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
+          '</span>' +
           '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" title="Remove TP"><span class="material-symbols-outlined">delete</span></span>';
         layer.appendChild(row);
 
