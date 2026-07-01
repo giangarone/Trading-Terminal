@@ -1381,6 +1381,22 @@ table.msx-table tbody tr.selected {
   transform: translate(-50%, 49px);
 }
 
+/* Bottom-bar mode — all markers pinned to one row near the chart floor instead of
+   the candle's high/low; there's no candle edge to point at, so the caret is hidden,
+   and the popup always opens upward since expanding down would clip the chart bottom. */
+.news-marker.bottom-bar .news-marker-signal {
+  flex-direction: column;
+  transform: translate(-50%, calc(-100% - 12px));
+}
+
+.news-marker.bottom-bar .news-marker-caret {
+  display: none;
+}
+
+.news-marker.bottom-bar .news-marker-popup {
+  transform: translate(-50%, calc(-100% - 49px));
+}
+
 /* =====================================================================
    Scheduled event lines — upcoming macro events (FOMC…) drawn as neutral
    vertical lines anchored near the bottom of the chart. The name/date/

@@ -398,6 +398,11 @@
   min-width: 0;
 }
 
+.cs-field[data-disabled] {
+  opacity: .45;
+  pointer-events: none;
+}
+
 .cs-field label {
   display: block;
   font-size: var(--fs-label);

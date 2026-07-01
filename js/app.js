@@ -53,6 +53,7 @@
       maxEvents: 20,
       showPast: true,
       showUpcoming: true,
+      showMarkersAtBottom: false,
       importance: { high: true, medium: true, low: true },
       types: { news: true, social: true, geopolitical: true, corporate: true }
     }
@@ -2048,9 +2049,12 @@
         return;
       }
 
-      el.classList.remove('pos-above', 'pos-below');
+      el.classList.remove('pos-above', 'pos-below', 'bottom-bar');
       let anchorY;
-      if (posMode === 'always-above') {
+      if (ns.showMarkersAtBottom) {
+        anchorY = ih - 14;
+        el.classList.add('bottom-bar');
+      } else if (posMode === 'always-above') {
         anchorY = priceToY(bar.high, h);
         el.classList.add('pos-above');
       } else if (posMode === 'always-below') {
@@ -3621,6 +3625,15 @@
       btn.closest('.cs-switch-row').classList.toggle('active');
     });
   });
+  /* "Show markers at bottom of chart" makes Marker Position irrelevant, so dim it live
+     (the generic handler above already flipped .active on this row by the time this runs) */
+  const csNewsMarkersAtBottomRow = document.getElementById('csNewsMarkersAtBottom');
+  if (csNewsMarkersAtBottomRow) {
+    csNewsMarkersAtBottomRow.querySelector('.ui-toggle').addEventListener('click', () => {
+      document.getElementById('csNewsPositionGroup').closest('.cs-field')
+        .toggleAttribute('data-disabled', csNewsMarkersAtBottomRow.classList.contains('active'));
+    });
+  }
   /* "Confirm Orders" toggle persists separately, since it gates the Order Confirmation modal */
   const csConfirmMarketOrdersRow = document.getElementById('csConfirmMarketOrders');
   if (csConfirmMarketOrdersRow) {
@@ -3939,6 +3952,8 @@
     document.getElementById('csNewsTypeCorp').classList.toggle('checked', sn.types.corporate);
     document.getElementById('csNewsShowPast').classList.toggle('active', sn.showPast);
     document.getElementById('csNewsShowUpcoming').classList.toggle('active', sn.showUpcoming);
+    document.getElementById('csNewsMarkersAtBottom').classList.toggle('active', sn.showMarkersAtBottom);
+    document.getElementById('csNewsPositionGroup').closest('.cs-field').toggleAttribute('data-disabled', sn.showMarkersAtBottom);
 
     csUpdateConditionalFields();
     refreshAllCsDropdownLabels(document.getElementById('chartSettingsBackdrop'));
@@ -3991,6 +4006,7 @@
         maxEvents: parseInt(document.getElementById('csNewsMaxEvents').value) || 20,
         showPast: document.getElementById('csNewsShowPast').classList.contains('active'),
         showUpcoming: document.getElementById('csNewsShowUpcoming').classList.contains('active'),
+        showMarkersAtBottom: document.getElementById('csNewsMarkersAtBottom').classList.contains('active'),
         importance: {
           high: document.getElementById('csNewsImpHigh').classList.contains('active'),
           medium: document.getElementById('csNewsImpMedium').classList.contains('active'),
@@ -4366,7 +4382,7 @@
     { name: 'Large Lot / Block Trade Detector', desc: 'Highlights unusually large executed trades that may indicate institutional participation.', cat: 'l1' },
     { name: 'Aggressive Order Flow', desc: 'Measures whether buyers or sellers are controlling the tape through sustained market orders.', cat: 'l1' },
     { name: 'Smart Volume Spike Detector', desc: 'Detects abnormal volume and classifies whether it supports continuation, exhaustion, absorption, liquidation, or a fake breakout.', cat: 'l1' },
-    { name: 'Whale Movement', desc: 'Tracks large holder activity to flag accumulation or distribution before it shows up in price.', cat: 'l1' },
+    { name: 'Whale Movement', desc: 'Detects large institutional orders that signal potential market moves', cat: 'l1' },
 
     { name: 'Limit Order Heatmap', desc: 'Shows resting bid/ask liquidity to identify support, resistance, liquidity walls, and breakout zones.', cat: 'l2' },
     { name: 'Iceberg Detector', desc: 'Detects hidden or refreshing institutional orders.', cat: 'l2' },
