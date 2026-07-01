@@ -666,7 +666,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   cursor: pointer;
   background: var(--bg-sunken);
   border: solid 1px var(--border-default);
@@ -675,13 +675,11 @@
 
 .ol-gear:hover {
   color: var(--text-primary);
-  background: var(--bg-hover);
 }
 
 .ol-gear.ol-danger:hover {
   color: var(--short);
   border: solid 1px var(--short);
-  background: var(--short-dim);
 }
 
 .ol-gear.ol-success:hover {
@@ -691,8 +689,12 @@
 
 .ol-gear.ol-reverse:hover {
   color: var(--info);
-  border: solid 1px var(--info-border);
-  background: var(--info-dim);
+  border: solid 1px var(--info);
+}
+
+.ol-gear.accent:hover {
+  color: var(--accent);
+  border: solid 1px var(--accent);
 }
 
 .ol-gear .material-symbols-outlined {

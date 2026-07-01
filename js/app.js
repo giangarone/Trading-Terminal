@@ -2660,8 +2660,8 @@
         row.style.top = y + 'px';
         const tpSign = tpNet >= 0 ? '+' : '';
         row.innerHTML =
-          modeBtnHtml +
           '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">error</span>TP' + (idx + 1) + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="ol-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span>' + badgeHtml + '</span>' +
+          modeBtnHtml +
           '<span class="ol-tp-meta">' +
           '<span class="ol-tp-meta-pct" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
           '<span class="ol-tp-meta-r">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
@@ -2859,12 +2859,12 @@
         row.className = 'ol-side-row';
         row.style.top = y + 'px';
         row.innerHTML =
-          modeBtns +
           '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + '">' +
           '<span class="material-symbols-outlined ol-chip-warning">error</span>SL' +
           '<span class="ol-amt ' + (slNet >= 0 ? 'up' : 'down') + '"><span class="ol-amt-val">' + slSign + fmtMoney(slNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(slGross, slFee, slNet) + '</span></span>' +
           badgeHtml +
           '</span>' +
+          modeBtns +
           '<span class="ol-gear ol-danger" id="slDeleteTrigger" title="Remove SL"><span class="material-symbols-outlined">close</span></span>';
         layer.appendChild(row);
 
@@ -3042,10 +3042,6 @@
           '</span>';
 
         bar.innerHTML =
-          '<span class="ol-gear" id="pctCloseBtn" title="Close % of Position">' +
-          '<span class="material-symbols-outlined">percent</span>' +
-          '</span>' +
-
           '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Reverse Position">' +
           '<span class="material-symbols-outlined">swap_vert</span>' +
           '</span>' +
@@ -3062,6 +3058,10 @@
 
           tpAddHandleHtml +
           slAddHandleHtml +
+
+          '<span class="ol-gear accent" id="pctCloseBtn" title="Close % of Position">' +
+          '<span class="material-symbols-outlined">percent</span>' +
+          '</span>' +
 
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position">' +
           '<span class="material-symbols-outlined">close</span>' +
