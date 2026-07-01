@@ -2886,24 +2886,32 @@
       layer.appendChild(line);
 
       function onDragEntry(cy, h) {
-        bar.style.top = cy + 'px'; line.style.top = cy + 'px';
+        bar.style.top = cy + 'px';
+        line.style.top = cy + 'px';
+
         setOrderEntryPrice(roundTick(yToPrice(cy, h)));
+
         // Keep an automated SL anchored to entry while dragging for non-market orders
         if (order.orderType !== 'Market') {
           if (slTrailActive()) applyTrailingStopPreview();
           else if (slAtrActive()) placeAtrStop();
         }
+
         updateAllTpSlLinePositionsLive();
         updateAllTpSlValidityLive();
         updateAllTpSlReadoutsLive();
         drawPriceChart();
       }
+
       function onDropEntry(cy, h) {
         setOrderEntryPrice(roundTick(yToPrice(cy, h)));
         syncQtyFromRisk();
         render();
       }
-      if (canDragEntry) makeDraggable(line, onDragEntry, onDropEntry, undefined, undefined, 'entry');
+
+      if (canDragEntry) {
+        makeDraggable(line, onDragEntry, onDropEntry, undefined, undefined, 'entry');
+      }
 
       const bar = document.createElement('div');
       bar.className = 'ol-entry-bar';
@@ -2911,85 +2919,157 @@
 
       const side = order.side;
       const sideLabel = side === 'buy' ? 'BUY' : 'SELL';
+
       const tpAddHandleHtml = '<span class="ol-chip ghost tp-add" id="tpAddHandle">TP</span>';
-      const slAddHandleHtml = !order.sl ? '<span class="ol-chip ghost sl-add" id="slAddHandle">SL</span>' : '';
-      const sizeLabel = order.sizeMode === 'contracts' ? String(order.qty)
-        : order.sizeMode === 'dollar' ? '$' + fmt(order.sizeValues.dollar, 0)
-          : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
+      const slAddHandleHtml = !order.sl
+        ? '<span class="ol-chip ghost sl-add" id="slAddHandle">SL</span>'
+        : '';
+
+      const sizeLabel = order.sizeMode === 'contracts'
+        ? String(order.qty)
+        : order.sizeMode === 'dollar'
+          ? '$' + fmt(order.sizeValues.dollar, 0)
+          : order.sizeMode === 'percent'
+            ? order.sizeValues.percent + '%'
             : String(order.qty);
 
       if (!order.filled) {
         let entryTitle;
-        if (blocked) entryTitle = 'Fix invalid TP/SL before placing the order';
-        else if (placeable) entryTitle = canDragEntry ? 'Drag to move, or click to place the order' : 'Click to place the order';
-        else entryTitle = 'Drag to move entry';
-        // Resting/working order: placed and waiting for price to reach entry (not yet filled, no longer awaiting placement)
+
+        if (blocked) {
+          entryTitle = 'Fix invalid TP/SL before placing the order';
+        } else if (placeable) {
+          entryTitle = canDragEntry
+            ? 'Drag to move, or click to place the order'
+            : 'Click to place the order';
+        } else {
+          entryTitle = 'Drag to move entry';
+        }
+
+        // Resting/working order: placed and waiting for price to reach entry
+        // Not yet filled, no longer awaiting placement
         const working = !placeable;
+
         const entryClass = 'ol-chip entry ' + side
           + (placeable ? ' placeable' : '')
           + (working ? ' working' : '')
-          + (order.filling ? ' filling' : '')   // keeps the progress fill at 100% if a re-render lands mid-sweep
+          + (order.filling ? ' filling' : '')
           + (blocked ? ' disabled' : '');
+
         bar.innerHTML =
           '<span class="' + entryClass + '" id="entryPriceHandle" title="' + entryTitle + '">' +
-          '<span class="ol-chip-fill"></span><span class="ol-chip-lbl">' + sideLabel + '</span></span>' +
-          tpAddHandleHtml + slAddHandleHtml +
+          '<span class="ol-chip-fill"></span>' +
+          '<span class="ol-chip-lbl">' + sideLabel + '</span>' +
+          '</span>' +
+
           '<span class="ol-pill neutral combo" id="orderConfigPill">' +
           '<span class="ol-pill-seg" id="sizePillTrigger">' + sizeLabel + '</span>' +
           '<span class="ol-pill-divider"></span>' +
           '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
           '</span>' +
-          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Flip Direction"><span class="material-symbols-outlined">swap_vert</span></span>' +
-          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Cancel Order"><span class="material-symbols-outlined">close</span></span>';
+
+          tpAddHandleHtml +
+          slAddHandleHtml +
+
+          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Flip Direction">' +
+          '<span class="material-symbols-outlined">swap_vert</span>' +
+          '</span>' +
+
+          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Cancel Order">' +
+          '<span class="material-symbols-outlined">close</span>' +
+          '</span>';
+
       } else {
         const dir = order.side === 'buy' ? 1 : -1;
         const currentPrice = qtCurrentPrice();
         const pnl = dir * (currentPrice - order.entry) * POINT_VALUE * order.qty;
-        const pnlHtml = '<span class="ol-entry-pnl ' + (pnl >= 0 ? 'up' : 'down') + '">' + (pnl >= 0 ? '+' : '') + fmtMoney(pnl) + '</span>';
+
+        const pnlHtml =
+          '<span class="ol-entry-pnl ' + (pnl >= 0 ? 'up' : 'down') + '">' +
+          (pnl >= 0 ? '+' : '') + fmtMoney(pnl) +
+          '</span>';
+
         bar.innerHTML =
-          '<span class="ol-chip entry locked ' + side + '" id="entryPriceHandle">' + sideLabel + pnlHtml + '</span>' +
-          tpAddHandleHtml + slAddHandleHtml +
+          '<span class="ol-chip entry locked ' + side + '" id="entryPriceHandle">' +
+          sideLabel + pnlHtml +
+          '</span>' +
+
           '<span class="ol-pill neutral combo locked" id="orderConfigPill">' +
           '<span class="ol-pill-seg" id="sizePillTrigger">' + order.qty + '</span>' +
           '<span class="ol-pill-divider"></span>' +
           '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
           '</span>' +
-          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Reverse Position"><span class="material-symbols-outlined">swap_vert</span></span>' +
-          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">close</span></span>';
+
+          tpAddHandleHtml +
+          slAddHandleHtml +
+
+          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Reverse Position">' +
+          '<span class="material-symbols-outlined">swap_vert</span>' +
+          '</span>' +
+
+          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position">' +
+          '<span class="material-symbols-outlined">close</span>' +
+          '</span>';
       }
+
       layer.appendChild(bar);
 
       const tpAddHandle = bar.querySelector('#tpAddHandle');
-      if (tpAddHandle) { makeAddHandleDraggable(tpAddHandle, 'tp'); bindHandleHover(tpAddHandle, 'tp-add'); }
+      if (tpAddHandle) {
+        makeAddHandleDraggable(tpAddHandle, 'tp');
+        bindHandleHover(tpAddHandle, 'tp-add');
+      }
+
       const slAddHandle = bar.querySelector('#slAddHandle');
-      if (slAddHandle) { makeAddHandleDraggable(slAddHandle, 'sl'); bindHandleHover(slAddHandle, 'sl-add'); }
+      if (slAddHandle) {
+        makeAddHandleDraggable(slAddHandle, 'sl');
+        bindHandleHover(slAddHandle, 'sl-add');
+      }
 
       const entryPriceHandle = bar.querySelector('#entryPriceHandle');
       if (entryPriceHandle) {
         bindHandleHover(entryPriceHandle, 'entry');
+
         if (canDragEntry) {
           makeDraggable(entryPriceHandle, onDragEntry, onDropEntry, undefined, placeOrder);
         } else if (placeable) {
-          entryPriceHandle.addEventListener('click', (e) => { e.stopPropagation(); placeOrder(); });
+          entryPriceHandle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            placeOrder();
+          });
         }
       }
 
       if (!order.filled) {
         bar.querySelector('#sizePillTrigger').addEventListener('click', (e) => {
-          e.stopPropagation(); openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+          e.stopPropagation();
+          openSizeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
         });
+
         bar.querySelector('#typePillTrigger').addEventListener('click', (e) => {
-          e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+          e.stopPropagation();
+          openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
         });
       }
+
       bar.querySelector('#reverseOrderBtn').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (order.filled) reverseFilledPosition(); else flipWorkingOrderSide();
+
+        if (order.filled) {
+          reverseFilledPosition();
+        } else {
+          flipWorkingOrderSide();
+        }
       });
+
       bar.querySelector('#cancelOrderBtn').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (order.filled) openChartClosePopup(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-        else cancelOrder();
+
+        if (order.filled) {
+          openChartClosePopup(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        } else {
+          cancelOrder();
+        }
       });
     }
 
