@@ -262,6 +262,8 @@
   const ctxMenu = document.getElementById('ctxMenu');
   const ctxLongLbl = document.getElementById('ctxLongLbl');
   const ctxShortLbl = document.getElementById('ctxShortLbl');
+  const ctxQuickMarketLongLbl = document.getElementById('ctxQuickMarketLongLbl');
+  const ctxQuickMarketShortLbl = document.getElementById('ctxQuickMarketShortLbl');
   chart.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     const rect = chart.getBoundingClientRect();
@@ -274,10 +276,14 @@
     const qtyStr = qty.toFixed(2);
     ctxLongLbl.textContent = 'Buy ' + qtyStr + ' ETH @ ' + priceStr;
     ctxShortLbl.textContent = 'Sell ' + qtyStr + ' ETH @ ' + priceStr;
+    ctxQuickMarketLongLbl.textContent = 'Buy Market ' + qtyStr + ' ETH';
+    ctxQuickMarketShortLbl.textContent = 'Sell Market ' + qtyStr + ' ETH';
     openAt(ctxMenu, e.clientX, e.clientY);
   });
   document.getElementById('ctxLong').addEventListener('click', () => { createOrder('buy', pendingClickPrice); closeAllPopovers(); });
   document.getElementById('ctxShort').addEventListener('click', () => { createOrder('sell', pendingClickPrice); closeAllPopovers(); });
+  document.getElementById('ctxQuickMarketLong').addEventListener('click', () => { fillQuickMarketOrder('buy'); closeAllPopovers(); });
+  document.getElementById('ctxQuickMarketShort').addEventListener('click', () => { fillQuickMarketOrder('sell'); closeAllPopovers(); });
 
   /* ---------- positions panel: expand/collapse & in-row actions ---------- */
   document.querySelectorAll('.pos-row-summary').forEach(summary => {
@@ -484,6 +490,27 @@
       initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null
     };
     render();
+  }
+
+  // Chart right-click "Market Buy/Sell" trades go straight to a market fill (no pending entry chip), same as the Quick Trade panel's Market tab
+  function fillQuickMarketOrder(side) {
+    const currentPrice = (() => {
+      const el = document.getElementById('hdrLast');
+      return el ? parseFloat(el.textContent.replace(/,/g, '')) : BASE_PRICE;
+    })();
+    const details = {
+      side,
+      orderType: 'Market',
+      amount: (qtyInput.value || '1') + ' ' + QT_INSTRUMENT_UNIT,
+      leverage: qtLeverageCheckbox.classList.contains('checked') ? document.getElementById('qtLeverageInput').value + '×' : null,
+      price: '$' + fmt(currentPrice)
+    };
+    requestOrderConfirmation(details, () => fillQuickMarketOrderExecute(side, currentPrice));
+  }
+  function fillQuickMarketOrderExecute(side, currentPrice) {
+    createOrder(side, currentPrice, 'quick');
+    order.orderType = 'Market';
+    confirmOrderFill();
   }
 
   /* ---------- Quick Trade panel ---------- */
