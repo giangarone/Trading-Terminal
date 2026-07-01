@@ -237,14 +237,6 @@
   cursor: pointer;
 }
 
-.ol-pill.neutral:hover {
-  border: 1px solid var(--border-strong);
-}
-
-.ol-pill.neutral:hover {
-  border: 1px solid var(--border-strong);
-}
-
 .ol-pill .material-symbols-outlined {
   font-size: 15px;
 }
@@ -277,7 +269,7 @@
 }
 
 .ol-pill-seg:hover {
-  background: var(--bg-hover);
+  background: var(--bg-base);
 }
 
 .ol-pill-divider {
@@ -551,7 +543,7 @@
   align-items: center;
   font-family: var(--sans);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   text-decoration: underline dotted transparent;
 }
@@ -636,7 +628,7 @@
 .ol-tp-meta {
   display: inline-flex;
   align-items: stretch;
-  background: var(--bg-input);
+  background: var(--bg-sunken);
   border: 1px solid var(--border-default);
   border-radius: 4px;
   overflow: hidden;

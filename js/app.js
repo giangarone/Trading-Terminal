@@ -1160,7 +1160,7 @@
     const cfg = ensureTpTrailOffset(tp);
     return formatTpOffset(cfg.offsetValue, cfg.offsetUnit);
   }
-  function tpBadgeText(tp) { return 'Trail ' + tpOffsetLabel(tp); }
+  function tpBadgeText(tp) { return 'TRL ' + tpOffsetLabel(tp); }
   /* live-patch a trailing-TP badge label + its Offset line during a drag (no full re-render) */
   function refreshTpBadgeOnChart(tpId) {
     const labelEl = layer.querySelector('[data-tp-badge-edit="' + tpId + '"]');
@@ -1218,7 +1218,7 @@
     if (!order || !order.sl || !order.sl.enabled) return null;
     if (order.sl.mode === 'breakeven') return { text: order.sl.beActive ? 'SL → BE' : 'BE', cls: 'be' };
     if (order.sl.mode === 'atr') return { text: 'ATR ' + slAtrMult().toFixed(2) + 'x', cls: 'atr' };
-    return { text: 'Trail ' + slDistanceLabel(ensureSlConfig()), cls: 'trail' };
+    return { text: 'TRL ' + slDistanceLabel(ensureSlConfig()), cls: 'trail' };
   }
   /* live-patch the on-chart SL chip badge without a full re-render (used by drag and by gear-menu field edits).
      If a drag detaches a special mode (e.g. manually dragging an ATR stop), the badge is removed outright
@@ -2627,7 +2627,7 @@
           offsetLabelEl = document.createElement('span');
           offsetLabelEl.className = 'ol-offset-label';
           offsetLabelEl.innerHTML =
-            '<span class="ol-offset-label-text">TP' + (idx + 1) + ' Trail · ' + tpOffsetLabel(tp) + '</span>' +
+            '<span class="ol-offset-label-text">TP' + (idx + 1) + ' TRL</span>' +
             '<button type="button" class="ol-offset-remove" data-tp-offset-remove="' + tp.id + '" title="Disable trailing" aria-label="Disable">' +
             '<span class="material-symbols-outlined">close</span></button>';
           offsetLabelEl.style.top = oy + 'px';
@@ -2642,7 +2642,7 @@
           offsetLineEl.style.top = oy;
           offsetLabelEl.style.top = oy;
           const txtEl = offsetLabelEl.querySelector('.ol-offset-label-text');
-          if (txtEl) txtEl.textContent = 'TP' + (idx + 1) + ' Trail · ' + tpOffsetLabel(tp);
+          if (txtEl) txtEl.textContent = 'TP' + (idx + 1) + ' TRL';
         }
 
         const tpChipEl = row.querySelector('.ol-chip');
@@ -2721,10 +2721,7 @@
             }
             dragLine.style.top = cy + 'px';
             dragLabel.style.top = cy + 'px';
-            const gapPts = Math.abs(tp.price - roundTick(yToPrice(cy, h)));
-            const cfg = ensureTpTrailOffset(tp);
-            const v = tpGapToOffset(gapPts, tp.price, cfg.offsetUnit);
-            dragLabel.innerHTML = '<span class="ol-offset-label-text">TP' + (idx + 1) + ' Trail · ' + formatTpOffset(v, cfg.offsetUnit) + '</span>';
+            dragLabel.innerHTML = '<span class="ol-offset-label-text">TP' + (idx + 1) + ' TRL</span>';
             drawPriceChart();
           }
           function onTrailBtnDrop(cy, h) {
