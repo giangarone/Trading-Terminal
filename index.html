@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="css/indicators.css?v=9">
   <link rel="stylesheet" href="css/chart-settings.css?v=23">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
-  <link rel="stylesheet" href="css/market-sessions.css?v=7">
+  <link rel="stylesheet" href="css/market-sessions.css?v=9">
 </head>
 
 <body>
@@ -4674,9 +4674,9 @@
       <div class="sess-view" id="sessViewSettings" data-view="settings">
 
         <!-- Session Highlights -->
-        <section class="sess-card">
-          <div class="sess-card-head">
-            <span class="sess-card-title">Session Highlights</span>
+        <section class="sess-section">
+          <div class="sess-section-head">
+            <span class="sess-section-title">Session Highlights</span>
           </div>
           <div class="sess-session-list">
             <label class="sess-session-row">
@@ -4711,16 +4711,16 @@
         </section>
 
         <!-- Opening Range (ORB) -->
-        <section class="sess-card sess-card--orb active" id="sessOrbCard">
-          <div class="sess-card-head sess-card-head--switch">
-            <span class="sess-card-title">Opening Range (ORB)</span>
-            <button type="button" class="ui-toggle sess-card-toggle" id="sessOrbMasterToggle"
+        <section class="sess-section sess-section--orb active" id="sessOrbCard">
+          <div class="sess-section-head sess-section-head--switch">
+            <span class="sess-section-title">Opening Range (ORB)</span>
+            <button type="button" class="ui-toggle sess-section-toggle" id="sessOrbMasterToggle"
               aria-label="Toggle Opening Range">
               <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
             </button>
           </div>
 
-          <div class="sess-card-body" id="sessOrbBody">
+          <div class="sess-orb-body" id="sessOrbBody">
             <div class="sess-subrow">
               <span class="sess-subrow-label">Apply to</span>
               <div class="sess-seg-group" id="sessOrbSegGroup">
@@ -4768,9 +4768,9 @@
         </section>
 
         <!-- ORB Intelligence -->
-        <section class="sess-card">
-          <div class="sess-card-head">
-            <span class="sess-card-title">ORB Intelligence</span>
+        <section class="sess-section">
+          <div class="sess-section-head">
+            <span class="sess-section-title">ORB Intelligence</span>
           </div>
           <div class="cs-switch-row sess-switch-row active">
             <span class="cs-switch-text">
@@ -4806,7 +4806,7 @@
         </section>
 
         <!-- ORB Analysis Dashboard master toggle -->
-        <section class="sess-card sess-card--feature">
+        <section class="sess-section sess-section--feature">
           <div class="cs-switch-row sess-switch-row sess-switch-row--feature" id="sessDashboardToggleRow">
             <span class="cs-switch-text">
               <span class="cs-switch-title">ORB Analysis Dashboard</span>
@@ -4833,8 +4833,8 @@
       <div class="sess-view" id="sessViewDashboard" data-view="dashboard" hidden>
 
         <!-- Quality -->
-        <section class="sess-card">
-          <div class="sess-card-head"><span class="sess-card-title">Today's ORB Quality</span></div>
+        <section class="sess-section">
+          <div class="sess-section-head"><span class="sess-section-title">Today's ORB Quality</span></div>
           <div class="sess-quality-row">
             <div class="sess-quality-score">
               <span class="sess-score-num">82</span><span class="sess-score-max">/100</span>
@@ -4863,8 +4863,8 @@
         </section>
 
         <!-- Stats -->
-        <section class="sess-card">
-          <div class="sess-card-head"><span class="sess-card-title">Today's Stats</span></div>
+        <section class="sess-section">
+          <div class="sess-section-head"><span class="sess-section-title">Today's Stats</span></div>
           <div class="sess-stat-grid">
             <div class="sess-stat-cell">
               <span class="sess-stat-val">71%</span>
@@ -4886,8 +4886,8 @@
         </section>
 
         <!-- Bias -->
-        <section class="sess-card sess-bias-card sess-bias-card--bull">
-          <div class="sess-card-head"><span class="sess-card-title">Today's Bias</span></div>
+        <section class="sess-section sess-bias-card--bull">
+          <div class="sess-section-head"><span class="sess-section-title">Today's Bias</span></div>
           <div class="sess-bias-head">
             <span class="sess-bias-dir up"><span class="material-symbols-outlined">trending_up</span>BULLISH</span>
             <span class="badge badge--good">84% confidence</span>
@@ -4896,16 +4896,11 @@
             <strong>Expected Scenario —</strong> Likely ORB breakout to the upside after a first pullback to the
             range midpoint. Watch for a retest of the breakout level as an entry.
           </p>
-          <p class="sess-bias-warn">
-            <span class="material-symbols-outlined">warning</span>
-            <strong>Avoid —</strong> Low conviction downside breaks. If a short setup triggers, wait for L2
-            confirmation before entry.
-          </p>
         </section>
 
         <!-- Smart Targets -->
-        <section class="sess-card">
-          <div class="sess-card-head"><span class="sess-card-title">Smart Targets</span></div>
+        <section class="sess-section">
+          <div class="sess-section-head"><span class="sess-section-title">Smart Targets</span></div>
           <div class="sess-target-list">
             <div class="sess-target-row">
               <span class="sess-target-price">21,547</span>
@@ -4917,31 +4912,10 @@
               <span class="sess-target-label">Stacked asks</span>
               <span class="sess-target-pts up">+68 pts</span>
             </div>
-            <div class="sess-target-row sess-target-row--caution">
-              <span class="material-symbols-outlined sess-target-caution-icon">warning</span>
+            <div class="sess-target-row">
               <span class="sess-target-price">21,612</span>
               <span class="sess-target-label">Iceberg detected</span>
               <span class="sess-target-pts up">+97 pts</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- L2 Confirmation (locked) -->
-        <section class="sess-card sess-l2-card">
-          <div class="sess-card-head">
-            <span class="sess-card-title">L2 Confirmation</span>
-            <span class="badge badge--purple badge--uppercase">Pro</span>
-          </div>
-          <div class="sess-l2-body">
-            <div class="sess-l2-placeholder" aria-hidden="true">
-              <div class="sess-l2-placeholder-row"></div>
-              <div class="sess-l2-placeholder-row"></div>
-              <div class="sess-l2-placeholder-row"></div>
-            </div>
-            <div class="sess-lock-overlay">
-              <span class="material-symbols-outlined sess-lock-icon">lock</span>
-              <p class="sess-lock-copy">Real-time order book confirmation is available on the Pro plan.</p>
-              <button class="sess-upgrade-btn" type="button">Upgrade to Pro</button>
             </div>
           </div>
         </section>
