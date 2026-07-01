@@ -1175,6 +1175,9 @@
   function tpDisplayPrice(tp) {
     return (tp.trailing && tp.activated && tp.exitPrice != null) ? tp.exitPrice : tp.price;
   }
+  /* once an activated trailing TP's automatic ratchet has moved it past entry, that's not a
+     misplacement — only a manual drag past entry (which clears this flag) should still warn */
+  function tpSideWarningSuppressed(tp) { return tpTrailActive(tp) && !!tp.autoTrailing; }
   /* min/step/decimal-places for an offset value, by unit (percent default, ticks optional) */
   function tpOffsetParams(unit) {
     if (unit === 'ticks') return { min: 1, max: 2000, step: 1, dp: 0 };
@@ -1334,11 +1337,12 @@
         if (dir * (currentPrice - tp.price) >= 0) {
           tp.activated = true;
           tp.exitPrice = roundTick(currentPrice - dir * distPrice);
+          tp.autoTrailing = true;
         }
       } else {
         // Phase 2 — trail the exit price behind market; ratchet in the favorable direction only.
         const candidate = roundTick(currentPrice - dir * distPrice);
-        if (dir * (candidate - tp.exitPrice) > 0) tp.exitPrice = candidate;
+        if (dir * (candidate - tp.exitPrice) > 0) { tp.exitPrice = candidate; tp.autoTrailing = true; }
       }
     });
   }
@@ -1611,7 +1615,7 @@
     if (!order) return;
     layer.querySelectorAll('.ol-side-row[data-tp-id]').forEach(row => {
       const tp = order.tps.find(t => t.id === row.dataset.tpId);
-      if (tp) row.querySelector('.ol-chip').classList.toggle('invalid', !tpSlSideOk('tp', tpDisplayPrice(tp)));
+      if (tp) row.querySelector('.ol-chip').classList.toggle('invalid', !tpSlSideOk('tp', tpDisplayPrice(tp)) && !tpSideWarningSuppressed(tp));
     });
     if (order.sl) {
       const slChip = layer.querySelector('.ol-chip.sl');
@@ -2624,6 +2628,7 @@
           tp.trailing = false;
           tp.activated = false;
           tp.exitPrice = null;
+          tp.autoTrailing = false;
         }
       });
       sortedTps.forEach((tp, idx) => {
@@ -2646,7 +2651,7 @@
         const { gross: tpGross, fee: tpFee, net: tpNet } = tpFeeCalc(tp, contracts, displayPrice);
         const riskPerContractTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
         const rMultiple = riskPerContractTotal ? (pts * POINT_VALUE / riskPerContractTotal) : null;
-        const tpInvalid = !tpSlSideOk('tp', displayPrice);
+        const tpInvalid = !tpSlSideOk('tp', displayPrice) && !tpSideWarningSuppressed(tp);
 
         // When trailing is active, the Trail button is replaced by a colored badge inside the
         // chip (mirrors the SL mode flow); otherwise a neutral Trail button sits to the left.
@@ -2709,7 +2714,9 @@
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
           if (tpActivatedTrailing) {
             // Activated: the TP line IS the trailing exit — drag repositions exitPrice directly.
+            // A manual override is no longer "automatic," so the side-of-entry check re-applies.
             tp.exitPrice = roundTick(yToPrice(cy, h));
+            tp.autoTrailing = false;
           } else {
             tp.price = roundTick(yToPrice(cy, h));
             repositionOffsetLine(h); // the offset line follows the TP, preserving the offset
@@ -2721,10 +2728,11 @@
         function onDropTp(cy, h) {
           if (tpActivatedTrailing) {
             tp.exitPrice = roundTick(yToPrice(cy, h));
+            tp.autoTrailing = false;
           } else {
             tp.price = roundTick(yToPrice(cy, h));
             // Moving the activation trigger resets trailing state so it re-evaluates from scratch.
-            if (tp.trailing) { tp.activated = false; tp.exitPrice = null; }
+            if (tp.trailing) { tp.activated = false; tp.exitPrice = null; tp.autoTrailing = false; }
           }
           render();
         }
@@ -2797,6 +2805,7 @@
             tp.trailing = true;
             tp.activated = false;
             tp.exitPrice = null;
+            tp.autoTrailing = false;
             if (dragLine) dragLine.remove();
             if (dragLabel) dragLabel.remove();
             render();
@@ -4667,6 +4676,7 @@
     tp.trailing = !tp.trailing;
     tp.activated = false;
     tp.exitPrice = null;
+    tp.autoTrailing = false;
     if (tp.trailing) ensureTpTrailOffset(tp);
     else if (activeTrailTpId === id) closeAllPopovers();
     render();
