@@ -91,7 +91,7 @@
    time, so the label just names the concept ("Trailing Offset") rather than which TP it's for. */
 .ol-offset-label {
   position: absolute;
-  right: 84px;
+  right: 80px;
   transform: translateY(-50%);
   display: inline-flex;
   align-items: center;

@@ -1162,23 +1162,28 @@
                     <div class="cs-fields-row">
                       <div class="cs-field" id="csTsDistanceWrap">
                         <label>Distance</label>
-                        <div class="cs-unit-pair">
-                          <div class="price-stepper cs-price-stepper">
-                            <input type="text" id="csTsDistanceValue" readonly value="1.0">
-                            <div class="price-stepper-arrows">
-                              <button type="button" id="csTsDistanceInc"><span
-                                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                              <button type="button" id="csTsDistanceDec"><span
-                                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                            </div>
+                        <div class="cs-radio-group" id="csTsDistanceUnitToggle">
+                          <div class="cs-radio-row active" data-unit="percent">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">%</span></span>
                           </div>
-                          <div class="select-input pop-trigger cs-dd-trigger" data-target="csTsDistanceUnit"><span
-                              class="cs-select-label">%</span><span class="material-symbols-outlined">expand_more</span>
-                          </div><select id="csTsDistanceUnit" style="display:none;">
-                            <option value="percent" selected>%</option>
-                            <option value="ticks">Ticks</option>
-                            <option value="atr">ATR</option>
-                          </select>
+                          <div class="cs-radio-row" data-unit="ticks">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">Ticks</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="atr">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">ATR</span></span>
+                          </div>
+                        </div>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="csTsDistanceValue" readonly value="1.0">
+                          <div class="price-stepper-arrows">
+                            <button type="button" id="csTsDistanceInc"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" id="csTsDistanceDec"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -5442,7 +5447,7 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=115"></script>
+  <script src="js/app.js?v=116"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=12"></script>
   <script src="js/market-scanner.js?v=9"></script>

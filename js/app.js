@@ -2685,7 +2685,7 @@
           offsetLabelEl.className = 'ol-offset-label';
           offsetLabelEl.innerHTML =
             '<span class="ol-offset-label-text">TRAILING OFFSET</span>' +
-            '<span class="material-symbols-outlined ol-offset-label-arrow">chevron_right</span>';
+            '<span class="material-symbols-outlined ol-offset-label-arrow">arrow_forward</span>';
           offsetLabelEl.style.top = oy + 'px';
           layer.appendChild(offsetLabelEl);
         }
@@ -3964,7 +3964,7 @@
     document.getElementById('csBeOffsetUnit').value = s.moveSlToBreakeven.offsetUnit;
 
     document.getElementById('csTsDistanceValue').value = s.trailingStop.distanceValue;
-    document.getElementById('csTsDistanceUnit').value = s.trailingStop.distanceUnit;
+    document.querySelectorAll('#csTsDistanceUnitToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingStop.distanceUnit));
     document.getElementById('csTsStart').value = s.trailingStop.start;
     document.getElementById('csTsStartCustomRValue').value = s.trailingStop.startCustomR;
 
@@ -4027,7 +4027,7 @@
       },
       trailingStop: {
         distanceValue: parseFloat(document.getElementById('csTsDistanceValue').value) || 1,
-        distanceUnit: document.getElementById('csTsDistanceUnit').value,
+        distanceUnit: document.querySelector('#csTsDistanceUnitToggle .cs-radio-row.active').dataset.unit,
         start: document.getElementById('csTsStart').value,
         startCustomR: parseFloat(document.getElementById('csTsStartCustomRValue').value) || 1,
       },
