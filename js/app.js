@@ -2615,7 +2615,19 @@
     // ---- TP lines (sorted nearest-to-entry first, so labels renumber TP1, TP2, TP3... by proximity) ----
     {
       const tpSortDir = order.side === 'buy' ? 1 : -1;
-      order.tps.slice().sort((a, b) => tpSortDir * (a.price - b.price)).forEach((tp, idx) => {
+      const sortedTps = order.tps.slice().sort((a, b) => tpSortDir * (a.price - b.price));
+      const lastTp = sortedTps[sortedTps.length - 1];
+      // Only the single TP furthest from entry may ever trail. If TP membership or prices changed
+      // since the last render and a different TP is now furthest, hand trailing off automatically.
+      sortedTps.forEach(tp => {
+        if (tp !== lastTp && tp.trailing) {
+          tp.trailing = false;
+          tp.activated = false;
+          tp.exitPrice = null;
+        }
+      });
+      sortedTps.forEach((tp, idx) => {
+        const isLastTp = tp === lastTp;
         const dir = order.side === 'buy' ? 1 : -1;
         // Once trailing has activated, the TP line itself becomes the live trailing exit —
         // it displays and tracks tp.exitPrice instead of the original static trigger price.
@@ -2638,7 +2650,7 @@
 
         // When trailing is active, the Trail button is replaced by a colored badge inside the
         // chip (mirrors the SL mode flow); otherwise a neutral Trail button sits to the left.
-        const modeBtnHtml = tpTrailing ? '' :
+        const modeBtnHtml = (tpTrailing || !isLastTp) ? '' :
           '<button type="button" class="ol-tp-mode-btn" data-tp-trail="' + tp.id + '">TRL</button>';
         const badgeHtml = !tpTrailing ? '' :
           '<span class="ol-badge tp-badge trail" data-tp-badge="' + tp.id + '">' +
@@ -2663,8 +2675,8 @@
           '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" title="Remove TP"><span class="material-symbols-outlined">close</span></span>';
         layer.appendChild(row);
 
-        // Offset line: a second draggable line sitting at the trailing offset distance toward entry,
-        // tagged with a small "TPn Trail" label so multiple trailing TPs stay distinguishable.
+        // Offset line: a second draggable line sitting at the trailing offset distance toward entry.
+        // Only one TP can ever trail at a time, so the label doesn't need to name which TP it's for.
         // Only shown before activation — once activated, the TP line itself IS the trailing exit.
         let offsetLineEl = null, offsetLabelEl = null;
         if (tpTrailing && !tpActivatedTrailing) {
@@ -2677,7 +2689,9 @@
 
           offsetLabelEl = document.createElement('span');
           offsetLabelEl.className = 'ol-offset-label';
-          offsetLabelEl.innerHTML = '<span class="ol-offset-label-text">TP' + (idx + 1) + ' OFFSET</span>';
+          offsetLabelEl.innerHTML =
+            '<span class="ol-offset-label-text">TRAILING OFFSET</span>' +
+            '<span class="material-symbols-outlined ol-offset-label-arrow">chevron_right</span>';
           offsetLabelEl.style.top = oy + 'px';
           layer.appendChild(offsetLabelEl);
         }
@@ -2687,8 +2701,6 @@
           const oy = clamp(priceToY(op, h), 10, h - 10) + 'px';
           offsetLineEl.style.top = oy;
           offsetLabelEl.style.top = oy;
-          const txtEl = offsetLabelEl.querySelector('.ol-offset-label-text');
-          if (txtEl) txtEl.textContent = 'TP' + (idx + 1) + ' OFFSET';
         }
 
         const tpChipEl = row.querySelector('.ol-chip');
@@ -2768,7 +2780,9 @@
             }
             dragLine.style.top = cy + 'px';
             dragLabel.style.top = cy + 'px';
-            dragLabel.innerHTML = '<span class="ol-offset-label-text">TP' + (idx + 1) + ' TRL</span>';
+            dragLabel.innerHTML =
+              '<span class="ol-offset-label-text">TRAILING OFFSET</span>' +
+              '<span class="material-symbols-outlined ol-offset-label-arrow">chevron_right</span>';
             drawPriceChart();
           }
           function onTrailBtnDrop(cy, h) {

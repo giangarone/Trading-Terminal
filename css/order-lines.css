@@ -87,8 +87,8 @@
   opacity: .5;
 }
 
-/* Tag on the left edge of an offset line, naming which TP it belongs to (e.g. "TP1 Trail") —
-   lets several trailing TPs stay distinguishable when their offset lines sit close together. */
+/* Tag on the left edge of the trailing TP's offset line. Only one TP can ever trail at a
+   time, so the label just names the concept ("Trailing Offset") rather than which TP it's for. */
 .ol-offset-label {
   position: absolute;
   right: 84px;
@@ -104,6 +104,10 @@
   color: var(--intel);
   white-space: nowrap;
   pointer-events: none;
+}
+
+.ol-offset-label-arrow {
+  font-size: 11px;
 }
 
 .ol-line.ghost {
@@ -821,7 +825,7 @@
 
 .ol-sl-mode-btn:hover,
 .ol-tp-mode-btn:hover {
-  color: var(--text-primary);
+  background: var(--bg-elevated);
 }
 
 .ol-sl-mode-btn.disabled,
