@@ -1170,6 +1170,11 @@
     return tp.trailOffset;
   }
   function tpTrailActive(tp) { return !!(tp && tp.trailing); }
+  /* the price a TP currently shows/tracks on the chart: once trailing has activated, that's the
+     live trailing exit (tp.exitPrice), not the original static trigger (tp.price) */
+  function tpDisplayPrice(tp) {
+    return (tp.trailing && tp.activated && tp.exitPrice != null) ? tp.exitPrice : tp.price;
+  }
   /* min/step/decimal-places for an offset value, by unit (percent default, ticks optional) */
   function tpOffsetParams(unit) {
     if (unit === 'ticks') return { min: 1, max: 2000, step: 1, dp: 0 };
@@ -1556,11 +1561,12 @@
 
   /* ---------- TP/SL fee & net PnL helpers ---------- */
   /* Entry fee depends on order type (market fill vs limit fill); TP exit is always a limit order. */
-  function tpFeeCalc(tp, contracts) {
+  function tpFeeCalc(tp, contracts, atPrice) {
+    if (atPrice == null) atPrice = tp.price;
     const dir = order.side === 'buy' ? 1 : -1;
-    const gross = dir * (tp.price - order.entry) * POINT_VALUE * contracts;
+    const gross = dir * (atPrice - order.entry) * POINT_VALUE * contracts;
     const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
-    const fee = (order.entry * entryFeeRate + tp.price * FEE_RATE_LIMIT) * contracts;
+    const fee = (order.entry * entryFeeRate + atPrice * FEE_RATE_LIMIT) * contracts;
     return { gross, fee, net: gross - fee };
   }
   /* SL exit is always a stop order (taker fill), unlike a TP's limit exit. */
@@ -1605,7 +1611,7 @@
     if (!order) return;
     layer.querySelectorAll('.ol-side-row[data-tp-id]').forEach(row => {
       const tp = order.tps.find(t => t.id === row.dataset.tpId);
-      if (tp) row.querySelector('.ol-chip').classList.toggle('invalid', !tpSlSideOk('tp', tp.price));
+      if (tp) row.querySelector('.ol-chip').classList.toggle('invalid', !tpSlSideOk('tp', tpDisplayPrice(tp)));
     });
     if (order.sl) {
       const slChip = layer.querySelector('.ol-chip.sl');
@@ -1623,11 +1629,12 @@
     layer.querySelectorAll('.ol-side-row[data-tp-id]').forEach(row => {
       const tp = order.tps.find(t => t.id === row.dataset.tpId);
       if (!tp) return;
-      const pts = dir * (tp.price - order.entry);
+      const displayPrice = tpDisplayPrice(tp);
+      const pts = dir * (displayPrice - order.entry);
       const amtEl = row.querySelector('.ol-amt');
       if (amtEl) {
         const contracts = Math.max(1, Math.round(order.qty * tp.pct / 100));
-        const { gross, fee, net } = tpFeeCalc(tp, contracts);
+        const { gross, fee, net } = tpFeeCalc(tp, contracts, displayPrice);
         const valEl = amtEl.querySelector('.ol-amt-val');
         if (valEl) valEl.textContent = (net >= 0 ? '+' : '') + fmtMoney(net);
         amtEl.classList.toggle('up', net >= 0);
@@ -2607,23 +2614,28 @@
     {
       const tpSortDir = order.side === 'buy' ? 1 : -1;
       order.tps.slice().sort((a, b) => tpSortDir * (a.price - b.price)).forEach((tp, idx) => {
-        const y = clamp(priceToY(tp.price, H), 10, H - 10);
+        const dir = order.side === 'buy' ? 1 : -1;
+        // Once trailing has activated, the TP line itself becomes the live trailing exit —
+        // it displays and tracks tp.exitPrice instead of the original static trigger price.
+        const tpTrailing = tpTrailActive(tp);
+        const tpActivatedTrailing = tpTrailing && tp.activated && tp.exitPrice != null;
+        const displayPrice = tpDisplayPrice(tp);
+
+        const y = clamp(priceToY(displayPrice, H), 10, H - 10);
         const line = document.createElement('div');
         line.className = 'ol-line tp';
         line.style.top = y + 'px';
         layer.appendChild(line);
 
-        const dir = order.side === 'buy' ? 1 : -1;
-        const pts = dir * (tp.price - order.entry);
+        const pts = dir * (displayPrice - order.entry);
         const contracts = Math.max(1, Math.round(order.qty * tp.pct / 100));
-        const { gross: tpGross, fee: tpFee, net: tpNet } = tpFeeCalc(tp, contracts);
+        const { gross: tpGross, fee: tpFee, net: tpNet } = tpFeeCalc(tp, contracts, displayPrice);
         const riskPerContractTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
         const rMultiple = riskPerContractTotal ? (pts * POINT_VALUE / riskPerContractTotal) : null;
-        const tpInvalid = !tpSlSideOk('tp', tp.price);
+        const tpInvalid = !tpSlSideOk('tp', displayPrice);
 
         // When trailing is active, the Trail button is replaced by a colored badge inside the
         // chip (mirrors the SL mode flow); otherwise a neutral Trail button sits to the left.
-        const tpTrailing = tpTrailActive(tp);
         const modeBtnHtml = tpTrailing ? '' :
           '<button type="button" class="ol-tp-mode-btn" data-tp-trail="' + tp.id + '">TRL</button>';
         const badgeHtml = !tpTrailing ? '' :
@@ -2651,11 +2663,10 @@
 
         // Offset line: a second draggable line sitting at the trailing offset distance toward entry,
         // tagged with a small "TPn Trail" label so multiple trailing TPs stay distinguishable.
+        // Only shown before activation — once activated, the TP line itself IS the trailing exit.
         let offsetLineEl = null, offsetLabelEl = null;
-        if (tpTrailing) {
-          const offsetPrice = (tp.activated && tp.exitPrice != null)
-            ? tp.exitPrice
-            : roundTick(tp.price - dir * tpOffsetDist(tp));
+        if (tpTrailing && !tpActivatedTrailing) {
+          const offsetPrice = roundTick(tp.price - dir * tpOffsetDist(tp));
           const oy = clamp(priceToY(offsetPrice, H), 10, H - 10);
           offsetLineEl = document.createElement('div');
           offsetLineEl.className = 'ol-line offset';
@@ -2665,7 +2676,7 @@
           offsetLabelEl = document.createElement('span');
           offsetLabelEl.className = 'ol-offset-label';
           offsetLabelEl.innerHTML =
-            '<span class="ol-offset-label-text">TP' + (idx + 1) + ' TRL</span>' +
+            '<span class="ol-offset-label-text">TP' + (idx + 1) + ' OFFSET</span>' +
             '<button type="button" class="ol-offset-remove" data-tp-offset-remove="' + tp.id + '" title="Disable trailing" aria-label="Disable">' +
             '<span class="material-symbols-outlined">close</span></button>';
           offsetLabelEl.style.top = oy + 'px';
@@ -2673,60 +2684,59 @@
         }
         function repositionOffsetLine(h) {
           if (!offsetLineEl) return;
-          const op = (tp.activated && tp.exitPrice != null)
-            ? tp.exitPrice
-            : roundTick(tp.price - dir * tpOffsetDist(tp));
+          const op = roundTick(tp.price - dir * tpOffsetDist(tp));
           const oy = clamp(priceToY(op, h), 10, h - 10) + 'px';
           offsetLineEl.style.top = oy;
           offsetLabelEl.style.top = oy;
           const txtEl = offsetLabelEl.querySelector('.ol-offset-label-text');
-          if (txtEl) txtEl.textContent = 'TP' + (idx + 1) + ' TRL';
+          if (txtEl) txtEl.textContent = 'TP' + (idx + 1) + ' OFFSET';
         }
 
         const tpChipEl = row.querySelector('.ol-chip');
         bindHandleHover(tpChipEl, 'tp:' + tp.id);
         function onDragTp(cy, h) {
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
-          tp.price = roundTick(yToPrice(cy, h));
-          repositionOffsetLine(h); // the offset line follows the TP, preserving the offset
+          if (tpActivatedTrailing) {
+            // Activated: the TP line IS the trailing exit — drag repositions exitPrice directly.
+            tp.exitPrice = roundTick(yToPrice(cy, h));
+          } else {
+            tp.price = roundTick(yToPrice(cy, h));
+            repositionOffsetLine(h); // the offset line follows the TP, preserving the offset
+          }
           updateAllTpSlValidityLive();
           updateAllTpSlReadoutsLive();
           drawPriceChart();
         }
         function onDropTp(cy, h) {
-          tp.price = roundTick(yToPrice(cy, h));
-          // Moving the activation trigger resets trailing state so it re-evaluates from scratch.
-          if (tp.trailing) { tp.activated = false; tp.exitPrice = null; }
+          if (tpActivatedTrailing) {
+            tp.exitPrice = roundTick(yToPrice(cy, h));
+          } else {
+            tp.price = roundTick(yToPrice(cy, h));
+            // Moving the activation trigger resets trailing state so it re-evaluates from scratch.
+            if (tp.trailing) { tp.activated = false; tp.exitPrice = null; }
+          }
           render();
         }
         makeDraggable(tpChipEl, onDragTp, onDropTp, '.ol-badge');
         makeDraggable(line, onDragTp, onDropTp, undefined, undefined, 'tp:' + tp.id);
 
-        // Dragging the offset line redefines the offset value (distance from the TP).
+        // Dragging the offset line (only present pre-activation) redefines the offset distance from the TP.
         if (offsetLineEl) {
           function onDragOffset(cy, h) {
-            if (tp.activated) {
-              // Activated: the offset line IS the exit — drag repositions exitPrice directly.
-              tp.exitPrice = roundTick(yToPrice(cy, h));
-              repositionOffsetLine(h);
-              drawPriceChart();
-            } else {
-              // Not yet activated: drag redefines the offset value (distance from the trigger).
-              const p = roundTick(yToPrice(cy, h));
-              const gapPts = Math.abs(tp.price - p);
-              const cfg = ensureTpTrailOffset(tp);
-              const params = tpOffsetParams(cfg.offsetUnit);
-              // Clamp only — don't round to the unit's display precision, or the line would
-              // snap to a coarse grid (in percent, 0.01% can span ~2 ticks). The dragged price
-              // is already tick-snapped, so the line tracks the tick grid smoothly.
-              let v = tpGapToOffset(gapPts, tp.price, cfg.offsetUnit);
-              v = Math.max(params.min, Math.min(params.max, v));
-              cfg.offsetValue = v;
-              repositionOffsetLine(h);
-              refreshTpBadgeOnChart(tp.id);
-              syncTpTrailMenuValue(tp.id);
-              drawPriceChart();
-            }
+            const p = roundTick(yToPrice(cy, h));
+            const gapPts = Math.abs(tp.price - p);
+            const cfg = ensureTpTrailOffset(tp);
+            const params = tpOffsetParams(cfg.offsetUnit);
+            // Clamp only — don't round to the unit's display precision, or the line would
+            // snap to a coarse grid (in percent, 0.01% can span ~2 ticks). The dragged price
+            // is already tick-snapped, so the line tracks the tick grid smoothly.
+            let v = tpGapToOffset(gapPts, tp.price, cfg.offsetUnit);
+            v = Math.max(params.min, Math.min(params.max, v));
+            cfg.offsetValue = v;
+            repositionOffsetLine(h);
+            refreshTpBadgeOnChart(tp.id);
+            syncTpTrailMenuValue(tp.id);
+            drawPriceChart();
           }
           function onDropOffset(cy, h) {
             onDragOffset(cy, h);
