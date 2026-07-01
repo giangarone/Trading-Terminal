@@ -1073,7 +1073,7 @@ table.bp-table tr.total-row td {
   color: var(--text-secondary);
 }
 
-/* Percentage slider — custom thumb over a track with embedded circular tick markers */
+/* Percentage slider — custom thumb over a track */
 .pos-close-slider-wrap {
   position: relative;
   height: 14px;
@@ -1091,25 +1091,6 @@ table.bp-table tr.total-row td {
   border-radius: 2px;
   background: var(--border-default);
   z-index: 0;
-}
-
-/* Markers are positioned at the thumb's real coordinates: 7px inset + travel */
-.pos-close-tick {
-  position: absolute;
-  top: 50%;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--bg-input);
-  transform: translate(-50%, -50%);
-  z-index: 1;
-  pointer-events: none;
-  border: 1px solid var(--border-strong);
-}
-
-.pos-close-tick.filled {
-  background: var(--text-secondary);
-  border: none;
 }
 
 .pos-close-slider {

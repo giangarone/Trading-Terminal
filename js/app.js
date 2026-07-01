@@ -369,7 +369,7 @@
       showToast(sym + ' reversed to ' + (result.newSide === 'buy' ? 'Long' : 'Short') + ' at ' + fmt(result.price, result.dec), 'swap_vert');
     }
   });
-  /* wrap a raw slider with its track + 5 embedded circular tick markers (idempotent) */
+  /* wrap a raw slider with its track (idempotent) */
   function decoratePosCloseSlider(slider) {
     if (slider.parentElement && slider.parentElement.classList.contains('pos-close-slider-wrap')) return;
     const wrap = document.createElement('div');
@@ -379,14 +379,6 @@
     track.className = 'pos-close-track';
     wrap.appendChild(track);
     wrap.appendChild(slider);
-    [0, 25, 50, 75, 100].forEach(v => {
-      const tick = document.createElement('span');
-      tick.className = 'pos-close-tick';
-      tick.dataset.tick = v;
-      /* match the thumb: 5px inset (half the 10px thumb) + proportional travel */
-      tick.style.left = 'calc(5px + (100% - 10px) * ' + (v / 100) + ')';
-      wrap.appendChild(tick);
-    });
   }
   window.decoratePosCloseSlider = decoratePosCloseSlider;
 
@@ -394,15 +386,12 @@
     const wrap = slider.closest('.pos-close-slider-wrap');
     if (!wrap) return;
     const pct = parseInt(slider.value, 10);
-    /* fill transition lands exactly at the thumb centre, same coordinate as the ticks */
+    /* fill transition lands exactly at the thumb centre */
     const pos = 'calc(5px + (100% - 10px) * ' + (pct / 100) + ')';
     const track = wrap.querySelector('.pos-close-track');
     if (track) {
       track.style.background = 'linear-gradient(to right, var(--border-strong) ' + pos + ', var(--border-default) ' + pos + ')';
     }
-    wrap.querySelectorAll('.pos-close-tick').forEach(t => {
-      t.classList.toggle('filled', pct >= parseInt(t.dataset.tick, 10));
-    });
   }
   window.posCloseSliderFill = posCloseSliderFill;
 
