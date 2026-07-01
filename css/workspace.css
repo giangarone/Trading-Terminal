@@ -475,6 +475,10 @@
   flex-direction: column;
 }
 
+.bottom-panel.bp-collapsed {
+  height: 39px !important;
+}
+
 .bp-tabs {
   display: flex;
   align-items: center;

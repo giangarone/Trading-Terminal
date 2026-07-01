@@ -451,11 +451,18 @@ document.querySelectorAll('#scanFilters .filter-chip').forEach(chip => {
 
 const scanSearchEl = document.getElementById('scanSearch');
 if (scanSearchEl) scanSearchEl.addEventListener('input', applyScanFilters);
+const bottomPanel = document.querySelector('.bottom-panel');
 document.querySelectorAll('#bpTabs .bp-tab').forEach(btn => {
   btn.addEventListener('click', () => {
+    const alreadyActive = btn.classList.contains('active');
     document.querySelectorAll('#bpTabs .bp-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
     document.querySelectorAll('.bottom-panel .bp-table-wrap').forEach(p => p.classList.remove('active'));
+    if (alreadyActive) {
+      bottomPanel.classList.add('bp-collapsed');
+      return;
+    }
+    bottomPanel.classList.remove('bp-collapsed');
+    btn.classList.add('active');
     const panel = document.getElementById('bpPanel-' + btn.dataset.panel);
     if (panel) panel.classList.add('active');
   });
