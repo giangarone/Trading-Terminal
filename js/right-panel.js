@@ -129,6 +129,9 @@
     return 'reduced';
   };
 
+  /* Reverse a position exactly like the chart entry bar's Reverse control: market-close the
+     current side, then instantly open a fresh position of the same size in the opposite
+     direction at the current mark price. Returns the new side/price so callers can toast it. */
   window.reversePosition = function (sym) {
     const p = positions.find(x => x.sym === sym);
     if (!p) return false;
@@ -138,7 +141,14 @@
     p.anchor = p.mark;
     p.pnlOpen0 = 0;
     if (p.elAvg) p.elAvg.textContent = fmt(p.avgPrice, p.dec);
-    return true;
+    const newSide = p.pv > 0 ? 'buy' : 'sell';
+    const badge = document.querySelector('.pos-row[data-pos-id="' + sym + '"] .pos-side-badge');
+    if (badge) {
+      badge.classList.remove('long', 'short');
+      badge.classList.add(newSide === 'buy' ? 'long' : 'short');
+      badge.textContent = newSide === 'buy' ? 'Long' : 'Short';
+    }
+    return { newSide, price: p.avgPrice, dec: p.dec };
   };
 
   /* ---------- graduate a filled chart order into a Positions-tab row ---------- */

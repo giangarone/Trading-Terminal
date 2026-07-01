@@ -352,8 +352,15 @@
     const reverseBtn = e.target.closest('[data-pos-reverse]');
     if (reverseBtn) {
       const sym = reverseBtn.closest('.pos-row').dataset.posId;
-      if (!window.reversePosition(sym)) return;
-      showToast(sym + ' position reversed', 'sync_alt');
+      /* ETHUSD's row is driven by the chart's order object — route through the same
+         market-close-then-reopen logic as the entry bar's Reverse control so both stay in sync. */
+      if (sym === 'ETHUSD' && order && order.filled) {
+        reverseFilledPosition();
+        return;
+      }
+      const result = window.reversePosition(sym);
+      if (!result) return;
+      showToast(sym + ' reversed to ' + (result.newSide === 'buy' ? 'Long' : 'Short') + ' at ' + fmt(result.price, result.dec), 'swap_vert');
     }
   });
   /* wrap a raw slider with its track + 5 embedded circular tick markers (idempotent) */
