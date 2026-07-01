@@ -618,8 +618,7 @@
 }
 
 .ol-pill.combo.locked {
-  opacity: 0.45;
-  border-color: var(--border-subtle);
+  display: none;
 }
 
 .ol-pill.combo.locked .ol-pill-seg {

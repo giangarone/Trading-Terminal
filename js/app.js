@@ -872,7 +872,9 @@
     ocBackdrop.classList.remove('show');
     ocPendingProceed = null;
   }
-  document.getElementById('ocDontShow').addEventListener('click', (e) => e.currentTarget.classList.toggle('checked'));
+  document.querySelector('.oc-dontshow').addEventListener('click', () => {
+    document.getElementById('ocDontShow').classList.toggle('checked');
+  });
   document.getElementById('ocConfirm').addEventListener('click', () => {
     if (document.getElementById('ocDontShow').classList.contains('checked')) setOrderConfirmEnabled(false);
     const proceed = ocPendingProceed;
