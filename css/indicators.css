@@ -873,16 +873,16 @@
   border: 1px solid var(--border-default);
   background: var(--bg-input);
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
   font-family: var(--sans);
 }
 
 .modal-quick button.active {
-  background: var(--accent);
-  color: var(--on-accent);
-  border-color: var(--accent);
+  background: var(--short-dim);
+  color: var(--text-primary);
+  border-color: var(--short);
 }
 
 .modal-quick button:hover:not(.active) {
@@ -953,6 +953,11 @@
 
 .modal-actions .btn-save:hover {
   filter: brightness(1.1);
+}
+
+.modal-actions .btn-save.btn-danger {
+  background: var(--short);
+  color: var(--on-accent);
 }
 
 .modal-actions .btn-cancel {

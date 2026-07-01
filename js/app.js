@@ -833,6 +833,110 @@
     render();
     showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
   }
+
+  /* Reverse a working (unfilled) order in place: flip the side and mirror any TP/SL across the entry
+     so they stay on the valid side (a buy's TP above / SL below becomes a sell's TP below / SL above). */
+  function flipWorkingOrderSide() {
+    if (!order || order.filled) return;
+    const e = order.entry;
+    order.side = order.side === 'buy' ? 'sell' : 'buy';
+    order.tps.forEach(tp => { tp.price = roundTick(2 * e - tp.price); });
+    if (order.sl) {
+      order.sl.price = roundTick(2 * e - order.sl.price);
+      order.initialRisk = Math.abs(e - order.sl.price) * POINT_VALUE;
+    }
+    render();
+    showToast('Order flipped to ' + (order.side === 'buy' ? 'Buy' : 'Sell'), 'swap_vert');
+  }
+
+  /* Reverse a filled position: market-close the current side, then immediately open a fresh
+     market position in the opposite direction (same qty, at the current price, no TP/SL). */
+  function reverseFilledPosition() {
+    if (!order || !order.filled) return;
+    const price = qtCurrentPrice();
+    const oldSide = order.side, qty = order.qty;
+    const dir = oldSide === 'buy' ? 1 : -1;
+    const newSide = oldSide === 'buy' ? 'sell' : 'buy';
+    const closePnl = (price - order.entry) * qty * dir * POINT_VALUE;
+    orderHistory.unshift({ symbol: 'ETHUSD', side: oldSide, qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
+    tradeHistory.unshift({ symbol: 'ETHUSD', side: newSide, qty, price, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT });
+    window.closePositionPct('ETHUSD', 100);
+    const entry = roundTick(price);
+    order = {
+      side: newSide, entry, qty, orderType: 'Market', fillAbove: false,
+      sizeMode: 'contracts', filled: true, pendingConfirm: false,
+      sizeValues: { dollar: 5000, percent: 25, risk: 500 },
+      tps: [], sl: null, tpsHitCount: 0, initialRisk: null
+    };
+    orderHistory.unshift({ symbol: 'ETHUSD', side: newSide, qty, price: entry, status: 'filled', type: 'Market', time: nowTimeStr(), pnl: null });
+    tradeHistory.unshift({ symbol: 'ETHUSD', side: newSide, qty, price: entry, pnl: null, role: 'open', type: 'Market', time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT });
+    window.upsertPositionFromFill('ETHUSD', newSide, qty, entry);
+    window.refreshTodayJournalCard();
+    render(); closeAllPopovers();
+    showToast('Reversed to ' + (newSide === 'buy' ? 'Long' : 'Short') + ' at ' + fmt(entry), 'swap_vert');
+  }
+
+  /* ---------- chart close-controls popup (filled position → partial/full market close) ---------- */
+  const chartClosePopup = document.getElementById('chartClosePopup');
+  const chartCloseSlider = document.getElementById('chartCloseSlider');
+  const chartClosePctLabel = document.getElementById('chartClosePctLabel');
+  const chartCloseQuick = document.getElementById('chartCloseQuick');
+
+  function setChartClosePct(pct) {
+    pct = clamp(Math.round(pct), 0, 100);
+    chartCloseSlider.value = pct;
+    if (window.posCloseSliderFill) window.posCloseSliderFill(chartCloseSlider);
+    const qty = order ? Math.max(1, Math.round(order.qty * pct / 100)) : 0;
+    chartClosePctLabel.textContent = pct + '% · ' + qty + (qty === 1 ? ' contract' : ' contracts');
+    chartCloseQuick.querySelectorAll('[data-close-pct]').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.closePct, 10) === pct);
+    });
+  }
+
+  function openChartClosePopup(rect, trigger) {
+    if (!order || !order.filled) return;
+    if (window.decoratePosCloseSlider) window.decoratePosCloseSlider(chartCloseSlider);
+    setChartClosePct(100);
+    openNear(chartClosePopup, rect, 'right', trigger);
+  }
+
+  function executeChartClose(pct) {
+    if (!order || !order.filled) return;
+    if (pct <= 0) { showToast('Select an amount to close', 'error'); return; }
+    const closePrice = qtCurrentPrice();
+    const dir = order.side === 'buy' ? 1 : -1;
+    const closeSide = order.side === 'buy' ? 'sell' : 'buy';
+    if (pct >= 100) {
+      const closePnl = (closePrice - order.entry) * order.qty * dir * POINT_VALUE;
+      orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
+      tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: order.qty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
+      window.refreshTodayJournalCard();
+      window.closePositionPct('ETHUSD', 100);
+      showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position closed at ' + fmt(closePrice), 'check_circle');
+      order = null; render(); closeAllPopovers();
+      return;
+    }
+    const closeQty = Math.max(1, Math.round(order.qty * pct / 100));
+    const closePnl = (closePrice - order.entry) * closeQty * dir * POINT_VALUE;
+    orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: closeQty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
+    tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: closeQty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: closeQty * QT_FEE_PER_CONTRACT });
+    window.refreshTodayJournalCard();
+    window.closePositionPct('ETHUSD', pct);
+    order.qty = Math.max(1, order.qty - closeQty);
+    render(); closeAllPopovers();
+    showToast('Position reduced by ' + pct + '%', 'check_circle');
+  }
+
+  chartCloseQuick.querySelectorAll('[data-close-pct]').forEach(b => {
+    b.addEventListener('click', (e) => { e.stopPropagation(); setChartClosePct(parseInt(b.dataset.closePct, 10)); });
+  });
+  chartCloseSlider.addEventListener('input', () => setChartClosePct(parseInt(chartCloseSlider.value, 10)));
+  document.getElementById('chartCloseCancel').addEventListener('click', (e) => { e.stopPropagation(); closeAllPopovers(); });
+  document.getElementById('chartCloseConfirm').addEventListener('click', (e) => {
+    e.stopPropagation();
+    executeChartClose(parseInt(chartCloseSlider.value, 10));
+  });
+
   /* ---------- Order Confirmation modal: gates every order placement behind a review step ---------- */
   const ORDER_CONFIRM_KEY = 'tt_orderConfirm';
   function orderConfirmEnabled() {
@@ -2838,6 +2942,7 @@
           '<span class="ol-pill-divider"></span>' +
           '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
           '</span>' +
+          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Flip Direction"><span class="material-symbols-outlined">swap_vert</span></span>' +
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Cancel Order"><span class="material-symbols-outlined">close</span></span>';
       } else {
         const dir = order.side === 'buy' ? 1 : -1;
@@ -2852,6 +2957,7 @@
           '<span class="ol-pill-divider"></span>' +
           '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
           '</span>' +
+          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Reverse Position"><span class="material-symbols-outlined">swap_vert</span></span>' +
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position"><span class="material-symbols-outlined">close</span></span>';
       }
       layer.appendChild(bar);
@@ -2879,7 +2985,15 @@
           e.stopPropagation(); openOrderTypeMenu(e.currentTarget.getBoundingClientRect(), e.currentTarget);
         });
       }
-      bar.querySelector('#cancelOrderBtn').addEventListener('click', (e) => { e.stopPropagation(); cancelOrder(); });
+      bar.querySelector('#reverseOrderBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (order.filled) reverseFilledPosition(); else flipWorkingOrderSide();
+      });
+      bar.querySelector('#cancelOrderBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (order.filled) openChartClosePopup(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        else cancelOrder();
+      });
     }
 
     drawPriceChart();

@@ -22,9 +22,9 @@
   <link rel="stylesheet" href="css/right-panel.css?v=3">
   <link rel="stylesheet" href="css/quick-trade.css?v=6">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=18">
+  <link rel="stylesheet" href="css/order-lines.css?v=20">
   <link rel="stylesheet" href="css/market-scanner.css?v=23">
-  <link rel="stylesheet" href="css/indicators.css?v=8">
+  <link rel="stylesheet" href="css/indicators.css?v=9">
   <link rel="stylesheet" href="css/chart-settings.css?v=22">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
 </head>
@@ -4856,6 +4856,25 @@
     </div>
   </div>
 
+  <!-- Chart close-controls popup — anchored to the entry-bar Close button on a filled position -->
+  <div class="pop-menu ol-close-popup" id="chartClosePopup">
+    <div class="modal-quick" id="chartCloseQuick">
+      <button data-close-pct="25">25%</button>
+      <button data-close-pct="50">50%</button>
+      <button data-close-pct="75">75%</button>
+      <button data-close-pct="100" class="active">100%</button>
+    </div>
+    <div class="pos-close-amount-row">
+      <span class="pos-close-field-label">Amount</span>
+      <span class="pos-close-pct-label" id="chartClosePctLabel">100%</span>
+    </div>
+    <input type="range" class="pos-close-slider" id="chartCloseSlider" min="0" max="100" step="1" value="100">
+    <div class="modal-actions">
+      <button class="btn-cancel" id="chartCloseCancel">Cancel</button>
+      <button class="btn-save btn-danger" id="chartCloseConfirm">Close</button>
+    </div>
+  </div>
+
   <!-- ===================== TRADING JOURNAL FLOATING PANEL ===================== -->
   <div class="pop-menu float-panel tj-journal-panel" id="tjModalBackdrop" data-persistent="true">
 
@@ -5013,7 +5032,7 @@
   <script src="js/workspace.js?v=6"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=90"></script>
+  <script src="js/app.js?v=92"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=11"></script>
   <script src="js/market-scanner.js?v=9"></script>
