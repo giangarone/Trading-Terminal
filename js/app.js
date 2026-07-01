@@ -58,7 +58,7 @@
       types: { news: true, social: true, geopolitical: true, corporate: true }
     }
   };
-  /* maps Position Defaults' generic order-type options to the actual order type strings used by the order object */
+  /* maps the Order Behavior card's generic order-type options to the actual order type strings used by the order object */
   const PD_ORDER_TYPE_MAP = { market: 'Market', limit: 'Limit', stop: 'Stop Market', mit: 'MIT' };
   function cloneCsDefaults() { return JSON.parse(JSON.stringify(CS_DEFAULTS)); }
   function loadChartSettings() {
@@ -3784,7 +3784,7 @@
     });
   }
 
-  /* ---------- Position Defaults: size field tracks the selected sizing method ---------- */
+  /* ---------- Chart Trades: Default Size field tracks the selected sizing method ---------- */
   const PD_SIZE_MODES = {
     contracts: { label: 'Default Contracts', unit: 'contracts', step: 1, default: '1' },
     shares: { label: 'Default Shares', unit: 'shares', step: 1, default: '100' },

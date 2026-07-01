@@ -294,8 +294,6 @@
                   class="material-symbols-outlined">receipt_long</span>Quick Trade</button>
               <button class="cs-nav-item" data-cs-tab="trademgmt"><span
                   class="material-symbols-outlined">show_chart</span>Chart Trades</button>
-              <button class="cs-nav-item" data-cs-tab="positiondefaults"><span
-                  class="material-symbols-outlined">account_tree</span>Position Defaults</button>
               <button class="cs-nav-item" data-cs-tab="risk"><span class="material-symbols-outlined">balance</span>Risk
                 & Money Management</button>
             </div>
@@ -1022,6 +1020,62 @@
 
                   <div class="cs-card">
                     <div class="cs-card-head">
+                      <span class="cs-card-title">Default Size</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Position Sizing</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="pdSizingMethod"><span
+                            class="cs-select-label">Contracts</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="pdSizingMethod"
+                          style="display:none;">
+                          <option value="contracts" selected>Contracts</option>
+                          <option value="shares">Shares</option>
+                          <option value="dollar">Dollar Amount</option>
+                          <option value="pct_equity">% Equity</option>
+                          <option value="risk_pct">Risk %</option>
+                        </select>
+                      </div>
+                      <div class="cs-field">
+                        <label id="pdDefaultSizeLabel">Default Contracts</label>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="pdDefaultSize" value="1" data-step="1">
+                          <span class="cs-stepper-unit" id="pdDefaultSizeUnit">contracts</span>
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="pdDefaultSize"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="pdDefaultSize"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Default Leverage</label>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="pdLeverage" value="10" data-step="1">
+                          <span class="cs-stepper-unit">×</span>
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="pdLeverage"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="pdLeverage"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="cs-field">
+                        <label>Margin Mode (Crypto)</label>
+                        <div class="cs-segmented" id="pdCrossIsolatedGroup" style="margin-bottom:0;">
+                          <button type="button" class="cs-seg-btn active" data-mode="cross">Cross</button>
+                          <button type="button" class="cs-seg-btn" data-mode="isolated">Isolated</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
                       <span class="cs-card-title">Default TP/SL Behavior</span>
                     </div>
                     <div class="cs-field" style="margin-bottom:14px;">
@@ -1159,6 +1213,55 @@
 
                 </div>
                 <div class="cs-col">
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Order Behavior</span>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Default Order Type</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="pdOrderType"><span
+                            class="cs-select-label">Limit</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="pdOrderType"
+                          style="display:none;">
+                          <option value="market">Market</option>
+                          <option value="limit" selected>Limit</option>
+                          <option value="stop">Stop</option>
+                          <option value="mit">MIT — Market if Touched</option>
+                        </select>
+                      </div>
+                      <div class="cs-field">
+                        <label>Time in Force</label>
+                        <div class="select-input pop-trigger cs-dd-trigger" data-target="pdTimeInForce"><span
+                            class="cs-select-label">GTC — Good Till Canceled</span><span
+                            class="material-symbols-outlined">expand_more</span></div><select id="pdTimeInForce"
+                          style="display:none;">
+                          <option value="gtc" selected>GTC — Good Till Canceled</option>
+                          <option value="day">Day</option>
+                          <option value="ioc">IOC — Immediate or Cancel</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="cs-switch-row">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Reduce Only</span>
+                        <span class="cs-switch-desc">Orders can only reduce an existing position, never open a new
+                          one.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Reduce Only"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Post Only</span>
+                        <span class="cs-switch-desc">Limit orders are placed as maker orders only — rejected if they'd
+                          fill immediately.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Post Only"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                  </div>
 
                   <div class="cs-card">
                     <div class="cs-card-head">
@@ -1314,126 +1417,6 @@
               <div class="cs-pane-head">
                 <h2>Quick Trade</h2>
                 <p>Configure default order type, sizing, TP/SL, and behavior for the quick trade panel.</p>
-              </div>
-            </div>
-            <div class="cs-pane" data-cs-pane="positiondefaults">
-              <div class="cs-pane-head">
-                <h2>Position Defaults</h2>
-                <p>Default order type, sizing, and execution settings applied to all new positions.</p>
-              </div>
-
-              <div class="cs-grid">
-                <div class="cs-col">
-
-                  <div class="cs-card">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Default Size</span>
-                    </div>
-                    <div class="cs-fields-row">
-                      <div class="cs-field">
-                        <label>Position Sizing</label>
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="pdSizingMethod"><span
-                            class="cs-select-label">Contracts</span><span
-                            class="material-symbols-outlined">expand_more</span></div><select id="pdSizingMethod"
-                          style="display:none;">
-                          <option value="contracts" selected>Contracts</option>
-                          <option value="shares">Shares</option>
-                          <option value="dollar">Dollar Amount</option>
-                          <option value="pct_equity">% Equity</option>
-                          <option value="risk_pct">Risk %</option>
-                        </select>
-                      </div>
-                      <div class="cs-field">
-                        <label id="pdDefaultSizeLabel">Default Contracts</label>
-                        <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="pdDefaultSize" value="1" data-step="1">
-                          <span class="cs-stepper-unit" id="pdDefaultSizeUnit">contracts</span>
-                          <div class="price-stepper-arrows">
-                            <button type="button" class="ps-up" data-target="pdDefaultSize"><span
-                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" class="ps-down" data-target="pdDefaultSize"><span
-                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="cs-fields-row">
-                      <div class="cs-field">
-                        <label>Default Leverage</label>
-                        <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="pdLeverage" value="10" data-step="1">
-                          <span class="cs-stepper-unit">×</span>
-                          <div class="price-stepper-arrows">
-                            <button type="button" class="ps-up" data-target="pdLeverage"><span
-                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" class="ps-down" data-target="pdLeverage"><span
-                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="cs-field">
-                        <label>Margin Mode (Crypto)</label>
-                        <div class="cs-segmented" id="pdCrossIsolatedGroup" style="margin-bottom:0;">
-                          <button type="button" class="cs-seg-btn active" data-mode="cross">Cross</button>
-                          <button type="button" class="cs-seg-btn" data-mode="isolated">Isolated</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-                <div class="cs-col">
-
-                  <div class="cs-card">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Order Behavior</span>
-                    </div>
-                    <div class="cs-fields-row">
-                      <div class="cs-field">
-                        <label>Default Order Type</label>
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="pdOrderType"><span
-                            class="cs-select-label">Limit</span><span
-                            class="material-symbols-outlined">expand_more</span></div><select id="pdOrderType"
-                          style="display:none;">
-                          <option value="market">Market</option>
-                          <option value="limit" selected>Limit</option>
-                          <option value="stop">Stop</option>
-                          <option value="mit">MIT — Market if Touched</option>
-                        </select>
-                      </div>
-                      <div class="cs-field">
-                        <label>Time in Force</label>
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="pdTimeInForce"><span
-                            class="cs-select-label">GTC — Good Till Canceled</span><span
-                            class="material-symbols-outlined">expand_more</span></div><select id="pdTimeInForce"
-                          style="display:none;">
-                          <option value="gtc" selected>GTC — Good Till Canceled</option>
-                          <option value="day">Day</option>
-                          <option value="ioc">IOC — Immediate or Cancel</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="cs-switch-row">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Reduce Only</span>
-                        <span class="cs-switch-desc">Orders can only reduce an existing position, never open a new
-                          one.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Reduce Only"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-switch-row">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Post Only</span>
-                        <span class="cs-switch-desc">Limit orders are placed as maker orders only — rejected if they'd
-                          fill immediately.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Post Only"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                  </div>
-
-                </div>
               </div>
             </div>
             <div class="cs-pane" data-cs-pane="risk">
