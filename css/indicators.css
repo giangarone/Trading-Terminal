@@ -881,9 +881,9 @@
 }
 
 .modal-quick button.active {
-  background: var(--short-dim);
-  color: var(--text-primary);
-  border-color: var(--short);
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--accent-border);
 }
 
 .modal-quick button:hover:not(.active) {

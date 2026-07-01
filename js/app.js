@@ -3020,6 +3020,10 @@
           + (blocked ? ' disabled' : '');
 
         bar.innerHTML =
+          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Flip Direction">' +
+          '<span class="material-symbols-outlined">swap_vert</span>' +
+          '</span>' +
+
           '<span class="' + entryClass + '" id="entryPriceHandle" title="' + entryTitle + '">' +
           '<span class="ol-chip-fill"></span>' +
           '<span class="ol-chip-lbl">' + sideLabel + '</span>' +
@@ -3033,10 +3037,6 @@
 
           tpAddHandleHtml +
           slAddHandleHtml +
-
-          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Flip Direction">' +
-          '<span class="material-symbols-outlined">swap_vert</span>' +
-          '</span>' +
 
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Cancel Order">' +
           '<span class="material-symbols-outlined">close</span>' +
@@ -3053,6 +3053,14 @@
           '</span>';
 
         bar.innerHTML =
+          '<span class="ol-gear" id="pctCloseBtn" title="Close % of Position">' +
+          '<span class="material-symbols-outlined">percent</span>' +
+          '</span>' +
+
+          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Reverse Position">' +
+          '<span class="material-symbols-outlined">swap_vert</span>' +
+          '</span>' +
+
           '<span class="ol-chip entry locked ' + side + '" id="entryPriceHandle">' +
           sideLabel + pnlHtml +
           '</span>' +
@@ -3065,10 +3073,6 @@
 
           tpAddHandleHtml +
           slAddHandleHtml +
-
-          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Reverse Position">' +
-          '<span class="material-symbols-outlined">swap_vert</span>' +
-          '</span>' +
 
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position">' +
           '<span class="material-symbols-outlined">close</span>' +
@@ -3125,14 +3129,17 @@
         }
       });
 
+      const pctCloseBtn = bar.querySelector('#pctCloseBtn');
+      if (pctCloseBtn) {
+        pctCloseBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openChartClosePopup(e.currentTarget.getBoundingClientRect(), e.currentTarget);
+        });
+      }
+
       bar.querySelector('#cancelOrderBtn').addEventListener('click', (e) => {
         e.stopPropagation();
-
-        if (order.filled) {
-          openChartClosePopup(e.currentTarget.getBoundingClientRect(), e.currentTarget);
-        } else {
-          cancelOrder();
-        }
+        cancelOrder();
       });
     }
 
