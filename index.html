@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="css/quick-trade.css?v=6">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=27">
-  <link rel="stylesheet" href="css/market-scanner.css?v=24">
+  <link rel="stylesheet" href="css/market-scanner.css?v=25">
   <link rel="stylesheet" href="css/indicators.css?v=9">
   <link rel="stylesheet" href="css/chart-settings.css?v=26">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
@@ -278,8 +278,6 @@
                   class="material-symbols-outlined">tune</span>General</button>
               <button class="cs-nav-item" data-cs-tab="chart"><span
                   class="material-symbols-outlined">show_chart</span>Chart</button>
-              <button class="cs-nav-item" data-cs-tab="data"><span class="material-symbols-outlined">sync</span>Data &
-                Updates</button>
               <button class="cs-nav-item" data-cs-tab="alerts"><span
                   class="material-symbols-outlined">notifications</span>Alerts</button>
               <button class="cs-nav-item" data-cs-tab="news"><span
@@ -726,13 +724,6 @@
                 </div>
               </div>
             </div>
-            <div class="cs-pane" data-cs-pane="data">
-              <div class="cs-pane-head">
-                <h2>Data & Updates</h2>
-                <p>Data feed and refresh behavior.</p>
-              </div>
-              <div class="cs-empty">No settings here yet</div>
-            </div>
             <div class="cs-pane" data-cs-pane="alerts">
               <div class="cs-pane-head">
                 <h2>Alerts</h2>
@@ -869,29 +860,41 @@
 
                     <div class="cs-field" style="margin-bottom:14px;">
                       <label>Marker Position</label>
-                      <div class="cs-segmented" id="csNewsPositionGroup">
-                        <button type="button" class="cs-seg-btn active" data-mode="by-sentiment">By Sentiment</button>
-                        <button type="button" class="cs-seg-btn" data-mode="always-above">Always Above</button>
-                        <button type="button" class="cs-seg-btn" data-mode="always-below">Always Below</button>
+                      <div class="cs-radio-group" id="csNewsPositionGroup">
+                        <div class="cs-radio-row active" data-mode="by-sentiment">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text"><span class="cs-radio-title">By Sentiment</span></span>
+                        </div>
+                        <div class="cs-radio-row" data-mode="always-above">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text"><span class="cs-radio-title">Above Candles</span></span>
+                        </div>
+                        <div class="cs-radio-row" data-mode="always-below">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text"><span class="cs-radio-title">Below Candles</span></span>
+                        </div>
+                        <div class="cs-radio-row" data-mode="bottom">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text"><span class="cs-radio-title">Bottom of Chart</span></span>
+                        </div>
                       </div>
-                    </div>
-
-                    <div class="cs-switch-row" id="csNewsMarkersAtBottom">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Show markers at bottom of chart</span>
-                        <span class="cs-switch-desc">Pin all news markers to a single row along the chart floor
-                          instead of the candle's high/low.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Show markers at bottom of chart"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
 
                     <div class="cs-field" style="margin-bottom:14px;">
                       <label>Sentiment Filter</label>
-                      <div class="cs-segmented" id="csNewsSentimentGroup">
-                        <button type="button" class="cs-seg-btn active" data-mode="all">All</button>
-                        <button type="button" class="cs-seg-btn" data-mode="bullish">Bullish Only</button>
-                        <button type="button" class="cs-seg-btn" data-mode="bearish">Bearish Only</button>
+                      <div class="cs-radio-group" id="csNewsSentimentGroup">
+                        <div class="cs-radio-row active" data-mode="all">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text"><span class="cs-radio-title">All</span></span>
+                        </div>
+                        <div class="cs-radio-row" data-mode="bullish">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text"><span class="cs-radio-title">Bullish Only</span></span>
+                        </div>
+                        <div class="cs-radio-row" data-mode="bearish">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text"><span class="cs-radio-title">Bearish Only</span></span>
+                        </div>
                       </div>
                     </div>
 
@@ -5447,7 +5450,7 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=118"></script>
+  <script src="js/app.js?v=120"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=12"></script>
   <script src="js/market-scanner.js?v=9"></script>

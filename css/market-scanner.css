@@ -1368,6 +1368,12 @@ table.msx-table tbody tr.selected {
   transform: translate(-50%, calc(-100% - 12px));
 }
 
+/* Sitting above the candle, the caret points down at it — regardless of sentiment. */
+.news-marker.pos-above .news-marker-caret {
+  border-top: 5px solid var(--news-accent);
+  border-bottom: 0;
+}
+
 .news-marker.pos-above .news-marker-popup {
   transform: translate(-50%, calc(-100% - 49px));
 }
@@ -1375,6 +1381,12 @@ table.msx-table tbody tr.selected {
 .news-marker.pos-below .news-marker-signal {
   flex-direction: column-reverse;
   transform: translate(-50%, 12px);
+}
+
+/* Sitting below the candle, the caret points up at it — regardless of sentiment. */
+.news-marker.pos-below .news-marker-caret {
+  border-bottom: 5px solid var(--news-accent);
+  border-top: 0;
 }
 
 .news-marker.pos-below .news-marker-popup {

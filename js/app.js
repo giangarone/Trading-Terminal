@@ -53,7 +53,6 @@
       maxEvents: 20,
       showPast: true,
       showUpcoming: true,
-      showMarkersAtBottom: false,
       importance: { high: true, medium: true, low: true },
       types: { news: true, social: true, geopolitical: true, corporate: true }
     }
@@ -77,6 +76,9 @@
             delete merged.news.types.marketMoving;
           }
           delete merged.news.showCatalysts;
+          // "Show markers at bottom" toggle was folded into Marker Position as a 4th option
+          if (merged.news.showMarkersAtBottom) merged.news.position = 'bottom';
+          delete merged.news.showMarkersAtBottom;
         }
         return merged;
       }
@@ -2087,7 +2089,7 @@
 
       el.classList.remove('pos-above', 'pos-below', 'bottom-bar');
       let anchorY;
-      if (ns.showMarkersAtBottom) {
+      if (posMode === 'bottom') {
         anchorY = ih - 14;
         el.classList.add('bottom-bar');
       } else if (posMode === 'always-above') {
@@ -3687,15 +3689,6 @@
       btn.closest('.cs-switch-row').classList.toggle('active');
     });
   });
-  /* "Show markers at bottom of chart" makes Marker Position irrelevant, so dim it live
-     (the generic handler above already flipped .active on this row by the time this runs) */
-  const csNewsMarkersAtBottomRow = document.getElementById('csNewsMarkersAtBottom');
-  if (csNewsMarkersAtBottomRow) {
-    csNewsMarkersAtBottomRow.querySelector('.ui-toggle').addEventListener('click', () => {
-      document.getElementById('csNewsPositionGroup').closest('.cs-field')
-        .toggleAttribute('data-disabled', csNewsMarkersAtBottomRow.classList.contains('active'));
-    });
-  }
   /* "Confirm Orders" toggle persists separately, since it gates the Order Confirmation modal */
   const csConfirmMarketOrdersRow = document.getElementById('csConfirmMarketOrders');
   if (csConfirmMarketOrdersRow) {
@@ -3729,8 +3722,6 @@
   bindSimpleSegmented('ctCrossIsolatedGroup');
   bindSimpleSegmented('ctDisplayModeGroup');
   bindSimpleSegmented('pdCrossIsolatedGroup');
-  bindSimpleSegmented('csNewsPositionGroup');
-  bindSimpleSegmented('csNewsSentimentGroup');
 
   /* ---------- Alert email update button ---------- */
   const alertEmailSave = document.getElementById('alertEmailSave');
@@ -4001,8 +3992,8 @@
     document.getElementById('pdOrderType').value = s.positionDefaults.orderType;
 
     const sn = s.news || CS_DEFAULTS.news;
-    document.querySelectorAll('#csNewsPositionGroup .cs-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === sn.position));
-    document.querySelectorAll('#csNewsSentimentGroup .cs-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === sn.sentimentFilter));
+    document.querySelectorAll('#csNewsPositionGroup .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.mode === sn.position));
+    document.querySelectorAll('#csNewsSentimentGroup .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.mode === sn.sentimentFilter));
     document.getElementById('csNewsTimeRange').value = sn.timeRange;
     document.getElementById('csNewsMaxEvents').value = sn.maxEvents;
     document.getElementById('csNewsImpHigh').classList.toggle('active', sn.importance.high);
@@ -4014,8 +4005,6 @@
     document.getElementById('csNewsTypeCorp').classList.toggle('checked', sn.types.corporate);
     document.getElementById('csNewsShowPast').classList.toggle('active', sn.showPast);
     document.getElementById('csNewsShowUpcoming').classList.toggle('active', sn.showUpcoming);
-    document.getElementById('csNewsMarkersAtBottom').classList.toggle('active', sn.showMarkersAtBottom);
-    document.getElementById('csNewsPositionGroup').closest('.cs-field').toggleAttribute('data-disabled', sn.showMarkersAtBottom);
 
     csUpdateConditionalFields();
     refreshAllCsDropdownLabels(document.getElementById('chartSettingsBackdrop'));
@@ -4062,13 +4051,12 @@
         orderType: document.getElementById('pdOrderType').value,
       },
       news: {
-        position: document.querySelector('#csNewsPositionGroup .cs-seg-btn.active')?.dataset.mode || 'by-sentiment',
-        sentimentFilter: document.querySelector('#csNewsSentimentGroup .cs-seg-btn.active')?.dataset.mode || 'all',
+        position: document.querySelector('#csNewsPositionGroup .cs-radio-row.active')?.dataset.mode || 'by-sentiment',
+        sentimentFilter: document.querySelector('#csNewsSentimentGroup .cs-radio-row.active')?.dataset.mode || 'all',
         timeRange: document.getElementById('csNewsTimeRange').value,
         maxEvents: parseInt(document.getElementById('csNewsMaxEvents').value) || 20,
         showPast: document.getElementById('csNewsShowPast').classList.contains('active'),
         showUpcoming: document.getElementById('csNewsShowUpcoming').classList.contains('active'),
-        showMarkersAtBottom: document.getElementById('csNewsMarkersAtBottom').classList.contains('active'),
         importance: {
           high: document.getElementById('csNewsImpHigh').classList.contains('active'),
           medium: document.getElementById('csNewsImpMedium').classList.contains('active'),

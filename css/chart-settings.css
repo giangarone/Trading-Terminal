@@ -1372,16 +1372,6 @@
   margin-top: 14px;
 }
 
-#ocConfirm.buy {
-  background: var(--long);
-  color: var(--on-long);
-}
-
-#ocConfirm.sell {
-  background: var(--short);
-  color: var(--on-short);
-}
-
 #templatesSelectMenu {
   z-index: 2100;
 }
