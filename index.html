@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="css/order-lines.css?v=30">
   <link rel="stylesheet" href="css/market-scanner.css?v=25">
   <link rel="stylesheet" href="css/indicators.css?v=9">
-  <link rel="stylesheet" href="css/chart-settings.css?v=27">
+  <link rel="stylesheet" href="css/chart-settings.css?v=28">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
 </head>
@@ -1111,23 +1111,35 @@
                     </div>
                   </div>
 
-                  <div class="cs-card">
+                  <div class="cs-card cs-card--single-col">
                     <div class="cs-card-head">
                       <span class="cs-card-title">Move SL To Breakeven</span>
                     </div>
                     <div class="cs-fields-row">
                       <div class="cs-field">
                         <label>Trigger</label>
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csBeTrigger"><span
-                            class="cs-select-label">After TP1 Hit</span><span
-                            class="material-symbols-outlined">expand_more</span></div><select id="csBeTrigger"
-                          style="display:none;">
-                          <option value="tp1">After TP1 Hit</option>
-                          <option value="tp2">After TP2 Hit</option>
-                          <option value="tp3">After TP3 Hit</option>
-                          <option value="customR">Custom R Multiple</option>
-                          <option value="pct">% to Target</option>
-                        </select>
+                        <div class="cs-radio-group" id="csBeTriggerToggle">
+                          <div class="cs-radio-row active" data-unit="tp1">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">After TP1 Hit</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="tp2">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">After TP2 Hit</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="tp3">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">After TP3 Hit</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="customR">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">Custom R Multiple</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="pct">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">% to Target</span></span>
+                          </div>
+                        </div>
                       </div>
                       <div class="cs-field" id="csBeCustomRWrap" style="display:none;">
                         <label>Custom R Multiple</label>
@@ -1155,32 +1167,39 @@
                       </div>
                       <div class="cs-field">
                         <label>Breakeven Offset</label>
-                        <div class="cs-unit-pair">
-                          <div class="price-stepper cs-price-stepper">
-                            <input type="text" id="csBeOffsetValue" readonly value="1">
-                            <div class="price-stepper-arrows">
-                              <button type="button" id="csBeOffsetInc"><span
-                                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                              <button type="button" id="csBeOffsetDec"><span
-                                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                            </div>
+                        <div class="cs-radio-group" id="csBeOffsetUnitToggle">
+                          <div class="cs-radio-row" data-unit="ticks">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">Ticks</span></span>
                           </div>
-                          <div class="select-input pop-trigger cs-dd-trigger" data-target="csBeOffsetUnit"><span
-                              class="cs-select-label">Fee Amount</span><span
-                              class="material-symbols-outlined">expand_more</span></div><select id="csBeOffsetUnit"
-                            style="display:none;">
-                            <option value="ticks">Ticks</option>
-                            <option value="points">Points</option>
-                            <option value="percent">%</option>
-                            <option value="fee" selected>Fee Amount</option>
-                          </select>
+                          <div class="cs-radio-row" data-unit="points">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">Points</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="percent">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">%</span></span>
+                          </div>
+                          <div class="cs-radio-row active" data-unit="fee">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">Fee Amount</span></span>
+                          </div>
+                        </div>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="csBeOffsetValue" readonly value="1">
+                          <div class="price-stepper-arrows">
+                            <button type="button" id="csBeOffsetInc"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" id="csBeOffsetDec"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
                         </div>
                       </div>
                     </div>
                     <div class="cs-helper">Offset is added to entry price when moving SL to breakeven.</div>
                   </div>
 
-                  <div class="cs-card">
+                  <div class="cs-card cs-card--single-col">
                     <div class="cs-card-head">
                       <span class="cs-card-title">Trailing Stop</span>
                     </div>
@@ -1215,16 +1234,28 @@
                     <div class="cs-fields-row" id="csTsStartWrap">
                       <div class="cs-field">
                         <label>Start Trailing</label>
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="csTsStart"><span
-                            class="cs-select-label">Immediately</span><span
-                            class="material-symbols-outlined">expand_more</span></div><select id="csTsStart"
-                          style="display:none;">
-                          <option value="immediate" selected>Immediately</option>
-                          <option value="tp1">After TP1 Hit</option>
-                          <option value="tp2">After TP2 Hit</option>
-                          <option value="tp3">After TP3 Hit</option>
-                          <option value="customR">Custom R Multiple</option>
-                        </select>
+                        <div class="cs-radio-group" id="csTsStartToggle">
+                          <div class="cs-radio-row active" data-unit="immediate">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">Immediately</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="tp1">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">After TP1 Hit</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="tp2">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">After TP2 Hit</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="tp3">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">After TP3 Hit</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="customR">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">Custom R Multiple</span></span>
+                          </div>
+                        </div>
                       </div>
                       <div class="cs-field" id="csTsStartCustomRWrap" style="display:none;">
                         <label>Custom R Multiple</label>
@@ -5542,7 +5573,7 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=130"></script>
+  <script src="js/app.js?v=131"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=12"></script>
   <script src="js/market-scanner.js?v=9"></script>

@@ -3778,14 +3778,20 @@
   document.getElementById('getPlanEliteBtn').addEventListener('click', () => {
     showToast('Terminal Elite activated', 'workspace_premium');
   });
+  function csActiveRadioUnit(groupId) {
+    const activeRow = document.querySelector('#' + groupId + ' .cs-radio-row.active');
+    return activeRow ? activeRow.dataset.unit : null;
+  }
   function csUpdateConditionalFields() {
-    document.getElementById('csBeCustomRWrap').style.display = document.getElementById('csBeTrigger').value === 'customR' ? '' : 'none';
-    document.getElementById('csBePctWrap').style.display = document.getElementById('csBeTrigger').value === 'pct' ? '' : 'none';
-    document.getElementById('csTsStartCustomRWrap').style.display = document.getElementById('csTsStart').value === 'customR' ? '' : 'none';
+    const beTrigger = csActiveRadioUnit('csBeTriggerToggle');
+    const tsStart = csActiveRadioUnit('csTsStartToggle');
+    document.getElementById('csBeCustomRWrap').style.display = beTrigger === 'customR' ? '' : 'none';
+    document.getElementById('csBePctWrap').style.display = beTrigger === 'pct' ? '' : 'none';
+    document.getElementById('csTsStartCustomRWrap').style.display = tsStart === 'customR' ? '' : 'none';
     document.getElementById('csTtpDistanceWrap').style.display = document.getElementById('csTtpMethod').value === 'atr' ? 'none' : '';
     document.getElementById('csTtpActivationCustomRWrap').style.display = document.getElementById('csTtpActivation').value === 'customR' ? '' : 'none';
   }
-  ['csBeTrigger', 'csTsStart', 'csTtpMethod', 'csTtpActivation'].forEach(id => {
+  ['csTtpMethod', 'csTtpActivation'].forEach(id => {
     document.getElementById(id).addEventListener('change', csUpdateConditionalFields);
   });
   /* percentOverride/atrOverride let a field use a finer min/step/decimals when its unit dropdown is set to "%" or "ATR" —
@@ -3795,10 +3801,20 @@
     const dec = document.getElementById(prefix + 'Dec');
     const inc = document.getElementById(prefix + 'Inc');
     const unitSelect = document.getElementById(prefix + 'Unit');
+    const unitToggle = document.getElementById(prefix + 'UnitToggle');
+    function currentUnit() {
+      if (unitSelect) return unitSelect.value;
+      if (unitToggle) {
+        const activeRow = unitToggle.querySelector('.cs-radio-row.active');
+        return activeRow ? activeRow.dataset.unit : null;
+      }
+      return null;
+    }
     function activeParams() {
-      if (percentOverride && unitSelect && unitSelect.value === 'percent') return percentOverride;
-      if (atrOverride && unitSelect && unitSelect.value === 'atr') return atrOverride;
-      if (feeOverride && unitSelect && unitSelect.value === 'fee') return feeOverride;
+      const unit = currentUnit();
+      if (percentOverride && unit === 'percent') return percentOverride;
+      if (atrOverride && unit === 'atr') return atrOverride;
+      if (feeOverride && unit === 'fee') return feeOverride;
       return { min, max, step };
     }
     /* Arrow clicks snap to the step grid; manual typing only clamps to min/max and allows up to 2 decimals */
@@ -3901,6 +3917,7 @@
       row.addEventListener('click', () => {
         group.querySelectorAll('.cs-radio-row').forEach(r => r.classList.remove('active'));
         row.classList.add('active');
+        csUpdateConditionalFields();
       });
     });
   });
@@ -4155,15 +4172,15 @@
   }
   function populateChartSettingsForm() {
     const s = chartSettings;
-    document.getElementById('csBeTrigger').value = s.moveSlToBreakeven.trigger;
+    document.querySelectorAll('#csBeTriggerToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.moveSlToBreakeven.trigger));
     document.getElementById('csBeCustomRValue').value = s.moveSlToBreakeven.customR;
     document.getElementById('csBePctValue').value = s.moveSlToBreakeven.pctToTp;
     document.getElementById('csBeOffsetValue').value = s.moveSlToBreakeven.offsetValue;
-    document.getElementById('csBeOffsetUnit').value = s.moveSlToBreakeven.offsetUnit;
+    document.querySelectorAll('#csBeOffsetUnitToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.moveSlToBreakeven.offsetUnit));
 
     document.getElementById('csTsDistanceValue').value = s.trailingStop.distanceValue;
     document.querySelectorAll('#csTsDistanceUnitToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingStop.distanceUnit));
-    document.getElementById('csTsStart').value = s.trailingStop.start;
+    document.querySelectorAll('#csTsStartToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingStop.start));
     document.getElementById('csTsStartCustomRValue').value = s.trailingStop.startCustomR;
 
     document.getElementById('csAtrLength').value = s.atrStop.length;
@@ -4216,16 +4233,16 @@
       defaultTargets: csTargetsDraft,
       defaultStopLoss: csSlDraft,
       moveSlToBreakeven: {
-        trigger: document.getElementById('csBeTrigger').value,
+        trigger: document.querySelector('#csBeTriggerToggle .cs-radio-row.active').dataset.unit,
         customR: parseFloat(document.getElementById('csBeCustomRValue').value) || 1,
         pctToTp: parseFloat(document.getElementById('csBePctValue').value) || 50,
         offsetValue: parseFloat(document.getElementById('csBeOffsetValue').value) || 0,
-        offsetUnit: document.getElementById('csBeOffsetUnit').value,
+        offsetUnit: document.querySelector('#csBeOffsetUnitToggle .cs-radio-row.active').dataset.unit,
       },
       trailingStop: {
         distanceValue: parseFloat(document.getElementById('csTsDistanceValue').value) || 1,
         distanceUnit: document.querySelector('#csTsDistanceUnitToggle .cs-radio-row.active').dataset.unit,
-        start: document.getElementById('csTsStart').value,
+        start: document.querySelector('#csTsStartToggle .cs-radio-row.active').dataset.unit,
         startCustomR: parseFloat(document.getElementById('csTsStartCustomRValue').value) || 1,
       },
       atrStop: {
