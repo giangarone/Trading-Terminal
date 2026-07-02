@@ -1224,8 +1224,8 @@
     if (beCfg.trigger === 'tp1') return 'TP1';
     if (beCfg.trigger === 'tp2') return 'TP2';
     if (beCfg.trigger === 'tp3') return 'TP3';
-    if (beCfg.trigger === 'customR') return (+beCfg.customR).toFixed(1) + 'R';
-    return Math.round(beCfg.pctToTp) + '%'; // pct
+    if (beCfg.trigger === 'customR') return (beCfg.customR != null ? +beCfg.customR : 1).toFixed(1) + 'R';
+    return Math.round(beCfg.pctToTp != null ? beCfg.pctToTp : 50) + '%'; // pct
   }
   function getEffectiveTrailConfig() { return (order && order.sl && order.sl.trailOverride) || chartSettings.trailingStop; }
   function getEffectiveAtrConfig() { return chartSettings.atrStop; }
