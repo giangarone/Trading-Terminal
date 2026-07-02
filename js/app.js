@@ -65,6 +65,9 @@
       const raw = localStorage.getItem('tt_chartSettings');
       if (raw) {
         const merged = Object.assign(cloneCsDefaults(), JSON.parse(raw));
+        // Object.assign is shallow, so a save from before a breakeven field existed (e.g. 'pctToTp')
+        // would otherwise wipe it out entirely, leaving it undefined (renders as "NaN" in the UI).
+        merged.moveSlToBreakeven = Object.assign({}, CS_DEFAULTS.moveSlToBreakeven, merged.moveSlToBreakeven);
         // 'Points' was removed as a trailing-distance unit — migrate any persisted value to %
         if (merged.trailingStop && merged.trailingStop.distanceUnit === 'points') merged.trailingStop.distanceUnit = 'percent';
         // Migrate old news type keys (breaking/marketMoving → news) and remove removed settings
