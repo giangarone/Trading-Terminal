@@ -3909,6 +3909,7 @@
   bindSimpleSegmented('csTimeFormatGroup');
   bindSimpleSegmented('csScalePositionGroup');
   bindSimpleSegmented('qtsCrossIsolatedGroup');
+  bindSimpleSegmented('qtsDisplayModeGroup');
   bindSimpleSegmented('qtDisplayModeGroup');
   bindSimpleSegmented('ctCrossIsolatedGroup');
   bindSimpleSegmented('ctDisplayModeGroup');
