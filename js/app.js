@@ -1268,7 +1268,9 @@
     const cfg = ensureTpTrailOffset(tp);
     return formatTpOffset(cfg.offsetValue, cfg.offsetUnit);
   }
-  function tpBadgeText(tp) { return 'TRL TRIGGER'; }
+  // Before activation the badge marks the price that arms trailing ('TRL TRIGGER').
+  // Once activated, the TP has moved to its offset level and is actively trailing, so it reads just 'TRL'.
+  function tpBadgeText(tp) { return (tp && tp.activated && tp.exitPrice != null) ? 'TRL' : 'TRL TRIGGER'; }
   /* live-patch a trailing-TP badge label + its Offset line during a drag (no full re-render) */
   function refreshTpBadgeOnChart(tpId) {
     const labelEl = layer.querySelector('[data-tp-badge-edit="' + tpId + '"]');
