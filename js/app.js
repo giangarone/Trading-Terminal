@@ -40,7 +40,7 @@
       { pct: 25, r: 4.0, type: 'limit' }
     ],
     defaultStopLoss: { r: 1.0, type: 'stopMarket' },
-    moveSlToBreakeven: { trigger: 'tp1', customR: 1, pctToTp: 50, offsetValue: 1, offsetUnit: 'fee' },
+    moveSlToBreakeven: { trigger: 'tp1', customR: 1, pctToTp: 50, offsetValue: 0, offsetUnit: 'fee' },
     trailingStop: { distanceValue: 1.0, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
     atrStop: { length: 14, multiplier: 2.0, timeframe: 'current', updateFreq: 'newbar', dynamic: true },
     trailingTp: { activation: 'tp1', activationCustomR: 1, method: 'fixed', distanceValue: 20, distanceUnit: 'ticks' },
@@ -1186,7 +1186,7 @@
   /* effective config = this SL's own override if set, otherwise the global Chart Settings default */
   function getEffectiveBeConfig() { return (order && order.sl && order.sl.beOverride) || chartSettings.moveSlToBreakeven; }
   /* price distance for a breakeven offset config — 'fee' covers the round-trip entry+exit fee
-     (offsetValue is a multiplier on top of that, so 1 = exactly break even on fees) */
+     (offsetValue is a multiplier on top of that, so 1 = exactly break even on fees; 0 = exactly entry) */
   function breakevenOffsetPrice(beCfg) {
     if (beCfg.offsetUnit === 'points') return beCfg.offsetValue;
     if (beCfg.offsetUnit === 'percent') return order.entry * beCfg.offsetValue / 100;
@@ -1197,12 +1197,37 @@
     }
     return beCfg.offsetValue * TICK; // ticks
   }
-  /* the reference target for the '% to Target' breakeven trigger — TP1 (the first take-profit).
-     Consistent with how the 'tp1' trigger resolves in resolveBreakevenTpId(). */
+  /* step config for the breakeven offset field — allows 0 (SL lands exactly at entry) and decimals for
+     fine control. Ticks stay whole since a fractional tick is meaningless. */
+  function beOffsetParams(unit) {
+    if (unit === 'ticks') return { min: 0, max: 200, step: 1 };
+    if (unit === 'points') return { min: 0, max: 200, step: 0.25 };
+    if (unit === 'percent') return { min: 0, max: 50, step: 0.1 };
+    return { min: 0, max: 10, step: 0.1 }; // fee multiplier
+  }
+  /* the reference target for the '% to Target' breakeven trigger — TP1 (the first take-profit). */
   function breakevenRefTp() { return (order && order.tps.length) ? order.tps[0] : null; }
-  /* price at which a '% to Target' breakeven trigger fires: a fraction of the way from entry to TP1.
-     Direction-agnostic — TP1 always sits on the profit side of entry for both long and short. */
+  /* the two price-based BE triggers ('% to Target' and 'Custom R Multiple') draw a draggable line and
+     arm from applyBreakeven on price — unlike tp1/tp2/tp3, which arm from checkTpFills on a TP hit. */
+  function isPriceBasedBeTrigger(trigger) { return trigger === 'pct' || trigger === 'customR'; }
+  /* risk distance in points, used by the 'Custom R Multiple' trigger. Once filled the risk is locked to
+     the fill-time value (matches currentRMultiple); before then it tracks the live SL placement. */
+  function beRiskPoints() {
+    if (!order || !order.sl) return null;
+    if (order.filled && order.initialRisk) return order.initialRisk / POINT_VALUE;
+    return Math.abs(order.entry - order.sl.price);
+  }
+  /* price at which a price-based breakeven trigger fires. '% to Target' sits a fraction of the way from
+     entry to TP1; 'Custom R Multiple' sits N times the initial risk beyond entry. Both land on the
+     profit side of entry for longs and shorts alike. */
   function breakevenTriggerPrice(beCfg) {
+    const dir = order && order.side === 'buy' ? 1 : -1;
+    if (beCfg.trigger === 'customR') {
+      const riskPts = beRiskPoints();
+      if (!riskPts) return null;
+      const r = beCfg.customR != null ? beCfg.customR : 1;
+      return roundTick(order.entry + dir * r * riskPts);
+    }
     const refTp = breakevenRefTp();
     if (!refTp) return null;
     const pct = (beCfg.pctToTp != null ? beCfg.pctToTp : 50) / 100;
@@ -1425,13 +1450,13 @@
     syncQtyFromRisk();
     showToast('Stop loss moved to breakeven', 'vertical_align_center');
   }
-  /* Price-based breakeven: the '% to Target' trigger fires once price travels the chosen fraction of
-     the way from entry to TP1. The TP-hit triggers (tp1/tp2/tp3/customR) fire from checkTpFills instead. */
+  /* Price-based breakeven: the '% to Target' and 'Custom R Multiple' triggers fire once price reaches
+     their level. The TP-hit triggers (tp1/tp2/tp3) fire from checkTpFills on the mapped TP hit instead. */
   function applyBreakeven(currentPrice) {
     if (!order || !order.filled || !slBeActiveMode() || order.sl.beActive) return;
     const cfg = getEffectiveBeConfig();
-    if (cfg.trigger !== 'pct') return;
-    if (!meetsTriggerCondition('pct', cfg.customR, currentPrice)) return;
+    if (!isPriceBasedBeTrigger(cfg.trigger)) return;
+    if (!meetsTriggerCondition(cfg.trigger, cfg.customR, currentPrice)) return;
     moveSlToBreakevenLevel(currentPrice);
   }
   /* ---------- auto-balance TP allocations so they always sum to exactly 100% ---------- */
@@ -3030,11 +3055,12 @@
           removeSl();
         });
 
-        // ---- Breakeven '% to Target' ghost trigger line (draggable, shown pre-fire only) ----
-        // Sits a fraction of the way from entry to TP1; crossing it arms breakeven (applyBreakeven).
+        // ---- Breakeven price-based ghost trigger line (draggable, shown pre-fire only) ----
+        // Both '% to Target' (a fraction of the way from entry to TP1) and 'Custom R Multiple' (N times
+        // the initial risk beyond entry) show a line at the price that arms breakeven (applyBreakeven).
         const beCfg = getEffectiveBeConfig();
-        if (slBeActiveMode() && !order.sl.beActive && beCfg.trigger === 'pct' && breakevenRefTp()) {
-          const refTp = breakevenRefTp();
+        const beShowLine = isPriceBasedBeTrigger(beCfg.trigger) && breakevenTriggerPrice(beCfg) !== null;
+        if (slBeActiveMode() && !order.sl.beActive && beShowLine) {
           const trigY = clamp(priceToY(breakevenTriggerPrice(beCfg), H), 10, H - 10);
           const beLine = document.createElement('div');
           beLine.className = 'ol-line be-trigger';
@@ -3043,7 +3069,7 @@
 
           const beLabel = document.createElement('span');
           beLabel.className = 'ol-offset-label be-trigger';
-          beLabel.innerHTML = '<span class="ol-offset-label-text">BE TRIGGER · ' + Math.round(beCfg.pctToTp) + '%</span>';
+          beLabel.innerHTML = '<span class="ol-offset-label-text">BE TRIGGER · ' + breakevenTriggerLabel(beCfg) + '</span>';
           beLabel.style.top = trigY + 'px';
           layer.appendChild(beLabel);
 
@@ -3053,23 +3079,33 @@
             beLine.style.top = yy;
             beLabel.style.top = yy;
             const txt = beLabel.querySelector('.ol-offset-label-text');
-            if (txt) txt.textContent = 'BE TRIGGER · ' + Math.round(ov.pctToTp) + '%';
+            if (txt) txt.textContent = 'BE TRIGGER · ' + breakevenTriggerLabel(ov);
           }
           function onDragBe(cy, h) {
             const ov = ensureBeOverride();
             const p = roundTick(yToPrice(cy, h));
-            const span = refTp.price - order.entry;
-            // fraction of the entry→TP1 distance; clamp so the trigger stays strictly between them
-            let pct = span ? (p - order.entry) / span * 100 : ov.pctToTp;
-            ov.pctToTp = Math.round(Math.max(1, Math.min(99, pct)));
+            const dir = order.side === 'buy' ? 1 : -1;
+            if (ov.trigger === 'customR') {
+              // distance from entry expressed in multiples of the initial risk
+              const riskPts = beRiskPoints();
+              const r = riskPts ? dir * (p - order.entry) / riskPts : ov.customR;
+              ov.customR = +Math.max(0.1, Math.min(20, r)).toFixed(1);
+              syncBeCustomRField();
+            } else {
+              // fraction of the entry→TP1 distance; clamp so the trigger stays strictly between them
+              const refTp = breakevenRefTp();
+              const span = refTp ? refTp.price - order.entry : 0;
+              const pct = span ? (p - order.entry) / span * 100 : ov.pctToTp;
+              ov.pctToTp = Math.round(Math.max(1, Math.min(99, pct)));
+              syncBePctField();
+            }
             repositionBeLine(h);
-            syncBePctField();
             refreshSlBadgeOnChart();
             drawPriceChart();
           }
           function onDropBe(cy, h) { onDragBe(cy, h); render(); }
           // Both the thin line and the visible label pill are draggable; a click (no drag) on the
-          // label opens the SL settings, so the pill is a proper grab target and adjusts % live.
+          // label opens the SL settings, so the pill is a proper grab target and adjusts the value live.
           const openBeMenu = () => openSlGearMenu(beLabel.getBoundingClientRect(), beLabel);
           makeDraggable(beLine, onDragBe, onDropBe, undefined, undefined, 'be');
           makeDraggable(beLabel, onDragBe, onDropBe, undefined, openBeMenu, 'be');
@@ -3777,7 +3813,8 @@
   const PERCENT_DISTANCE_STEP = { min: 0.1, max: 50, step: 0.1 };
   const ATR_DISTANCE_STEP = { min: 0.01, max: 20, step: 0.1 };
   const FEE_MULTIPLIER_STEP = { min: 0.1, max: 10, step: 0.1 };
-  bindCsStepper('csBeOffset', 0, 200, 1, PERCENT_DISTANCE_STEP, undefined, FEE_MULTIPLIER_STEP);
+  // breakeven offset allows 0 (SL exactly at entry) and decimals for percent/fee — its own params, not the shared distance ones
+  bindCsStepper('csBeOffset', 0, 200, 1, { min: 0, max: 50, step: 0.1 }, undefined, { min: 0, max: 10, step: 0.1 });
   bindCsStepper('csTsDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP, ATR_DISTANCE_STEP);
   bindCsStepper('csTtpDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP);
   function bindPlainStepper(valueId, min, max, step, onChange) {
@@ -4916,26 +4953,20 @@
     const ov = order && order.sl && order.sl.beOverride;
     if (el && ov) el.value = Math.round(ov.pctToTp);
   }
+  /* keep the gear-menu Custom R field in step with a ghost-line drag (only if the menu is open) */
+  function syncBeCustomRField() {
+    const el = document.getElementById('slBeOvCustomRValue');
+    const ov = order && order.sl && order.sl.beOverride;
+    if (el && ov) el.value = (+ov.customR).toFixed(1);
+  }
   /* resolves which TP arms breakeven, using the global default set in Chart Settings > Trade Management */
   function resolveBreakevenTpId() {
     if (!order || !order.tps.length) return null;
     const cfg = getEffectiveBeConfig();
-    if (cfg.trigger === 'pct') return null; // price-based trigger — armed by applyBreakeven, not a TP hit
+    if (isPriceBasedBeTrigger(cfg.trigger)) return null; // price-based ('% to Target' / 'Custom R') — armed by applyBreakeven, not a TP hit
     if (cfg.trigger === 'tp1') return order.tps[0].id;
     if (cfg.trigger === 'tp2') return (order.tps[1] || order.tps[order.tps.length - 1]).id;
     if (cfg.trigger === 'tp3') return (order.tps[2] || order.tps[order.tps.length - 1]).id;
-    if (cfg.trigger === 'customR') {
-      const dir = order.side === 'buy' ? 1 : -1;
-      const riskTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
-      if (riskTotal) {
-        const match = order.tps.find(tp => {
-          const pts = dir * (tp.price - order.entry);
-          return (pts * POINT_VALUE) / riskTotal >= cfg.customR;
-        });
-        if (match) return match.id;
-      }
-      return order.tps[order.tps.length - 1].id;
-    }
     return order.tps[0].id;
   }
   /* every SL gets its own editable breakeven settings, seeded from the global default */
@@ -4959,7 +4990,7 @@
     slBeOvTriggerToggle.querySelectorAll('.cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === be.trigger));
     slBeOvOffsetUnitToggle.querySelectorAll('.cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === be.offsetUnit));
     slBeOvOffsetValue.value = be.offsetValue;
-    document.getElementById('slBeOvCustomRValue').value = be.customR;
+    document.getElementById('slBeOvCustomRValue').value = (+be.customR).toFixed(1);
     document.getElementById('slBeOvPctValue').value = Math.round(be.pctToTp);
     syncBeOvTriggerFields(be.trigger);
     refreshAllCsDropdownLabels(slGearMenu);
@@ -5000,9 +5031,10 @@
       order.sl.beActive = false;
       const ov = ensureBeOverride();
       // Dynamic default: with a single TP, a TP-hit trigger is pointless (the TP closes the trade),
-      // so default to the price-based '% to Target' trigger. With 2+ TPs keep the configured trigger.
-      if (ov && order.tps.length < 2) ov.trigger = 'pct';
-      order.sl.beTpId = (ov && ov.trigger === 'pct') ? null : resolveBreakevenTpId();
+      // so fall back to the price-based '% to Target'. A price-based trigger the user already picked
+      // ('% to Target' or 'Custom R Multiple') is kept as-is.
+      if (ov && order.tps.length < 2 && !isPriceBasedBeTrigger(ov.trigger)) ov.trigger = 'pct';
+      order.sl.beTpId = (ov && isPriceBasedBeTrigger(ov.trigger)) ? null : resolveBreakevenTpId();
     }
   }
   /* set the SL to a specific behavior ('fixed' = disabled/plain stop, otherwise enables that mode and places it) */
@@ -5067,7 +5099,7 @@
       const ov = ensureBeOverride();
       if (!ov || row.dataset.unit === ov.trigger) return;
       ov.trigger = row.dataset.unit;
-      if (slBeActiveMode() && !order.sl.beActive) order.sl.beTpId = (ov.trigger === 'pct') ? null : resolveBreakevenTpId();
+      if (slBeActiveMode() && !order.sl.beActive) order.sl.beTpId = isPriceBasedBeTrigger(ov.trigger) ? null : resolveBreakevenTpId();
       renderSlGearMenu();
       render(); // reflect the ghost line + badge on the chart
     });
@@ -5126,10 +5158,7 @@
     const dec = document.getElementById('slBeOvOffsetDec');
     function params() {
       const ov = ensureBeOverride();
-      const unit = ov ? ov.offsetUnit : 'fee';
-      if (unit === 'percent') return PERCENT_DISTANCE_STEP;
-      if (unit === 'fee') return FEE_MULTIPLIER_STEP;
-      return { min: 0, max: 200, step: 1 };
+      return beOffsetParams(ov ? ov.offsetUnit : 'fee');
     }
     /* Arrow clicks snap to the step grid; manual typing only clamps to min/max and allows up to 2 decimals */
     function clampStep(v) { const p = params(); v = Math.round(v / p.step) * p.step; v = Number.isInteger(p.step) ? Math.round(v) : +v.toFixed(2); return Math.min(p.max, Math.max(p.min, v)); }
@@ -5146,11 +5175,11 @@
     const input = document.getElementById('slBeOvCustomRValue');
     const inc = document.getElementById('slBeOvCustomRInc');
     const dec = document.getElementById('slBeOvCustomRDec');
-    function clampVal(v) { return Math.min(100, Math.max(0.1, +parseFloat(v).toFixed(1))); }
+    function clampVal(v) { return Math.min(20, Math.max(0.1, +parseFloat(v).toFixed(1))); }
     function commit() {
       const ov = ensureBeOverride();
       if (ov) ov.customR = parseFloat(input.value) || 1;
-      if (slBeActiveMode() && !order.sl.beActive) order.sl.beTpId = resolveBreakevenTpId();
+      if (slBeActiveMode() && !order.sl.beActive) render(); // reposition the on-chart trigger line
     }
     input.removeAttribute('readonly');
     input.addEventListener('click', (e) => e.stopPropagation());
