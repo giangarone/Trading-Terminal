@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="css/order-lines.css?v=30">
   <link rel="stylesheet" href="css/market-scanner.css?v=25">
   <link rel="stylesheet" href="css/indicators.css?v=9">
-  <link rel="stylesheet" href="css/chart-settings.css?v=26">
+  <link rel="stylesheet" href="css/chart-settings.css?v=27">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
 </head>
@@ -524,6 +524,15 @@
                         <span class="cs-switch-desc">Show confirmation before canceling all orders.</span>
                       </span>
                       <button type="button" class="ui-toggle" aria-label="Toggle Confirm Cancel All Orders"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csConfirmReverse">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Confirm Flip / Reverse</span>
+                        <span class="cs-switch-desc">Show confirmation before flipping an order's direction or
+                          reversing a position.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Confirm Flip / Reverse"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
@@ -5497,6 +5506,30 @@
     </div>
   </div>
 
+  <!-- ===================== FLIP / REVERSE CONFIRMATION MODAL ===================== -->
+  <div class="oc-backdrop" id="rcBackdrop">
+    <div class="oc-dialog">
+      <div class="oc-dialog-head">
+        <div>
+          <div class="oc-dialog-title" id="rcTitle">Reverse Position</div>
+        </div>
+        <button class="oc-close" id="rcClose"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="oc-dialog-desc" id="rcDesc">
+        This will close your current position at the best available market price and immediately open a new
+        position of the same size in the opposite direction.
+      </div>
+      <label class="cs-checkbox-row oc-dontshow">
+        <span class="chk-box" id="rcDontShow"><span class="material-symbols-outlined">check</span></span>
+        Don't show this confirmation again
+      </label>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="rcCancel">Cancel</button>
+        <button class="btn-save" id="rcConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== TOASTS ===================== -->
   <div class="toast-stack" id="toastStack"></div>
 
@@ -5509,7 +5542,7 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=123"></script>
+  <script src="js/app.js?v=124"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=12"></script>
   <script src="js/market-scanner.js?v=9"></script>

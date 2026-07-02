@@ -1015,6 +1015,50 @@
   document.getElementById('ocClose').addEventListener('click', closeOrderConfirm);
   ocBackdrop.addEventListener('click', (e) => { if (e.target === ocBackdrop) closeOrderConfirm(); });
 
+  /* ---------- Flip/Reverse Confirmation modal: gates the entry bar's Flip Direction / Reverse Position button ---------- */
+  const REVERSE_CONFIRM_KEY = 'tt_reverseConfirm';
+  function reverseConfirmEnabled() {
+    try { return localStorage.getItem(REVERSE_CONFIRM_KEY) !== '0'; } catch (e) { return true; }
+  }
+  function setReverseConfirmEnabled(on) {
+    try { localStorage.setItem(REVERSE_CONFIRM_KEY, on ? '1' : '0'); } catch (e) { /* storage unavailable */ }
+    const row = document.getElementById('csConfirmReverse');
+    if (row) row.classList.toggle('active', on);
+  }
+
+  const rcBackdrop = document.getElementById('rcBackdrop');
+  let rcPendingProceed = null;
+
+  function requestReverseConfirmation(isFilled, proceed) {
+    if (!reverseConfirmEnabled()) { proceed(); return; }
+    openReverseConfirm(isFilled, proceed);
+  }
+  function openReverseConfirm(isFilled, proceed) {
+    rcPendingProceed = proceed;
+    document.getElementById('rcTitle').textContent = isFilled ? 'Reverse Position' : 'Flip Direction';
+    document.getElementById('rcDesc').textContent = isFilled
+      ? 'This will close your current position at the best available market price and immediately open a new position of the same size in the opposite direction.'
+      : "This will switch your pending order from a buy to a sell (or vice versa). Its take-profit and stop-loss levels will be mirrored to stay on the correct side of your entry price.";
+    document.getElementById('rcDontShow').classList.remove('checked');
+    rcBackdrop.classList.add('show');
+  }
+  function closeReverseConfirm() {
+    rcBackdrop.classList.remove('show');
+    rcPendingProceed = null;
+  }
+  document.querySelector('#rcBackdrop .oc-dontshow').addEventListener('click', () => {
+    document.getElementById('rcDontShow').classList.toggle('checked');
+  });
+  document.getElementById('rcConfirm').addEventListener('click', () => {
+    if (document.getElementById('rcDontShow').classList.contains('checked')) setReverseConfirmEnabled(false);
+    const proceed = rcPendingProceed;
+    closeReverseConfirm();
+    if (proceed) proceed();
+  });
+  document.getElementById('rcCancel').addEventListener('click', closeReverseConfirm);
+  document.getElementById('rcClose').addEventListener('click', closeReverseConfirm);
+  rcBackdrop.addEventListener('click', (e) => { if (e.target === rcBackdrop) closeReverseConfirm(); });
+
   /* clicking the BUY/SELL entry chip places a pending chart order — blocked while TP/SL sit on the wrong side of entry */
   function placeOrder() {
     if (!order || !order.pendingConfirm || !orderTpSlValid()) return;
@@ -3208,11 +3252,13 @@
       bar.querySelector('#reverseOrderBtn').addEventListener('click', (e) => {
         e.stopPropagation();
 
-        if (order.filled) {
-          reverseFilledPosition();
-        } else {
-          flipWorkingOrderSide();
-        }
+        requestReverseConfirmation(order.filled, () => {
+          if (order.filled) {
+            reverseFilledPosition();
+          } else {
+            flipWorkingOrderSide();
+          }
+        });
       });
 
       const pctCloseBtn = bar.querySelector('#pctCloseBtn');
@@ -3784,6 +3830,14 @@
     csConfirmMarketOrdersRow.classList.toggle('active', orderConfirmEnabled());
     csConfirmMarketOrdersRow.querySelector('.ui-toggle').addEventListener('click', () => {
       setOrderConfirmEnabled(csConfirmMarketOrdersRow.classList.contains('active'));
+    });
+  }
+  /* "Confirm Flip / Reverse" toggle persists separately, since it gates the Flip/Reverse Confirmation modal */
+  const csConfirmReverseRow = document.getElementById('csConfirmReverse');
+  if (csConfirmReverseRow) {
+    csConfirmReverseRow.classList.toggle('active', reverseConfirmEnabled());
+    csConfirmReverseRow.querySelector('.ui-toggle').addEventListener('click', () => {
+      setReverseConfirmEnabled(csConfirmReverseRow.classList.contains('active'));
     });
   }
   document.querySelectorAll('#chartSettingsBackdrop .cs-radio-group').forEach(group => {
