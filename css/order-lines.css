@@ -762,6 +762,13 @@
   color: var(--intel);
 }
 
+/* The trailing stop-loss badge is purple so it reads distinctly from the trailing take-profit
+   badge (which stays --intel). Scoped to .sl-badge so only the SL trailing badge is recolored. */
+.ol-badge.sl-badge.trail {
+  background: var(--purple-dim);
+  color: var(--purple);
+}
+
 .ol-badge.atr {
   background: var(--accent-dim);
   color: var(--accent);
