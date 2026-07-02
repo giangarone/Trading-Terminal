@@ -534,12 +534,6 @@
     const lbl = QT_TAB_LABELS[tabName] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market';
     qtBuyBtn.querySelector('.bs-lbl').textContent = 'Buy ' + lbl;
     qtSellBtn.querySelector('.bs-lbl').textContent = 'Sell ' + lbl;
-    const isLimit = panelName === 'limit';
-    const tpslToggleEl = document.getElementById('qtTpslToggle');
-    const tpslBlockEl = document.getElementById('qtTpslBlock');
-    const tpslCheckboxEl = document.getElementById('qtTpslCheckbox');
-    tpslToggleEl.style.display = isLimit ? '' : 'none';
-    tpslBlockEl.style.display = (isLimit && tpslCheckboxEl.classList.contains('checked')) ? 'block' : 'none';
   }
   qtOrderTabs.querySelectorAll('.qt-tab:not(.qt-tab-dropdown)').forEach(tab => {
     tab.addEventListener('click', () => qtSetActiveTab(tab.dataset.tab));
@@ -620,28 +614,13 @@
     });
   });
 
-  /* ---------- Limit tab: TP/SL toggle ---------- */
-  const qtTpslToggle = document.getElementById('qtTpslToggle');
-  const qtTpslCheckbox = document.getElementById('qtTpslCheckbox');
-  const qtTpslBlock = document.getElementById('qtTpslBlock');
-  qtTpslToggle.addEventListener('click', () => {
-    const enabled = qtTpslCheckbox.classList.toggle('checked');
-    qtTpslBlock.style.display = enabled ? 'block' : 'none';
-  });
-  /* Leverage toggle — same reveal behavior as TP/SL; the value defaults to 10× even while collapsed */
+  /* Leverage toggle — reveal behavior; the value defaults to 10× even while collapsed */
   const qtLeverageToggle = document.getElementById('qtLeverageToggle');
   const qtLeverageCheckbox = document.getElementById('qtLeverageCheckbox');
   const qtLeverageBlock = document.getElementById('qtLeverageBlock');
   qtLeverageToggle.addEventListener('click', () => {
     const enabled = qtLeverageCheckbox.classList.toggle('checked');
     qtLeverageBlock.style.display = enabled ? 'block' : 'none';
-  });
-  document.querySelectorAll('#qtTpslBlock .tpsl-offset-unit').forEach(unit => {
-    unit.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isPct = unit.textContent.trim().startsWith('%');
-      unit.innerHTML = (isPct ? 'pts' : '%') + '<span class="material-symbols-outlined">expand_more</span>';
-    });
   });
 
   function qtPlaceOrder(side, price) {
