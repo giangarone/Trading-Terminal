@@ -4,8 +4,7 @@ An HTML/CSS/JS trading terminal UI designed to simulate a real trading platform,
 
 ## Terminology
 
-- **"Quick trades"** = trades placed via the right panel (Quick Trade panel).
-- **"Chart trades"** = trades placed via the chart right-click menu.
+- Trades can be placed two ways — via the right panel (Quick Trade panel) or via the chart right-click menu — but both are the same kind of trade and share one set of defaults, configured in the **Trade Defaults** settings pane (`data-cs-pane="trademgmt"`). There is no separate "quick trade" vs "chart trade" configuration.
 
 ## Design mandate
 

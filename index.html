@@ -288,10 +288,8 @@
 
             <div class="cs-nav-group">
               <div class="cs-nav-label">Trading</div>
-              <button class="cs-nav-item" data-cs-tab="orderdefaults"><span
-                  class="material-symbols-outlined">receipt_long</span>Quick Trades</button>
               <button class="cs-nav-item" data-cs-tab="trademgmt"><span
-                  class="material-symbols-outlined">show_chart</span>Chart Trades</button>
+                  class="material-symbols-outlined">show_chart</span>Trade Defaults</button>
               <button class="cs-nav-item" data-cs-tab="risk"><span class="material-symbols-outlined">balance</span>Risk
                 & Money Management</button>
             </div>
@@ -1023,8 +1021,9 @@
 
             <div class="cs-pane active" data-cs-pane="trademgmt">
               <div class="cs-pane-head">
-                <h2>Chart Trades</h2>
-                <p>Configure default order type, sizing, TP/SL, and behavior for chart-placed trades.</p>
+                <h2>Trade Defaults</h2>
+                <p>Default sizing, order type, TP/SL, and management for every trade — no matter where you place it
+                  from.</p>
               </div>
 
               <div class="cs-grid">
@@ -1408,279 +1407,6 @@
               </div>
             </div>
 
-            <div class="cs-pane" data-cs-pane="orderdefaults">
-              <div class="cs-pane-head">
-                <h2>Quick Trades</h2>
-                <p>Configure default sizing, TP/SL, and order behavior for the quick trade panel.</p>
-              </div>
-
-              <div class="cs-grid">
-                <div class="cs-col">
-
-                  <div class="cs-card">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Leverage &amp; Margin</span>
-                    </div>
-                    <div class="cs-fields-row">
-                      <div class="cs-field">
-                        <label>Default Leverage</label>
-                        <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="qtsLeverage" value="10" data-step="1">
-                          <span class="cs-stepper-unit">×</span>
-                          <div class="price-stepper-arrows">
-                            <button type="button" class="ps-up" data-target="qtsLeverage"><span
-                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" class="ps-down" data-target="qtsLeverage"><span
-                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="cs-field">
-                        <label>Margin Mode (Crypto)</label>
-                        <div class="cs-segmented" id="qtsCrossIsolatedGroup" style="margin-bottom:0;">
-                          <button type="button" class="cs-seg-btn active" data-mode="cross">Cross</button>
-                          <button type="button" class="cs-seg-btn" data-mode="isolated">Isolated</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="cs-card">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Default TP/SL Behavior</span>
-                    </div>
-                    <div class="cs-field" style="margin-bottom:0;">
-                      <label>TP/SL Display Mode</label>
-                      <div class="cs-segmented" id="qtsDisplayModeGroup" style="margin-bottom:0;">
-                        <button type="button" class="cs-seg-btn active" data-mode="condensed">Condensed</button>
-                        <button type="button" class="cs-seg-btn" data-mode="expanded">Expanded</button>
-                      </div>
-                    </div>
-                    <div class="cs-helper">In Expanded mode, take profits and a stop loss are added automatically
-                      when you place an entry, using the targets below. In Condensed mode, you add them manually.
-                    </div>
-                  </div>
-
-                  <div class="cs-card cs-card--single-col">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Move SL To Breakeven</span>
-                    </div>
-                    <div class="cs-fields-row">
-                      <div class="cs-field">
-                        <label>Trigger</label>
-                        <div class="cs-radio-group" id="qtsBeTriggerToggle">
-                          <div class="cs-radio-row active" data-unit="tp1">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">TP1</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="tp2">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">TP2</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="tp3">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">TP3</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="customR">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">Custom R Multiple</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="pct">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">% to Target</span></span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="cs-field">
-                        <label>Breakeven Offset</label>
-                        <div class="cs-radio-group" id="qtsBeOffsetUnitToggle">
-                          <div class="cs-radio-row" data-unit="ticks">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">Ticks</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="points">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">Points</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="percent">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">%</span></span>
-                          </div>
-                          <div class="cs-radio-row active" data-unit="fee">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">Fee Amount</span></span>
-                          </div>
-                        </div>
-                        <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="qtsBeOffsetValue" readonly value="1">
-                          <div class="price-stepper-arrows">
-                            <button type="button" id="qtsBeOffsetInc"><span
-                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" id="qtsBeOffsetDec"><span
-                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="cs-helper">Offset is added to entry price when moving SL to breakeven.</div>
-                  </div>
-
-                </div>
-                <div class="cs-col">
-
-                  <div class="cs-card">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Order Behavior</span>
-                    </div>
-                    <div class="cs-fields-row">
-                      <div class="cs-field" style="grid-column:1 / -1;">
-                        <label>Time in Force</label>
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="qtsTimeInForce"><span
-                            class="cs-select-label">GTC — Good Till Canceled</span><span
-                            class="material-symbols-outlined">expand_more</span></div><select id="qtsTimeInForce"
-                          style="display:none;">
-                          <option value="gtc" selected>GTC — Good Till Canceled</option>
-                          <option value="day">Day</option>
-                          <option value="ioc">IOC — Immediate or Cancel</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="cs-switch-row">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Reduce Only</span>
-                        <span class="cs-switch-desc">Orders can only reduce an existing position, never open a new
-                          one.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Reduce Only"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-switch-row">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Post Only</span>
-                        <span class="cs-switch-desc">Limit orders are placed as maker orders only — rejected if they'd
-                          fill immediately.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Post Only"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                  </div>
-
-                  <div class="cs-card cs-card--single-col">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">ATR Stop</span>
-                    </div>
-                    <div class="cs-fields-row">
-                      <div class="cs-field">
-                        <label>ATR Multiplier</label>
-                        <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="qtsAtrMultiplier" readonly value="2.0">
-                          <div class="price-stepper-arrows">
-                            <button type="button" id="qtsAtrMultiplierInc"><span
-                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" id="qtsAtrMultiplierDec"><span
-                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="cs-card cs-card--single-col">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Trailing Take Profit</span>
-                    </div>
-                    <div class="cs-fields-row">
-                      <div class="cs-field">
-                        <label>Offset</label>
-                        <div class="cs-radio-group" id="qtsTtpDistanceUnitToggle">
-                          <div class="cs-radio-row active" data-unit="percent">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">%</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="ticks">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">Ticks</span></span>
-                          </div>
-                        </div>
-                        <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="qtsTtpDistanceValue" readonly value="0.5">
-                          <div class="price-stepper-arrows">
-                            <button type="button" id="qtsTtpDistanceInc"><span
-                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" id="qtsTtpDistanceDec"><span
-                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="cs-helper">When activated, the trailing TP will manage the remaining position until
-                      exit.</div>
-                  </div>
-
-                  <div class="cs-card cs-card--single-col">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Trailing Stop</span>
-                    </div>
-                    <div class="cs-fields-row">
-                      <div class="cs-field" id="qtsTsDistanceWrap">
-                        <label>Distance</label>
-                        <div class="cs-radio-group" id="qtsTsDistanceUnitToggle">
-                          <div class="cs-radio-row active" data-unit="percent">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">%</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="ticks">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">Ticks</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="atr">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">ATR</span></span>
-                          </div>
-                        </div>
-                        <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="qtsTsDistanceValue" readonly value="1.0">
-                          <div class="price-stepper-arrows">
-                            <button type="button" id="qtsTsDistanceInc"><span
-                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" id="qtsTsDistanceDec"><span
-                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="cs-fields-row" id="qtsTsStartWrap">
-                      <div class="cs-field">
-                        <label>Start Trailing</label>
-                        <div class="cs-radio-group" id="qtsTsStartToggle">
-                          <div class="cs-radio-row active" data-unit="immediate">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">Immediately</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="tp1">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">After TP1 Hit</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="tp2">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">After TP2 Hit</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="tp3">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">After TP3 Hit</span></span>
-                          </div>
-                          <div class="cs-radio-row" data-unit="customR">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text"><span class="cs-radio-title">Custom R Multiple</span></span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </div>
             <div class="cs-pane" data-cs-pane="risk">
               <div class="cs-pane-head">
                 <h2>Risk & Money Management</h2>
@@ -5746,7 +5472,7 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=136"></script>
+  <script src="js/app.js?v=138"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=12"></script>
   <script src="js/market-scanner.js?v=9"></script>

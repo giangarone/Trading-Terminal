@@ -3562,8 +3562,7 @@
   const TEMPLATE_SAVE_OPTIONS = [
     { key: 'symbols', label: 'Symbols' },
     { key: 'timeframe', label: 'Timeframe' },
-    { key: 'chartTrade', label: 'Chart trade execution settings' },
-    { key: 'quickTrade', label: 'Quick trade execution settings' },
+    { key: 'tradeDefaults', label: 'Trade defaults' },
     { key: 'exchanges', label: 'Active exchanges' },
     { key: 'drawings', label: 'Chart drawings' },
     { key: 'news', label: 'News layout settings' },
@@ -3910,8 +3909,6 @@
   }
   bindSimpleSegmented('csTimeFormatGroup');
   bindSimpleSegmented('csScalePositionGroup');
-  bindSimpleSegmented('qtsCrossIsolatedGroup');
-  bindSimpleSegmented('qtsDisplayModeGroup');
   bindSimpleSegmented('qtDisplayModeGroup');
   bindSimpleSegmented('ctCrossIsolatedGroup');
   bindSimpleSegmented('ctDisplayModeGroup');
