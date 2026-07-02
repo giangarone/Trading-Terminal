@@ -1148,12 +1148,7 @@
       window.closePositionPct('ETHUSD', tp.pct);
       showToast(toastMsg, 'check_circle');
       if (order.sl && order.sl.beTpId === tp.id && !order.sl.beActive) {
-        const beCfg = getEffectiveBeConfig();
-        const offsetPrice = breakevenOffsetPrice(beCfg);
-        order.sl.price = roundTick(order.entry + dir * offsetPrice);
-        order.sl.beActive = true;
-        syncQtyFromRisk();
-        showToast('Stop loss moved to breakeven', 'vertical_align_center');
+        moveSlToBreakevenLevel(currentPrice);
       }
     });
     order.tpsHitCount = (order.tpsHitCount || 0) + hitTps.length;
@@ -1414,6 +1409,22 @@
       }
     });
   }
+  /* Move the SL to its breakeven level (entry ± the fee/offset) once a trigger arms it. The offset
+     sits on the profit side so the stop covers round-trip fees. Crucially, a stop can never be placed
+     beyond the current market price — that would fill instantly and close the whole position. When the
+     offset would overshoot the market (e.g. a tight target with a large fee offset), clamp the stop to
+     one tick inside the current price so breakeven still reduces risk without triggering an exit. */
+  function moveSlToBreakevenLevel(currentPrice) {
+    if (!order || !order.sl) return;
+    const dir = order.side === 'buy' ? 1 : -1;
+    const target = order.entry + dir * breakevenOffsetPrice(getEffectiveBeConfig());
+    const marketCap = currentPrice - dir * TICK; // furthest the stop may sit and stay a valid protective stop
+    const clamped = dir === 1 ? Math.min(target, marketCap) : Math.max(target, marketCap);
+    order.sl.price = roundTick(clamped);
+    order.sl.beActive = true;
+    syncQtyFromRisk();
+    showToast('Stop loss moved to breakeven', 'vertical_align_center');
+  }
   /* Price-based breakeven: the '% to Target' trigger fires once price travels the chosen fraction of
      the way from entry to TP1. The TP-hit triggers (tp1/tp2/tp3/customR) fire from checkTpFills instead. */
   function applyBreakeven(currentPrice) {
@@ -1421,10 +1432,7 @@
     const cfg = getEffectiveBeConfig();
     if (cfg.trigger !== 'pct') return;
     if (!meetsTriggerCondition('pct', cfg.customR, currentPrice)) return;
-    order.sl.price = roundTick(order.entry + (order.side === 'buy' ? 1 : -1) * breakevenOffsetPrice(cfg));
-    order.sl.beActive = true;
-    syncQtyFromRisk();
-    showToast('Stop loss moved to breakeven', 'vertical_align_center');
+    moveSlToBreakevenLevel(currentPrice);
   }
   /* ---------- auto-balance TP allocations so they always sum to exactly 100% ---------- */
   function rebalanceTpAllocations(newTpId) {
