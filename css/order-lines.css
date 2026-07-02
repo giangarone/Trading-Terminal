@@ -44,6 +44,7 @@
 .ol-line.tp,
 .ol-line.sl,
 .ol-line.offset,
+.ol-line.be-trigger,
 .ol-line.entry.draggable {
   pointer-events: auto;
   cursor: ns-resize;
@@ -52,6 +53,7 @@
 .ol-line.tp::before,
 .ol-line.sl::before,
 .ol-line.offset::before,
+.ol-line.be-trigger::before,
 .ol-line.entry.draggable::before {
   content: '';
   position: absolute;
@@ -85,6 +87,20 @@
 .ol-line.offset {
   border-color: var(--intel-border);
   opacity: .5;
+}
+
+/* Breakeven '% to Target' ghost trigger line — sits between entry and TP1, in the breakeven color */
+.ol-line.be-trigger {
+  border-color: var(--long-border);
+  opacity: .5;
+}
+
+.ol-offset-label.be-trigger {
+  color: var(--long);
+  cursor: grab;
+}
+.ol-offset-label.be-trigger:active {
+  cursor: grabbing;
 }
 
 /* Tag on the left edge of the trailing TP's offset line. Only one TP can ever trail at a
@@ -659,8 +675,8 @@
 }
 
 .ol-gear {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border-radius: 4px;
   display: flex;
   align-items: center;

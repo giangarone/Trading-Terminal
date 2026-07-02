@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="css/right-panel.css?v=3">
   <link rel="stylesheet" href="css/quick-trade.css?v=6">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=27">
+  <link rel="stylesheet" href="css/order-lines.css?v=30">
   <link rel="stylesheet" href="css/market-scanner.css?v=25">
   <link rel="stylesheet" href="css/indicators.css?v=9">
   <link rel="stylesheet" href="css/chart-settings.css?v=26">
@@ -1117,6 +1117,7 @@
                           <option value="tp2">After TP2 Hit</option>
                           <option value="tp3">After TP3 Hit</option>
                           <option value="customR">Custom R Multiple</option>
+                          <option value="pct">% to Target</option>
                         </select>
                       </div>
                       <div class="cs-field" id="csBeCustomRWrap" style="display:none;">
@@ -1127,6 +1128,18 @@
                             <button type="button" class="ps-up" data-target="csBeCustomRValue"><span
                                 class="material-symbols-outlined">keyboard_arrow_up</span></button>
                             <button type="button" class="ps-down" data-target="csBeCustomRValue"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="cs-field" id="csBePctWrap" style="display:none;">
+                        <label>% to Target</label>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="csBePctValue" value="50" data-step="5">
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="csBePctValue"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="csBePctValue"><span
                                 class="material-symbols-outlined">keyboard_arrow_down</span></button>
                           </div>
                         </div>
@@ -5136,35 +5149,81 @@
     <div class="ol-mode-settings" id="slBeSettings">
       <div class="cs-field">
         <label>Trigger</label>
-        <div class="select-input pop-trigger cs-dd-trigger" data-target="slBeOvTrigger"><span
-            class="cs-select-label">After TP1 Hit</span><span class="material-symbols-outlined">expand_more</span>
-        </div><select id="slBeOvTrigger" style="display:none;">
-          <option value="tp1">After TP1 Hit</option>
-          <option value="tp2">After TP2 Hit</option>
-          <option value="tp3">After TP3 Hit</option>
-          <option value="customR">Custom R Multiple</option>
-        </select>
+        <div class="cs-radio-group" id="slBeOvTriggerToggle">
+          <div class="cs-radio-row" data-unit="tp1">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">After TP1 Hit</span></span>
+          </div>
+          <div class="cs-radio-row" data-unit="tp2">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">After TP2 Hit</span></span>
+          </div>
+          <div class="cs-radio-row" data-unit="tp3">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">After TP3 Hit</span></span>
+          </div>
+          <div class="cs-radio-row" data-unit="customR">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">Custom R Multiple</span></span>
+          </div>
+          <div class="cs-radio-row" data-unit="pct">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">% to Target</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="cs-field" id="slBeOvCustomRWrap" style="display:none;">
+        <label>Custom R Multiple</label>
+        <div class="price-stepper cs-price-stepper">
+          <input type="text" id="slBeOvCustomRValue" readonly value="1">
+          <div class="price-stepper-arrows">
+            <button type="button" id="slBeOvCustomRInc"><span
+                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+            <button type="button" id="slBeOvCustomRDec"><span
+                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="cs-field" id="slBeOvPctWrap" style="display:none;">
+        <label>% to Target</label>
+        <div class="price-stepper cs-price-stepper">
+          <input type="text" id="slBeOvPctValue" readonly value="50">
+          <div class="price-stepper-arrows">
+            <button type="button" id="slBeOvPctInc"><span
+                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+            <button type="button" id="slBeOvPctDec"><span
+                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+          </div>
+        </div>
       </div>
       <div class="cs-field">
         <label>Breakeven Offset</label>
-        <div class="cs-unit-pair">
-          <div class="price-stepper cs-price-stepper">
-            <input type="text" id="slBeOvOffsetValue" readonly value="1">
-            <div class="price-stepper-arrows">
-              <button type="button" id="slBeOvOffsetInc"><span
-                  class="material-symbols-outlined">keyboard_arrow_up</span></button>
-              <button type="button" id="slBeOvOffsetDec"><span
-                  class="material-symbols-outlined">keyboard_arrow_down</span></button>
-            </div>
+        <div class="cs-radio-group" id="slBeOvOffsetUnitToggle">
+          <div class="cs-radio-row" data-unit="ticks">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">Ticks</span></span>
           </div>
-          <div class="select-input pop-trigger cs-dd-trigger" data-target="slBeOvOffsetUnit"><span
-              class="cs-select-label">Fee Amount</span><span class="material-symbols-outlined">expand_more</span></div>
-          <select id="slBeOvOffsetUnit" style="display:none;">
-            <option value="ticks">Ticks</option>
-            <option value="points">Points</option>
-            <option value="percent">%</option>
-            <option value="fee" selected>Fee Amount</option>
-          </select>
+          <div class="cs-radio-row" data-unit="points">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">Points</span></span>
+          </div>
+          <div class="cs-radio-row" data-unit="percent">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">%</span></span>
+          </div>
+          <div class="cs-radio-row" data-unit="fee">
+            <span class="cs-radio-dot"></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">Fee</span></span>
+          </div>
+        </div>
+        <div class="price-stepper cs-price-stepper">
+          <input type="text" id="slBeOvOffsetValue" readonly value="1">
+          <div class="price-stepper-arrows">
+            <button type="button" id="slBeOvOffsetInc"><span
+                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+            <button type="button" id="slBeOvOffsetDec"><span
+                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+          </div>
         </div>
       </div>
     </div>
@@ -5450,7 +5509,7 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=120"></script>
+  <script src="js/app.js?v=123"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=12"></script>
   <script src="js/market-scanner.js?v=9"></script>

@@ -40,7 +40,7 @@
       { pct: 25, r: 4.0, type: 'limit' }
     ],
     defaultStopLoss: { r: 1.0, type: 'stopMarket' },
-    moveSlToBreakeven: { trigger: 'tp1', customR: 1, offsetValue: 1, offsetUnit: 'fee' },
+    moveSlToBreakeven: { trigger: 'tp1', customR: 1, pctToTp: 50, offsetValue: 1, offsetUnit: 'fee' },
     trailingStop: { distanceValue: 1.0, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
     atrStop: { length: 14, multiplier: 2.0, timeframe: 'current', updateFreq: 'newbar', dynamic: true },
     trailingTp: { activation: 'tp1', activationCustomR: 1, method: 'fixed', distanceValue: 20, distanceUnit: 'ticks' },
@@ -1038,7 +1038,7 @@
   function removeTp(id) {
     if (!order) return;
     order.tps = order.tps.filter(t => t.id !== id);
-    if (order.sl && !order.sl.beActive && (order.tps.length < 2 || order.sl.beTpId === id)) {
+    if (order.sl && !order.sl.beActive && (order.tps.length < 1 || order.sl.beTpId === id)) {
       order.sl.beTpId = null;
     }
     render();
@@ -1133,6 +1133,12 @@
       const r = currentRMultiple(currentPrice);
       return r !== null && r >= customRValue;
     }
+    if (triggerKey === 'pct') {
+      const trigPrice = breakevenTriggerPrice(getEffectiveBeConfig());
+      if (trigPrice === null) return false;
+      const dir = order.side === 'buy' ? 1 : -1;
+      return dir * (currentPrice - trigPrice) >= 0;
+    }
     return false;
   }
   /* effective config = this SL's own override if set, otherwise the global Chart Settings default */
@@ -1148,6 +1154,26 @@
       return order.entry * (entryFeeRate + exitFeeRate) * beCfg.offsetValue;
     }
     return beCfg.offsetValue * TICK; // ticks
+  }
+  /* the reference target for the '% to Target' breakeven trigger — TP1 (the first take-profit).
+     Consistent with how the 'tp1' trigger resolves in resolveBreakevenTpId(). */
+  function breakevenRefTp() { return (order && order.tps.length) ? order.tps[0] : null; }
+  /* price at which a '% to Target' breakeven trigger fires: a fraction of the way from entry to TP1.
+     Direction-agnostic — TP1 always sits on the profit side of entry for both long and short. */
+  function breakevenTriggerPrice(beCfg) {
+    const refTp = breakevenRefTp();
+    if (!refTp) return null;
+    const pct = (beCfg.pctToTp != null ? beCfg.pctToTp : 50) / 100;
+    return roundTick(order.entry + pct * (refTp.price - order.entry));
+  }
+  /* short label for what arms breakeven — shown on the SL badge as "<label> → BE" so the
+     trigger source is visible at a glance instead of a bare "BE". */
+  function breakevenTriggerLabel(beCfg) {
+    if (beCfg.trigger === 'tp1') return 'TP1';
+    if (beCfg.trigger === 'tp2') return 'TP2';
+    if (beCfg.trigger === 'tp3') return 'TP3';
+    if (beCfg.trigger === 'customR') return (+beCfg.customR).toFixed(1) + 'R';
+    return Math.round(beCfg.pctToTp) + '%'; // pct
   }
   function getEffectiveTrailConfig() { return (order && order.sl && order.sl.trailOverride) || chartSettings.trailingStop; }
   function getEffectiveAtrConfig() { return chartSettings.atrStop; }
@@ -1250,7 +1276,11 @@
      A plain (non-special-mode) SL has no badge at all — null means "don't show one". */
   function slBadgeInfo() {
     if (!order || !order.sl || !order.sl.enabled) return null;
-    if (order.sl.mode === 'breakeven') return { text: order.sl.beActive ? 'SL → BE' : 'BE', cls: 'be' };
+    if (order.sl.mode === 'breakeven') {
+      if (order.sl.beActive) return { text: 'SL → BE', cls: 'be' };
+      const beCfg = getEffectiveBeConfig();
+      return { text: breakevenTriggerLabel(beCfg) + ' → BE', cls: 'be' };
+    }
     if (order.sl.mode === 'atr') return { text: 'ATR ' + slAtrMult().toFixed(2) + 'x', cls: 'atr' };
     return { text: 'TRL ' + slDistanceLabel(ensureSlConfig()), cls: 'trail' };
   }
@@ -1336,6 +1366,18 @@
         if (dir * (candidate - tp.exitPrice) > 0) { tp.exitPrice = candidate; tp.autoTrailing = true; }
       }
     });
+  }
+  /* Price-based breakeven: the '% to Target' trigger fires once price travels the chosen fraction of
+     the way from entry to TP1. The TP-hit triggers (tp1/tp2/tp3/customR) fire from checkTpFills instead. */
+  function applyBreakeven(currentPrice) {
+    if (!order || !order.filled || !slBeActiveMode() || order.sl.beActive) return;
+    const cfg = getEffectiveBeConfig();
+    if (cfg.trigger !== 'pct') return;
+    if (!meetsTriggerCondition('pct', cfg.customR, currentPrice)) return;
+    order.sl.price = roundTick(order.entry + (order.side === 'buy' ? 1 : -1) * breakevenOffsetPrice(cfg));
+    order.sl.beActive = true;
+    syncQtyFromRisk();
+    showToast('Stop loss moved to breakeven', 'vertical_align_center');
   }
   /* ---------- auto-balance TP allocations so they always sum to exactly 100% ---------- */
   function rebalanceTpAllocations(newTpId) {
@@ -2537,6 +2579,7 @@
       simTickCounter++;
       applyTrailingStop(last);
       applyTrailingTp(last);
+      applyBreakeven(last);
       if (order && order.filled && !isDraggingOrderLine) render();
 
       let alertsChanged = false;
@@ -2843,7 +2886,7 @@
         let modeBtns = '';
         SL_MODE_BUTTONS.forEach(m => {
           if (m.mode === activeMode) return;
-          const locked = m.mode === 'breakeven' && order.tps.length < 2;
+          const locked = m.mode === 'breakeven' && order.tps.length < 1;
           modeBtns +=
             '<button type="button" class="ol-sl-mode-btn' + (locked ? ' disabled' : '') +
             '" data-mode="' + m.mode + '">' + m.label + '</button>';
@@ -2931,6 +2974,51 @@
           e.stopPropagation();
           removeSl();
         });
+
+        // ---- Breakeven '% to Target' ghost trigger line (draggable, shown pre-fire only) ----
+        // Sits a fraction of the way from entry to TP1; crossing it arms breakeven (applyBreakeven).
+        const beCfg = getEffectiveBeConfig();
+        if (slBeActiveMode() && !order.sl.beActive && beCfg.trigger === 'pct' && breakevenRefTp()) {
+          const refTp = breakevenRefTp();
+          const trigY = clamp(priceToY(breakevenTriggerPrice(beCfg), H), 10, H - 10);
+          const beLine = document.createElement('div');
+          beLine.className = 'ol-line be-trigger';
+          beLine.style.top = trigY + 'px';
+          layer.appendChild(beLine);
+
+          const beLabel = document.createElement('span');
+          beLabel.className = 'ol-offset-label be-trigger';
+          beLabel.innerHTML = '<span class="ol-offset-label-text">BE TRIGGER · ' + Math.round(beCfg.pctToTp) + '%</span>';
+          beLabel.style.top = trigY + 'px';
+          layer.appendChild(beLabel);
+
+          function repositionBeLine(h) {
+            const ov = ensureBeOverride();
+            const yy = clamp(priceToY(breakevenTriggerPrice(ov), h), 10, h - 10) + 'px';
+            beLine.style.top = yy;
+            beLabel.style.top = yy;
+            const txt = beLabel.querySelector('.ol-offset-label-text');
+            if (txt) txt.textContent = 'BE TRIGGER · ' + Math.round(ov.pctToTp) + '%';
+          }
+          function onDragBe(cy, h) {
+            const ov = ensureBeOverride();
+            const p = roundTick(yToPrice(cy, h));
+            const span = refTp.price - order.entry;
+            // fraction of the entry→TP1 distance; clamp so the trigger stays strictly between them
+            let pct = span ? (p - order.entry) / span * 100 : ov.pctToTp;
+            ov.pctToTp = Math.round(Math.max(1, Math.min(99, pct)));
+            repositionBeLine(h);
+            syncBePctField();
+            refreshSlBadgeOnChart();
+            drawPriceChart();
+          }
+          function onDropBe(cy, h) { onDragBe(cy, h); render(); }
+          // Both the thin line and the visible label pill are draggable; a click (no drag) on the
+          // label opens the SL settings, so the pill is a proper grab target and adjusts % live.
+          const openBeMenu = () => openSlGearMenu(beLabel.getBoundingClientRect(), beLabel);
+          makeDraggable(beLine, onDragBe, onDropBe, undefined, undefined, 'be');
+          makeDraggable(beLabel, onDragBe, onDropBe, undefined, openBeMenu, 'be');
+        }
       }
     }
 
@@ -3591,6 +3679,7 @@
   });
   function csUpdateConditionalFields() {
     document.getElementById('csBeCustomRWrap').style.display = document.getElementById('csBeTrigger').value === 'customR' ? '' : 'none';
+    document.getElementById('csBePctWrap').style.display = document.getElementById('csBeTrigger').value === 'pct' ? '' : 'none';
     document.getElementById('csTsStartCustomRWrap').style.display = document.getElementById('csTsStart').value === 'customR' ? '' : 'none';
     document.getElementById('csTtpDistanceWrap').style.display = document.getElementById('csTtpMethod').value === 'atr' ? 'none' : '';
     document.getElementById('csTtpActivationCustomRWrap').style.display = document.getElementById('csTtpActivation').value === 'customR' ? '' : 'none';
@@ -3958,6 +4047,7 @@
     const s = chartSettings;
     document.getElementById('csBeTrigger').value = s.moveSlToBreakeven.trigger;
     document.getElementById('csBeCustomRValue').value = s.moveSlToBreakeven.customR;
+    document.getElementById('csBePctValue').value = s.moveSlToBreakeven.pctToTp;
     document.getElementById('csBeOffsetValue').value = s.moveSlToBreakeven.offsetValue;
     document.getElementById('csBeOffsetUnit').value = s.moveSlToBreakeven.offsetUnit;
 
@@ -4018,6 +4108,7 @@
       moveSlToBreakeven: {
         trigger: document.getElementById('csBeTrigger').value,
         customR: parseFloat(document.getElementById('csBeCustomRValue').value) || 1,
+        pctToTp: parseFloat(document.getElementById('csBePctValue').value) || 50,
         offsetValue: parseFloat(document.getElementById('csBeOffsetValue').value) || 0,
         offsetUnit: document.getElementById('csBeOffsetUnit').value,
       },
@@ -4743,16 +4834,28 @@
   const slBeToggle = document.getElementById('slBeToggle');
   const slBeSub = document.getElementById('slBeSub');
   const slBeSubDefaultText = slBeSub.textContent;
-  const slBeSubLockedText = 'Needs at least 2 take profits';
+  const slBeSubLockedText = 'Needs at least 1 take profit';
   const slDistanceUnitToggle = document.getElementById('slDistanceUnitToggle');
   const slStartToggle = document.getElementById('slStartToggle');
-  const slBeOvTrigger = document.getElementById('slBeOvTrigger');
+  const slBeOvTriggerToggle = document.getElementById('slBeOvTriggerToggle');
+  const slBeOvOffsetUnitToggle = document.getElementById('slBeOvOffsetUnitToggle');
   const slBeOvOffsetValue = document.getElementById('slBeOvOffsetValue');
-  const slBeOvOffsetUnit = document.getElementById('slBeOvOffsetUnit');
+  /* show only the value field the selected breakeven trigger needs (Custom R / % to Target) */
+  function syncBeOvTriggerFields(trigger) {
+    document.getElementById('slBeOvCustomRWrap').style.display = trigger === 'customR' ? '' : 'none';
+    document.getElementById('slBeOvPctWrap').style.display = trigger === 'pct' ? '' : 'none';
+  }
+  /* keep the gear-menu % field in step with a ghost-line drag (only if the menu is open) */
+  function syncBePctField() {
+    const el = document.getElementById('slBeOvPctValue');
+    const ov = order && order.sl && order.sl.beOverride;
+    if (el && ov) el.value = Math.round(ov.pctToTp);
+  }
   /* resolves which TP arms breakeven, using the global default set in Chart Settings > Trade Management */
   function resolveBreakevenTpId() {
     if (!order || !order.tps.length) return null;
     const cfg = getEffectiveBeConfig();
+    if (cfg.trigger === 'pct') return null; // price-based trigger — armed by applyBreakeven, not a TP hit
     if (cfg.trigger === 'tp1') return order.tps[0].id;
     if (cfg.trigger === 'tp2') return (order.tps[1] || order.tps[order.tps.length - 1]).id;
     if (cfg.trigger === 'tp3') return (order.tps[2] || order.tps[order.tps.length - 1]).id;
@@ -4775,7 +4878,7 @@
     if (!order || !order.sl) return null;
     if (!order.sl.beOverride) {
       const base = chartSettings.moveSlToBreakeven;
-      order.sl.beOverride = { trigger: base.trigger, customR: base.customR, offsetValue: base.offsetValue, offsetUnit: base.offsetUnit };
+      order.sl.beOverride = { trigger: base.trigger, customR: base.customR, pctToTp: base.pctToTp, offsetValue: base.offsetValue, offsetUnit: base.offsetUnit };
     }
     return order.sl.beOverride;
   }
@@ -4788,14 +4891,17 @@
     slStartToggle.querySelectorAll('.cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === cfg.start));
     document.getElementById('slAtrMultiplier').value = slAtrMult().toFixed(2);
     const be = ensureBeOverride();
-    slBeOvTrigger.value = be.trigger;
+    slBeOvTriggerToggle.querySelectorAll('.cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === be.trigger));
+    slBeOvOffsetUnitToggle.querySelectorAll('.cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === be.offsetUnit));
     slBeOvOffsetValue.value = be.offsetValue;
-    slBeOvOffsetUnit.value = be.offsetUnit;
+    document.getElementById('slBeOvCustomRValue').value = be.customR;
+    document.getElementById('slBeOvPctValue').value = Math.round(be.pctToTp);
+    syncBeOvTriggerFields(be.trigger);
     refreshAllCsDropdownLabels(slGearMenu);
   }
   function renderSlGearMenu() {
     if (!order || !order.sl) return;
-    const noTps = order.tps.length < 2; // breakeven needs at least 2 TPs set
+    const noTps = order.tps.length < 1; // breakeven needs at least 1 TP set
     if (noTps && order.sl.mode === 'breakeven' && !order.sl.beActive) order.sl.beTpId = null;
     const mode = order.sl.mode, on = order.sl.enabled;
     slTrailRow.classList.toggle('selected', on && mode === 'trailing');
@@ -4827,7 +4933,11 @@
       placeAtrStop();
     } else if (order.sl.mode === 'breakeven') {
       order.sl.beActive = false;
-      order.sl.beTpId = resolveBreakevenTpId();
+      const ov = ensureBeOverride();
+      // Dynamic default: with a single TP, a TP-hit trigger is pointless (the TP closes the trade),
+      // so default to the price-based '% to Target' trigger. With 2+ TPs keep the configured trigger.
+      if (ov && order.tps.length < 2) ov.trigger = 'pct';
+      order.sl.beTpId = (ov && ov.trigger === 'pct') ? null : resolveBreakevenTpId();
     }
   }
   /* set the SL to a specific behavior ('fixed' = disabled/plain stop, otherwise enables that mode and places it) */
@@ -4852,7 +4962,7 @@
       renderSlGearMenu(); render();
       return;
     }
-    if (mode === 'breakeven' && order.tps.length < 2) { showToast('Breakeven needs at least 2 take profits', 'info'); return; }
+    if (mode === 'breakeven' && order.tps.length < 1) { showToast('Breakeven needs at least 1 take profit', 'info'); return; }
     applySlCycleMode(mode);
     renderSlGearMenu(); render();
   }
@@ -4885,15 +4995,28 @@
       populateSlSettings();
     });
   });
-  /* Breakeven trigger / offset unit */
-  [slBeOvTrigger, slBeOvOffsetUnit].forEach(el => el.addEventListener('change', (e) => {
-    e.stopPropagation();
-    const ov = ensureBeOverride();
-    if (!ov) return;
-    ov.trigger = slBeOvTrigger.value;
-    ov.offsetUnit = slBeOvOffsetUnit.value;
-    if (slBeActiveMode() && !order.sl.beActive) { order.sl.beTpId = resolveBreakevenTpId(); renderSlGearMenu(); }
-  }));
+  /* Breakeven trigger — radio group. Re-resolves the armed TP and toggles the on-chart ghost line. */
+  slBeOvTriggerToggle.querySelectorAll('.cs-radio-row').forEach(row => {
+    row.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const ov = ensureBeOverride();
+      if (!ov || row.dataset.unit === ov.trigger) return;
+      ov.trigger = row.dataset.unit;
+      if (slBeActiveMode() && !order.sl.beActive) order.sl.beTpId = (ov.trigger === 'pct') ? null : resolveBreakevenTpId();
+      renderSlGearMenu();
+      render(); // reflect the ghost line + badge on the chart
+    });
+  });
+  /* Breakeven offset unit — radio group */
+  slBeOvOffsetUnitToggle.querySelectorAll('.cs-radio-row').forEach(row => {
+    row.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const ov = ensureBeOverride();
+      if (!ov || row.dataset.unit === ov.offsetUnit) return;
+      ov.offsetUnit = row.dataset.unit;
+      populateSlSettings();
+    });
+  });
   /* Trailing distance value stepper (%, ticks, or ATR multiples) */
   {
     const input = document.getElementById('slDistanceValue');
@@ -4937,8 +5060,10 @@
     const inc = document.getElementById('slBeOvOffsetInc');
     const dec = document.getElementById('slBeOvOffsetDec');
     function params() {
-      if (slBeOvOffsetUnit.value === 'percent') return PERCENT_DISTANCE_STEP;
-      if (slBeOvOffsetUnit.value === 'fee') return FEE_MULTIPLIER_STEP;
+      const ov = ensureBeOverride();
+      const unit = ov ? ov.offsetUnit : 'fee';
+      if (unit === 'percent') return PERCENT_DISTANCE_STEP;
+      if (unit === 'fee') return FEE_MULTIPLIER_STEP;
       return { min: 0, max: 200, step: 1 };
     }
     /* Arrow clicks snap to the step grid; manual typing only clamps to min/max and allows up to 2 decimals */
@@ -4950,6 +5075,36 @@
     input.addEventListener('change', (e) => { e.stopPropagation(); input.value = clampManual(parseFloat(input.value) || 0); commit(); });
     dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampStep((parseFloat(input.value) || 0) - params().step); commit(); });
     inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampStep((parseFloat(input.value) || 0) + params().step); commit(); });
+  }
+  /* Breakeven Custom R Multiple stepper */
+  {
+    const input = document.getElementById('slBeOvCustomRValue');
+    const inc = document.getElementById('slBeOvCustomRInc');
+    const dec = document.getElementById('slBeOvCustomRDec');
+    function clampVal(v) { return Math.min(100, Math.max(0.1, +parseFloat(v).toFixed(1))); }
+    function commit() {
+      const ov = ensureBeOverride();
+      if (ov) ov.customR = parseFloat(input.value) || 1;
+      if (slBeActiveMode() && !order.sl.beActive) order.sl.beTpId = resolveBreakevenTpId();
+    }
+    input.removeAttribute('readonly');
+    input.addEventListener('click', (e) => e.stopPropagation());
+    input.addEventListener('change', (e) => { e.stopPropagation(); input.value = clampVal(input.value || '1'); commit(); });
+    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 1) - 0.1); commit(); });
+    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 1) + 0.1); commit(); });
+  }
+  /* Breakeven % to Target stepper — mirrors the draggable ghost trigger line */
+  {
+    const input = document.getElementById('slBeOvPctValue');
+    const inc = document.getElementById('slBeOvPctInc');
+    const dec = document.getElementById('slBeOvPctDec');
+    function clampVal(v) { return Math.min(99, Math.max(1, Math.round(parseFloat(v)))); }
+    function commit() { const ov = ensureBeOverride(); if (ov) ov.pctToTp = parseFloat(input.value) || 50; render(); }
+    input.removeAttribute('readonly');
+    input.addEventListener('click', (e) => e.stopPropagation());
+    input.addEventListener('change', (e) => { e.stopPropagation(); input.value = clampVal(input.value || '50'); commit(); });
+    dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 50) - 5); commit(); });
+    inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 50) + 5); commit(); });
   }
 
   /* ---------- size & mode dropdown ---------- */
