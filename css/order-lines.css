@@ -99,6 +99,7 @@
   color: var(--long);
   cursor: grab;
 }
+
 .ol-offset-label.be-trigger:active {
   cursor: grabbing;
 }
@@ -116,13 +117,12 @@
   font-size: 9px;
   font-weight: 600;
   letter-spacing: .03em;
-  border-radius: 4px;
   background: var(--bg-sunken);
   color: var(--intel);
   white-space: nowrap;
   pointer-events: auto;
   cursor: pointer;
-  padding: 6px 0;
+  padding: 4px 0;
 }
 
 .ol-line.ghost {
@@ -199,7 +199,7 @@
 
 .ol-entry-bar {
   position: absolute;
-  right: 320px;
+  right: 360px;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
