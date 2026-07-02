@@ -509,15 +509,11 @@
   flex-wrap: wrap;
 }
 
-/* Single-column cards (Move SL To Breakeven, Trailing Stop): stack fields and
-   radio options vertically instead of the default two-column grid. */
+/* Single-column cards (Move SL To Breakeven, Trailing Stop): stack the fields
+   in one column instead of the default two-column grid. The radio options
+   inside each group keep the shared horizontal flex-wrap layout. */
 .cs-card--single-col .cs-fields-row {
   grid-template-columns: 1fr;
-}
-
-.cs-card--single-col .cs-radio-group {
-  flex-direction: column;
-  gap: 12px;
 }
 
 .cs-radio-row {

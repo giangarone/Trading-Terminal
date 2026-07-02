@@ -42,8 +42,8 @@
     defaultStopLoss: { r: 1.0, type: 'stopMarket' },
     moveSlToBreakeven: { trigger: 'tp1', customR: 1, pctToTp: 50, offsetValue: 0, offsetUnit: 'fee' },
     trailingStop: { distanceValue: 1.0, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
-    atrStop: { length: 14, multiplier: 2.0, timeframe: 'current', updateFreq: 'newbar', dynamic: true },
-    trailingTp: { activation: 'tp1', activationCustomR: 1, method: 'fixed', distanceValue: 20, distanceUnit: 'ticks' },
+    atrStop: { multiplier: 2.0 },
+    trailingTp: { distanceValue: 0.5, distanceUnit: 'percent' },
     globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true, lockRR: false },
     positionDefaults: { orderType: 'limit' },
     news: {
@@ -70,6 +70,8 @@
         merged.moveSlToBreakeven = Object.assign({}, CS_DEFAULTS.moveSlToBreakeven, merged.moveSlToBreakeven);
         // 'Points' was removed as a trailing-distance unit — migrate any persisted value to %
         if (merged.trailingStop && merged.trailingStop.distanceUnit === 'points') merged.trailingStop.distanceUnit = 'percent';
+        // Trailing TP now mirrors the tp-trail-menu (only % / Ticks) — migrate any persisted 'points' to %
+        if (merged.trailingTp && merged.trailingTp.distanceUnit === 'points') merged.trailingTp.distanceUnit = 'percent';
         // Migrate old news type keys (breaking/marketMoving → news) and remove removed settings
         if (merged.news) {
           if (!merged.news.types) merged.news.types = {};
@@ -3788,12 +3790,7 @@
     document.getElementById('csBeCustomRWrap').style.display = beTrigger === 'customR' ? '' : 'none';
     document.getElementById('csBePctWrap').style.display = beTrigger === 'pct' ? '' : 'none';
     document.getElementById('csTsStartCustomRWrap').style.display = tsStart === 'customR' ? '' : 'none';
-    document.getElementById('csTtpDistanceWrap').style.display = document.getElementById('csTtpMethod').value === 'atr' ? 'none' : '';
-    document.getElementById('csTtpActivationCustomRWrap').style.display = document.getElementById('csTtpActivation').value === 'customR' ? '' : 'none';
   }
-  ['csTtpMethod', 'csTtpActivation'].forEach(id => {
-    document.getElementById(id).addEventListener('change', csUpdateConditionalFields);
-  });
   /* percentOverride/atrOverride let a field use a finer min/step/decimals when its unit dropdown is set to "%" or "ATR" —
      ticks/points distances are sensibly whole numbers, but percent and ATR-multiple distances need sub-1 decimals (e.g. 0.5%, 2.0x) */
   function bindCsStepper(prefix, min, max, step, percentOverride, atrOverride, feeOverride) {
@@ -3855,7 +3852,6 @@
     dec.addEventListener('click', (e) => { e.stopPropagation(); set(parseFloat(input.value || '0') - step); });
     inc.addEventListener('click', (e) => { e.stopPropagation(); set(parseFloat(input.value || '0') + step); });
   }
-  bindPlainStepper('csAtrLength', 1, 200, 1);
   bindPlainStepper('csAtrMultiplier', 0.01, 20, 0.1);
   document.querySelectorAll('#chartSettingsBackdrop .cs-checkbox-row').forEach(row => {
     row.addEventListener('click', (e) => {
@@ -4183,17 +4179,10 @@
     document.querySelectorAll('#csTsStartToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingStop.start));
     document.getElementById('csTsStartCustomRValue').value = s.trailingStop.startCustomR;
 
-    document.getElementById('csAtrLength').value = s.atrStop.length;
     document.getElementById('csAtrMultiplier').value = s.atrStop.multiplier;
-    document.getElementById('csAtrTimeframe').value = s.atrStop.timeframe;
-    document.getElementById('csAtrUpdateFreq').value = s.atrStop.updateFreq;
-    document.getElementById('csAtrDynamic').classList.toggle('checked', s.atrStop.dynamic);
 
-    document.getElementById('csTtpActivation').value = s.trailingTp.activation;
-    document.getElementById('csTtpActivationCustomRValue').value = s.trailingTp.activationCustomR;
-    document.getElementById('csTtpMethod').value = s.trailingTp.method;
     document.getElementById('csTtpDistanceValue').value = s.trailingTp.distanceValue;
-    document.getElementById('csTtpDistanceUnit').value = s.trailingTp.distanceUnit;
+    document.querySelectorAll('#csTtpDistanceUnitToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingTp.distanceUnit));
 
     document.querySelectorAll('#csDisplayModeGroup .cs-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === s.tpSlDisplayMode));
     csTargetsDraft = JSON.parse(JSON.stringify(s.defaultTargets || []));
@@ -4246,18 +4235,11 @@
         startCustomR: parseFloat(document.getElementById('csTsStartCustomRValue').value) || 1,
       },
       atrStop: {
-        length: parseInt(document.getElementById('csAtrLength').value) || 14,
         multiplier: parseFloat(document.getElementById('csAtrMultiplier').value) || 2,
-        timeframe: document.getElementById('csAtrTimeframe').value,
-        updateFreq: document.getElementById('csAtrUpdateFreq').value,
-        dynamic: document.getElementById('csAtrDynamic').classList.contains('checked'),
       },
       trailingTp: {
-        activation: document.getElementById('csTtpActivation').value,
-        activationCustomR: parseFloat(document.getElementById('csTtpActivationCustomRValue').value) || 1,
-        method: document.getElementById('csTtpMethod').value,
         distanceValue: parseFloat(document.getElementById('csTtpDistanceValue').value) || 1,
-        distanceUnit: document.getElementById('csTtpDistanceUnit').value,
+        distanceUnit: document.querySelector('#csTtpDistanceUnitToggle .cs-radio-row.active').dataset.unit,
       },
       globalBehavior: {
         cancelOnManualClose: document.getElementById('csGbCancelOnClose').classList.contains('checked'),
