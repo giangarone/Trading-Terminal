@@ -1703,10 +1703,17 @@
   }
 
   /* ---------- drag behaviour ---------- */
-  /* a TP/SL is only valid on the correct side of entry: long TP above / SL below, short TP below / SL above */
+  /* the price a TP/SL's side is validated against. A working (unfilled) order validates against its
+     entry, so you can't stage a TP/SL on the wrong side before the trade exists. A filled position
+     validates against the live market: once you're in the trade a TP/SL that has drifted past entry is
+     still perfectly valid — it only becomes unworkable if it crosses to the wrong side of the market. */
+  function tpSlSideRef() { return (order && order.filled) ? qtCurrentPrice() : order.entry; }
+  /* a TP/SL is only valid on the correct side of the reference price: long TP above / SL below,
+     short TP below / SL above (reference = entry while working, live market once filled) */
   function tpSlSideOk(kind, price) {
     const dir = order.side === 'buy' ? 1 : -1;
-    return kind === 'tp' ? dir * (price - order.entry) > 0 : dir * (order.entry - price) > 0;
+    const ref = tpSlSideRef();
+    return kind === 'tp' ? dir * (price - ref) > 0 : dir * (ref - price) > 0;
   }
   /* a trailing SL legitimately ratchets past entry once price has moved far enough in your favor —
      that's the stop automatically locking in profit, not a misconfiguration, so don't flag it as invalid.
@@ -1899,7 +1906,8 @@
       const amtEl = floatChip.querySelector('.ol-drag-float-amt');
 
       function isValid(rawPrice) {
-        const signedDist = kind === 'tp' ? dir * (rawPrice - order.entry) : dir * (order.entry - rawPrice);
+        const ref = tpSlSideRef();
+        const signedDist = kind === 'tp' ? dir * (rawPrice - ref) : dir * (ref - rawPrice);
         return signedDist >= minDist;
       }
       function update(clientY) {
