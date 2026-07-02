@@ -664,7 +664,7 @@ table.bp-table tr.total-row td {
 .pos-header-bar,
 .pos-row-summary {
   display: grid;
-  grid-template-columns: minmax(180px, 1.2fr) 90px 130px 120px 100px 90px 190px 44px;
+  grid-template-columns: minmax(180px, 1.2fr) 90px 130px 120px 100px 90px 120px 44px;
   align-items: center;
 }
 
@@ -901,33 +901,47 @@ table.bp-table tr.total-row td {
 .pos-quick-btn-row {
   display: flex;
   gap: 6px;
+  justify-content: flex-end;
 }
 
+/* Compact icon buttons that mirror the chart's .ol-gear controls: neutral by default,
+   tinting to their action color on hover (info for reverse, red for close). */
 .pos-quick-btn {
-  flex: 1;
+  width: 24px;
   height: 24px;
-  border-radius: var(--r-sm);
-  font-size: var(--fs-label);
-  font-weight: var(--fw-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
   cursor: pointer;
   border: 1px solid var(--border-default);
-  background: var(--bg-input);
-  color: var(--text-primary);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
+.pos-quick-close {
+  background: var(--short-dim);
+  border: 1px solid var(--short-border);
+  color: var(--short);
+}
+
+.pos-quick-btn .material-symbols-outlined {
+  font-size: 15px;
 }
 
 .pos-quick-btn:hover {
+  color: var(--text-primary);
   border-color: var(--border-strong);
 }
 
-.pos-quick-btn.pos-quick-close {
-  color: var(--short);
-  border-color: var(--short-border);
-  background: var(--short-dim);
+.pos-quick-btn.pos-quick-reverse:hover {
+  color: var(--info);
+  border-color: var(--info);
 }
 
 .pos-quick-btn.pos-quick-close:hover {
-  filter: brightness(1.08);
-  border: 1px solid var(--short);
+  color: var(--short);
+  border-color: var(--short);
 }
 
 /* ── Actions cell ────────────────────────────────────────── */

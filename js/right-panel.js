@@ -154,8 +154,8 @@
   /* ---------- graduate a filled chart order into a Positions-tab row ---------- */
   function quickCloseRowHtml() {
     return '<div class="pos-quick-btn-row">' +
-      '<button class="pos-quick-btn pos-quick-reverse" data-pos-reverse>Reverse</button>' +
-      '<button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100">Close</button></div>';
+      '<button class="pos-quick-btn pos-quick-reverse" data-pos-reverse title="Reverse"><span class="material-symbols-outlined">swap_vert</span></button>' +
+      '<button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100" title="Close"><span class="material-symbols-outlined">close</span></button></div>';
   }
   /* Market/Limit close controls for a dynamically-created (chart/quick-trade) position row */
   function detailCloseHtml(sym, qtyStr, unit, priceStr, amtStep, pxStep) {
