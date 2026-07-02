@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/topbar.css?v=5">
   <link rel="stylesheet" href="css/left-panel.css?v=3">
   <link rel="stylesheet" href="css/center-panel.css?v=5">
-  <link rel="stylesheet" href="css/workspace.css?v=19">
+  <link rel="stylesheet" href="css/workspace.css?v=21">
   <link rel="stylesheet" href="css/right-panel.css?v=3">
   <link rel="stylesheet" href="css/quick-trade.css?v=6">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
@@ -3181,42 +3181,6 @@
                   </div>
                 </div>
                 <div class="pos-row-detail">
-                  <div class="pos-detail-close">
-                    <div class="pos-detail-label">Close Position</div>
-                    <div class="pos-close-tabs">
-                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
-                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
-                    </div>
-                    <div class="pos-close-pane active" data-close-pane="market">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLbl-NQU5">100% · 8 Contracts</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSlider-NQU5" min="0" max="100" step="1"
-                        value="100">
-                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
-                    </div>
-                    <div class="pos-close-pane" data-close-pane="limit">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLblLimit-NQU5">100% · 8 Contracts</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-NQU5" min="0" max="100"
-                        step="1" value="100">
-                      <div class="pos-close-field-label">Limit price</div>
-                      <div class="price-stepper">
-                        <input type="text" id="posCloseLimitPx-NQU5" value="29,704.75" data-step="0.25">
-                        <span class="qty-unit">USD</span>
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="posCloseLimitPx-NQU5"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="posCloseLimitPx-NQU5"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                        </div>
-                      </div>
-                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
-                    </div>
-                  </div>
                   <div class="pos-detail-section">
                     <div class="pos-detail-label">Position</div>
                     <div class="pos-kv">
@@ -3259,6 +3223,42 @@
                         <span class="pos-tpsl-dist faint">-1.7%</span>
                         <span class="pos-tpsl-size faint">100%</span>
                       </div>
+                    </div>
+                  </div>
+                  <div class="pos-detail-close">
+                    <div class="pos-detail-label">Close Position</div>
+                    <div class="pos-close-tabs">
+                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
+                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
+                    </div>
+                    <div class="pos-close-pane active" data-close-pane="market">
+                      <div class="pos-close-amount-row">
+                        <span class="pos-close-field-label">Amount</span>
+                        <span class="pos-close-pct-label" id="posClosePctLbl-NQU5">100% · 8 Contracts</span>
+                      </div>
+                      <input type="range" class="pos-close-slider" id="posCloseSlider-NQU5" min="0" max="100" step="1"
+                        value="100">
+                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
+                    </div>
+                    <div class="pos-close-pane" data-close-pane="limit">
+                      <div class="pos-close-amount-row">
+                        <span class="pos-close-field-label">Amount</span>
+                        <span class="pos-close-pct-label" id="posClosePctLblLimit-NQU5">100% · 8 Contracts</span>
+                      </div>
+                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-NQU5" min="0" max="100"
+                        step="1" value="100">
+                      <div class="pos-close-field-label">Limit price</div>
+                      <div class="price-stepper">
+                        <input type="text" id="posCloseLimitPx-NQU5" value="29,704.75" data-step="0.25">
+                        <span class="qty-unit">USD</span>
+                        <div class="price-stepper-arrows">
+                          <button type="button" class="ps-up" data-target="posCloseLimitPx-NQU5"><span
+                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                          <button type="button" class="ps-down" data-target="posCloseLimitPx-NQU5"><span
+                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                        </div>
+                      </div>
+                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
                     </div>
                   </div>
                 </div>
@@ -3309,42 +3309,6 @@
                   </div>
                 </div>
                 <div class="pos-row-detail">
-                  <div class="pos-detail-close">
-                    <div class="pos-detail-label">Close Position</div>
-                    <div class="pos-close-tabs">
-                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
-                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
-                    </div>
-                    <div class="pos-close-pane active" data-close-pane="market">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLbl-ESU5">100% · 5 Contracts</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSlider-ESU5" min="0" max="100" step="1"
-                        value="100">
-                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
-                    </div>
-                    <div class="pos-close-pane" data-close-pane="limit">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLblLimit-ESU5">100% · 5 Contracts</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-ESU5" min="0" max="100"
-                        step="1" value="100">
-                      <div class="pos-close-field-label">Limit price</div>
-                      <div class="price-stepper">
-                        <input type="text" id="posCloseLimitPx-ESU5" value="6,028.00" data-step="0.25">
-                        <span class="qty-unit">USD</span>
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="posCloseLimitPx-ESU5"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="posCloseLimitPx-ESU5"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                        </div>
-                      </div>
-                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
-                    </div>
-                  </div>
                   <div class="pos-detail-section">
                     <div class="pos-detail-label">Position</div>
                     <div class="pos-kv">
@@ -3381,6 +3345,42 @@
                         <span class="pos-tpsl-dist faint">+1.1%</span>
                         <span class="pos-tpsl-size faint">100%</span>
                       </div>
+                    </div>
+                  </div>
+                  <div class="pos-detail-close">
+                    <div class="pos-detail-label">Close Position</div>
+                    <div class="pos-close-tabs">
+                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
+                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
+                    </div>
+                    <div class="pos-close-pane active" data-close-pane="market">
+                      <div class="pos-close-amount-row">
+                        <span class="pos-close-field-label">Amount</span>
+                        <span class="pos-close-pct-label" id="posClosePctLbl-ESU5">100% · 5 Contracts</span>
+                      </div>
+                      <input type="range" class="pos-close-slider" id="posCloseSlider-ESU5" min="0" max="100" step="1"
+                        value="100">
+                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
+                    </div>
+                    <div class="pos-close-pane" data-close-pane="limit">
+                      <div class="pos-close-amount-row">
+                        <span class="pos-close-field-label">Amount</span>
+                        <span class="pos-close-pct-label" id="posClosePctLblLimit-ESU5">100% · 5 Contracts</span>
+                      </div>
+                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-ESU5" min="0" max="100"
+                        step="1" value="100">
+                      <div class="pos-close-field-label">Limit price</div>
+                      <div class="price-stepper">
+                        <input type="text" id="posCloseLimitPx-ESU5" value="6,028.00" data-step="0.25">
+                        <span class="qty-unit">USD</span>
+                        <div class="price-stepper-arrows">
+                          <button type="button" class="ps-up" data-target="posCloseLimitPx-ESU5"><span
+                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                          <button type="button" class="ps-down" data-target="posCloseLimitPx-ESU5"><span
+                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                        </div>
+                      </div>
+                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
                     </div>
                   </div>
                 </div>
@@ -3432,42 +3432,6 @@
                   </div>
                 </div>
                 <div class="pos-row-detail">
-                  <div class="pos-detail-close">
-                    <div class="pos-detail-label">Close Position</div>
-                    <div class="pos-close-tabs">
-                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
-                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
-                    </div>
-                    <div class="pos-close-pane active" data-close-pane="market">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLbl-SOLUSD">100% · 3,084.19 USD</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSlider-SOLUSD" min="0" max="100" step="1"
-                        value="100">
-                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
-                    </div>
-                    <div class="pos-close-pane" data-close-pane="limit">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLblLimit-SOLUSD">100% · 3,084.19 USD</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-SOLUSD" min="0" max="100"
-                        step="1" value="100">
-                      <div class="pos-close-field-label">Limit price</div>
-                      <div class="price-stepper">
-                        <input type="text" id="posCloseLimitPx-SOLUSD" value="0.2195" data-step="0.0001">
-                        <span class="qty-unit">USD</span>
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="posCloseLimitPx-SOLUSD"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="posCloseLimitPx-SOLUSD"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                        </div>
-                      </div>
-                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
-                    </div>
-                  </div>
                   <div class="pos-detail-section">
                     <div class="pos-detail-label">Position</div>
                     <div class="pos-kv">
@@ -3504,6 +3468,42 @@
                         <span class="pos-tpsl-dist faint">+10.0%</span>
                         <span class="pos-tpsl-size faint">100%</span>
                       </div>
+                    </div>
+                  </div>
+                  <div class="pos-detail-close">
+                    <div class="pos-detail-label">Close Position</div>
+                    <div class="pos-close-tabs">
+                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
+                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
+                    </div>
+                    <div class="pos-close-pane active" data-close-pane="market">
+                      <div class="pos-close-amount-row">
+                        <span class="pos-close-field-label">Amount</span>
+                        <span class="pos-close-pct-label" id="posClosePctLbl-SOLUSD">100% · 3,084.19 USD</span>
+                      </div>
+                      <input type="range" class="pos-close-slider" id="posCloseSlider-SOLUSD" min="0" max="100" step="1"
+                        value="100">
+                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
+                    </div>
+                    <div class="pos-close-pane" data-close-pane="limit">
+                      <div class="pos-close-amount-row">
+                        <span class="pos-close-field-label">Amount</span>
+                        <span class="pos-close-pct-label" id="posClosePctLblLimit-SOLUSD">100% · 3,084.19 USD</span>
+                      </div>
+                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-SOLUSD" min="0" max="100"
+                        step="1" value="100">
+                      <div class="pos-close-field-label">Limit price</div>
+                      <div class="price-stepper">
+                        <input type="text" id="posCloseLimitPx-SOLUSD" value="0.2195" data-step="0.0001">
+                        <span class="qty-unit">USD</span>
+                        <div class="price-stepper-arrows">
+                          <button type="button" class="ps-up" data-target="posCloseLimitPx-SOLUSD"><span
+                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                          <button type="button" class="ps-down" data-target="posCloseLimitPx-SOLUSD"><span
+                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                        </div>
+                      </div>
+                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
                     </div>
                   </div>
                 </div>
@@ -3555,42 +3555,6 @@
                   </div>
                 </div>
                 <div class="pos-row-detail">
-                  <div class="pos-detail-close">
-                    <div class="pos-detail-label">Close Position</div>
-                    <div class="pos-close-tabs">
-                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
-                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
-                    </div>
-                    <div class="pos-close-pane active" data-close-pane="market">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLbl-BTCUSD">100% · 0.125 BTC</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSlider-BTCUSD" min="0" max="100" step="1"
-                        value="100">
-                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
-                    </div>
-                    <div class="pos-close-pane" data-close-pane="limit">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLblLimit-BTCUSD">100% · 0.125 BTC</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-BTCUSD" min="0" max="100"
-                        step="1" value="100">
-                      <div class="pos-close-field-label">Limit price</div>
-                      <div class="price-stepper">
-                        <input type="text" id="posCloseLimitPx-BTCUSD" value="67,121.50" data-step="0.5">
-                        <span class="qty-unit">USD</span>
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="posCloseLimitPx-BTCUSD"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="posCloseLimitPx-BTCUSD"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                        </div>
-                      </div>
-                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
-                    </div>
-                  </div>
                   <div class="pos-detail-section">
                     <div class="pos-detail-label">Position</div>
                     <div class="pos-kv">
@@ -3633,6 +3597,42 @@
                         <span class="pos-tpsl-dist faint">-7.6%</span>
                         <span class="pos-tpsl-size faint">100%</span>
                       </div>
+                    </div>
+                  </div>
+                  <div class="pos-detail-close">
+                    <div class="pos-detail-label">Close Position</div>
+                    <div class="pos-close-tabs">
+                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
+                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
+                    </div>
+                    <div class="pos-close-pane active" data-close-pane="market">
+                      <div class="pos-close-amount-row">
+                        <span class="pos-close-field-label">Amount</span>
+                        <span class="pos-close-pct-label" id="posClosePctLbl-BTCUSD">100% · 0.125 BTC</span>
+                      </div>
+                      <input type="range" class="pos-close-slider" id="posCloseSlider-BTCUSD" min="0" max="100" step="1"
+                        value="100">
+                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
+                    </div>
+                    <div class="pos-close-pane" data-close-pane="limit">
+                      <div class="pos-close-amount-row">
+                        <span class="pos-close-field-label">Amount</span>
+                        <span class="pos-close-pct-label" id="posClosePctLblLimit-BTCUSD">100% · 0.125 BTC</span>
+                      </div>
+                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-BTCUSD" min="0" max="100"
+                        step="1" value="100">
+                      <div class="pos-close-field-label">Limit price</div>
+                      <div class="price-stepper">
+                        <input type="text" id="posCloseLimitPx-BTCUSD" value="67,121.50" data-step="0.5">
+                        <span class="qty-unit">USD</span>
+                        <div class="price-stepper-arrows">
+                          <button type="button" class="ps-up" data-target="posCloseLimitPx-BTCUSD"><span
+                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                          <button type="button" class="ps-down" data-target="posCloseLimitPx-BTCUSD"><span
+                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                        </div>
+                      </div>
+                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
                     </div>
                   </div>
                 </div>
@@ -3684,42 +3684,6 @@
                   </div>
                 </div>
                 <div class="pos-row-detail">
-                  <div class="pos-detail-close">
-                    <div class="pos-detail-label">Close Position</div>
-                    <div class="pos-close-tabs">
-                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
-                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
-                    </div>
-                    <div class="pos-close-pane active" data-close-pane="market">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLbl-ETHUSD">100% · 2 ETH</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSlider-ETHUSD" min="0" max="100" step="1"
-                        value="100">
-                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
-                    </div>
-                    <div class="pos-close-pane" data-close-pane="limit">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLblLimit-ETHUSD">100% · 2 ETH</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-ETHUSD" min="0" max="100"
-                        step="1" value="100">
-                      <div class="pos-close-field-label">Limit price</div>
-                      <div class="price-stepper">
-                        <input type="text" id="posCloseLimitPx-ETHUSD" value="3,210.75" data-step="0.05">
-                        <span class="qty-unit">USD</span>
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="posCloseLimitPx-ETHUSD"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="posCloseLimitPx-ETHUSD"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                        </div>
-                      </div>
-                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
-                    </div>
-                  </div>
                   <div class="pos-detail-section">
                     <div class="pos-detail-label">Position</div>
                     <div class="pos-kv">
@@ -3762,6 +3726,42 @@
                         <span class="pos-tpsl-dist faint">-9.7%</span>
                         <span class="pos-tpsl-size faint">100%</span>
                       </div>
+                    </div>
+                  </div>
+                  <div class="pos-detail-close">
+                    <div class="pos-detail-label">Close Position</div>
+                    <div class="pos-close-tabs">
+                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
+                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
+                    </div>
+                    <div class="pos-close-pane active" data-close-pane="market">
+                      <div class="pos-close-amount-row">
+                        <span class="pos-close-field-label">Amount</span>
+                        <span class="pos-close-pct-label" id="posClosePctLbl-ETHUSD">100% · 2 ETH</span>
+                      </div>
+                      <input type="range" class="pos-close-slider" id="posCloseSlider-ETHUSD" min="0" max="100" step="1"
+                        value="100">
+                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
+                    </div>
+                    <div class="pos-close-pane" data-close-pane="limit">
+                      <div class="pos-close-amount-row">
+                        <span class="pos-close-field-label">Amount</span>
+                        <span class="pos-close-pct-label" id="posClosePctLblLimit-ETHUSD">100% · 2 ETH</span>
+                      </div>
+                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-ETHUSD" min="0" max="100"
+                        step="1" value="100">
+                      <div class="pos-close-field-label">Limit price</div>
+                      <div class="price-stepper">
+                        <input type="text" id="posCloseLimitPx-ETHUSD" value="3,210.75" data-step="0.05">
+                        <span class="qty-unit">USD</span>
+                        <div class="price-stepper-arrows">
+                          <button type="button" class="ps-up" data-target="posCloseLimitPx-ETHUSD"><span
+                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                          <button type="button" class="ps-down" data-target="posCloseLimitPx-ETHUSD"><span
+                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                        </div>
+                      </div>
+                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
                     </div>
                   </div>
                 </div>
@@ -3813,42 +3813,6 @@
                   </div>
                 </div>
                 <div class="pos-row-detail">
-                  <div class="pos-detail-close">
-                    <div class="pos-detail-label">Close Position</div>
-                    <div class="pos-close-tabs">
-                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
-                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
-                    </div>
-                    <div class="pos-close-pane active" data-close-pane="market">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLbl-AAPL">100% · 100 Shares</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSlider-AAPL" min="0" max="100" step="1"
-                        value="100">
-                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
-                    </div>
-                    <div class="pos-close-pane" data-close-pane="limit">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLblLimit-AAPL">100% · 100 Shares</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-AAPL" min="0" max="100"
-                        step="1" value="100">
-                      <div class="pos-close-field-label">Limit price</div>
-                      <div class="price-stepper">
-                        <input type="text" id="posCloseLimitPx-AAPL" value="188.45" data-step="0.05">
-                        <span class="qty-unit">USD</span>
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="posCloseLimitPx-AAPL"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="posCloseLimitPx-AAPL"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                        </div>
-                      </div>
-                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
-                    </div>
-                  </div>
                   <div class="pos-detail-section">
                     <div class="pos-detail-label">Position</div>
                     <div class="pos-kv">
@@ -3885,6 +3849,42 @@
                         <span class="pos-tpsl-dist faint">-5.5%</span>
                         <span class="pos-tpsl-size faint">100%</span>
                       </div>
+                    </div>
+                  </div>
+                  <div class="pos-detail-close">
+                    <div class="pos-detail-label">Close Position</div>
+                    <div class="pos-close-tabs">
+                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
+                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
+                    </div>
+                    <div class="pos-close-pane active" data-close-pane="market">
+                      <div class="pos-close-amount-row">
+                        <span class="pos-close-field-label">Amount</span>
+                        <span class="pos-close-pct-label" id="posClosePctLbl-AAPL">100% · 100 Shares</span>
+                      </div>
+                      <input type="range" class="pos-close-slider" id="posCloseSlider-AAPL" min="0" max="100" step="1"
+                        value="100">
+                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
+                    </div>
+                    <div class="pos-close-pane" data-close-pane="limit">
+                      <div class="pos-close-amount-row">
+                        <span class="pos-close-field-label">Amount</span>
+                        <span class="pos-close-pct-label" id="posClosePctLblLimit-AAPL">100% · 100 Shares</span>
+                      </div>
+                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-AAPL" min="0" max="100"
+                        step="1" value="100">
+                      <div class="pos-close-field-label">Limit price</div>
+                      <div class="price-stepper">
+                        <input type="text" id="posCloseLimitPx-AAPL" value="188.45" data-step="0.05">
+                        <span class="qty-unit">USD</span>
+                        <div class="price-stepper-arrows">
+                          <button type="button" class="ps-up" data-target="posCloseLimitPx-AAPL"><span
+                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                          <button type="button" class="ps-down" data-target="posCloseLimitPx-AAPL"><span
+                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                        </div>
+                      </div>
+                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
                     </div>
                   </div>
                 </div>
@@ -5474,7 +5474,7 @@
   <script src="js/resize.js"></script>
   <script src="js/app.js?v=138"></script>
   <script src="js/theme.js?v=2"></script>
-  <script src="js/right-panel.js?v=13"></script>
+  <script src="js/right-panel.js?v=14"></script>
   <script src="js/market-scanner.js?v=9"></script>
   <script src="js/market-sessions.js?v=4"></script>
 

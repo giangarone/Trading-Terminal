@@ -986,9 +986,15 @@ table.bp-table tr.total-row td {
 
 .pos-row-detail {
   display: none;
-  grid-template-columns: 260px 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 260px;
   border-top: 1px solid var(--border-default);
   background: var(--bg-surface);
+}
+
+/* Dynamically-created (chart/quick-trade) rows only render the Close column — keep it at
+   its fixed width on its own instead of stretching to a full 1fr track. */
+.pos-row-detail--close-only {
+  grid-template-columns: 260px;
 }
 
 .pos-row.is-expanded .pos-row-detail {
@@ -1002,7 +1008,9 @@ table.bp-table tr.total-row td {
   min-width: 0;
 }
 
-.pos-detail-section:last-child {
+/* The Close column sits right-most (the info sections lead), so it drops its divider
+   as the panel's outer edge. */
+.pos-detail-close {
   border-right: none;
 }
 

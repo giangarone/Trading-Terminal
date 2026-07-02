@@ -217,7 +217,7 @@
       '<div class="pos-col pos-col-quickclose">' + quickCloseRowHtml() + '</div>' +
       '<div class="pos-col pos-col-actions"><button class="pos-expand-btn" title="Expand details"><span class="material-symbols-outlined pos-chevron">expand_more</span></button></div>' +
       '</div>' +
-      '<div class="pos-row-detail"><div class="pos-detail-close">' +
+      '<div class="pos-row-detail pos-row-detail--close-only"><div class="pos-detail-close">' +
       detailCloseHtml(sym, fmtQty(qty), 'Units', fmt(price, dec), '0.001',
         price < 1 ? '0.0001' : price < 100 ? '0.01' : '0.5') +
       '</div></div>';
