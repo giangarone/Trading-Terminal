@@ -40,7 +40,7 @@
       { pct: 25, r: 4.0, type: 'limit' }
     ],
     defaultStopLoss: { r: 1.0, type: 'stopMarket' },
-    moveSlToBreakeven: { trigger: 'tp1', customR: 1, pctToTp: 50, offsetValue: 0, offsetUnit: 'fee' },
+    moveSlToBreakeven: { trigger: 'tp1', customR: 1, pctToTp: 50, offsetValue: 0.06, offsetUnit: 'fee' },
     trailingStop: { distanceValue: 1.0, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
     atrStop: { multiplier: 2.0 },
     trailingTp: { distanceValue: 0.5, distanceUnit: 'percent' },

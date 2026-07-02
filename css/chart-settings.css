@@ -468,6 +468,13 @@
   flex-shrink: 0;
 }
 
+/* a switch row tucked under a card's fields, separated by a hairline divider */
+.cs-switch-row--divided {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+
 .cs-switch-text {
   display: flex;
   flex-direction: column;

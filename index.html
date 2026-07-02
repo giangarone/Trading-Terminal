@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="css/order-lines.css?v=30">
   <link rel="stylesheet" href="css/market-scanner.css?v=25">
   <link rel="stylesheet" href="css/indicators.css?v=9">
-  <link rel="stylesheet" href="css/chart-settings.css?v=29">
+  <link rel="stylesheet" href="css/chart-settings.css?v=30">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
 </head>
@@ -1197,6 +1197,16 @@
                       </div>
                     </div>
                     <div class="cs-helper">Offset is added to entry price when moving SL to breakeven.</div>
+                    <div class="cs-switch-row cs-switch-row--divided active" id="csBeDynamicFee">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Dynamic Fee Offset</span>
+                        <span class="cs-switch-desc">Automatically detect the exchange's trading fees and apply the
+                          exact offset amount to match them, so breakeven truly nets zero instead of a small loss to
+                          fees.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Dynamic Fee Offset"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
                   </div>
 
                   <div class="cs-card cs-card--single-col">
@@ -5736,7 +5746,7 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=135"></script>
+  <script src="js/app.js?v=136"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=12"></script>
   <script src="js/market-scanner.js?v=9"></script>
