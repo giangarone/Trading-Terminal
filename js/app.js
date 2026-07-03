@@ -4568,28 +4568,44 @@
   })();
 
   /* ---------- toolbar icon collapse ---------- */
-  /* When .tb-left runs low on room, action buttons progressively drop their
-     label to an icon-only state (widest/least-critical first) instead of
-     overflowing. Every tool stays visible and one click away; the hidden label
-     is surfaced via an instant tooltip. A ResizeObserver keeps it in sync with
-     window and (resizable) side-panel width changes. */
+  /* When the toolbar runs low on room, controls progressively drop their label
+     to an icon-only state instead of overflowing. Every tool stays visible and
+     one click away; the hidden label is surfaced via an instant tooltip. The
+     .tb-left buttons collapse right-to-left first; the .tb-right account/template
+     selectors then collapse too (which frees width back to .tb-left, since it
+     fills via flex). A ResizeObserver keeps it in sync with window and
+     (resizable) side-panel width changes. */
   (function initToolbarCollapse() {
     const tbLeft = document.querySelector('.tb-left');
-    if (!tbLeft) return;
+    const tbChartZone = document.querySelector('.tb-chart-zone');
+    if (!tbLeft || !tbChartZone) return;
 
-    /* Collapse order — the first button is the first to lose its label. */
-    const collapseOrder = ['marketSessionsTrigger', 'marketScannerTrigger', 'newsToggle',
-      'replayToggle', 'indicatorsTrigger', 'candleTypeTrigger']
+    /* Collapse order — the first item is the first to lose its label. .tb-left
+       collapses right-to-left (News is rightmost), then the .tb-right selectors,
+       then the two core chart controls (Indicators, Candles) as a last resort. */
+    const collapseOrder = ['newsToggle', 'marketSessionsTrigger', 'marketScannerTrigger', 'replayToggle',
+      'templatesSelectTrigger', 'accountSelectTrigger', 'indicatorsTrigger', 'candleTypeTrigger']
       .map(id => document.getElementById(id))
       .filter(Boolean);
+
+    /* Tooltip text for the .tb-right selectors, built from their current value. */
+    function accountTooltip(el) {
+      const name = el.querySelector('.tb-account-name');
+      const balance = el.querySelector('.tb-account-balance');
+      return [name, balance].filter(Boolean).map(n => n.textContent.trim()).filter(Boolean).join(' · ');
+    }
 
     function isOverflowing() {
       return tbLeft.scrollWidth > tbLeft.clientWidth + 1;
     }
 
     function relayout() {
-      /* Reset to full labels, then collapse one at a time until the bar fits. */
-      collapseOrder.forEach(btn => btn.classList.remove('ct-collapsed'));
+      /* Reset to full labels, then collapse one at a time until the bar fits.
+         Refresh account tooltips here so they track the current account/template. */
+      collapseOrder.forEach(btn => {
+        btn.classList.remove('ct-collapsed');
+        if (btn.classList.contains('tb-account')) btn.dataset.tooltip = accountTooltip(btn);
+      });
       if (!isOverflowing()) return;
       for (const btn of collapseOrder) {
         btn.classList.add('ct-collapsed');
@@ -4597,9 +4613,10 @@
       }
     }
 
-    /* Run synchronously on every size change. A plain boolean guards against
-       re-entrancy; toggling labels doesn't change .tb-left's own width (it fills
-       via flex), so this can't loop. Deliberately no requestAnimationFrame —
+    /* Observe the chart zone (not .tb-left): its width is set by the window and
+       side panels, and does NOT change when we collapse items — so relayout can
+       never re-trigger the observer (no loop, no warning). Runs synchronously; a
+       boolean still guards re-entrancy. Deliberately no requestAnimationFrame —
        rAF is throttled in background tabs and would strand the layout. */
     let running = false;
     const safeRelayout = () => {
@@ -4608,7 +4625,7 @@
       relayout();
       running = false;
     };
-    new ResizeObserver(safeRelayout).observe(tbLeft);
+    new ResizeObserver(safeRelayout).observe(tbChartZone);
     relayout();
     /* Re-measure once the Material Symbols icon font finishes loading — button
        widths change when it swaps in, and the observer won't otherwise re-fire. */

@@ -58,7 +58,7 @@
 .tb-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex: 1 1 auto;
   min-width: 0;
   /* Fills the available space so clientWidth is a stable measurement target for
