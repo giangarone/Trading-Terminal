@@ -27,6 +27,9 @@
 
   let order = null;
   let tpCounter = 1;
+  // Static mockup: a partially-filled AAPL limit order that demonstrates the fill pill
+  // in the Open Orders tab. Dismissable via its cancel (✕); does not affect real trading.
+  let mockAaplOrder = { sym: 'AAPL', side: 'buy', qty: 20, filledQty: 12, price: 187.50, orderType: 'Limit' };
   let pendingClickPrice = BASE_PRICE;
   let exitModal = null;                // {tpId, mode, pct}
 
@@ -483,7 +486,7 @@
     }
     order = {
       side, entry, qty: parseInt(qtyInput.value || '1'), orderType, fillAbove,
-      sizeMode: 'contracts', filled: false,
+      sizeMode: 'contracts', filled: false, filledQty: 0,
       pendingConfirm: isChartTrade,
       sizeValues: { dollar: 5000, percent: 25, risk: 500 },
       tps, sl, tpsHitCount: 0,
@@ -1505,6 +1508,34 @@
     );
   }
 
+  /* Build one pending-entry row for the Open Orders tab (live order or static mock).
+     Shows the fill-progress pill + "Partial" status when partially filled, else "Pending". */
+  function openOrderEntryRow(o, cancelAttr) {
+    const sideCls = o.side === 'buy' ? 'long' : 'short';
+    const sideLabel = o.side === 'buy' ? 'Buy' : 'Sell';
+    const partial = o.filledQty > 0 && o.filledQty < o.qty;
+    const fillPct = Math.round(o.filledQty / o.qty * 100);
+    const qtyCell = partial
+      ? '<span class="ord-val-primary">' + o.qty + '</span>' +
+        '<span class="ord-fill-pill" title="' + fillPct + '% filled">' +
+        '<span class="ord-fill-pill-bar" style="width:' + fillPct + '%"></span>' +
+        '<span class="ord-fill-pill-label">' + fillPct + '%</span>' +
+        '</span>'
+      : '<span class="ord-val-primary">' + o.qty + '</span>';
+    const statusCell = partial
+      ? '<span class="bp-status partial">Partial</span>'
+      : '<span class="bp-status working">Pending</span>';
+    return (
+      '<tr>' +
+      '<td>' + symCell(o.sym, sideCls, sideLabel, 'Entry · ' + o.orderType) + '</td>' +
+      '<td>' + qtyCell + '</td>' +
+      '<td>' + fmt(o.price) + '</td>' +
+      '<td>' + statusCell + '</td>' +
+      '<td><span class="bp-action-icon" ' + cancelAttr + '><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
+      '</tr>'
+    );
+  }
+
   function renderAlerts() {
     const body = document.getElementById('bpBody-alerts');
     if (!body) return;
@@ -1541,23 +1572,21 @@
     if (!body) return;
     const rows = [];
 
+    /* Static AAPL mockup — a partially-filled resting order demonstrating the fill pill */
+    if (mockAaplOrder) {
+      rows.push(openOrderEntryRow(mockAaplOrder, 'data-cancel-mock="1"'));
+    }
+
     if (order) {
-      const sideCls = order.side === 'buy' ? 'long' : 'short';
-      const sideLabel = order.side === 'buy' ? 'Buy' : 'Sell';
       const closeSideCls = order.side === 'buy' ? 'short' : 'long';
       const closeSideLabel = order.side === 'buy' ? 'Sell' : 'Buy';
 
       /* Entry row — only while still unfilled; once filled, it's a position, not an order */
       if (!order.filled) {
-        rows.push(
-          '<tr>' +
-          '<td>' + symCell('ETHUSD', sideCls, sideLabel, 'Entry · ' + order.orderType) + '</td>' +
-          '<td><span class="ord-val-primary">' + order.qty + '</span></td>' +
-          '<td>' + fmt(order.entry) + '</td>' +
-          '<td><span class="bp-status working">Pending</span></td>' +
-          '<td><span class="bp-action-icon" data-cancel-entry="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
-          '</tr>'
-        );
+        rows.push(openOrderEntryRow(
+          { sym: 'ETHUSD', side: order.side, qty: order.qty, filledQty: order.filledQty, price: order.entry, orderType: order.orderType },
+          'data-cancel-entry="1"'
+        ));
       }
 
       if (order.filled) {
@@ -1590,6 +1619,7 @@
 
     body.innerHTML = rows.length ? rows.join('') : '<tr class="bp-empty-row"><td colspan="5">No open orders — right-click the chart to trade.</td></tr>';
     body.querySelectorAll('[data-cancel-entry]').forEach(el => el.addEventListener('click', cancelOrder));
+    body.querySelectorAll('[data-cancel-mock]').forEach(el => el.addEventListener('click', () => { mockAaplOrder = null; renderOpenOrders(); }));
     body.querySelectorAll('[data-cancel-tp]').forEach(el => el.addEventListener('click', () => removeTp(el.dataset.cancelTp)));
     body.querySelectorAll('[data-cancel-sl]').forEach(el => el.addEventListener('click', removeSl));
     const countEl = document.getElementById('bpCountOrders');

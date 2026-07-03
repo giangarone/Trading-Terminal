@@ -550,6 +550,20 @@
   background: var(--short-dim);
 }
 
+/* Open Orders cancel ✕ — mirrors the Positions tab close button (.pos-quick-close):
+   red-tinted by default via the --short tokens, intensifying its border on hover. */
+#bpBody-orders .bp-action-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--short);
+  border-color: var(--short-border);
+  background: var(--short-dim);
+}
+
+#bpBody-orders .bp-action-icon:hover {
+  border-color: var(--short);
+}
+
 .bp-status {
   font-size: 10.5px;
   font-weight: 600;
@@ -561,6 +575,11 @@
 .bp-status.working {
   color: var(--accent);
   background: var(--accent-dim);
+}
+
+.bp-status.partial {
+  color: var(--info);
+  background: var(--info-dim);
 }
 
 .bp-status.placed {
@@ -1280,6 +1299,40 @@ table.bp-table tr.total-row td {
   font-size: var(--fs-label);
   color: var(--text-muted);
   margin-top: 2px;
+}
+
+/* Fill-progress pill — shown under the qty on a partially-filled resting order.
+   A rounded track with an inner bar sized to the fill %, and the % label on top. */
+.ord-fill-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  height: 16px;
+  margin-top: 4px;
+  padding: 0 6px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--info-dim);
+  vertical-align: middle;
+}
+
+.ord-fill-pill-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--info);
+  opacity: .3;
+}
+
+.ord-fill-pill-label {
+  position: relative;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--info);
 }
 
 /* Alert direction indicator (↑ / ↓ with condition label) */
