@@ -405,12 +405,6 @@
   color: var(--text-primary);
 }
 
-.qt-info-ic {
-  font-size: 14px;
-  color: var(--text-muted);
-  cursor: help;
-}
-
 .ai-ask-desc {
   font-size: 11px;
   color: var(--text-muted);

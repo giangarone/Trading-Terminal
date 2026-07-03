@@ -127,8 +127,8 @@
   --short-border: rgba(214, 50, 74, .55);
   --on-short: #fff;
   --accent: #e5920c;
-  --accent-dim: #f3e3c8;
-  --accent-border: rgba(156, 99, 8, .55);
+  --accent-dim: rgb(229 146 12 / 14%);
+  --accent-border: rgb(184 116 7 / 37%);
   --intel: #0b6f7c;
   --intel-dim: #d6eef1;
   --intel-border: rgba(11, 111, 124, .55);
