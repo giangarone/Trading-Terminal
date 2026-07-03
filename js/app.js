@@ -4567,6 +4567,54 @@
     });
   })();
 
+  /* ---------- toolbar icon collapse ---------- */
+  /* When .tb-left runs low on room, action buttons progressively drop their
+     label to an icon-only state (widest/least-critical first) instead of
+     overflowing. Every tool stays visible and one click away; the hidden label
+     is surfaced via an instant tooltip. A ResizeObserver keeps it in sync with
+     window and (resizable) side-panel width changes. */
+  (function initToolbarCollapse() {
+    const tbLeft = document.querySelector('.tb-left');
+    if (!tbLeft) return;
+
+    /* Collapse order — the first button is the first to lose its label. */
+    const collapseOrder = ['marketSessionsTrigger', 'marketScannerTrigger', 'newsToggle',
+      'replayToggle', 'indicatorsTrigger', 'candleTypeTrigger']
+      .map(id => document.getElementById(id))
+      .filter(Boolean);
+
+    function isOverflowing() {
+      return tbLeft.scrollWidth > tbLeft.clientWidth + 1;
+    }
+
+    function relayout() {
+      /* Reset to full labels, then collapse one at a time until the bar fits. */
+      collapseOrder.forEach(btn => btn.classList.remove('ct-collapsed'));
+      if (!isOverflowing()) return;
+      for (const btn of collapseOrder) {
+        btn.classList.add('ct-collapsed');
+        if (!isOverflowing()) break;
+      }
+    }
+
+    /* Run synchronously on every size change. A plain boolean guards against
+       re-entrancy; toggling labels doesn't change .tb-left's own width (it fills
+       via flex), so this can't loop. Deliberately no requestAnimationFrame —
+       rAF is throttled in background tabs and would strand the layout. */
+    let running = false;
+    const safeRelayout = () => {
+      if (running) return;
+      running = true;
+      relayout();
+      running = false;
+    };
+    new ResizeObserver(safeRelayout).observe(tbLeft);
+    relayout();
+    /* Re-measure once the Material Symbols icon font finishes loading — button
+       widths change when it swaps in, and the observer won't otherwise re-fire. */
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(safeRelayout);
+  })();
+
   /* ---------- symbol selector dropdown ---------- */
   const SYMBOL_LIST = [
     ...['ETHUSD', 'BTCUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'DOGEUSD', 'ADAUSD', 'AVAXUSD', 'LINKUSD', 'MATICUSD',

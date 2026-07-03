@@ -155,15 +155,16 @@
 .bs-row {
   display: flex;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .bs-btn {
   flex: 1;
   border-radius: 8px;
-  padding: 12px 8px;
+  padding: 0 8px;
   text-align: center;
   border: none;
+  height: 32px;
 }
 
 .bs-btn .bs-lbl {
@@ -205,7 +206,8 @@
 .ghost-btn {
   flex: 1;
   border-radius: var(--r-sm);
-  padding: 8px 0;
+  padding: 0 8px;
+  height: 32px;
   text-align: center;
   font-size: var(--fs-sm);
   font-weight: 500;

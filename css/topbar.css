@@ -50,20 +50,20 @@
   padding: 0 16px 0 8px;
   gap: 24px;
   min-width: 0;
-  overflow: hidden;
+  /* Visible so collapsed-button tooltips can render below the toolbar. The
+     .tb-left collapse logic keeps its contents within the available width. */
+  overflow: visible;
 }
 
 .tb-left {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1 1 auto;
   min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.tb-left::-webkit-scrollbar {
-  display: none;
+  /* Fills the available space so clientWidth is a stable measurement target for
+     the icon-collapse logic; visible lets tooltips escape (see .tb-chart-zone). */
+  overflow: visible;
 }
 
 .symbol-block {

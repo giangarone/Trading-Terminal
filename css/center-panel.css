@@ -92,6 +92,7 @@
   font-weight: var(--fw-mid);
   white-space: nowrap;
   flex-shrink: 0;
+  position: relative;
 }
 
 .ct-action-btn:hover {
@@ -115,6 +116,40 @@
   color: var(--info);
   border-color: var(--info-border);
   background: var(--info-dim);
+}
+
+/* Progressive icon collapse: when the toolbar runs low on room, action buttons
+   drop their label (and dropdown caret) to an icon-only state, widest/least
+   critical first. The label reappears the moment space returns. */
+.ct-action-btn.ct-collapsed {
+  padding: 6px;
+}
+
+.ct-action-btn.ct-collapsed .ct-label,
+.ct-action-btn.ct-collapsed .ct-caret {
+  display: none;
+}
+
+/* Instant tooltip (matches the .cdt-btn drawing-tool tooltips) — shown only for
+   collapsed, icon-only buttons so the hidden label stays discoverable. */
+.ct-action-btn.ct-collapsed[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sans);
+  white-space: nowrap;
+  box-shadow: 0 8px 20px var(--shadow-color);
+  z-index: 50;
+  pointer-events: none;
 }
 
 .ct-icon {
