@@ -1,7 +1,7 @@
 /* ====== Tokens ====== */
 :root {
-  --long: #2bd47e;
-  --long-dim: rgba(43, 212, 126, .14);
+  --long: #2ebf85;
+  --long-dim: rgba(46, 191, 133, .14);
   --short: #f2495c;
   --short-dim: rgba(242, 73, 92, .14);
   --accent: #e3a039;
@@ -14,10 +14,10 @@
   --purple-guide: rgba(167, 139, 250, .55);
   --on-accent: #11161A;
   --on-signal: #0b0f10;
-  --on-long: #0b1a12;
-  --on-short: #1c0608;
-  --long-border: rgba(43, 212, 126, .45);
-  --short-border: rgba(242, 73, 92, .45);
+  --on-long: #fff;
+  --on-short: #fff;
+  --long-border: rgba(46, 191, 133, .5);
+  --short-border: rgba(242, 73, 92, .5);
   --accent-border: rgba(227, 160, 57, .45);
   --info: #3b82f6;
   --info-dim: rgba(59, 130, 246, .14);
@@ -118,11 +118,11 @@
   --shadow-color: rgba(15, 23, 32, .12);
   --on-signal: #fff;
 
-  --long: #2DBD85;
+  --long: #2ebf85;
   --long-dim: #d7f0e2;
-  --long-border: rgba(19, 117, 63, .55);
+  --long-border: rgba(44, 192, 134, .55);
   --on-long: #fff;
-  --short: #F6475D;
+  --short: #f2495c;
   --short-dim: #f8dde1;
   --short-border: rgba(214, 50, 74, .55);
   --on-short: #fff;

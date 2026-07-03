@@ -15,8 +15,8 @@
 }
 
 .cs-modal {
-  width: min(1080px, 94vw);
-  height: min(760px, 88vh);
+  width: min(1200px, 94vw);
+  height: min(900px, 88vh);
   background: var(--bg-base);
   border: 1px solid var(--border-default);
   border-radius: var(--r-lg);

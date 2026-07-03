@@ -243,7 +243,6 @@
 
 .jc-day.has-stats:hover {
   transform: translateY(-1px);
-  filter: brightness(1.2);
 }
 
 .d-num-row {
@@ -882,7 +881,7 @@ table.bp-table tr.total-row td {
 
 .pos-pnl-dollar {
   display: block;
-  font-weight: var(--fw-semi);
+  font-weight: 500;
 }
 
 .pos-pnl-pct {

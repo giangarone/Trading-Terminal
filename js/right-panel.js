@@ -241,7 +241,7 @@
       amtRow('posClosePctLblLimit-' + sym, initLbl, 'posCloseSliderLimit-' + sym) +
       '<div class="pos-close-field-label">Limit price</div>' +
       stepper('posCloseLimitPx-' + sym, priceStr, pxStep, 'USD') +
-      '<button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button></div>';
+      '<button class="pos-close-primary" data-pos-close-limit>Close Limit</button></div>';
   }
   /* leverage currently chosen in the Quick Trade panel — stamped onto positions opened from a fill */
   function currentLeverage() {

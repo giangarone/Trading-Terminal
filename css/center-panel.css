@@ -27,11 +27,12 @@
 }
 
 .tf-btn:hover {
+  background: var(--bg-base);
   color: var(--text-primary);
 }
 
 .tf-btn.active {
-  background: var(--border-default);
+  background: var(--bg-hover);
   color: var(--text-primary);
 }
 
@@ -369,7 +370,7 @@
   cursor: pointer;
 }
 
-.tpl-opt-row + .tpl-opt-row {
+.tpl-opt-row+.tpl-opt-row {
   border-top: 1px solid var(--border-subtle);
 }
 
@@ -463,18 +464,74 @@
   letter-spacing: .02em;
 }
 
-.chart-pane-area.layout-2col    { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; }
-.chart-pane-area.layout-2row    { display: grid; grid-template-rows: 1fr 1fr; gap: 1px; }
-.chart-pane-area.layout-4grid   { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; }
-.chart-pane-area.layout-large2  { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; }
-.chart-pane-area.layout-large2  .chart-pane:first-child { grid-row: 1 / span 2; }
-.chart-pane-area.layout-2large  { display: grid; grid-template-columns: 1fr 2fr; grid-template-rows: 1fr 1fr; gap: 1px; }
-.chart-pane-area.layout-2large  .chart-pane:last-child { grid-row: 1 / span 2; }
-.chart-pane-area.layout-3col    { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; }
-.chart-pane-area.layout-top2    { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; }
-.chart-pane-area.layout-top2    .chart-pane:first-child { grid-column: 1 / span 2; }
-.chart-pane-area.layout-2bottom { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; }
-.chart-pane-area.layout-2bottom .chart-pane:last-child { grid-column: 1 / span 2; }
+.chart-pane-area.layout-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+}
+
+.chart-pane-area.layout-2row {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 1px;
+}
+
+.chart-pane-area.layout-4grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1px;
+}
+
+.chart-pane-area.layout-large2 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1px;
+}
+
+.chart-pane-area.layout-large2 .chart-pane:first-child {
+  grid-row: 1 / span 2;
+}
+
+.chart-pane-area.layout-2large {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1px;
+}
+
+.chart-pane-area.layout-2large .chart-pane:last-child {
+  grid-row: 1 / span 2;
+}
+
+.chart-pane-area.layout-3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+}
+
+.chart-pane-area.layout-top2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1px;
+}
+
+.chart-pane-area.layout-top2 .chart-pane:first-child {
+  grid-column: 1 / span 2;
+}
+
+.chart-pane-area.layout-2bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1px;
+}
+
+.chart-pane-area.layout-2bottom .chart-pane:last-child {
+  grid-column: 1 / span 2;
+}
 
 .chart-placeholder {
   position: relative;

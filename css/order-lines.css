@@ -64,7 +64,7 @@
 }
 
 .ol-line.entry {
-  border-top-style: dotted;
+  border-top-style: solid;
 }
 
 .ol-line.entry.buy {
@@ -439,10 +439,6 @@
   color: var(--text-secondary);
   cursor: ns-resize;
   gap: 0;
-}
-
-.ol-chip.entry:hover {
-  filter: brightness(1.08);
 }
 
 .ol-chip.entry.buy {
@@ -1131,7 +1127,7 @@
 
 .sym-select-list {
   overflow-y: auto;
-  max-height: 280px;
+  max-height: 440px;
   display: flex;
   flex-direction: column;
   gap: 1px;
