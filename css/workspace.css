@@ -1114,9 +1114,8 @@ table.bp-table tr.total-row td {
   width: 100%;
   height: 30px;
   border-radius: var(--r-sm);
-  background: var(--short-dim);
-  border: 1px solid var(--short-border);
-  color: var(--short);
+  background: var(--short);
+  color: var(--on-short);
   font-size: var(--fs-sm);
   font-weight: var(--fw-semi);
   margin-bottom: 6px;
@@ -1125,7 +1124,6 @@ table.bp-table tr.total-row td {
 
 .pos-close-primary:hover {
   filter: brightness(1.08);
-  border: 1px solid var(--short);
 }
 
 /* Key-value grid inside detail sections */

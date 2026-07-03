@@ -26,7 +26,7 @@
 .msx-modal {
   width: min(1480px, 98vw);
   height: min(900px, 96vh);
-  background: var(--bg-base);
+  background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--r-lg);
   box-shadow: 0 30px 80px var(--shadow-color);
