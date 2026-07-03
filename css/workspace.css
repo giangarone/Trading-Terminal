@@ -221,12 +221,12 @@
 
 .jc-day.up {
   background: var(--long-dim);
-  border-color: var(--long-border);
+  border-color: var(--long);
 }
 
 .jc-day.down {
   background: var(--short-dim);
-  border-color: var(--short-border);
+  border-color: var(--short);
 }
 
 .jc-day.future {
@@ -243,16 +243,7 @@
 
 .jc-day.has-stats:hover {
   transform: translateY(-1px);
-}
-
-.jc-day.up.has-stats:hover {
-  background: var(--long-dim);
-  border-color: var(--long-border);
-}
-
-.jc-day.down.has-stats:hover {
-  background: var(--short-dim);
-  border-color: var(--short-border);
+  filter: brightness(1.2);
 }
 
 .d-num-row {
@@ -316,7 +307,7 @@
 .jc-day .d-trades {
   font-size: 9.5px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
@@ -1114,61 +1105,9 @@ table.bp-table tr.total-row td {
   color: var(--text-secondary);
 }
 
-/* Percentage slider — custom thumb over a track */
+/* Percentage slider — uses the global .range-slider component (css/tokens.css) */
 .pos-close-slider-wrap {
-  position: relative;
-  height: 14px;
   margin-bottom: 12px;
-}
-
-/* Visual track sits behind the (transparent) native input */
-.pos-close-track {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border-default);
-  z-index: 0;
-}
-
-.pos-close-slider {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 14px;
-  margin: 0;
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  outline: none;
-  cursor: pointer;
-  z-index: 2;
-}
-
-.pos-close-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--text-primary);
-  cursor: pointer;
-}
-
-.pos-close-slider::-moz-range-track {
-  background: transparent;
-}
-
-.pos-close-slider::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--text-primary);
-  border: none;
-  cursor: pointer;
 }
 
 .pos-close-primary {

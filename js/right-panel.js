@@ -228,7 +228,7 @@
       return '<div class="pos-close-amount-row">' +
         '<span class="pos-close-field-label">Amount</span>' +
         '<span class="pos-close-pct-label" id="' + lblId + '">' + lblText + '</span></div>' +
-        '<input type="range" class="pos-close-slider" id="' + sliderId + '" min="0" max="100" step="1" value="100">';
+        '<input type="range" class="pos-close-slider range-slider" id="' + sliderId + '" min="0" max="100" step="1" value="100">';
     }
     return '<div class="pos-detail-label">Close Position</div>' +
       '<div class="pos-close-tabs">' +
@@ -287,8 +287,8 @@
     });
     document.querySelector('.pos-rows-scroll').prepend(row);
     row.querySelectorAll('.pos-close-slider').forEach(s => {
-      if (window.decoratePosCloseSlider) window.decoratePosCloseSlider(s);
-      if (window.posCloseSliderFill) window.posCloseSliderFill(s);
+      if (window.decorateRangeSlider) window.decorateRangeSlider(s);
+      if (window.fillRangeSlider) window.fillRangeSlider(s);
       if (window.updatePosCloseLabel) window.updatePosCloseLabel(s);
     });
   }

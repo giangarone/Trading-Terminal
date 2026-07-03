@@ -1703,41 +1703,15 @@
   vertical-align: middle;
 }
 
-/* Volume row: slider + percentage value */
+/* Volume row: slider + percentage value — uses the global .range-slider component (css/tokens.css) */
 .cs-volume-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.cs-volume-slider {
+.cs-volume-row .range-slider-wrap {
   flex: 1;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border-default);
-  outline: none;
-  cursor: pointer;
-}
-
-.cs-volume-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--text-primary);
-  cursor: pointer;
-}
-
-.cs-volume-slider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--text-primary);
-  border: none;
-  cursor: pointer;
 }
 
 .cs-volume-value {

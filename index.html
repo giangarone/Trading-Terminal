@@ -14,18 +14,18 @@
     rel="stylesheet">
 
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
-  <link rel="stylesheet" href="css/tokens.css?v=9">
+  <link rel="stylesheet" href="css/tokens.css?v=10">
   <link rel="stylesheet" href="css/topbar.css?v=5">
   <link rel="stylesheet" href="css/left-panel.css?v=3">
   <link rel="stylesheet" href="css/center-panel.css?v=5">
-  <link rel="stylesheet" href="css/workspace.css?v=25">
+  <link rel="stylesheet" href="css/workspace.css?v=26">
   <link rel="stylesheet" href="css/right-panel.css?v=3">
   <link rel="stylesheet" href="css/quick-trade.css?v=6">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=32">
   <link rel="stylesheet" href="css/market-scanner.css?v=29">
   <link rel="stylesheet" href="css/indicators.css?v=9">
-  <link rel="stylesheet" href="css/chart-settings.css?v=30">
+  <link rel="stylesheet" href="css/chart-settings.css?v=31">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
 </head>
@@ -282,34 +282,18 @@
                   class="material-symbols-outlined">notifications</span>Alerts</button>
               <button class="cs-nav-item" data-cs-tab="news"><span
                   class="material-symbols-outlined">newspaper</span>News & Events</button>
-              <button class="cs-nav-item" data-cs-tab="hotkeys"><span
-                  class="material-symbols-outlined">keyboard</span>Hotkeys</button>
             </div>
 
             <div class="cs-nav-group">
               <div class="cs-nav-label">Trading</div>
               <button class="cs-nav-item" data-cs-tab="trademgmt"><span
                   class="material-symbols-outlined">show_chart</span>Trade Defaults</button>
-              <button class="cs-nav-item" data-cs-tab="risk"><span class="material-symbols-outlined">balance</span>Risk
-                & Money Management</button>
-            </div>
-
-            <div class="cs-nav-group">
-              <div class="cs-nav-label">Connections</div>
               <button class="cs-nav-item" data-cs-tab="broker"><span
                   class="material-symbols-outlined">account_balance</span>Broker Connections</button>
               <button class="cs-nav-item" data-cs-tab="marketdata"><span
                   class="material-symbols-outlined">monitoring</span>Market Data</button>
               <button class="cs-nav-item" data-cs-tab="webhooks"><span
                   class="material-symbols-outlined">webhook</span>Webhooks</button>
-            </div>
-
-            <div class="cs-nav-group">
-              <div class="cs-nav-label">Advanced</div>
-              <button class="cs-nav-item" data-cs-tab="remotesync"><span
-                  class="material-symbols-outlined">cloud_sync</span>Cloud &amp; Sync</button>
-              <button class="cs-nav-item" data-cs-tab="developer"><span
-                  class="material-symbols-outlined">code</span>Developer</button>
             </div>
 
             <div class="cs-nav-group">
@@ -320,6 +304,8 @@
                   class="material-symbols-outlined">security</span>Security</button>
               <button class="cs-nav-item" data-cs-tab="plans"><span
                   class="material-symbols-outlined">workspace_premium</span>Plans &amp; Pricing</button>
+              <button class="cs-nav-item" data-cs-tab="remotesync"><span
+                  class="material-symbols-outlined">cloud_sync</span>Cloud &amp; Sync</button>
             </div>
 
             <div class="cs-sidebar-footer">
@@ -822,7 +808,10 @@
                     <div class="cs-field">
                       <label>Volume</label>
                       <div class="cs-volume-row">
-                        <input type="range" class="cs-volume-slider" id="alertVolume" min="0" max="100" value="70">
+                        <div class="range-slider-wrap">
+                          <div class="range-slider-track"></div>
+                          <input type="range" class="range-slider" id="alertVolume" min="0" max="100" value="70">
+                        </div>
                         <span class="cs-volume-value" id="alertVolumeValue">70%</span>
                       </div>
                     </div>
@@ -843,14 +832,6 @@
                 </div>
               </div>
             </div>
-            <div class="cs-pane" data-cs-pane="hotkeys">
-              <div class="cs-pane-head">
-                <h2>Hotkeys</h2>
-                <p>Keyboard shortcuts.</p>
-              </div>
-              <div class="cs-empty">No settings here yet</div>
-            </div>
-
             <div class="cs-pane" data-cs-pane="news">
               <div class="cs-pane-head">
                 <h2>News & Events</h2>
@@ -1407,13 +1388,6 @@
               </div>
             </div>
 
-            <div class="cs-pane" data-cs-pane="risk">
-              <div class="cs-pane-head">
-                <h2>Risk & Money Management</h2>
-                <p>Account-wide risk limits.</p>
-              </div>
-              <div class="cs-empty">No settings here yet</div>
-            </div>
             <div class="cs-pane" data-cs-pane="broker">
               <div class="cs-pane-head">
                 <h2>Broker Connections</h2>
@@ -2197,13 +2171,6 @@
                   the cloud.
                 </p>
               </div>
-            </div>
-            <div class="cs-pane" data-cs-pane="developer">
-              <div class="cs-pane-head">
-                <h2>Developer</h2>
-                <p>Advanced and experimental options.</p>
-              </div>
-              <div class="cs-empty">No settings here yet</div>
             </div>
             <div class="cs-pane" data-cs-pane="myaccount">
               <div class="cs-pane-head">
@@ -3236,7 +3203,7 @@
                         <span class="pos-close-field-label">Amount</span>
                         <span class="pos-close-pct-label" id="posClosePctLbl-NQU5">100% · 8 Contracts</span>
                       </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSlider-NQU5" min="0" max="100" step="1"
+                      <input type="range" class="pos-close-slider range-slider" id="posCloseSlider-NQU5" min="0" max="100" step="1"
                         value="100">
                       <button class="pos-close-primary" data-pos-close-market>Close Position</button>
                     </div>
@@ -3245,7 +3212,7 @@
                         <span class="pos-close-field-label">Amount</span>
                         <span class="pos-close-pct-label" id="posClosePctLblLimit-NQU5">100% · 8 Contracts</span>
                       </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-NQU5" min="0" max="100"
+                      <input type="range" class="pos-close-slider range-slider" id="posCloseSliderLimit-NQU5" min="0" max="100"
                         step="1" value="100">
                       <div class="pos-close-field-label">Limit price</div>
                       <div class="price-stepper">
@@ -3358,7 +3325,7 @@
                         <span class="pos-close-field-label">Amount</span>
                         <span class="pos-close-pct-label" id="posClosePctLbl-ESU5">100% · 5 Contracts</span>
                       </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSlider-ESU5" min="0" max="100" step="1"
+                      <input type="range" class="pos-close-slider range-slider" id="posCloseSlider-ESU5" min="0" max="100" step="1"
                         value="100">
                       <button class="pos-close-primary" data-pos-close-market>Close Position</button>
                     </div>
@@ -3367,7 +3334,7 @@
                         <span class="pos-close-field-label">Amount</span>
                         <span class="pos-close-pct-label" id="posClosePctLblLimit-ESU5">100% · 5 Contracts</span>
                       </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-ESU5" min="0" max="100"
+                      <input type="range" class="pos-close-slider range-slider" id="posCloseSliderLimit-ESU5" min="0" max="100"
                         step="1" value="100">
                       <div class="pos-close-field-label">Limit price</div>
                       <div class="price-stepper">
@@ -3481,7 +3448,7 @@
                         <span class="pos-close-field-label">Amount</span>
                         <span class="pos-close-pct-label" id="posClosePctLbl-SOLUSD">100% · 3,084.19 USD</span>
                       </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSlider-SOLUSD" min="0" max="100" step="1"
+                      <input type="range" class="pos-close-slider range-slider" id="posCloseSlider-SOLUSD" min="0" max="100" step="1"
                         value="100">
                       <button class="pos-close-primary" data-pos-close-market>Close Position</button>
                     </div>
@@ -3490,7 +3457,7 @@
                         <span class="pos-close-field-label">Amount</span>
                         <span class="pos-close-pct-label" id="posClosePctLblLimit-SOLUSD">100% · 3,084.19 USD</span>
                       </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-SOLUSD" min="0" max="100"
+                      <input type="range" class="pos-close-slider range-slider" id="posCloseSliderLimit-SOLUSD" min="0" max="100"
                         step="1" value="100">
                       <div class="pos-close-field-label">Limit price</div>
                       <div class="price-stepper">
@@ -3610,7 +3577,7 @@
                         <span class="pos-close-field-label">Amount</span>
                         <span class="pos-close-pct-label" id="posClosePctLbl-BTCUSD">100% · 0.125 BTC</span>
                       </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSlider-BTCUSD" min="0" max="100" step="1"
+                      <input type="range" class="pos-close-slider range-slider" id="posCloseSlider-BTCUSD" min="0" max="100" step="1"
                         value="100">
                       <button class="pos-close-primary" data-pos-close-market>Close Position</button>
                     </div>
@@ -3619,7 +3586,7 @@
                         <span class="pos-close-field-label">Amount</span>
                         <span class="pos-close-pct-label" id="posClosePctLblLimit-BTCUSD">100% · 0.125 BTC</span>
                       </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-BTCUSD" min="0" max="100"
+                      <input type="range" class="pos-close-slider range-slider" id="posCloseSliderLimit-BTCUSD" min="0" max="100"
                         step="1" value="100">
                       <div class="pos-close-field-label">Limit price</div>
                       <div class="price-stepper">
@@ -3733,7 +3700,7 @@
                         <span class="pos-close-field-label">Amount</span>
                         <span class="pos-close-pct-label" id="posClosePctLbl-AAPL">100% · 100 Shares</span>
                       </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSlider-AAPL" min="0" max="100" step="1"
+                      <input type="range" class="pos-close-slider range-slider" id="posCloseSlider-AAPL" min="0" max="100" step="1"
                         value="100">
                       <button class="pos-close-primary" data-pos-close-market>Close Position</button>
                     </div>
@@ -3742,7 +3709,7 @@
                         <span class="pos-close-field-label">Amount</span>
                         <span class="pos-close-pct-label" id="posClosePctLblLimit-AAPL">100% · 100 Shares</span>
                       </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-AAPL" min="0" max="100"
+                      <input type="range" class="pos-close-slider range-slider" id="posCloseSliderLimit-AAPL" min="0" max="100"
                         step="1" value="100">
                       <div class="pos-close-field-label">Limit price</div>
                       <div class="price-stepper">
@@ -5154,7 +5121,7 @@
       <span class="pos-close-field-label">Amount</span>
       <span class="pos-close-pct-label" id="chartClosePctLabel">100%</span>
     </div>
-    <input type="range" class="pos-close-slider" id="chartCloseSlider" min="0" max="100" step="1" value="100">
+    <input type="range" class="pos-close-slider range-slider" id="chartCloseSlider" min="0" max="100" step="1" value="100">
     <div class="modal-actions">
       <button class="btn-cancel" id="chartCloseCancel">Cancel</button>
       <button class="btn-save" id="chartCloseConfirm">Close</button>
@@ -5393,9 +5360,9 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=146"></script>
+  <script src="js/app.js?v=147"></script>
   <script src="js/theme.js?v=2"></script>
-  <script src="js/right-panel.js?v=17"></script>
+  <script src="js/right-panel.js?v=18"></script>
   <script src="js/market-scanner.js?v=14"></script>
   <script src="js/market-sessions.js?v=4"></script>
 

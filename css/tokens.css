@@ -323,6 +323,67 @@ input {
   color: var(--on-accent);
 }
 
+/* ====== Global range slider ======
+   Custom range input with a track that fills up to the thumb.
+   Markup: <div class="range-slider-wrap"><div class="range-slider-track"></div>
+             <input type="range" class="range-slider"></div>
+   The wrap/track can be added statically, or created at runtime for
+   dynamically-inserted sliders via decorateRangeSlider() (js/app.js).
+   Call fillRangeSlider() on init and on `input` to keep the fill in sync. */
+.range-slider-wrap {
+  position: relative;
+  height: 14px;
+}
+
+.range-slider-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-default);
+  z-index: 0;
+}
+
+.range-slider {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 14px;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  cursor: pointer;
+}
+
+.range-slider::-moz-range-track {
+  background: transparent;
+}
+
+.range-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: none;
+  cursor: pointer;
+}
+
 @media (prefers-reduced-motion: reduce) {
 
   .flash-up,

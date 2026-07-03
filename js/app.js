@@ -410,31 +410,32 @@
       });
     }
   });
-  /* wrap a raw slider with its track (idempotent) */
-  function decoratePosCloseSlider(slider) {
-    if (slider.parentElement && slider.parentElement.classList.contains('pos-close-slider-wrap')) return;
+  /* wrap a raw .range-slider with its track (idempotent) — for sliders inserted at runtime;
+     statically-declared ones (e.g. alertVolume) already have the wrap in index.html */
+  function decorateRangeSlider(slider) {
+    if (slider.parentElement && slider.parentElement.classList.contains('range-slider-wrap')) return;
     const wrap = document.createElement('div');
-    wrap.className = 'pos-close-slider-wrap';
+    wrap.className = slider.classList.contains('pos-close-slider') ? 'range-slider-wrap pos-close-slider-wrap' : 'range-slider-wrap';
     slider.parentNode.insertBefore(wrap, slider);
     const track = document.createElement('div');
-    track.className = 'pos-close-track';
+    track.className = 'range-slider-track';
     wrap.appendChild(track);
     wrap.appendChild(slider);
   }
-  window.decoratePosCloseSlider = decoratePosCloseSlider;
+  window.decorateRangeSlider = decorateRangeSlider;
 
-  function posCloseSliderFill(slider) {
-    const wrap = slider.closest('.pos-close-slider-wrap');
+  function fillRangeSlider(slider) {
+    const wrap = slider.closest('.range-slider-wrap');
     if (!wrap) return;
     const pct = parseInt(slider.value, 10);
-    /* fill transition lands exactly at the thumb centre */
-    const pos = 'calc(5px + (100% - 10px) * ' + (pct / 100) + ')';
-    const track = wrap.querySelector('.pos-close-track');
+    /* fill transition lands exactly at the thumb centre (thumb is 14px) */
+    const pos = 'calc(7px + (100% - 14px) * ' + (pct / 100) + ')';
+    const track = wrap.querySelector('.range-slider-track');
     if (track) {
       track.style.background = 'linear-gradient(to right, var(--border-strong) ' + pos + ', var(--border-default) ' + pos + ')';
     }
   }
-  window.posCloseSliderFill = posCloseSliderFill;
+  window.fillRangeSlider = fillRangeSlider;
 
   function updatePosCloseLabel(slider) {
     const pane = slider.closest('.pos-close-pane');
@@ -459,13 +460,13 @@
   posPanel.addEventListener('input', e => {
     const slider = e.target.closest('.pos-close-slider');
     if (!slider) return;
-    posCloseSliderFill(slider);
+    fillRangeSlider(slider);
     updatePosCloseLabel(slider);
   });
 
   document.querySelectorAll('.pos-close-slider').forEach(s => {
-    decoratePosCloseSlider(s);
-    posCloseSliderFill(s);
+    decorateRangeSlider(s);
+    fillRangeSlider(s);
     updatePosCloseLabel(s);
   });
   document.getElementById('ctxAlert').addEventListener('click', () => { addAlert(pendingClickPrice); closeAllPopovers(); });
@@ -929,7 +930,7 @@
   function setChartClosePct(pct) {
     pct = clamp(Math.round(pct), 0, 100);
     chartCloseSlider.value = pct;
-    if (window.posCloseSliderFill) window.posCloseSliderFill(chartCloseSlider);
+    if (window.fillRangeSlider) window.fillRangeSlider(chartCloseSlider);
     const qty = order ? Math.max(1, Math.round(order.qty * pct / 100)) : 0;
     chartClosePctLabel.textContent = pct + '% · ' + qty + (qty === 1 ? ' contract' : ' contracts');
     chartCloseQuick.querySelectorAll('[data-close-pct]').forEach(b => {
@@ -939,7 +940,7 @@
 
   function openChartClosePopup(rect, trigger) {
     if (!order || !order.filled) return;
-    if (window.decoratePosCloseSlider) window.decoratePosCloseSlider(chartCloseSlider);
+    if (window.decorateRangeSlider) window.decorateRangeSlider(chartCloseSlider);
     setChartClosePct(100);
     openNear(chartClosePopup, rect, 'right', trigger);
   }
@@ -4066,8 +4067,10 @@
   const alertVolumeSlider = document.getElementById('alertVolume');
   const alertVolumeValue = document.getElementById('alertVolumeValue');
   if (alertVolumeSlider && alertVolumeValue) {
+    fillRangeSlider(alertVolumeSlider);
     alertVolumeSlider.addEventListener('input', () => {
       alertVolumeValue.textContent = alertVolumeSlider.value + '%';
+      fillRangeSlider(alertVolumeSlider);
     });
   }
 
