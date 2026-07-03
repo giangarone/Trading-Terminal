@@ -40,7 +40,7 @@
 }
 
 /* TP/SL lines (and a draggable Entry line) get an invisible ~8px grab zone centered on
-   the visible 1px line, so they can be dragged from anywhere along their length. */
+   the visible 1px line, so they can be dragged from anywhere along their  length. */
 .ol-line.tp,
 .ol-line.sl,
 .ol-line.offset,
