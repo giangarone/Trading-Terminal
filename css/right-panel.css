@@ -208,7 +208,7 @@
   padding: 8px 0;
   text-align: center;
   font-size: var(--fs-sm);
-  font-weight: var(--fw-semi);
+  font-weight: 500;
   background: var(--bg-input);
   border: 1px solid var(--border-default);
   color: var(--text-secondary);
