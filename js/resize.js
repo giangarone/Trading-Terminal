@@ -49,27 +49,36 @@ setupHorizontalResize(document.getElementById('leftResizeHandle'), document.quer
 setupHorizontalResize(document.getElementById('rightResizeHandle'), document.querySelector('.right-panel'), 'right', 280, 540);
 setupVerticalResize(document.getElementById('bottomResizeHandle'), document.querySelector('.bottom-panel'), 100, 560);
 
-document.querySelectorAll('.wl-row').forEach(row => {
-  row.addEventListener('click', () => {
-    document.querySelectorAll('.wl-row').forEach(r => r.classList.remove('selected'));
+/* ---------- watchlist row selection (delegated so added rows work too) ---------- */
+(function () {
+  const wlRows = document.getElementById('wlRows');
+  if (!wlRows) return;
+  function selectRow(row) {
+    wlRows.querySelectorAll('.wl-row').forEach(r => r.classList.remove('selected'));
     row.classList.add('selected');
+  }
+  wlRows.addEventListener('click', (e) => {
+    const row = e.target.closest('.wl-row');
+    if (row) selectRow(row);
   });
-  row.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); row.click(); }
+  wlRows.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const row = e.target.closest('.wl-row');
+    if (row) { e.preventDefault(); selectRow(row); }
   });
-});
+})();
 
 /* ---------- watchlist category tabs + search ---------- */
 (function () {
   const tabs = document.querySelectorAll('#wlTabs .wl-tab');
-  const rows = document.querySelectorAll('#wlRows .wl-row');
   const searchInput = document.getElementById('wlSearchInput');
   const emptyMsg = document.getElementById('wlEmpty');
   let activeCat = 'all';
+  /* query rows live so symbols added after init are still filtered */
   function applyFilter() {
     const q = searchInput.value.trim().toUpperCase();
     let visibleCount = 0;
-    rows.forEach(row => {
+    document.querySelectorAll('#wlRows .wl-row').forEach(row => {
       const matchesCat = activeCat === 'all' || row.dataset.cat === activeCat;
       const matchesSearch = !q || row.dataset.sym.toUpperCase().includes(q);
       const show = matchesCat && matchesSearch;
@@ -86,6 +95,7 @@ document.querySelectorAll('.wl-row').forEach(row => {
     });
   });
   searchInput.addEventListener('input', applyFilter);
+  window.applyWatchlistFilter = applyFilter;
   applyFilter();
 })();
 

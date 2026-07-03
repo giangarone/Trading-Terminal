@@ -22,6 +22,110 @@
   function setUpDown(el, isUp) { el.classList.remove('up', 'down'); el.classList.add(isUp ? 'up' : 'down'); }
   function flashEl(el, isUp) { el.classList.remove('flash-up', 'flash-down'); void el.offsetWidth; el.classList.add(isUp ? 'flash-up' : 'flash-down'); }
   function roundStep(p, step) { return Math.round(p / step) * step; }
+  function fmtVol(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return String(Math.round(n));
+  }
+  function symHash(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+    return h;
+  }
+  /* deterministic base volume per symbol (~200K … 40M) so rows differ but stay stable */
+  function baseVolFor(sym) { return 200000 + (symHash(sym) % 40000000); }
+
+  /* display names for the whole add-symbol universe (+ the futures shown in the
+     static watchlist). Falls back to the ticker for anything unlisted. */
+  const SYMBOL_NAMES = {
+    ETHUSD: 'Ethereum', BTCUSD: 'Bitcoin', SOLUSD: 'Solana', XRPUSD: 'XRP', BNBUSD: 'BNB',
+    DOGEUSD: 'Dogecoin', ADAUSD: 'Cardano', AVAXUSD: 'Avalanche', LINKUSD: 'Chainlink',
+    MATICUSD: 'Polygon', LTCUSD: 'Litecoin', DOTUSD: 'Polkadot', TRXUSD: 'TRON',
+    ATOMUSD: 'Cosmos', NEARUSD: 'NEAR Protocol', UNIUSD: 'Uniswap', FILUSD: 'Filecoin',
+    APTUSD: 'Aptos', ARBUSD: 'Arbitrum', OPUSD: 'Optimism', SUIUSD: 'Sui',
+    ICPUSD: 'Internet Computer', ETCUSD: 'Ethereum Classic',
+    AAPL: 'Apple Inc.', TSLA: 'Tesla, Inc.', NVDA: 'NVIDIA Corp.', MSFT: 'Microsoft Corp.',
+    AMZN: 'Amazon.com, Inc.', GOOGL: 'Alphabet Inc.', META: 'Meta Platforms, Inc.',
+    NFLX: 'Netflix, Inc.', AMD: 'Advanced Micro Devices', JPM: 'JPMorgan Chase',
+    BAC: 'Bank of America', DIS: 'Walt Disney Co.', KO: 'Coca-Cola Co.', PEP: 'PepsiCo, Inc.',
+    WMT: 'Walmart Inc.', V: 'Visa Inc.', MA: 'Mastercard Inc.', XOM: 'Exxon Mobil Corp.',
+    CVX: 'Chevron Corp.', INTC: 'Intel Corp.', ORCL: 'Oracle Corp.', CRM: 'Salesforce, Inc.',
+    ADBE: 'Adobe Inc.',
+    NQU5: 'E-mini Nasdaq-100', ESU5: 'E-mini S&P 500', YMU5: 'E-mini Dow',
+    RTYU5: 'E-mini Russell 2000', CLN5: 'Crude Oil', GCQ5: 'Gold', SIN5: 'Silver',
+    ZBU5: 'U.S. Treasury Bond', ZNU5: '10-Year T-Note', ZCU5: 'Corn', HGU5: 'Copper',
+    NGU5: 'Natural Gas', PLU5: 'Platinum', KCU5: 'Coffee', ZSU5: 'Soybeans', ZWU5: 'Wheat',
+    '6BU5': 'British Pound', '6EU5': 'Euro FX',
+    EURUSD: 'Euro / US Dollar', GBPUSD: 'British Pound / US Dollar', USDJPY: 'US Dollar / Japanese Yen',
+    AUDUSD: 'Australian Dollar / US Dollar', USDCAD: 'US Dollar / Canadian Dollar',
+    NZDUSD: 'NZ Dollar / US Dollar', USDCHF: 'US Dollar / Swiss Franc', EURGBP: 'Euro / British Pound',
+    EURJPY: 'Euro / Japanese Yen', GBPJPY: 'British Pound / Japanese Yen', USDTRY: 'US Dollar / Turkish Lira',
+    USDMXN: 'US Dollar / Mexican Peso', USDZAR: 'US Dollar / South African Rand', EURCHF: 'Euro / Swiss Franc',
+    AUDJPY: 'Australian Dollar / Japanese Yen', CHFJPY: 'Swiss Franc / Japanese Yen', EURAUD: 'Euro / Australian Dollar',
+  };
+  function nameFor(sym) { return SYMBOL_NAMES[sym] || sym; }
+
+  /* plausible starting data for a symbol that isn't in the static watchlist,
+     derived from its category + a stable per-symbol hash */
+  const CAT_SEED = {
+    crypto: { last: 50, step: 0.01, dec: 2 },
+    stocks: { last: 200, step: 0.05, dec: 2 },
+    futures: { last: 5000, step: 0.25, dec: 2 },
+    forex: { last: 1.1, step: 0.0001, dec: 4 },
+  };
+  function seedSymbol(sym, cat) {
+    const h = symHash(sym);
+    const base = CAT_SEED[cat] || CAT_SEED.stocks;
+    const mult = 0.5 + (h % 1000) / 1000 * 3;      /* 0.5× … 3.5× */
+    const chgPct = ((h % 800) / 100) - 4;           /* −4% … +4% */
+    const last = Math.max(+(base.last * mult).toFixed(base.dec), base.step);
+    return { last, chgPct, step: base.step, dec: base.dec, vol: baseVolFor(sym) };
+  }
+
+  /* ensure a static/dynamic row carries ticker+name spans and Change/Volume cells */
+  function normalizeWatchlistRow(row) {
+    const sym = row.dataset.sym;
+    const symEl = row.querySelector('.wl-sym');
+    if (symEl && !symEl.querySelector('.wl-sym-ticker')) {
+      const ticker = symEl.textContent.trim();
+      symEl.innerHTML = '<span class="wl-sym-ticker">' + ticker + '</span>' +
+        '<span class="wl-sym-name">' + nameFor(sym) + '</span>';
+    }
+    if (!row.querySelector('.wl-chgabs')) {
+      const chgAbs = document.createElement('span');
+      chgAbs.className = 'wl-chgabs';
+      chgAbs.id = 'wlChgAbs-' + sym;
+      row.insertBefore(chgAbs, row.querySelector('.wl-chg'));
+    }
+    if (!row.querySelector('.wl-vol')) {
+      const vol = document.createElement('span');
+      vol.className = 'wl-vol';
+      vol.id = 'wlVol-' + sym;
+      row.appendChild(vol);
+    }
+  }
+
+  /* build a complete row for a newly added symbol using its seed meta */
+  function buildWatchlistRow(sym, cat, meta) {
+    const row = document.createElement('div');
+    row.className = 'wl-row';
+    row.dataset.sym = sym;
+    row.dataset.cat = cat;
+    row.tabIndex = 0;
+    row.setAttribute('role', 'button');
+    const up = meta.chgPct >= 0;
+    const abs = meta.last - meta.last / (1 + meta.chgPct / 100);
+    const dir = up ? 'up' : 'down';
+    row.innerHTML =
+      '<span class="wl-sym"><span class="wl-sym-ticker">' + sym + '</span>' +
+      '<span class="wl-sym-name">' + nameFor(sym) + '</span></span>' +
+      '<span class="wl-last" id="wlLast-' + sym + '">' + fmt(meta.last, meta.dec) + '</span>' +
+      '<span class="wl-chgabs ' + dir + '" id="wlChgAbs-' + sym + '">' + (up ? '+' : '') + fmt(abs, meta.dec) + '</span>' +
+      '<span class="wl-chg ' + dir + '" id="wlChg-' + sym + '">' + (up ? '+' : '') + fmt(meta.chgPct) + '%</span>' +
+      '<span class="wl-vol" id="wlVol-' + sym + '">' + fmtVol(meta.vol) + '</span>';
+    return row;
+  }
 
   /* watchlist symbols (ETH is driven separately, alongside the chart) */
   const watchSyms = [
@@ -49,11 +153,22 @@
     { sym: 'USDCAD', last: 1.3625, chgPct: 0.05, step: 0.0001, dec: 4 },
     { sym: 'NZDUSD', last: 0.6022, chgPct: -0.30, step: 0.0001, dec: 4 },
   ];
+  /* normalize every static row first so the Change/Volume cells + name spans exist */
+  document.querySelectorAll('#wlRows .wl-row').forEach(normalizeWatchlistRow);
+
   watchSyms.forEach(s => {
     s.prevClose = s.last / (1 + s.chgPct / 100);
     s.anchor = s.last;
+    s.vol = baseVolFor(s.sym);
     s.elLast = document.getElementById('wlLast-' + s.sym);
     s.elChg = document.getElementById('wlChg-' + s.sym);
+    s.elChgAbs = document.getElementById('wlChgAbs-' + s.sym);
+    s.elVol = document.getElementById('wlVol-' + s.sym);
+    /* seed initial Change/Volume text so the columns aren't blank before first tick */
+    const abs0 = s.last - s.prevClose;
+    const up0 = abs0 >= 0;
+    if (s.elChgAbs) { s.elChgAbs.textContent = (up0 ? '+' : '') + fmt(abs0, s.dec); setUpDown(s.elChgAbs, up0); }
+    if (s.elVol) s.elVol.textContent = fmtVol(s.vol);
   });
 
   /* positions — each carries its own mark price noise so they're independent
@@ -326,9 +441,16 @@
       s.last = Math.max(next, s.step);
       const isUp = s.last > prevLast;
       const chg = (s.last - s.prevClose) / s.prevClose * 100;
+      const chgAbs = s.last - s.prevClose;
       const chgUp = chg >= 0;
       if (s.elLast) s.elLast.textContent = fmt(s.last, s.dec);
       if (s.elChg) { s.elChg.textContent = (chgUp ? '+' : '') + fmt(chg) + '%'; setUpDown(s.elChg, chgUp); }
+      if (s.elChgAbs) { s.elChgAbs.textContent = (chgUp ? '+' : '') + fmt(chgAbs, s.dec); setUpDown(s.elChgAbs, chgUp); }
+      if (s.elVol) {
+        s.vol += s.vol * 0.0008 + (rand() - 0.5) * s.vol * 0.004;
+        if (s.vol < 1000) s.vol = 1000;
+        s.elVol.textContent = fmtVol(s.vol);
+      }
       if (s.elLast) flashEl(s.elLast, isUp);
     });
 
@@ -378,4 +500,27 @@
     }
   }
   setInterval(tick, 1200);
+
+  /* ---------- public API: add a symbol to the watchlist ---------- */
+  window.watchlistHasSymbol = function (sym) {
+    return !!document.querySelector('#wlRows .wl-row[data-sym="' + sym + '"]');
+  };
+  window.addWatchlistSymbol = function (sym, cat) {
+    if (window.watchlistHasSymbol(sym)) return;
+    const rowsWrap = document.getElementById('wlRows');
+    if (!rowsWrap) return;
+    const meta = seedSymbol(sym, cat);
+    rowsWrap.appendChild(buildWatchlistRow(sym, cat, meta));
+    /* register into the live simulation so the new row ticks like the rest */
+    const s = { sym, last: meta.last, chgPct: meta.chgPct, step: meta.step, dec: meta.dec, vol: meta.vol };
+    s.prevClose = s.last / (1 + s.chgPct / 100);
+    s.anchor = s.last;
+    s.elLast = document.getElementById('wlLast-' + sym);
+    s.elChg = document.getElementById('wlChg-' + sym);
+    s.elChgAbs = document.getElementById('wlChgAbs-' + sym);
+    s.elVol = document.getElementById('wlVol-' + sym);
+    watchSyms.push(s);
+    /* apply the active category tab + search so the new row respects the filter */
+    if (window.applyWatchlistFilter) window.applyWatchlistFilter();
+  };
 })();

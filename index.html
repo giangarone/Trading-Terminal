@@ -16,7 +16,7 @@
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
   <link rel="stylesheet" href="css/tokens.css?v=10">
   <link rel="stylesheet" href="css/topbar.css?v=5">
-  <link rel="stylesheet" href="css/left-panel.css?v=3">
+  <link rel="stylesheet" href="css/left-panel.css?v=8">
   <link rel="stylesheet" href="css/center-panel.css?v=5">
   <link rel="stylesheet" href="css/workspace.css?v=26">
   <link rel="stylesheet" href="css/right-panel.css?v=3">
@@ -1003,8 +1003,7 @@
             <div class="cs-pane active" data-cs-pane="trademgmt">
               <div class="cs-pane-head">
                 <h2>Trade Defaults</h2>
-                <p>Default sizing, order type, TP/SL, and management for every trade — no matter where you place it
-                  from.</p>
+                <p> Default sizing, order type, TP/SL, and trade management for your trades.</p>
               </div>
 
               <div class="cs-grid">
@@ -2817,12 +2816,12 @@
       <!-- LEFT PANEL -->
       <aside class="left-panel">
 
-        <div class="card">
+        <div class="card wl-show-last wl-show-chgpct" id="wlCard">
           <div class="card-head">
             <span class="card-title">Watchlist</span>
             <div class="card-head-actions">
-              <span class="material-symbols-outlined">add</span>
-              <span class="material-symbols-outlined">more_horiz</span>
+              <span class="material-symbols-outlined pop-trigger" id="wlAddBtn" title="Add symbol">add</span>
+              <span class="material-symbols-outlined pop-trigger" id="wlColsBtn" title="Customize columns">more_horiz</span>
             </div>
           </div>
           <div class="wl-tabs" id="wlTabs">
@@ -2836,8 +2835,13 @@
             <span class="material-symbols-outlined">search</span>
             <input type="text" id="wlSearchInput" placeholder="Search symbol…">
           </div>
-          <div class="wl-cols"><span>Symbol</span><span style="text-align:right;">Last</span><span
-              style="text-align:right;">Chg%</span></div>
+          <div class="wl-cols">
+            <span data-col="symbol">Symbol</span>
+            <span data-col="last">Last</span>
+            <span data-col="chgabs">Chg</span>
+            <span data-col="chgpct">Chg%</span>
+            <span data-col="vol">Vol</span>
+          </div>
           <div id="wlRows">
             <div class="wl-row selected" data-sym="ETHUSD" data-cat="crypto" tabindex="0" role="button">
               <span class="wl-sym">ETHUSD</span><span class="wl-last" id="wlLast-ETHUSD">4,500.25</span><span
@@ -4268,6 +4272,55 @@
     <div class="sym-select-list" id="symSelectList"></div>
   </div>
 
+  <!-- ===================== WATCHLIST: ADD SYMBOL DROPDOWN ===================== -->
+  <div class="pop-menu sym-select-menu" id="wlAddMenu" style="width:260px;">
+    <div class="wl-tabs" id="wlAddTabs">
+      <button class="wl-tab active" data-cat="all">All</button>
+      <button class="wl-tab" data-cat="crypto">Crypto</button>
+      <button class="wl-tab" data-cat="stocks">Stocks</button>
+      <button class="wl-tab" data-cat="futures">Futures</button>
+      <button class="wl-tab" data-cat="forex">Forex</button>
+    </div>
+    <div class="sym-select-search">
+      <span class="material-symbols-outlined">search</span>
+      <input type="text" id="wlAddSearch" placeholder="Add symbol…">
+    </div>
+    <div class="sym-select-list" id="wlAddList"></div>
+  </div>
+
+  <!-- ===================== WATCHLIST: CUSTOMIZE COLUMNS MENU ===================== -->
+  <div class="pop-menu wl-cols-menu" id="wlColsMenu" style="width:220px;">
+    <div class="pop-menu-label">Columns</div>
+    <button class="pop-item checklist checked" data-col="last">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">Last</span></span>
+    </button>
+    <button class="pop-item checklist" data-col="chgabs">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">Change</span></span>
+    </button>
+    <button class="pop-item checklist checked" data-col="chgpct">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">Change %</span></span>
+    </button>
+    <button class="pop-item checklist" data-col="vol">
+      <span class="chk-box"><span class="material-symbols-outlined">check</span></span>
+      <span class="pop-text"><span class="pt-title">Volume</span></span>
+    </button>
+    <div class="pop-sep"></div>
+    <div class="pop-menu-label">Display symbol as</div>
+    <div class="cs-radio-group wl-display-mode" id="wlDisplayModeGroup">
+      <div class="cs-radio-row active" data-mode="ticker">
+        <span class="cs-radio-dot"></span>
+        <span class="cs-radio-text"><span class="cs-radio-title">Ticker</span></span>
+      </div>
+      <div class="cs-radio-row" data-mode="name">
+        <span class="cs-radio-dot"></span>
+        <span class="cs-radio-text"><span class="cs-radio-title">Company name</span></span>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== CANDLE TYPE DROPDOWN ===================== -->
   <div class="pop-menu" id="candleTypeMenu" style="width:170px;">
     <div class="pop-menu-label">Candle Type</div>
@@ -5370,10 +5423,10 @@
   <script src="js/utils.js"></script>
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
-  <script src="js/resize.js"></script>
-  <script src="js/app.js?v=147"></script>
+  <script src="js/resize.js?v=1"></script>
+  <script src="js/app.js?v=148"></script>
   <script src="js/theme.js?v=2"></script>
-  <script src="js/right-panel.js?v=18"></script>
+  <script src="js/right-panel.js?v=19"></script>
   <script src="js/market-scanner.js?v=14"></script>
   <script src="js/market-sessions.js?v=4"></script>
 

@@ -1003,7 +1003,7 @@ table.bp-table tr.total-row td {
 /* Dynamically-created (chart/quick-trade) rows only render the Close column — keep it at
    its fixed width on its own instead of stretching to a full 1fr track. */
 .pos-row-detail--close-only {
-  grid-template-columns: 260px;
+  grid-template-columns: 240px;
 }
 
 .pos-row.is-expanded .pos-row-detail {

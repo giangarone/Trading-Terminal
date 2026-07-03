@@ -55,9 +55,9 @@
 }
 
 .wl-cols {
-  display: grid;
-  grid-template-columns: minmax(36px, 1fr) 64px 56px;
-  gap: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   font-size: var(--fs-label);
   color: var(--text-muted);
   letter-spacing: var(--ls-label);
@@ -67,10 +67,9 @@
 }
 
 .wl-row {
-  display: grid;
-  grid-template-columns: minmax(36px, 1fr) 64px 56px;
-  gap: 4px;
+  display: flex;
   align-items: center;
+  gap: 12px;
   padding: 7px 6px 7px 9px;
   border-radius: 6px;
   cursor: pointer;
@@ -103,28 +102,122 @@
 .wl-cols span,
 .wl-sym,
 .wl-last,
-.wl-chg {
+.wl-chgabs,
+.wl-chg,
+.wl-vol {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* Widths + alignment are shared by the header and the row cells so the columns
+   stay lined up as they're toggled on/off. Typography stays on the row cells
+   only — the header keeps its uppercase label styling from .wl-cols. */
+.wl-sym,
+.wl-cols [data-col="symbol"] {
+  flex: 1;
+}
+
+.wl-last,
+.wl-cols [data-col="last"] {
+  width: 58px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.wl-chgabs,
+.wl-cols [data-col="chgabs"] {
+  width: 42px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.wl-chg,
+.wl-cols [data-col="chgpct"] {
+  width: 40px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.wl-vol,
+.wl-cols [data-col="vol"] {
+  width: 42px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+/* Row-cell typography (the header cells are unaffected). */
 .wl-sym {
-  font-weight: 500;
   font-size: 12px;
+  font-weight: 500;
 }
 
 .wl-last {
   font-size: 12px;
   font-weight: 500;
-  text-align: right;
 }
 
-.wl-chg {
+.wl-chgabs,
+.wl-chg,
+.wl-vol {
   font-size: 11px;
-  text-align: right;
   font-weight: 500;
+}
+
+.wl-vol {
+  color: var(--text-muted);
+}
+
+/* Column visibility — driven by classes on #wlCard. Change & Volume are off by
+   default; Last & Chg% stay on unless their class is removed. */
+.wl-chgabs,
+.wl-vol,
+.wl-cols [data-col="chgabs"],
+.wl-cols [data-col="vol"] {
+  display: none;
+}
+
+#wlCard.wl-show-chgabs .wl-chgabs,
+#wlCard.wl-show-chgabs .wl-cols [data-col="chgabs"] {
+  display: block;
+}
+
+#wlCard.wl-show-vol .wl-vol,
+#wlCard.wl-show-vol .wl-cols [data-col="vol"] {
+  display: block;
+}
+
+#wlCard:not(.wl-show-last) .wl-last,
+#wlCard:not(.wl-show-last) .wl-cols [data-col="last"] {
+  display: none;
+}
+
+#wlCard:not(.wl-show-chgpct) .wl-chg,
+#wlCard:not(.wl-show-chgpct) .wl-cols [data-col="chgpct"] {
+  display: none;
+}
+
+/* Ticker / company-name toggle — both spans live inside .wl-sym; CSS swaps them. */
+.wl-sym-name {
+  display: none;
+}
+
+#wlCard.wl-show-names .wl-sym-ticker {
+  display: none;
+}
+
+#wlCard.wl-show-names .wl-sym-name {
+  display: inline;
+}
+
+/* Customize-columns menu: stack the display-mode radios vertically and tighten
+   the default .cs-radio-group spacing for the compact popover. */
+.wl-cols-menu .wl-display-mode {
+  flex-direction: column;
+  gap: 9px;
+  margin: 9px 0 3px;
+  padding: 0 9px;
 }
 
 .wl-tabs {

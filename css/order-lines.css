@@ -355,14 +355,14 @@
 }
 
 .ol-chip.tp {
-  background: var(--bg-sunken);
+  background: var(--long-chip);
   border: 1px solid var(--long-border);
   color: var(--long);
   cursor: ns-resize;
 }
 
 .ol-chip.sl {
-  background: var(--bg-sunken);
+  background: var(--short-chip);
   border: 1px solid var(--short-border);
   color: var(--short);
   cursor: ns-resize;
@@ -370,6 +370,7 @@
 
 .ol-chip.tp.invalid,
 .ol-chip.sl.invalid {
+  background: var(--bg-sunken);
   border-color: var(--accent-border);
   color: var(--accent);
 }
@@ -457,13 +458,13 @@
 }
 
 .ol-chip.entry.locked.buy {
-  background: var(--bg-sunken);
+  background: var(--long-chip);
   border: 1px solid var(--long-border);
   color: var(--long);
 }
 
 .ol-chip.entry.locked.sell {
-  background: var(--bg-sunken);
+  background: var(--short-chip);
   border: 1px solid var(--short-border);
   color: var(--short);
 }

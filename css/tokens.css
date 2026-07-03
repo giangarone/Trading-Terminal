@@ -18,6 +18,8 @@
   --on-short: #fff;
   --long-border: rgba(46, 191, 133, .5);
   --short-border: rgba(242, 73, 92, .5);
+  --long-chip: #0B2319;
+  --short-chip: #291317;
   --accent-border: rgba(227, 160, 57, .45);
   --info: #3b82f6;
   --info-dim: rgba(59, 130, 246, .14);
@@ -125,6 +127,8 @@
   --short: #f2495c;
   --short-dim: #f8dde1;
   --short-border: rgba(214, 50, 74, .55);
+  --long-chip: #D7F0E2;
+  --short-chip: #F9DDE1;
   --on-short: #fff;
   --accent: #e5920c;
   --accent-dim: rgb(229 146 12 / 14%);

@@ -2644,6 +2644,8 @@
       hdrDayLow: document.getElementById('hdrDayLow'),
       wlLast: document.getElementById('wlLast-ETHUSD'),
       wlChg: document.getElementById('wlChg-ETHUSD'),
+      wlChgAbs: document.getElementById('wlChgAbs-ETHUSD'),
+      wlVol: document.getElementById('wlVol-ETHUSD'),
       ohlcH: document.getElementById('ohlcH'),
       ohlcL: document.getElementById('ohlcL'),
       ohlcC: document.getElementById('ohlcC'),
@@ -2677,6 +2679,16 @@
       els.wlLast.textContent = fmt(last);
       els.wlChg.textContent = (dayUp ? '+' : '') + fmt(dayChgPct) + '%';
       setUpDown(els.wlChg, dayUp);
+
+      /* Change (abs) & Volume cells are injected by right-panel.js after this
+         module loads, so resolve them lazily on the first tick they exist. */
+      if (!els.wlChgAbs) els.wlChgAbs = document.getElementById('wlChgAbs-ETHUSD');
+      if (!els.wlVol) els.wlVol = document.getElementById('wlVol-ETHUSD');
+      if (els.wlChgAbs) {
+        els.wlChgAbs.textContent = (dayUp ? '+' : '') + fmt(dayChg);
+        setUpDown(els.wlChgAbs, dayUp);
+      }
+      if (els.wlVol) els.wlVol.textContent = fmtVol(vol);
 
       els.ohlcH.textContent = fmt(dayHigh);
       els.ohlcL.textContent = fmt(dayLow);
@@ -4618,6 +4630,92 @@
       renderSymSelectList(symSelectSearch.value);
     });
   });
+
+  /* ---------- watchlist: add-symbol menu (+ button) ---------- */
+  const wlAddBtn = document.getElementById('wlAddBtn');
+  const wlAddMenu = document.getElementById('wlAddMenu');
+  const wlAddSearch = document.getElementById('wlAddSearch');
+  const wlAddList = document.getElementById('wlAddList');
+  const wlAddTabs = document.querySelectorAll('#wlAddTabs .wl-tab');
+  let wlAddCat = 'all';
+  function renderWlAddList(filter) {
+    const q = (filter || '').trim().toUpperCase();
+    /* the universe is SYMBOL_LIST minus whatever is already in the watchlist */
+    const items = SYMBOL_LIST.filter(s =>
+      (wlAddCat === 'all' || s.cat === wlAddCat) &&
+      (!q || s.sym.includes(q)) &&
+      !(window.watchlistHasSymbol && window.watchlistHasSymbol(s.sym)));
+    wlAddList.innerHTML = items.length
+      ? items.map(s => '<button class="sym-select-item" data-sym="' + s.sym + '" data-cat="' + s.cat + '">' + s.sym + '</button>').join('')
+      : '<div class="sym-select-empty">No symbols to add</div>';
+    wlAddList.querySelectorAll('.sym-select-item').forEach(it => {
+      it.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (window.addWatchlistSymbol) window.addWatchlistSymbol(it.dataset.sym, it.dataset.cat);
+        showToast('Added ' + it.dataset.sym + ' to watchlist', 'add');
+        renderWlAddList(wlAddSearch.value);
+      });
+    });
+  }
+  if (wlAddBtn) wlAddBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (wlAddMenu.classList.contains('show') && wlAddMenu._openTrigger === wlAddBtn) {
+      closeAllPopovers();
+      return;
+    }
+    openNear(wlAddMenu, wlAddBtn.getBoundingClientRect(), 'right', wlAddBtn);
+    wlAddSearch.value = '';
+    renderWlAddList('');
+    wlAddSearch.focus();
+  });
+  if (wlAddSearch) {
+    wlAddSearch.addEventListener('input', () => renderWlAddList(wlAddSearch.value));
+    wlAddSearch.addEventListener('click', (e) => e.stopPropagation());
+  }
+  wlAddTabs.forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      wlAddTabs.forEach(t => t.classList.toggle('active', t === tab));
+      wlAddCat = tab.dataset.cat;
+      renderWlAddList(wlAddSearch.value);
+    });
+  });
+
+  /* ---------- watchlist: customize-columns menu (⋯ button) ---------- */
+  const wlColsBtn = document.getElementById('wlColsBtn');
+  const wlColsMenu = document.getElementById('wlColsMenu');
+  const wlCard = document.getElementById('wlCard');
+  if (wlColsBtn) wlColsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (wlColsMenu.classList.contains('show') && wlColsMenu._openTrigger === wlColsBtn) {
+      closeAllPopovers();
+      return;
+    }
+    openNear(wlColsMenu, wlColsBtn.getBoundingClientRect(), 'right', wlColsBtn);
+  });
+  if (wlColsMenu) {
+    /* column checkboxes toggle the matching wl-show-<col> class on #wlCard;
+       keep the menu open so several columns can be toggled at once */
+    wlColsMenu.querySelectorAll('.pop-item.checklist').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const on = item.classList.toggle('checked');
+        wlCard.classList.toggle('wl-show-' + item.dataset.col, on);
+      });
+    });
+    /* display-mode radios: ticker vs company name */
+    const wlDisplayGroup = document.getElementById('wlDisplayModeGroup');
+    if (wlDisplayGroup) {
+      wlDisplayGroup.querySelectorAll('.cs-radio-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+          e.stopPropagation();
+          wlDisplayGroup.querySelectorAll('.cs-radio-row').forEach(r => r.classList.remove('active'));
+          row.classList.add('active');
+          wlCard.classList.toggle('wl-show-names', row.dataset.mode === 'name');
+        });
+      });
+    }
+  }
 
   /* ---------- indicators modal ---------- */
   const indicatorsTrigger = document.getElementById('indicatorsTrigger');
