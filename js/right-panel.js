@@ -224,6 +224,9 @@
     row.querySelector('.pos-row-summary').addEventListener('click', (e) => {
       if (e.target.closest('.pos-col-quickclose') || e.target.closest('.pos-sym-ticker')) return;
       row.classList.toggle('is-expanded');
+      if (row.classList.contains('is-expanded') && window.fitBottomPanelToExpandedRow) {
+        window.fitBottomPanelToExpandedRow(row);
+      }
     });
     document.querySelector('.pos-rows-scroll').prepend(row);
     row.querySelectorAll('.pos-close-slider').forEach(s => {

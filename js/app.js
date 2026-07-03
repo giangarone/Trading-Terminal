@@ -296,10 +296,32 @@
   document.getElementById('ctxQuickMarketShort').addEventListener('click', () => { fillQuickMarketOrder('sell'); closeAllPopovers(); });
 
   /* ---------- positions panel: expand/collapse & in-row actions ---------- */
+  /* When a row is expanded while the bottom panel is too short to show the whole row,
+     grow the panel just enough for the expanded row to be fully visible (capped at the
+     same max height the vertical resize handle allows). Collapsing never shrinks it back. */
+  function fitBottomPanelToExpandedRow(row) {
+    const panel = document.querySelector('.bottom-panel');
+    const scroll = row.closest('.pos-rows-scroll');
+    if (!panel || !scroll || panel.classList.contains('bp-collapsed')) return;
+    const MAX_PANEL_HEIGHT = 560; // matches the vertical resize handle's max in resize.js
+    const rowHeight = row.getBoundingClientRect().height;
+    const viewportHeight = scroll.clientHeight;
+    if (rowHeight > viewportHeight) {
+      const panelHeight = panel.getBoundingClientRect().height;
+      const needed = panelHeight + (rowHeight - viewportHeight);
+      panel.style.height = Math.min(MAX_PANEL_HEIGHT, needed) + 'px';
+    }
+    /* keep the expanded row anchored in view after any growth */
+    requestAnimationFrame(() => row.scrollIntoView({ block: 'nearest' }));
+  }
+  window.fitBottomPanelToExpandedRow = fitBottomPanelToExpandedRow;
+
   document.querySelectorAll('.pos-row-summary').forEach(summary => {
     summary.addEventListener('click', (e) => {
       if (e.target.closest('.pos-col-quickclose') || e.target.closest('.pos-sym-ticker')) return;
-      summary.closest('.pos-row').classList.toggle('is-expanded');
+      const row = summary.closest('.pos-row');
+      row.classList.toggle('is-expanded');
+      if (row.classList.contains('is-expanded')) fitBottomPanelToExpandedRow(row);
     });
   });
 
