@@ -813,15 +813,19 @@ table.msx-table tbody tr.selected {
   gap: 8px;
   justify-content: center;
   margin-top: 4px;
+  width: 800px;
 }
 
 .msx-example-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   color: var(--purple);
   background: var(--purple-dim);
   border: 1px solid transparent;
   border-radius: var(--r-pill);
-  padding: 6px 12px;
+  padding: 3px 12px;
   cursor: pointer;
   transition: border-color var(--t-ui);
 }
@@ -907,40 +911,6 @@ table.msx-table tbody tr.selected {
 
 .msx-ai-clear .material-symbols-outlined {
   font-size: 14px;
-}
-
-/* AI rank cell */
-.msx-rank {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--purple);
-}
-
-.msx-score {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.msx-score-bar {
-  width: 60px;
-  height: 4px;
-  border-radius: 3px;
-  background: var(--purple-dim);
-  overflow: hidden;
-}
-
-.msx-score-fill {
-  display: block;
-  height: 100%;
-  background: var(--purple);
-  border-radius: 3px;
-}
-
-.msx-score-num {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-secondary);
 }
 
 /* ---- Detail pane ---- */
@@ -1157,6 +1127,155 @@ table.msx-table tbody tr.selected {
 .msx-d-btn-row .msx-d-btn {
   flex: 1;
   font-size: 11.5px;
+}
+
+.msx-d-btn-danger:hover {
+  color: var(--short);
+  border-color: var(--short-border);
+  background: var(--short-dim);
+}
+
+/* =====================================================================
+   Saved scans — save flow, list badges, and detail pane
+   ===================================================================== */
+
+/* AI-origin marker in the Saved Scans list + banner name */
+.msx-scan-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.msx-origin-badge {
+  padding: 2px 6px;
+  font-size: 9.5px;
+}
+
+.msx-origin-badge .material-symbols-outlined {
+  font-size: 12px;
+}
+
+/* AI banner: name row + actions (Save / Clear) */
+.msx-ai-banner-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--purple);
+  margin-bottom: 4px;
+}
+
+.msx-ai-banner-name .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.msx-ai-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.msx-ai-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--purple-guide);
+  background: var(--purple-dim);
+  color: var(--purple);
+  border-radius: var(--r-sm);
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: border-color var(--t-ui);
+}
+
+.msx-ai-save:hover {
+  border-color: var(--purple);
+}
+
+.msx-ai-save .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* Saved-scan detail pane */
+.msx-d-scan-badge {
+  background: var(--purple-dim);
+  color: var(--purple);
+}
+
+.msx-d-scan-badge .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.msx-d-scan-query {
+  font-size: 12.5px;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.msx-d-scan-stats {
+  display: flex;
+  gap: 18px;
+}
+
+.msx-d-scan-stat {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* =====================================================================
+   Save / Edit scan dialog (built on the shared .oc-dialog pattern).
+   Sits below the shared cs-dropdown popover (z 2100) so its Category /
+   Frequency menus render above it.
+   ===================================================================== */
+#msxSaveBackdrop {
+  z-index: 2050;
+}
+
+.msx-save-dialog {
+  width: 420px;
+}
+
+.msx-save-field {
+  margin-bottom: 12px;
+}
+
+.msx-save-field label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.msx-save-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--sans);
+  padding: 9px 11px;
+}
+
+.msx-save-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.msx-save-criteria {
+  padding: 4px 0 2px;
+}
+
+.msx-confirm-danger {
+  background: var(--short);
+  border-color: var(--short);
 }
 
 /* =====================================================================

@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="css/quick-trade.css?v=6">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=31">
-  <link rel="stylesheet" href="css/market-scanner.css?v=25">
+  <link rel="stylesheet" href="css/market-scanner.css?v=29">
   <link rel="stylesheet" href="css/indicators.css?v=9">
   <link rel="stylesheet" href="css/chart-settings.css?v=30">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
@@ -5460,6 +5460,56 @@
     </div>
   </div>
 
+  <!-- ===================== MARKET SCANNER — SAVE / EDIT SCAN DIALOG ===================== -->
+  <div class="oc-backdrop" id="msxSaveBackdrop">
+    <div class="oc-dialog msx-save-dialog">
+      <div class="oc-dialog-head">
+        <div>
+          <div class="oc-dialog-title" id="msxSaveTitle">Save Scan</div>
+          <div class="oc-dialog-sub">Saved scans re-run live against the market whenever you press Run.</div>
+        </div>
+        <button class="oc-close" id="msxSaveClose"><span class="material-symbols-outlined">close</span></button>
+      </div>
+
+      <div class="msx-save-field">
+        <label for="msxSaveName">Name</label>
+        <input type="text" id="msxSaveName" class="msx-save-input" autocomplete="off" placeholder="Name this scan">
+      </div>
+
+      <div class="msx-save-field">
+        <label for="msxSaveDesc">Description</label>
+        <input type="text" id="msxSaveDesc" class="msx-save-input" autocomplete="off" placeholder="What does this scan look for?">
+      </div>
+
+      <div class="msx-save-field">
+        <label>Criteria</label>
+        <div class="msx-ai-criteria msx-save-criteria" id="msxSaveCriteria"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" id="msxSaveCancel">Cancel</button>
+        <button class="btn-save" id="msxSaveConfirm">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MARKET SCANNER — DELETE SCAN CONFIRM ===================== -->
+  <div class="oc-backdrop" id="msxConfirmBackdrop">
+    <div class="oc-dialog">
+      <div class="oc-dialog-head">
+        <div>
+          <div class="oc-dialog-title">Delete Scan</div>
+        </div>
+        <button class="oc-close" id="msxConfirmClose"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="oc-dialog-desc" id="msxConfirmDesc">Delete this scan? This can't be undone.</div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="msxConfirmCancel">Cancel</button>
+        <button class="btn-save msx-confirm-danger" id="msxConfirmOk">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== TOASTS ===================== -->
   <div class="toast-stack" id="toastStack"></div>
 
@@ -5475,7 +5525,7 @@
   <script src="js/app.js?v=143"></script>
   <script src="js/theme.js?v=2"></script>
   <script src="js/right-panel.js?v=14"></script>
-  <script src="js/market-scanner.js?v=9"></script>
+  <script src="js/market-scanner.js?v=14"></script>
   <script src="js/market-sessions.js?v=4"></script>
 
 </body>

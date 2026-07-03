@@ -324,22 +324,73 @@
   ASSETS.forEach(function (a) { ASSET_BY_SYM[a.sym] = a; });
 
   /* ---------------------------------------------------------------
-     Saved scans (their own shape — not asset-backed)
+     Saved scans — persisted store (localStorage), recipe model.
+     Each saved scan stores the AI query so "Run" re-executes it live
+     rather than replaying a frozen result set. Shape:
+       { id, name, desc, query, results, lastRun, origin }
      --------------------------------------------------------------- */
-  const SAVED_SCANS = [
-    { name: 'Earnings Breakout', desc: 'Earnings beat + breakout', freq: 'Real-time', lastRun: '1m ago', results: 14, cat: 'myscans' },
-    { name: 'Dark Pool Buying', desc: 'Dark pool buys > $50M', freq: 'Real-time', lastRun: '2m ago', results: 23, cat: 'myscans' },
-    { name: 'RSI Oversold Bounce', desc: 'RSI < 30 bouncing', freq: '15m', lastRun: '10m ago', results: 8, cat: 'myscans' },
-    { name: 'Bullish Divergence', desc: 'Price lower low, RSI higher low', freq: 'Real-time', lastRun: '1m ago', results: 11, cat: 'alerts' },
-    { name: 'High Volume Breakout', desc: 'Breakout on high volume', freq: 'Real-time', lastRun: '3m ago', results: 19, cat: 'alerts' },
-    { name: 'Crypto Majors Watchlist', desc: 'BTC, ETH, SOL key levels', freq: 'Real-time', lastRun: '30s ago', results: 6, cat: 'watchlists' }
-  ];
+  const SAVED_SCANS_KEY = 'tt_savedScans';
+
+  // The library starts empty — scans are created by saving AI scans.
+  let SAVED_SCANS = loadSavedScans();
+
+  function loadSavedScans() {
+    try {
+      const raw = localStorage.getItem(SAVED_SCANS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          // Drop the old default seeds (ids "seed_*") from prior versions.
+          const cleaned = parsed.filter(function (s) { return !(s.id && s.id.indexOf('seed_') === 0); });
+          if (cleaned.length !== parsed.length) {
+            try { localStorage.setItem(SAVED_SCANS_KEY, JSON.stringify(cleaned)); } catch (e) { /* no-op */ }
+          }
+          return cleaned;
+        }
+      }
+    } catch (e) { /* storage unavailable — start empty */ }
+    return [];
+  }
+
+  function persistSavedScans() {
+    try { localStorage.setItem(SAVED_SCANS_KEY, JSON.stringify(SAVED_SCANS)); } catch (e) { /* no-op */ }
+  }
+
+  function scanById(id) {
+    for (let i = 0; i < SAVED_SCANS.length; i++) { if (SAVED_SCANS[i].id === id) return SAVED_SCANS[i]; }
+    return null;
+  }
+
+  function addSavedScan(obj) { SAVED_SCANS.push(obj); persistSavedScans(); }
+
+  function updateSavedScan(id, patch) {
+    const s = scanById(id);
+    if (s) { Object.assign(s, patch); persistSavedScans(); }
+  }
+
+  function deleteSavedScan(id) {
+    SAVED_SCANS = SAVED_SCANS.filter(function (s) { return s.id !== id; });
+    persistSavedScans();
+  }
 
   /* ---------------------------------------------------------------
      Small render helpers (return HTML strings)
      --------------------------------------------------------------- */
   function capitalize(s) {
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  }
+
+  // Local toast — app.js's showToast lives in its own IIFE and isn't shared,
+  // so we mirror it here reusing the same #toastStack element and .toast styles.
+  function showToast(msg, icon) {
+    const stack = document.getElementById('toastStack');
+    if (!stack) return;
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = '<span class="material-symbols-outlined">' + (icon || 'info') + '</span><span>' + msg + '</span>';
+    stack.appendChild(t);
+    setTimeout(function () { t.classList.add('show'); }, 10);
+    setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 2600);
   }
 
   function changeStr(n) {
@@ -424,42 +475,46 @@
       rows: function () { return ASSETS.map(function (a) { return { a: a, tags: a.biasTags, sortSymbol: a.sym, sortPrice: parseFloat(a.price.replace(/,/g, '')), sortBias: a.bias, sortStrength: a.strength }; }); }
     },
     saved: {
-      chips: [['all', 'All'], ['myscans', 'My Scans'], ['alerts', 'Alerts'], ['watchlists', 'Watchlists']],
+      chips: [],
       columns: [
-        { label: 'Scan Name', render: function (s) { return '<span class="msx-stack-main">' + s.name + '</span>'; } },
+        { label: 'Scan Name', render: function (s) { return '<span class="msx-scan-name"><span class="msx-stack-main">' + s.name + '</span>' + originBadge(s) + '</span>'; } },
         { label: 'Description', render: function (s) { return '<span class="msx-muted">' + s.desc + '</span>'; } },
-        { label: 'Frequency', render: function (s) { return '<span class="msx-muted">' + s.freq + '</span>'; } },
         { label: 'Last Run', render: function (s) { return '<span class="msx-muted">' + s.lastRun + '</span>'; } },
         { label: 'Results', cls: 'num', render: function (s) { return '<span class="msx-value">' + s.results + '</span>'; } },
-        { label: '', cls: 'num', render: function () { return '<button class="msx-run-btn"><span class="material-symbols-outlined">play_arrow</span>Run</button>'; } }
+        { label: '', cls: 'num', render: function (s) { return '<button class="msx-run-btn" data-run-scan="' + s.id + '"><span class="material-symbols-outlined">play_arrow</span>Run</button>'; } }
       ],
-      rows: function () { return SAVED_SCANS.map(function (s) { return { s: s, tags: [s.cat], sortChange: s.results, sortStrength: s.results }; }); },
-      noDetail: true
+      rows: function () { return SAVED_SCANS.map(function (s) { return { s: s, tags: ['all'], sortChange: s.results, sortStrength: s.results }; }); }
     },
+    // AI Results mirror the Live Feed columns exactly — the AI is just a
+    // discovery filter over the same universe.
     ai: {
       chips: [],
       columns: [
-        { label: '#', cls: 'num', render: function (a, row) { return '<span class="msx-rank">' + row.rank + '</span>'; } },
-        { label: 'Asset', render: function (a) { return assetCell(a); } },
-        { label: 'Match', render: function (a, row) { return stackCell(row.match, null, 'msx-intel'); } },
-        { label: 'Why it matched', render: function (a, row) { return '<span class="msx-muted">' + row.reason + '</span>'; } },
-        { label: 'Change', cls: 'num', render: function (a) { return changeStr(a.change); } },
-        { label: 'Score', cls: 'num', render: function (a, row) { return scoreCell(row.score); } }
+        { label: 'Asset', sortKey: 'sortSymbol', render: function (a) { return assetCell(a); } },
+        { label: 'Price', cls: 'num', sortKey: 'sortPrice', render: function (a) { return priceCell(a); } },
+        { label: 'Bias', sortKey: 'sortBias', render: function (a) { return biasCell(a.bias); } },
+        { label: 'Evidence', cls: 'num', sortKey: 'sortStrength', render: function (a) { return strengthCell(a.strength); } },
+        { label: 'Indicators', render: function (a) { return stackCell(a.indicator.signal, a.indicator.value, a.bias === 'bullish' ? 'msx-up' : a.bias === 'bearish' ? 'msx-down' : '', a.bias); } },
+        { label: 'Intelligence', render: function (a) { return stackCell(a.intel.signal, a.intel.value, 'msx-intel', a.bias); } },
+        { label: 'News', render: function (a) { var nb = a.news.reaction > 0.5 ? 'bullish' : a.news.reaction < -0.5 ? 'bearish' : 'mixed'; return stackCell(a.news.headline, capitalize(a.news.impact), '', nb); } },
+        { label: 'Technical', render: function (a) { return stackCell(a.technical.setup, a.technical.level, '', a.bias); } }
       ],
-      rows: function () { return (aiState.results || []).map(function (r) { return { a: r.a, rank: r.rank, match: r.match, reason: r.reason, score: r.score, tags: ['all'], sortChange: r.a.change, sortStrength: r.score }; }); }
+      rows: function () { return (aiState.results || []).map(function (r) { return { a: r.a, rank: r.rank, match: r.match, reason: r.reason, tags: ['all'], sortSymbol: r.a.sym, sortPrice: parseFloat(r.a.price.replace(/,/g, '')), sortBias: r.a.bias, sortStrength: r.a.strength }; }); }
     }
   };
 
-  function scoreCell(score) {
-    return '<span class="msx-score"><span class="msx-score-bar"><span class="msx-score-fill" style="width:' + score + '%"></span></span>' +
-      '<span class="msx-score-num">' + score + '</span></span>';
+  // Small AI-origin marker for the Saved Scans list (global .badge component).
+  function originBadge(s) {
+    if (s.origin !== 'ai') return '';
+    return '<span class="badge badge--purple badge--uppercase msx-origin-badge">' +
+      '<span class="material-symbols-outlined">auto_awesome</span>AI</span>';
   }
 
   /* ---------------------------------------------------------------
      State
      --------------------------------------------------------------- */
-  const state = { tab: 'livefeed', filter: 'all', search: '', sortCol: null, sortDir: 'desc', selected: 'NVDA' };
-  const aiState = { results: null, query: '' };
+  const state = { tab: 'livefeed', filter: 'all', search: '', sortCol: null, sortDir: 'desc', selected: 'NVDA', selectedScan: null };
+  const aiState = { results: null, query: '', savedId: null };
 
   /* ---------------------------------------------------------------
      DOM refs
@@ -472,6 +527,8 @@
   const searchEl = document.getElementById('msxSearch');
   const aiForm = document.getElementById('msxAiForm');
   const aiInput = document.getElementById('msxAiInput');
+  const saveBackdrop = document.getElementById('msxSaveBackdrop');
+  const confirmBackdrop = document.getElementById('msxConfirmBackdrop');
 
   /* ---------------------------------------------------------------
      Rendering
@@ -519,6 +576,14 @@
       return;
     }
 
+    // Saved tab with no scans at all → empty state (not a bare table)
+    if (state.tab === 'saved' && !SAVED_SCANS.length) {
+      hostEl.innerHTML = savedEmptyHtml();
+      countEl.textContent = '';
+      wireSavedEmpty();
+      return;
+    }
+
     const all = filteredRows();
 
     const head = '<thead><tr>' + cfg.columns.map(function (c) {
@@ -535,11 +600,14 @@
     const body = '<tbody>' + all.map(function (row) {
       const subject = row.a || row.s;
       const sym = row.a ? row.a.sym : '';
-      const sel = sym && sym === state.selected ? ' class="selected"' : '';
+      const scanId = row.s ? row.s.id : '';
+      const isSel = (sym && sym === state.selected) || (scanId && scanId === state.selectedScan);
+      const sel = isSel ? ' class="selected"' : '';
+      const attrs = 'data-sym="' + sym + '"' + (scanId ? ' data-scan-id="' + scanId + '"' : '');
       const cells = cfg.columns.map(function (c) {
         return '<td class="' + (c.cls || '') + '">' + c.render(subject, row) + '</td>';
       }).join('');
-      return '<tr data-sym="' + sym + '"' + sel + '>' + cells + '</tr>';
+      return '<tr ' + attrs + sel + '>' + cells + '</tr>';
     }).join('') + '</tbody>';
 
     const banner = (state.tab === 'ai' && aiState.results) ? aiBannerHtml() : '';
@@ -549,12 +617,7 @@
   }
 
   function renderDetail() {
-    const cfg = TABS[state.tab];
-    if (cfg.noDetail) {
-      detailEl.innerHTML = '<div class="msx-d-empty"><span class="material-symbols-outlined">bookmark</span>' +
-        'Select a saved scan and press Run to populate live results.</div>';
-      return;
-    }
+    if (state.tab === 'saved') { renderSavedDetail(); return; }
     const a = ASSET_BY_SYM[state.selected];
     if (!a) {
       detailEl.innerHTML = '<div class="msx-d-empty"><span class="material-symbols-outlined">ads_click</span>' +
@@ -604,6 +667,44 @@
       '<div class="msx-d-row-sub">' + time + '</div></div></div></div>';
   }
 
+  // Detail pane for the Saved Scans tab — shows the recipe (query + criteria),
+  // run metadata, and lifecycle actions (Run / Edit / Delete).
+  function renderSavedDetail() {
+    const s = scanById(state.selectedScan);
+    if (!s) {
+      detailEl.innerHTML = '<div class="msx-d-empty"><span class="material-symbols-outlined">bookmark</span>' +
+        'Select a saved scan to see its recipe, or press Run to load fresh results.</div>';
+      return;
+    }
+    const criteria = parseCriteria(s.query).map(function (c) {
+      return '<span class="msx-criteria-chip"><span class="material-symbols-outlined">' + c[0] + '</span>' + c[1] + '</span>';
+    }).join('');
+    detailEl.innerHTML =
+      '<div class="msx-d-head">' +
+      '<span class="msx-asset-badge msx-d-scan-badge"><span class="material-symbols-outlined">' +
+      (s.origin === 'ai' ? 'auto_awesome' : 'bookmark') + '</span></span>' +
+      '<span class="msx-d-head-text"><span class="msx-d-sym">' + s.name + '</span>' +
+      '<span class="msx-d-name">' + (s.origin === 'ai' ? 'AI scan' : 'Saved scan') + '</span></span></div>' +
+
+      '<div class="msx-d-section"><div class="msx-d-label">Query</div>' +
+      '<div class="msx-d-scan-query">“' + s.query + '”</div></div>' +
+
+      '<div class="msx-d-section"><div class="msx-d-label">Criteria</div>' +
+      '<div class="msx-ai-criteria">' + criteria + '</div></div>' +
+
+      '<div class="msx-d-section"><div class="msx-d-scan-stats">' +
+      '<div class="msx-d-meta-col"><div class="msx-ov-lbl">Last Run</div><div class="msx-d-scan-stat">' + s.lastRun + '</div></div>' +
+      '<div class="msx-d-meta-col"><div class="msx-ov-lbl">Results</div><div class="msx-d-scan-stat">' + s.results + '</div></div>' +
+      '</div></div>' +
+
+      '<div class="msx-d-actions">' +
+      '<button class="msx-d-btn primary" data-scan-run="' + s.id + '"><span class="material-symbols-outlined">play_arrow</span>Run Scan</button>' +
+      '<div class="msx-d-btn-row">' +
+      '<button class="msx-d-btn" data-scan-edit="' + s.id + '"><span class="material-symbols-outlined">edit</span>Edit</button>' +
+      '<button class="msx-d-btn msx-d-btn-danger" data-scan-delete="' + s.id + '"><span class="material-symbols-outlined">delete</span>Delete</button>' +
+      '</div></div>';
+  }
+
   function render() {
     renderChips();
     renderTable();
@@ -615,9 +716,11 @@
      a ranked, scored result set.
      --------------------------------------------------------------- */
   const AI_EXAMPLES = [
-    'Top 100 cryptos with bullish divergence near major support',
+    'Cryptos with bullish divergence near support',
     'Large-cap stocks breaking out on 2x volume',
-    'Oversold names with dark pool accumulation'
+    'Oversold names with dark pool accumulation',
+    'Breakouts near resistance on high volume',
+    'Overbought crypto losing momentum'
   ];
 
   function aiEmptyHtml() {
@@ -662,9 +765,13 @@
     return found;
   }
 
-  function runAiScan(query) {
+  // savedId links the results to a saved scan (Run from Saved tab). When
+  // omitted, the existing link is preserved so iterating on a loaded scan
+  // keeps its context; Clear resets it back to an ad-hoc scan.
+  function runAiScan(query, savedId) {
     query = (query || '').trim();
     if (!query) return;
+    if (savedId !== undefined) aiState.savedId = savedId;
     aiState.query = query;
     const q = query.toLowerCase();
 
@@ -690,7 +797,6 @@
       return {
         a: a,
         rank: i + 1,
-        score: Math.max(58, 97 - i * 5),
         match: a.technical.setup + ' · ' + (a.bias === 'bullish' ? 'Bullish' : a.bias === 'bearish' ? 'Bearish' : 'Mixed'),
         reason: a.why[0]
       };
@@ -707,21 +813,157 @@
   function clearAiScan() {
     aiState.results = null;
     aiState.query = '';
+    aiState.savedId = null;
     aiInput.value = '';
     render();
   }
 
   function aiBannerHtml() {
+    // "Update" only when the results are an unchanged run of a saved scan;
+    // once the query diverges it's effectively a new recipe → "Save scan".
+    const saved = aiState.savedId ? scanById(aiState.savedId) : null;
+    const isUpdate = !!(saved && saved.query === aiState.query);
     const criteria = parseCriteria(aiState.query).map(function (c) {
       return '<span class="msx-criteria-chip"><span class="material-symbols-outlined">' + c[0] + '</span>' + c[1] + '</span>';
     }).join('');
+    const name = isUpdate
+      ? '<div class="msx-ai-banner-name"><span class="material-symbols-outlined">bookmark</span>' + saved.name + '</div>'
+      : '';
+    const saveBtn = isUpdate
+      ? '<button class="msx-ai-save" id="msxAiSave"><span class="material-symbols-outlined">sync</span>Update</button>'
+      : '<button class="msx-ai-save" id="msxAiSave"><span class="material-symbols-outlined">bookmark_add</span>Save scan</button>';
     return '<div class="msx-ai-banner">' +
       '<span class="msx-ai-banner-icon"><span class="material-symbols-outlined">auto_awesome</span></span>' +
       '<div class="msx-ai-banner-body">' +
+      name +
       '<div class="msx-ai-banner-query">“' + aiState.query + '”</div>' +
       '<div class="msx-ai-criteria">' + criteria + '</div></div>' +
+      '<div class="msx-ai-banner-actions">' +
+      saveBtn +
       '<button class="msx-ai-clear" id="msxAiClear"><span class="material-symbols-outlined">close</span>Clear</button>' +
-      '</div>';
+      '</div></div>';
+  }
+
+  /* ---------------------------------------------------------------
+     Saved-scan empty state (Saved tab with zero scans)
+     --------------------------------------------------------------- */
+  function savedEmptyHtml() {
+    return '<div class="msx-empty">' +
+      '<div class="msx-empty-icon"><span class="material-symbols-outlined">bookmark</span></div>' +
+      '<div class="msx-empty-title">No saved scans yet</div>' +
+      '<div class="msx-empty-sub">Run an AI scan and save it to build your library. Saved scans re-run live against the market whenever you press Run.</div>' +
+      '<div class="msx-empty-examples"><button class="msx-example-chip" id="msxSavedEmptyCta"><span class="material-symbols-outlined">auto_awesome</span>Try an AI scan</button></div></div>';
+  }
+
+  function wireSavedEmpty() {
+    const cta = document.getElementById('msxSavedEmptyCta');
+    if (cta) cta.addEventListener('click', function () { setTab('ai'); });
+  }
+
+  /* ---------------------------------------------------------------
+     Run a saved scan → re-execute its query live and refresh its meta
+     --------------------------------------------------------------- */
+  function runSavedScan(id) {
+    const s = scanById(id);
+    if (!s) return;
+    runAiScan(s.query, s.id);
+    updateSavedScan(s.id, { lastRun: 'Just now', results: (aiState.results || []).length });
+  }
+
+  /* ---------------------------------------------------------------
+     Save / Edit dialog
+     --------------------------------------------------------------- */
+  function suggestScanName(query) {
+    const labels = parseCriteria(query).slice(0, 2).map(function (c) {
+      return c[1].replace(/^Asset class:\s*/, '').replace(/^Universe:\s*/, '');
+    });
+    return labels.join(' · ') || 'My Scan';
+  }
+
+  let saveEditId = null;
+
+  function openSaveDialog(scan) {
+    if (!saveBackdrop) return;
+    saveEditId = scan ? scan.id : null;
+    const isEdit = !!scan;
+    const query = isEdit ? scan.query : aiState.query;
+    document.getElementById('msxSaveTitle').textContent = isEdit ? 'Edit Scan' : 'Save Scan';
+    document.getElementById('msxSaveConfirm').textContent = isEdit ? 'Update' : 'Save';
+    document.getElementById('msxSaveName').value = isEdit ? scan.name : suggestScanName(query);
+    document.getElementById('msxSaveDesc').value = isEdit ? scan.desc : query;
+    document.getElementById('msxSaveCriteria').innerHTML = parseCriteria(query).map(function (c) {
+      return '<span class="msx-criteria-chip"><span class="material-symbols-outlined">' + c[0] + '</span>' + c[1] + '</span>';
+    }).join('');
+    saveBackdrop.classList.add('show');
+    setTimeout(function () { document.getElementById('msxSaveName').focus(); }, 30);
+  }
+
+  function closeSaveDialog() {
+    if (saveBackdrop) saveBackdrop.classList.remove('show');
+    saveEditId = null;
+  }
+
+  function confirmSaveDialog() {
+    const name = (document.getElementById('msxSaveName').value || '').trim() || 'Untitled Scan';
+    const desc = (document.getElementById('msxSaveDesc').value || '').trim();
+    if (saveEditId) {
+      updateSavedScan(saveEditId, { name: name, desc: desc });
+      showToast('Scan updated', 'bookmark_added');
+    } else {
+      const scan = {
+        id: 'scan_' + Date.now(),
+        name: name, desc: desc, query: aiState.query,
+        results: (aiState.results || []).length,
+        lastRun: 'Just now', origin: 'ai'
+      };
+      addSavedScan(scan);
+      aiState.savedId = scan.id; // banner flips to "Update" for this recipe
+      showToast('Scan saved', 'bookmark_added');
+    }
+    closeSaveDialog();
+    // Stay on the AI Results tab (per design); just refresh the current view.
+    if (state.tab === 'ai') renderTable();
+    else render();
+  }
+
+  function onAiSaveClick() {
+    const saved = aiState.savedId ? scanById(aiState.savedId) : null;
+    if (saved && saved.query === aiState.query) {
+      updateSavedScan(saved.id, { results: (aiState.results || []).length, lastRun: 'Just now' });
+      showToast('Scan updated', 'bookmark_added');
+    } else {
+      openSaveDialog();
+    }
+  }
+
+  /* ---------------------------------------------------------------
+     Delete confirmation
+     --------------------------------------------------------------- */
+  let deleteTargetId = null;
+
+  function openDeleteConfirm(id) {
+    const s = scanById(id);
+    if (!s || !confirmBackdrop) return;
+    deleteTargetId = id;
+    document.getElementById('msxConfirmDesc').innerHTML =
+      'Delete “<strong>' + s.name + '</strong>”? This can’t be undone.';
+    confirmBackdrop.classList.add('show');
+  }
+
+  function closeDeleteConfirm() {
+    if (confirmBackdrop) confirmBackdrop.classList.remove('show');
+    deleteTargetId = null;
+  }
+
+  function doDelete() {
+    if (deleteTargetId) {
+      if (state.selectedScan === deleteTargetId) state.selectedScan = null;
+      if (aiState.savedId === deleteTargetId) aiState.savedId = null;
+      deleteSavedScan(deleteTargetId);
+      showToast('Scan deleted', 'delete');
+    }
+    closeDeleteConfirm();
+    if (state.tab === 'saved') render();
   }
 
   /* ---------------------------------------------------------------
@@ -739,9 +981,13 @@
     state.filter = 'all';
     state.sortCol = null;
     state.sortDir = 'desc';
-    // default-select the first asset-backed row of the new tab
+    // default-select the first row of the new tab so the detail pane is populated
     const rows = TABS[tab].rows();
-    state.selected = rows.length && rows[0].a ? rows[0].a.sym : state.selected;
+    if (tab === 'saved') {
+      state.selectedScan = rows.length ? rows[0].s.id : null;
+    } else {
+      state.selected = rows.length && rows[0].a ? rows[0].a.sym : state.selected;
+    }
     syncTabs();
     render();
   }
@@ -759,6 +1005,13 @@
   });
 
   hostEl.addEventListener('click', function (e) {
+    // run a saved scan (row button) — check before row selection
+    const runBtn = e.target.closest('[data-run-scan]');
+    if (runBtn) { runSavedScan(runBtn.dataset.runScan); return; }
+    // save / update the current AI scan
+    if (e.target.closest('#msxAiSave')) { onAiSaveClick(); return; }
+    // clear AI scan
+    if (e.target.closest('#msxAiClear')) { clearAiScan(); return; }
     // column header sort
     const th = e.target.closest('th[data-sort-key]');
     if (th) {
@@ -772,9 +1025,15 @@
       renderTable();
       return;
     }
-    // clear AI scan
-    if (e.target.closest('#msxAiClear')) { clearAiScan(); return; }
-    // row selection (asset-backed rows only)
+    // saved-scan row selection
+    const savedTr = e.target.closest('tr[data-scan-id]');
+    if (savedTr && savedTr.dataset.scanId) {
+      state.selectedScan = savedTr.dataset.scanId;
+      hostEl.querySelectorAll('tbody tr').forEach(function (r) { r.classList.toggle('selected', r.dataset.scanId === state.selectedScan); });
+      renderDetail();
+      return;
+    }
+    // asset-backed row selection
     const tr = e.target.closest('tr[data-sym]');
     if (tr && tr.dataset.sym) {
       state.selected = tr.dataset.sym;
@@ -788,8 +1047,17 @@
     renderTable();
   });
 
-  // detail pane: "Open Chart" simulates navigating to the chart by closing the scanner
+  // detail pane actions
   detailEl.addEventListener('click', function (e) {
+    // saved-scan lifecycle (check before the generic primary handler — the
+    // saved-scan "Run Scan" button is also .msx-d-btn.primary)
+    const runB = e.target.closest('[data-scan-run]');
+    if (runB) { runSavedScan(runB.dataset.scanRun); return; }
+    const editB = e.target.closest('[data-scan-edit]');
+    if (editB) { openSaveDialog(scanById(editB.dataset.scanEdit)); return; }
+    const delB = e.target.closest('[data-scan-delete]');
+    if (delB) { openDeleteConfirm(delB.dataset.scanDelete); return; }
+    // asset "Open Chart" simulates navigating to the chart by closing the scanner
     if (e.target.closest('.msx-d-btn.primary')) closeScanner();
   });
 
@@ -825,8 +1093,34 @@
   });
 
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && isOpen()) { e.preventDefault(); closeScanner(); }
+    if (e.key !== 'Escape') return;
+    // close the top-most layer first: delete confirm → save dialog → scanner
+    if (confirmBackdrop && confirmBackdrop.classList.contains('show')) { e.preventDefault(); e.stopPropagation(); closeDeleteConfirm(); return; }
+    if (saveBackdrop && saveBackdrop.classList.contains('show')) { e.preventDefault(); e.stopPropagation(); closeSaveDialog(); return; }
+    if (isOpen()) { e.preventDefault(); closeScanner(); }
   });
+
+  /* ---------------------------------------------------------------
+     Save / Edit dialog + Delete confirm wiring
+     --------------------------------------------------------------- */
+  if (saveBackdrop) {
+    document.getElementById('msxSaveClose').addEventListener('click', closeSaveDialog);
+    document.getElementById('msxSaveCancel').addEventListener('click', closeSaveDialog);
+    document.getElementById('msxSaveConfirm').addEventListener('click', confirmSaveDialog);
+    saveBackdrop.addEventListener('click', function (e) { if (e.target === saveBackdrop) closeSaveDialog(); });
+    // Enter in a text field commits the dialog
+    ['msxSaveName', 'msxSaveDesc'].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); confirmSaveDialog(); } });
+    });
+  }
+
+  if (confirmBackdrop) {
+    document.getElementById('msxConfirmClose').addEventListener('click', closeDeleteConfirm);
+    document.getElementById('msxConfirmCancel').addEventListener('click', closeDeleteConfirm);
+    document.getElementById('msxConfirmOk').addEventListener('click', doDelete);
+    confirmBackdrop.addEventListener('click', function (e) { if (e.target === confirmBackdrop) closeDeleteConfirm(); });
+  }
 
   // refresh stub (visual only)
   const msxRefresh = document.getElementById('msxRefresh');
