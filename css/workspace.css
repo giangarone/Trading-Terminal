@@ -1245,6 +1245,11 @@ table.bp-table tr.total-row td {
   color: var(--short);
 }
 
+.pos-tpsl-empty {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
 /* ── Totals bar ──────────────────────────────────────────── */
 
 .pos-totals-bar {

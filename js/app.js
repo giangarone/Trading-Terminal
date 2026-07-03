@@ -361,6 +361,9 @@
       const row = closeBtn.closest('.pos-row');
       const sym = row.dataset.posId;
       const pct = parseInt(closeBtn.dataset.posClosePct, 10);
+      // Fully closing the chart's own (ETHUSD) position must also remove its entry/TP/SL lines
+      // from the chart — route through cancelOrder(), which closes it, logs it and re-renders.
+      if (pct >= 100 && sym === 'ETHUSD' && order && order.filled) { cancelOrder(); return; }
       if (!window.closePositionPct(sym, pct)) return;
       showToast(sym + ' position ' + (pct >= 100 ? 'closed' : 'reduced by ' + pct + '%'), 'check_circle');
       return;
@@ -373,6 +376,8 @@
       const slider = document.getElementById('posCloseSlider-' + sym);
       const pct = slider ? parseInt(slider.value, 10) : 0;
       if (pct <= 0) { showToast('Select an amount to close', 'error'); return; }
+      // A full close of the chart's own (ETHUSD) position also clears its lines from the chart.
+      if (pct >= 100 && sym === 'ETHUSD' && order && order.filled) { cancelOrder(); return; }
       if (!window.closePositionPct(sym, pct)) return;
       showToast(sym + ' position ' + (pct >= 100 ? 'closed' : 'reduced by ' + pct + '%'), 'check_circle');
       return;
@@ -868,7 +873,7 @@
     }
     orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'filled', type: order.orderType, time: nowTimeStr(), pnl: null });
     tradeHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, pnl: null, role: 'open', type: order.orderType, time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
-    window.upsertPositionFromFill('ETHUSD', order.side, order.qty, order.entry);
+    window.upsertPositionFromFill('ETHUSD', order.side, order.qty, order.entry, { tps: order.tps, sl: order.sl });
     render();
     showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
   }
@@ -909,7 +914,7 @@
     };
     orderHistory.unshift({ symbol: 'ETHUSD', side: newSide, qty, price: entry, status: 'filled', type: 'Market', time: nowTimeStr(), pnl: null });
     tradeHistory.unshift({ symbol: 'ETHUSD', side: newSide, qty, price: entry, pnl: null, role: 'open', type: 'Market', time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT });
-    window.upsertPositionFromFill('ETHUSD', newSide, qty, entry);
+    window.upsertPositionFromFill('ETHUSD', newSide, qty, entry, { tps: order.tps, sl: order.sl });
     window.refreshTodayJournalCard();
     render(); closeAllPopovers();
     showToast('Reversed to ' + (newSide === 'buy' ? 'Long' : 'Short') + ' at ' + fmt(entry), 'swap_vert');
@@ -2747,32 +2752,21 @@
         e.stopPropagation();
         removeAlert(a.id);
       });
-      const alertTagEl = hit.querySelector('.ol-alert-tag');
       const alertPriceEl = hit.querySelector('.ol-alert-price');
-      alertTagEl.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.ol-alert-del')) return;
-        e.preventDefault(); e.stopPropagation();
-        closeAllPopovers();
+      // The alert is draggable from anywhere along its line (the full-width hit band), not just
+      // its chip — same as TP/SL lines. The delete button is excluded so it stays clickable.
+      function onDragAlert(cy, h) {
         hit.classList.add('dragging');
-        const rect = chart.getBoundingClientRect();
-        function move(ev) {
-          const cy = clamp(ev.clientY - rect.top, 10, rect.height - 10);
-          hit.style.top = cy + 'px';
-          a.price = roundTick(yToPrice(cy, rect.height));
-          alertPriceEl.textContent = fmt(a.price);
-          drawPriceChart();
-        }
-        function up(ev) {
-          document.removeEventListener('mousemove', move);
-          document.removeEventListener('mouseup', up);
-          hit.classList.remove('dragging');
-          const cy = clamp(ev.clientY - rect.top, 10, rect.height - 10);
-          a.price = roundTick(yToPrice(cy, rect.height));
-          render();
-        }
-        document.addEventListener('mousemove', move);
-        document.addEventListener('mouseup', up);
-      });
+        hit.style.top = cy + 'px';
+        a.price = roundTick(yToPrice(cy, h));
+        alertPriceEl.textContent = fmt(a.price);
+        drawPriceChart();
+      }
+      function onDropAlert(cy, h) {
+        a.price = roundTick(yToPrice(cy, h));
+        render();
+      }
+      makeDraggable(hit, onDragAlert, onDropAlert, '.ol-alert-del');
     });
     if (!order) { return; }
     const H = rectH();

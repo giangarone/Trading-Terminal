@@ -72,6 +72,8 @@
       elMark: document.getElementById('posMark-' + sym),
       elPnlOpen: document.getElementById('posPnlOpen-' + sym),
       elPct: document.getElementById('posPct-' + sym),
+      elMarkD: document.getElementById('posMarkD-' + sym),
+      elUnrealD: document.getElementById('posUnrealD-' + sym),
     };
   }
 
@@ -81,7 +83,6 @@
     makePosition('ESU5', 5, 6015.25, 6028.00, -63.75, -0.21, 0.25, 2),
     makePosition('SOLUSD', 3084.19, 0.2136, 0.2195, -83.55, -8.35, 0.0001, 4),
     makePosition('BTCUSD', 0.125, 66245.10, 67121.50, 109.55, 1.32, 0.5, 2),
-    makePosition('ETHUSD', 2.0, 3125.40, 3210.75, 170.70, 2.73, 0.05, 2),
     makePosition('AAPL', 100, 185.27, 188.45, 318.00, 1.72, 0.05, 2),
   ];
 
@@ -157,6 +158,60 @@
       '<button class="pos-quick-btn pos-quick-reverse" data-pos-reverse title="Reverse"><span class="material-symbols-outlined">swap_vert</span></button>' +
       '<button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100" title="Close"><span class="material-symbols-outlined">close</span></button></div>';
   }
+  /* TP / SL rows for the expanded detail, built from the order's actual targets/stop.
+     Distance is the signed % from entry; size is each target's close percentage. */
+  function tpslListHtml(entry, dec, meta) {
+    const tps = (meta && meta.tps) || [];
+    const sl = meta && meta.sl;
+    let rows = '';
+    tps.forEach((tp, i) => {
+      const dist = entry ? (tp.price - entry) / entry * 100 : 0;
+      rows += '<div class="pos-tpsl-entry">' +
+        '<span class="pos-tpsl-name">TP ' + (i + 1) + '</span>' +
+        '<span class="pos-tpsl-price up">' + fmt(tp.price, dec) + '</span>' +
+        '<span class="pos-tpsl-dist faint">' + (dist >= 0 ? '+' : '') + fmt(dist) + '%</span>' +
+        '<span class="pos-tpsl-size faint">' + Math.round(tp.pct) + '%</span></div>';
+    });
+    if (sl) {
+      const dist = entry ? (sl.price - entry) / entry * 100 : 0;
+      rows += '<div class="pos-tpsl-entry pos-sl-entry">' +
+        '<span class="pos-tpsl-name">SL</span>' +
+        '<span class="pos-tpsl-price down">' + fmt(sl.price, dec) + '</span>' +
+        '<span class="pos-tpsl-dist faint">' + (dist >= 0 ? '+' : '') + fmt(dist) + '%</span>' +
+        '<span class="pos-tpsl-size faint">100%</span></div>';
+    }
+    return rows || '<div class="pos-tpsl-empty">No TP / SL set</div>';
+  }
+  /* Position / P&L / TP-SL detail sections for a dynamically-created row. Size, Avg Entry and
+     TP/SL are real; Mark Price and Unrealized are wired to update live (see makePosition/tick);
+     the remaining stats aren't tracked in this mockup, so they show placeholder values. */
+  function detailSectionsHtml(sym, qtyStr, unit, price, priceStr, dec, meta) {
+    const high24 = fmt(price * 1.01, dec);
+    const low24 = fmt(price * 0.99, dec);
+    return '<div class="pos-detail-section">' +
+      '<div class="pos-detail-label">Position</div>' +
+      '<div class="pos-kv">' +
+      '<span class="pos-kv-k">Size</span><span class="pos-kv-v">' + qtyStr + ' ' + unit + '</span>' +
+      '<span class="pos-kv-k">Avg Entry</span><span class="pos-kv-v">' + priceStr + '</span>' +
+      '<span class="pos-kv-k">Mark Price</span><span class="pos-kv-v" id="posMarkD-' + sym + '">' + priceStr + '</span>' +
+      '<span class="pos-kv-k">Break Even</span><span class="pos-kv-v">' + priceStr + '</span>' +
+      '<span class="pos-kv-k">Margin</span><span class="pos-kv-v faint">—</span>' +
+      '<span class="pos-kv-k">Liq. Price</span><span class="pos-kv-v faint">—</span>' +
+      '</div></div>' +
+      '<div class="pos-detail-section">' +
+      '<div class="pos-detail-label">P&amp;L</div>' +
+      '<div class="pos-kv">' +
+      '<span class="pos-kv-k">Unrealized</span><span class="pos-kv-v" id="posUnrealD-' + sym + '">+0.00</span>' +
+      '<span class="pos-kv-k">Realized</span><span class="pos-kv-v faint">—</span>' +
+      '<span class="pos-kv-k">Funding</span><span class="pos-kv-v faint">—</span>' +
+      '<span class="pos-kv-k">24h High</span><span class="pos-kv-v">' + high24 + '</span>' +
+      '<span class="pos-kv-k">24h Low</span><span class="pos-kv-v">' + low24 + '</span>' +
+      '</div></div>' +
+      '<div class="pos-detail-section">' +
+      '<div class="pos-detail-label">TP / SL</div>' +
+      '<div class="pos-tpsl-list">' + tpslListHtml(price, dec, meta) + '</div>' +
+      '</div>';
+  }
   /* Market/Limit close controls for a dynamically-created (chart/quick-trade) position row */
   function detailCloseHtml(sym, qtyStr, unit, priceStr, amtStep, pxStep) {
     function stepper(id, value, step, fieldUnit) {
@@ -193,7 +248,7 @@
     const el = document.getElementById('qtLeverageInput');
     return Math.max(1, parseInt(el && el.value, 10) || 1);
   }
-  function createPositionRow(sym, side, qty, price, dec) {
+  function createPositionRow(sym, side, qty, price, dec, meta) {
     const row = document.createElement('div');
     row.className = 'pos-row';
     row.dataset.posId = sym;
@@ -217,7 +272,9 @@
       '<div class="pos-col pos-col-quickclose">' + quickCloseRowHtml() + '</div>' +
       '<div class="pos-col pos-col-actions"><button class="pos-expand-btn" title="Expand details"><span class="material-symbols-outlined pos-chevron">expand_more</span></button></div>' +
       '</div>' +
-      '<div class="pos-row-detail pos-row-detail--close-only"><div class="pos-detail-close">' +
+      '<div class="pos-row-detail">' +
+      detailSectionsHtml(sym, fmtQty(qty), 'Units', price, fmt(price, dec), dec, meta) +
+      '<div class="pos-detail-close">' +
       detailCloseHtml(sym, fmtQty(qty), 'Units', fmt(price, dec), '0.001',
         price < 1 ? '0.0001' : price < 100 ? '0.01' : '0.5') +
       '</div></div>';
@@ -235,7 +292,7 @@
       if (window.updatePosCloseLabel) window.updatePosCloseLabel(s);
     });
   }
-  window.upsertPositionFromFill = function (sym, side, qty, price) {
+  window.upsertPositionFromFill = function (sym, side, qty, price, meta) {
     const dir = side === 'buy' ? 1 : -1;
     const existing = positions.find(x => x.sym === sym);
     if (existing) {
@@ -252,7 +309,7 @@
     }
     const dec = price < 1 ? 4 : 2;
     const step = price < 1 ? 0.0001 : price < 100 ? 0.01 : 0.5;
-    createPositionRow(sym, side, qty, price, dec);
+    createPositionRow(sym, side, qty, price, dec, meta);
     const pos = makePosition(sym, qty, price, price, 0, 0, step, dec);
     pos.pv = dir;
     pos.unitBase = (qty * price) / 100;
@@ -290,9 +347,14 @@
         const pct = p.unitBase !== 0 ? pnlOpen / p.unitBase : 0;
 
         if (p.elMark) p.elMark.textContent = fmt(p.mark, p.dec);
+        if (p.elMarkD) p.elMarkD.textContent = fmt(p.mark, p.dec);
         if (p.elPnlOpen) {
           p.elPnlOpen.textContent = (pnlOpen >= 0 ? '+' : '') + fmt(pnlOpen);
           setUpDown(p.elPnlOpen, pnlOpen >= 0);
+        }
+        if (p.elUnrealD) {
+          p.elUnrealD.textContent = (pnlOpen >= 0 ? '+' : '') + fmt(pnlOpen);
+          setUpDown(p.elUnrealD, pnlOpen >= 0);
         }
         if (p.elPct) {
           p.elPct.textContent = (pct >= 0 ? '+' : '') + fmt(pct) + '%';

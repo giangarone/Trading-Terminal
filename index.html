@@ -18,11 +18,11 @@
   <link rel="stylesheet" href="css/topbar.css?v=5">
   <link rel="stylesheet" href="css/left-panel.css?v=3">
   <link rel="stylesheet" href="css/center-panel.css?v=5">
-  <link rel="stylesheet" href="css/workspace.css?v=24">
+  <link rel="stylesheet" href="css/workspace.css?v=25">
   <link rel="stylesheet" href="css/right-panel.css?v=3">
   <link rel="stylesheet" href="css/quick-trade.css?v=6">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=31">
+  <link rel="stylesheet" href="css/order-lines.css?v=32">
   <link rel="stylesheet" href="css/market-scanner.css?v=29">
   <link rel="stylesheet" href="css/indicators.css?v=9">
   <link rel="stylesheet" href="css/chart-settings.css?v=30">
@@ -3638,135 +3638,6 @@
                 </div>
               </div>
 
-              <!-- ── ETHUSD ── -->
-              <div class="pos-row" data-pos-id="ETHUSD">
-                <div class="pos-row-summary">
-                  <div class="pos-col pos-col-symbol">
-                    <div class="pos-sym-icon pos-icon-crypto">ET</div>
-                    <div class="pos-sym-info">
-                      <div class="pos-sym-top">
-                        <span class="pos-sym-ticker">ETHUSD</span>
-                        <span class="pos-side-badge long">Long</span>
-                        <span class="pos-type-badge">Crypto</span>
-                        <span class="pos-lev-badge">10×</span>
-                      </div>
-                      <span class="pos-sym-sub">Ethereum / USD (Perp)</span>
-                    </div>
-                  </div>
-                  <div class="pos-col pos-col-size">
-                    <span class="pos-size-qty" id="posQty-ETHUSD">2.000</span>
-                    <span class="pos-size-unit">ETH</span>
-                  </div>
-                  <div class="pos-col pos-col-price">
-                    <span class="pos-entry" id="posAvg-ETHUSD">3,125.40</span>
-                    <span class="pos-mark" id="posMark-ETHUSD">3,210.75</span>
-                  </div>
-                  <div class="pos-col pos-col-pnl">
-                    <span class="pos-pnl-dollar up" id="posPnlOpen-ETHUSD">+170.70</span>
-                    <span class="pos-pnl-pct up" id="posPct-ETHUSD">+2.73%</span>
-                  </div>
-                  <div class="pos-col pos-col-margin">
-                    <span class="pos-margin" id="posMargin-ETHUSD">1,200.00 USD</span>
-                  </div>
-                  <div class="pos-col pos-col-liq">
-                    <span class="pos-liq down">2,150.30</span>
-                  </div>
-                  <div class="pos-col pos-col-quickclose">
-                    <div class="pos-quick-btn-row">
-                      <button class="pos-quick-btn pos-quick-reverse" data-pos-reverse title="Reverse"><span class="material-symbols-outlined">swap_vert</span></button>
-                      <button class="pos-quick-btn pos-quick-close" data-pos-close-pct="100" title="Close"><span class="material-symbols-outlined">close</span></button>
-                    </div>
-                  </div>
-                  <div class="pos-col pos-col-actions">
-                    <button class="pos-expand-btn" title="Expand details">
-                      <span class="material-symbols-outlined pos-chevron">expand_more</span>
-                    </button>
-                  </div>
-                </div>
-                <div class="pos-row-detail">
-                  <div class="pos-detail-section">
-                    <div class="pos-detail-label">Position</div>
-                    <div class="pos-kv">
-                      <span class="pos-kv-k">Size</span><span class="pos-kv-v">2.000 ETH</span>
-                      <span class="pos-kv-k">Avg Entry</span><span class="pos-kv-v">3,125.40</span>
-                      <span class="pos-kv-k">Mark Price</span><span class="pos-kv-v">3,210.75</span>
-                      <span class="pos-kv-k">Break Even</span><span class="pos-kv-v">3,126.80</span>
-                      <span class="pos-kv-k">Margin (4×)</span><span class="pos-kv-v">1,200.00 USD</span>
-                      <span class="pos-kv-k">Liq. Price</span><span class="pos-kv-v down">2,150.30</span>
-                    </div>
-                  </div>
-                  <div class="pos-detail-section">
-                    <div class="pos-detail-label">P&amp;L</div>
-                    <div class="pos-kv">
-                      <span class="pos-kv-k">Unrealized</span><span class="pos-kv-v up">+170.70</span>
-                      <span class="pos-kv-k">Realized</span><span class="pos-kv-v up">+520.45</span>
-                      <span class="pos-kv-k">Funding</span><span class="pos-kv-v down">-1.25 USD</span>
-                      <span class="pos-kv-k">24h High</span><span class="pos-kv-v">3,245.00</span>
-                      <span class="pos-kv-k">24h Low</span><span class="pos-kv-v">3,098.00</span>
-                    </div>
-                  </div>
-                  <div class="pos-detail-section">
-                    <div class="pos-detail-label">TP / SL</div>
-                    <div class="pos-tpsl-list">
-                      <div class="pos-tpsl-entry">
-                        <span class="pos-tpsl-name">TP 1</span>
-                        <span class="pos-tpsl-price up">3,500.00</span>
-                        <span class="pos-tpsl-dist faint">+9.0%</span>
-                        <span class="pos-tpsl-size faint">50%</span>
-                      </div>
-                      <div class="pos-tpsl-entry">
-                        <span class="pos-tpsl-name">TP 2</span>
-                        <span class="pos-tpsl-price up">3,850.00</span>
-                        <span class="pos-tpsl-dist faint">+19.9%</span>
-                        <span class="pos-tpsl-size faint">50%</span>
-                      </div>
-                      <div class="pos-tpsl-entry pos-sl-entry">
-                        <span class="pos-tpsl-name">SL</span>
-                        <span class="pos-tpsl-price down">2,900.00</span>
-                        <span class="pos-tpsl-dist faint">-9.7%</span>
-                        <span class="pos-tpsl-size faint">100%</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="pos-detail-close">
-                    <div class="pos-detail-label">Close Position</div>
-                    <div class="pos-close-tabs">
-                      <button class="pos-close-tab active" data-close-tab="market">Market</button>
-                      <button class="pos-close-tab" data-close-tab="limit">Limit</button>
-                    </div>
-                    <div class="pos-close-pane active" data-close-pane="market">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLbl-ETHUSD">100% · 2 ETH</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSlider-ETHUSD" min="0" max="100" step="1"
-                        value="100">
-                      <button class="pos-close-primary" data-pos-close-market>Close Position</button>
-                    </div>
-                    <div class="pos-close-pane" data-close-pane="limit">
-                      <div class="pos-close-amount-row">
-                        <span class="pos-close-field-label">Amount</span>
-                        <span class="pos-close-pct-label" id="posClosePctLblLimit-ETHUSD">100% · 2 ETH</span>
-                      </div>
-                      <input type="range" class="pos-close-slider" id="posCloseSliderLimit-ETHUSD" min="0" max="100"
-                        step="1" value="100">
-                      <div class="pos-close-field-label">Limit price</div>
-                      <div class="price-stepper">
-                        <input type="text" id="posCloseLimitPx-ETHUSD" value="3,210.75" data-step="0.05">
-                        <span class="qty-unit">USD</span>
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="posCloseLimitPx-ETHUSD"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="posCloseLimitPx-ETHUSD"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                        </div>
-                      </div>
-                      <button class="pos-close-primary" data-pos-close-limit>Place Close Limit</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               <!-- ── AAPL ── -->
               <div class="pos-row" data-pos-id="AAPL">
                 <div class="pos-row-summary">
@@ -5522,9 +5393,9 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js"></script>
-  <script src="js/app.js?v=144"></script>
+  <script src="js/app.js?v=146"></script>
   <script src="js/theme.js?v=2"></script>
-  <script src="js/right-panel.js?v=15"></script>
+  <script src="js/right-panel.js?v=17"></script>
   <script src="js/market-scanner.js?v=14"></script>
   <script src="js/market-sessions.js?v=4"></script>
 
