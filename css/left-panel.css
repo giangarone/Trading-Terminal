@@ -11,6 +11,17 @@
   gap: 10px;
 }
 
+.left-panel.is-collapsed {
+  width: var(--panel-rail-w);
+  padding: 0;
+  overflow: hidden;
+}
+
+.left-panel.is-collapsed > * {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);

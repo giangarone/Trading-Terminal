@@ -86,6 +86,10 @@
   /* ── Layout ──────────────────────────────────────────────── */
   --left-panel-w: 290px;
   /* left watchlist panel width; topbar logo zone tracks this  */
+  --right-panel-w: 300px;
+  /* right quick-trade panel width                             */
+  --panel-rail-w: 28px;
+  /* collapsed-panel rail width (left/right)                   */
 
   /* ── Components ──────────────────────────────────────────── */
   --h-input: 34px;

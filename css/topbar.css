@@ -163,6 +163,46 @@
   background: var(--border-subtle);
 }
 
+/* Expand button — only shown while its panel is collapsed. */
+.resize-toggle {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 40px;
+  border-radius: var(--r-xs);
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  z-index: 6;
+  cursor: pointer;
+  transition: color var(--t-ui), background var(--t-ui), border-color var(--t-ui);
+}
+
+.app.is-left-collapsed #leftResizeHandle .resize-toggle,
+.app.is-right-collapsed #rightResizeHandle .resize-toggle {
+  display: flex;
+}
+
+.resize-toggle:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-color: var(--border-default);
+}
+
+.resize-toggle .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Left rail chevron points right (→) to expand; right rail keeps default (←). */
+#leftResizeHandle .resize-toggle .material-symbols-outlined {
+  transform: rotate(180deg);
+}
+
 .resize-handle.resize-h {
   width: 1px;
   cursor: col-resize;
