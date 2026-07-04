@@ -880,6 +880,14 @@
   padding: 12px;
 }
 
+/* Dynamic Fee Offset row: no divider line or extra padding here — the column's 16px
+   flex gap is the only spacing above the row. */
+.ol-mode-settings .cs-switch-row--divided {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
 /* Right-click context menu */
 .ctx-menu {
   position: fixed;

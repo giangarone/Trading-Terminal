@@ -145,14 +145,14 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 20px;
+  width: 16px;
   height: 32px;
-  border-radius: var(--r-xs);
+  border-radius: 4px;
   align-items: center;
   justify-content: center;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
+  color: var(--text-secondary);
   z-index: 6;
   cursor: pointer;
   transition: color var(--t-ui), background var(--t-ui), border-color var(--t-ui);
