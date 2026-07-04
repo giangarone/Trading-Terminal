@@ -362,10 +362,6 @@
   background: var(--accent-dim);
 }
 
-.msx-tab-ai .material-symbols-outlined {
-  color: var(--purple);
-}
-
 .msx-tab-ai.active {
   border-bottom-color: var(--purple);
 }

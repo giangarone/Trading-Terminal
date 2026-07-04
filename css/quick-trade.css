@@ -205,7 +205,7 @@
 
 .qt-split-row {
   display: flex;
-  gap: 14px;
+  gap: 8px;
   margin-bottom: 14px;
 }
 
