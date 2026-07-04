@@ -1363,9 +1363,9 @@
   }
   /* The special (non-Fixed) SL modes, shown as neutral buttons beside the SL chip. */
   const SL_MODE_BUTTONS = [
-    { mode: 'trailing', label: 'TRL', cls: 'trail' },
-    { mode: 'atr', label: 'ATR', cls: 'atr' },
-    { mode: 'breakeven', label: 'BE', cls: 'be' },
+    { mode: 'trailing', label: 'TRL', cls: 'trail', tip: 'Trailing Stop' },
+    { mode: 'atr', label: 'ATR', cls: 'atr', tip: 'ATR Stop' },
+    { mode: 'breakeven', label: 'BE', cls: 'be', tip: 'Break-Even Stop' },
   ];
   /* badge shown inside the SL chip — text + style class, and it opens the SL settings.
      A plain (non-special-mode) SL has no badge at all — null means "don't show one". */
@@ -1930,7 +1930,6 @@
   }
   /* ---------- TP/SL "add" handles next to the entry: drag away from entry to create a TP or SL at that price ---------- */
   function makeAddHandleDraggable(handle, kind) {
-    handle.title = kind === 'tp' ? 'Drag to create TP' : 'Drag to create SL';
     handle.addEventListener('mousedown', (e) => {
       e.preventDefault(); e.stopPropagation();
       closeAllPopovers();
@@ -2818,7 +2817,7 @@
         // When trailing is active, the Trail button is replaced by a colored badge inside the
         // chip (mirrors the SL mode flow); otherwise a neutral Trail button sits to the left.
         const modeBtnHtml = (tpTrailing || !isLastTp) ? '' :
-          '<button type="button" class="ol-tp-mode-btn" data-tp-trail="' + tp.id + '">TRL</button>';
+          '<button type="button" class="ol-tp-mode-btn" data-tp-trail="' + tp.id + '" data-tooltip="Trailing Take-Profit">TRL</button>';
         const badgeHtml = !tpTrailing ? '' :
           '<span class="ol-badge tp-badge trail" data-tp-badge="' + tp.id + '">' +
           '<span class="ol-badge-label" data-tp-badge-edit="' + tp.id + '" title="Edit trailing TP">' + tpBadgeText(tp) + '</span>' +
@@ -2839,7 +2838,7 @@
           '<span class="ol-tp-meta-pct" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
           '<span class="ol-tp-meta-r">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
           '</span>' +
-          '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" title="Remove TP"><span class="material-symbols-outlined">close</span></span>';
+          '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" data-tooltip="Remove TP"><span class="material-symbols-outlined">close</span></span>';
         layer.appendChild(row);
 
         // Offset line: a second draggable line sitting at the trailing offset distance toward entry.
@@ -3017,7 +3016,7 @@
           const locked = m.mode === 'breakeven' && order.tps.length < 1;
           modeBtns +=
             '<button type="button" class="ol-sl-mode-btn' + (locked ? ' disabled' : '') +
-            '" data-mode="' + m.mode + '">' + m.label + '</button>';
+            '" data-mode="' + m.mode + '" data-tooltip="' + m.tip + '">' + m.label + '</button>';
         });
 
         let badgeHtml = '';
@@ -3045,7 +3044,7 @@
           badgeHtml +
           '</span>' +
           modeBtns +
-          '<span class="ol-gear ol-danger" id="slDeleteTrigger" title="Remove SL"><span class="material-symbols-outlined">close</span></span>';
+          '<span class="ol-gear ol-danger" id="slDeleteTrigger" data-tooltip="Remove SL"><span class="material-symbols-outlined">close</span></span>';
         layer.appendChild(row);
 
         const slChipEl = row.querySelector('.ol-chip');
@@ -3222,18 +3221,6 @@
             : String(order.qty);
 
       if (!order.filled) {
-        let entryTitle;
-
-        if (blocked) {
-          entryTitle = 'Fix invalid TP/SL before placing the order';
-        } else if (placeable) {
-          entryTitle = canDragEntry
-            ? 'Drag to move, or click to place the order'
-            : 'Click to place the order';
-        } else {
-          entryTitle = 'Drag to move entry';
-        }
-
         // Resting/working order: placed and waiting for price to reach entry
         // Not yet filled, no longer awaiting placement
         const working = !placeable;
@@ -3245,25 +3232,25 @@
           + (blocked ? ' disabled' : '');
 
         bar.innerHTML =
-          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Flip Direction">' +
+          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" data-tooltip="Switch to ' + (side === 'buy' ? 'Sell' : 'Buy') + '">' +
           '<span class="material-symbols-outlined">swap_vert</span>' +
           '</span>' +
 
-          '<span class="' + entryClass + '" id="entryPriceHandle" title="' + entryTitle + '">' +
+          '<span class="' + entryClass + '" id="entryPriceHandle">' +
           '<span class="ol-chip-fill"></span>' +
           '<span class="ol-chip-lbl">' + sideLabel + '</span>' +
           '</span>' +
 
           '<span class="ol-pill neutral combo" id="orderConfigPill">' +
-          '<span class="ol-pill-seg" id="sizePillTrigger">' + sizeLabel + '</span>' +
+          '<span class="ol-pill-seg" id="sizePillTrigger" data-tooltip="Quantity">' + sizeLabel + '</span>' +
           '<span class="ol-pill-divider"></span>' +
-          '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
+          '<span class="ol-pill-seg" id="typePillTrigger" data-tooltip="Order Type">' + order.orderType + '</span>' +
           '</span>' +
 
           tpAddHandleHtml +
           slAddHandleHtml +
 
-          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Cancel Order">' +
+          '<span class="ol-gear ol-danger" id="cancelOrderBtn" data-tooltip="Cancel Order">' +
           '<span class="material-symbols-outlined">close</span>' +
           '</span>';
 
@@ -3278,7 +3265,7 @@
           '</span>';
 
         bar.innerHTML =
-          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" title="Reverse Position">' +
+          '<span class="ol-gear ol-reverse" id="reverseOrderBtn" data-tooltip="Reverse Position">' +
           '<span class="material-symbols-outlined">swap_vert</span>' +
           '</span>' +
 
@@ -3287,19 +3274,19 @@
           '</span>' +
 
           '<span class="ol-pill neutral combo locked" id="orderConfigPill">' +
-          '<span class="ol-pill-seg" id="sizePillTrigger">' + order.qty + '</span>' +
+          '<span class="ol-pill-seg" id="sizePillTrigger" data-tooltip="Quantity">' + order.qty + '</span>' +
           '<span class="ol-pill-divider"></span>' +
-          '<span class="ol-pill-seg" id="typePillTrigger">' + order.orderType + '</span>' +
+          '<span class="ol-pill-seg" id="typePillTrigger" data-tooltip="Order Type">' + order.orderType + '</span>' +
           '</span>' +
 
           tpAddHandleHtml +
           slAddHandleHtml +
 
-          '<span class="ol-gear accent" id="pctCloseBtn" title="Close % of Position">' +
+          '<span class="ol-gear accent" id="pctCloseBtn" data-tooltip="Close % of Position">' +
           '<span class="material-symbols-outlined">percent</span>' +
           '</span>' +
 
-          '<span class="ol-gear ol-danger" id="cancelOrderBtn" title="Close Position">' +
+          '<span class="ol-gear ol-danger" id="cancelOrderBtn" data-tooltip="Close Position">' +
           '<span class="material-symbols-outlined">close</span>' +
           '</span>';
       }
@@ -4722,6 +4709,51 @@
     });
     /* A fixed tooltip would detach from its button while the bar scrolls. */
     bar.addEventListener('scroll', hideTooltip, { passive: true });
+  })();
+
+  /* Chart-trade controls (the gears and TP/SL mode buttons on the order lines)
+     sit inside the overflow-hidden chart pane, so — exactly like the chart tools
+     bar — they surface their label through a shared body-level .floating-tooltip
+     instead of a CSS ::after that the pane would clip. The order line layer is
+     re-rendered on every tick, so hover is handled by delegation on the stable
+     layer element rather than per-button listeners. */
+  (function initOrderLineTooltips() {
+    const olLayer = document.getElementById('orderLineLayer');
+    if (!olLayer) return;
+
+    const tip = document.createElement('div');
+    tip.className = 'floating-tooltip';
+    document.body.appendChild(tip);
+
+    function tooltipTarget(node) {
+      const el = node.closest && node.closest('[data-tooltip]');
+      return el && olLayer.contains(el) ? el : null;
+    }
+
+    function showTooltip(el) {
+      tip.textContent = el.dataset.tooltip;
+      const rect = el.getBoundingClientRect();
+      tip.style.left = (rect.left + rect.width / 2) + 'px';
+      tip.style.top = (rect.bottom + 8) + 'px';
+      tip.classList.add('show');
+    }
+
+    function hideTooltip() {
+      tip.classList.remove('show');
+    }
+
+    olLayer.addEventListener('mouseover', (e) => {
+      const el = tooltipTarget(e.target);
+      if (el) showTooltip(el);
+    });
+    olLayer.addEventListener('mouseout', (e) => {
+      const el = tooltipTarget(e.target);
+      /* Ignore moves that stay inside the same control (e.g. onto its icon). */
+      if (el && !el.contains(e.relatedTarget)) hideTooltip();
+    });
+    /* Safety net: a tick re-render can swap the hovered node without firing
+       mouseout, so always clear when the cursor leaves the layer entirely. */
+    olLayer.addEventListener('mouseleave', hideTooltip);
   })();
 
   /* ---------- symbol selector dropdown ---------- */
