@@ -18,7 +18,9 @@
     try { localStorage.setItem(STORAGE_KEY, theme); } catch (e) { /* storage unavailable */ }
     document.documentElement.setAttribute('data-theme', theme);
     themeToggleIcon.textContent = theme === 'light' ? 'light_mode' : 'dark_mode';
-    themeToggleBtn.setAttribute('aria-label', theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
+    const toggleLabel = theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme';
+    themeToggleBtn.setAttribute('aria-label', toggleLabel);
+    themeToggleBtn.setAttribute('data-tooltip', toggleLabel);
     if (typeof window.ttRepaintChart === 'function') window.ttRepaintChart();
   }
 

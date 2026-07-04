@@ -4580,13 +4580,25 @@
     const tbChartZone = document.querySelector('.tb-chart-zone');
     if (!tbLeft || !tbChartZone) return;
 
-    /* Collapse order — the first item is the first to lose its label. .tb-left
-       collapses right-to-left (News is rightmost), then the .tb-right selectors,
-       then the two core chart controls (Indicators, Candles) as a last resort. */
-    const collapseOrder = ['newsToggle', 'marketSessionsTrigger', 'marketScannerTrigger', 'replayToggle',
-      'templatesSelectTrigger', 'accountSelectTrigger', 'indicatorsTrigger', 'candleTypeTrigger']
-      .map(id => document.getElementById(id))
-      .filter(Boolean);
+    /* Collapse order — the first step is the first to condense. .tb-left buttons
+       collapse right-to-left (News is rightmost), then the .tb-right selectors,
+       then the two core chart controls (Indicators, Candles), and finally — only
+       in extreme-narrow cases — the timeframe group condenses to just the
+       selected timeframe plus its dropdown. Each step toggles `cls` (default
+       'ct-collapsed'; the timeframe group uses 'tf-condensed'). */
+    const collapseSteps = [
+      { id: 'newsToggle' },
+      { id: 'marketSessionsTrigger' },
+      { id: 'marketScannerTrigger' },
+      { id: 'replayToggle' },
+      { id: 'templatesSelectTrigger' },
+      { id: 'accountSelectTrigger' },
+      { id: 'indicatorsTrigger' },
+      { id: 'candleTypeTrigger' },
+      { id: 'tfGroup', cls: 'tf-condensed' },
+    ]
+      .map(step => ({ el: document.getElementById(step.id), cls: step.cls || 'ct-collapsed' }))
+      .filter(step => step.el);
 
     /* Tooltip text for the .tb-right selectors, built from their current value. */
     function accountTooltip(el) {
@@ -4600,15 +4612,15 @@
     }
 
     function relayout() {
-      /* Reset to full labels, then collapse one at a time until the bar fits.
+      /* Reset to full labels, then condense one step at a time until the bar fits.
          Refresh account tooltips here so they track the current account/template. */
-      collapseOrder.forEach(btn => {
-        btn.classList.remove('ct-collapsed');
-        if (btn.classList.contains('tb-account')) btn.dataset.tooltip = accountTooltip(btn);
+      collapseSteps.forEach(step => {
+        step.el.classList.remove(step.cls);
+        if (step.el.classList.contains('tb-account')) step.el.dataset.tooltip = accountTooltip(step.el);
       });
       if (!isOverflowing()) return;
-      for (const btn of collapseOrder) {
-        btn.classList.add('ct-collapsed');
+      for (const step of collapseSteps) {
+        step.el.classList.add(step.cls);
         if (!isOverflowing()) break;
       }
     }

@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="css/tokens.css?v=10">
   <link rel="stylesheet" href="css/topbar.css?v=6">
   <link rel="stylesheet" href="css/left-panel.css?v=8">
-  <link rel="stylesheet" href="css/center-panel.css?v=7">
+  <link rel="stylesheet" href="css/center-panel.css?v=9">
   <link rel="stylesheet" href="css/workspace.css?v=26">
   <link rel="stylesheet" href="css/right-panel.css?v=3">
   <link rel="stylesheet" href="css/quick-trade.css?v=7">
@@ -103,7 +103,7 @@
         </div>
 
         <div class="tb-right">
-          <button class="ct-icon pop-trigger" id="layoutPickerTrigger" title="Chart Layout">
+          <button class="ct-icon pop-trigger" id="layoutPickerTrigger" data-tooltip="Chart Layout">
             <span class="material-symbols-outlined">space_dashboard</span>
           </button>
           <div class="tb-account pop-trigger" id="templatesSelectTrigger">
@@ -117,11 +117,12 @@
             <span class="tb-account-balance" id="accountSelectBalance">$52,430.00</span>
             <span class="material-symbols-outlined tb-account-caret">expand_more</span>
           </div>
-          <button class="ct-icon" id="themeToggleBtn" aria-label="Switch to light theme"><span
-              class="material-symbols-outlined" id="themeToggleIcon">dark_mode</span></button>
-          <button class="ct-icon pop-trigger" id="alertsTrigger"><span
+          <button class="ct-icon" id="themeToggleBtn" aria-label="Switch to light theme"
+              data-tooltip="Switch to light theme"><span class="material-symbols-outlined"
+              id="themeToggleIcon">dark_mode</span></button>
+          <button class="ct-icon pop-trigger" id="alertsTrigger" data-tooltip="Alerts"><span
               class="material-symbols-outlined">notifications</span></button>
-          <button class="ct-icon pop-trigger" id="settingsTrigger"><span
+          <button class="ct-icon pop-trigger" id="settingsTrigger" data-tooltip="Settings"><span
               class="material-symbols-outlined">settings</span></button>
         </div>
       </div><!-- /.tb-chart-zone -->
@@ -5427,8 +5428,8 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js?v=1"></script>
-  <script src="js/app.js?v=150"></script>
-  <script src="js/theme.js?v=2"></script>
+  <script src="js/app.js?v=151"></script>
+  <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=19"></script>
   <script src="js/market-scanner.js?v=14"></script>
   <script src="js/market-sessions.js?v=4"></script>
