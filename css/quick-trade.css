@@ -265,6 +265,16 @@
   color: var(--text-muted);
 }
 
+/* locked stepper (e.g. Dynamic Fee Offset auto-fills the value) — arrows read-only */
+.price-stepper-arrows button:disabled {
+  opacity: 0.35;
+}
+
+.price-stepper-arrows button:disabled:hover {
+  color: var(--text-muted);
+  background: transparent;
+}
+
 .price-stepper .qty-unit {
   padding-right: 0;
 }

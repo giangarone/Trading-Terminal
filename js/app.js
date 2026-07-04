@@ -43,7 +43,7 @@
       { pct: 25, r: 4.0, type: 'limit' }
     ],
     defaultStopLoss: { r: 1.0, type: 'stopMarket' },
-    moveSlToBreakeven: { trigger: 'tp1', customR: 1, pctToTp: 50, offsetValue: 0.06, offsetUnit: 'fee' },
+    moveSlToBreakeven: { trigger: 'tp1', customR: 1, pctToTp: 50, offsetValue: 0.06, offsetUnit: 'fee', dynamicFee: true },
     trailingStop: { distanceValue: 1.0, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
     atrStop: { multiplier: 2.0 },
     trailingTp: { distanceValue: 0.5, distanceUnit: 'percent' },
@@ -3817,6 +3817,21 @@
     document.getElementById('csBeCustomRWrap').style.display = beTrigger === 'customR' ? '' : 'none';
     document.getElementById('csBePctWrap').style.display = beTrigger === 'pct' ? '' : 'none';
     document.getElementById('csTsStartCustomRWrap').style.display = tsStart === 'customR' ? '' : 'none';
+    csSyncBeDynamicFee();
+  }
+  /* Dynamic Fee Offset (global default): only shown for the 'Fee Amount' unit. While on, it auto-fills
+     the exact fee offset (0.06) and locks the offset input — matching the per-trade breakeven popup. */
+  function csSyncBeDynamicFee() {
+    const row = document.getElementById('csBeDynamicFee');
+    if (!row) return;
+    const isFee = csActiveRadioUnit('csBeOffsetUnitToggle') === 'fee';
+    row.style.display = isFee ? '' : 'none';
+    const locked = isFee && row.classList.contains('active');
+    const input = document.getElementById('csBeOffsetValue');
+    if (locked) input.value = 0.06;
+    input.disabled = locked;
+    document.getElementById('csBeOffsetInc').disabled = locked;
+    document.getElementById('csBeOffsetDec').disabled = locked;
   }
   /* percentOverride/atrOverride let a field use a finer min/step/decimals when its unit dropdown is set to "%" or "ATR" —
      ticks/points distances are sensibly whole numbers, but percent and ATR-multiple distances need sub-1 decimals (e.g. 0.5%, 2.0x) */
@@ -3934,6 +3949,11 @@
     csConfirmReverseRow.querySelector('.ui-toggle').addEventListener('click', () => {
       setReverseConfirmEnabled(csConfirmReverseRow.classList.contains('active'));
     });
+  }
+  /* Dynamic Fee Offset row re-syncs the offset input's locked state after the generic toggle flips it */
+  const csBeDynamicFeeRow = document.getElementById('csBeDynamicFee');
+  if (csBeDynamicFeeRow) {
+    csBeDynamicFeeRow.querySelector('.ui-toggle').addEventListener('click', () => csSyncBeDynamicFee());
   }
   document.querySelectorAll('#chartSettingsBackdrop .cs-radio-group').forEach(group => {
     group.querySelectorAll('.cs-radio-row').forEach(row => {
@@ -4201,6 +4221,7 @@
     document.getElementById('csBePctValue').value = s.moveSlToBreakeven.pctToTp;
     document.getElementById('csBeOffsetValue').value = s.moveSlToBreakeven.offsetValue;
     document.querySelectorAll('#csBeOffsetUnitToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.moveSlToBreakeven.offsetUnit));
+    document.getElementById('csBeDynamicFee').classList.toggle('active', s.moveSlToBreakeven.dynamicFee !== false);
 
     document.getElementById('csTsDistanceValue').value = s.trailingStop.distanceValue;
     document.querySelectorAll('#csTsDistanceUnitToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingStop.distanceUnit));
@@ -4255,6 +4276,7 @@
         pctToTp: parseFloat(document.getElementById('csBePctValue').value) || 50,
         offsetValue: parseFloat(document.getElementById('csBeOffsetValue').value) || 0,
         offsetUnit: document.querySelector('#csBeOffsetUnitToggle .cs-radio-row.active').dataset.unit,
+        dynamicFee: document.getElementById('csBeDynamicFee').classList.contains('active'),
       },
       trailingStop: {
         distanceValue: parseFloat(document.getElementById('csTsDistanceValue').value) || 1,
@@ -5209,6 +5231,25 @@
     document.getElementById('slBeOvCustomRWrap').style.display = trigger === 'customR' ? '' : 'none';
     document.getElementById('slBeOvPctWrap').style.display = trigger === 'pct' ? '' : 'none';
   }
+  /* Dynamic Fee Offset: only relevant for the 'Fee Amount' unit. While on, it auto-fills the exact
+     fee offset (0.06) and locks the offset input; switching units or toggling off makes it editable again. */
+  const BE_DYNAMIC_FEE_VALUE = 0.06;
+  function syncBeOvDynamicFee() {
+    const ov = order && order.sl && order.sl.beOverride;
+    if (!ov) return;
+    const row = document.getElementById('slBeOvDynamicFee');
+    const isFee = ov.offsetUnit === 'fee';
+    row.style.display = isFee ? '' : 'none';
+    row.classList.toggle('active', !!ov.dynamicFee);
+    const locked = isFee && !!ov.dynamicFee;
+    if (locked) {
+      ov.offsetValue = BE_DYNAMIC_FEE_VALUE;
+      slBeOvOffsetValue.value = BE_DYNAMIC_FEE_VALUE;
+    }
+    slBeOvOffsetValue.disabled = locked;
+    document.getElementById('slBeOvOffsetInc').disabled = locked;
+    document.getElementById('slBeOvOffsetDec').disabled = locked;
+  }
   /* keep the gear-menu % field in step with a ghost-line drag (only if the menu is open) */
   function syncBePctField() {
     const el = document.getElementById('slBeOvPctValue');
@@ -5236,7 +5277,7 @@
     if (!order || !order.sl) return null;
     if (!order.sl.beOverride) {
       const base = chartSettings.moveSlToBreakeven;
-      order.sl.beOverride = { trigger: base.trigger, customR: base.customR, pctToTp: base.pctToTp, offsetValue: base.offsetValue, offsetUnit: base.offsetUnit };
+      order.sl.beOverride = { trigger: base.trigger, customR: base.customR, pctToTp: base.pctToTp, offsetValue: base.offsetValue, offsetUnit: base.offsetUnit, dynamicFee: base.dynamicFee !== false };
     }
     return order.sl.beOverride;
   }
@@ -5255,6 +5296,7 @@
     document.getElementById('slBeOvCustomRValue').value = (+be.customR).toFixed(1);
     document.getElementById('slBeOvPctValue').value = Math.round(be.pctToTp);
     syncBeOvTriggerFields(be.trigger);
+    syncBeOvDynamicFee();
     refreshAllCsDropdownLabels(slGearMenu);
   }
   function renderSlGearMenu() {
@@ -5375,6 +5417,14 @@
       ov.offsetUnit = row.dataset.unit;
       populateSlSettings();
     });
+  });
+  /* Dynamic Fee Offset toggle — locks the offset to the exact fee amount while on */
+  document.getElementById('slBeOvDynamicFee').querySelector('.ui-toggle').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const ov = ensureBeOverride();
+    if (!ov) return;
+    ov.dynamicFee = !ov.dynamicFee;
+    populateSlSettings();
   });
   /* Trailing distance value stepper (%, ticks, or ATR multiples) */
   {
