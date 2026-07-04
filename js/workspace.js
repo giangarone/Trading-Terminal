@@ -67,7 +67,7 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
   const tjDayLabel = document.getElementById('tjDayLabel');
   const tjPnl = document.getElementById('tjPnl');
   const tjSpark = document.getElementById('tjSpark');
-  const tjTrades = document.getElementById('tjTrades');
+  const tjSparkLbl = document.getElementById('tjSparkLbl');
   const tjWinRate = document.getElementById('tjWinRate');
   const tjBest = document.getElementById('tjBest');
   const tjWorst = document.getElementById('tjWorst');
@@ -75,25 +75,24 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
     const sign = n > 0 ? '+' : n < 0 ? '-' : '';
     return sign + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
-  /* Compact form for the tight stat-strip cells: $1.4k above 1000, whole dollars below. */
-  function fmtCompact(n) {
+  /* Whole-dollar form for the tight stat-strip cells (no thousands abbreviation). */
+  function fmtDollars(n) {
     const sign = n > 0 ? '+' : n < 0 ? '-' : '';
-    const abs = Math.abs(n);
-    if (abs >= 1000) return sign + '$' + (abs / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
-    return sign + '$' + Math.round(abs);
+    return sign + '$' + Math.round(Math.abs(n)).toLocaleString('en-US');
   }
   function showJournalDay(idx) {
     const d = journalDays[idx];
     tjDayLabel.textContent = d.label;
+    /* Hero label: "Today's P&L" for today, otherwise the selected day's date. */
+    tjSparkLbl.textContent = idx === 0 ? "Today's P&L" : d.label + ' P&L';
     tjPnl.textContent = fmtSigned(d.pnl);
     tjPnl.classList.toggle('up', d.pnl >= 0);
     tjPnl.classList.toggle('down', d.pnl < 0);
     tjSpark.classList.toggle('up', d.pnl >= 0);
     tjSpark.classList.toggle('down', d.pnl < 0);
-    tjTrades.textContent = d.trades;
     tjWinRate.textContent = d.winRate + '%';
-    tjBest.textContent = fmtCompact(d.best);
-    tjWorst.textContent = fmtCompact(d.worst);
+    tjBest.textContent = fmtDollars(d.best);
+    tjWorst.textContent = fmtDollars(d.worst);
   }
   function closeAllPopoversLocal() {
     document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => m.classList.remove('show'));
