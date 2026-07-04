@@ -193,7 +193,7 @@
 }
 
 .resize-handle.resize-v {
-  height: 1px;
+  height: .5px;
   cursor: row-resize;
 }
 

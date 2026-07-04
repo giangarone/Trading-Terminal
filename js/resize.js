@@ -104,17 +104,59 @@ function setupPanel(handle, panel, expandBtn, side, minW, maxW, cssVar, defaultW
   applyCollapsed(state[side]);
 }
 
+/*
+ * Wires up the bottom panel so dragging its handle both resizes and
+ * collapses/expands it — the same reversible gesture the side panels use.
+ * Dragging below half the minimum height snaps it closed to the tab bar;
+ * dragging back out reopens it. This coexists with the tab-click toggle in
+ * workspace.js (both drive the `bp-collapsed` class), so the panel's
+ * collapsed/expanded body stays in sync however it was triggered.
+ */
 function setupVerticalResize(handle, panel, minH, maxH) {
   if (!handle || !panel) return;
+  const collapseThreshold = minH * 0.5;
+
+  /* When expanding with no tab selected (e.g. dragging open from the initial
+     collapsed state), show the first panel so the body isn't blank — mirrors
+     the tab-click path, which always activates a panel when it expands. */
+  function ensureActivePanel() {
+    if (panel.querySelector('#bpTabs .bp-tab.active')) return;
+    const firstTab = panel.querySelector('#bpTabs .bp-tab');
+    if (!firstTab) return;
+    firstTab.classList.add('active');
+    const target = document.getElementById('bpPanel-' + firstTab.dataset.panel);
+    if (target) target.classList.add('active');
+  }
+
+  /* Collapsing clears the active tab, matching the tab-click collapse. */
+  function clearActivePanel() {
+    panel.querySelectorAll('#bpTabs .bp-tab').forEach(b => b.classList.remove('active'));
+    panel.querySelectorAll('.bp-table-wrap').forEach(p => p.classList.remove('active'));
+  }
+
   handle.addEventListener('mousedown', (e) => {
     e.preventDefault();
-    const startY = e.clientY, startH = panel.getBoundingClientRect().height;
+    /* The bottom edge stays anchored; the panel height is a pure function of the
+       cursor Y, so crossing the threshold up/down toggles collapse reversibly
+       within a single drag. */
+    const bottomEdge = panel.getBoundingClientRect().bottom;
+    const impliedHeight = (ev) => bottomEdge - ev.clientY;
     handle.classList.add('dragging');
     document.body.style.userSelect = 'none';
     function move(ev) {
-      const dy = ev.clientY - startY;
-      const h = clampResize(startH - dy, minH, maxH);
-      panel.style.height = h + 'px';
+      const h = impliedHeight(ev);
+      if (h < collapseThreshold) {
+        if (!panel.classList.contains('bp-collapsed')) {
+          clearActivePanel();
+          panel.classList.add('bp-collapsed');
+        }
+        return;
+      }
+      if (panel.classList.contains('bp-collapsed')) {
+        panel.classList.remove('bp-collapsed');
+        ensureActivePanel();
+      }
+      panel.style.height = clampResize(h, minH, maxH) + 'px';
     }
     function up() {
       handle.classList.remove('dragging');

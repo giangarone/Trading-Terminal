@@ -441,6 +441,11 @@
   font-family: var(--sans);
 }
 
+/* Neutral placeholder dash when there was no losing trade to report. */
+.tj-mini-val.is-empty {
+  color: var(--text-muted);
+}
+
 .news-filter {
   font-size: 10.5px;
   color: var(--text-secondary);

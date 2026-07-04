@@ -92,7 +92,19 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
     tjSpark.classList.toggle('down', d.pnl < 0);
     tjWinRate.textContent = d.winRate + '%';
     tjBest.textContent = fmtDollars(d.best);
-    tjWorst.textContent = fmtDollars(d.worst);
+    tjBest.classList.toggle('up', d.best >= 0);
+    tjBest.classList.toggle('down', d.best < 0);
+    /* Worst only shows a number when there was an actual losing trade; otherwise
+       a neutral dash, so a profitable "worst" trade never reads as a red loss. */
+    if (d.worst < 0) {
+      tjWorst.textContent = fmtDollars(d.worst);
+      tjWorst.classList.add('down');
+      tjWorst.classList.remove('up', 'is-empty');
+    } else {
+      tjWorst.textContent = '—';
+      tjWorst.classList.remove('up', 'down');
+      tjWorst.classList.add('is-empty');
+    }
   }
   function closeAllPopoversLocal() {
     document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => m.classList.remove('show'));
