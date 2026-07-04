@@ -45,7 +45,7 @@ function setupVerticalResize(handle, panel, minH, maxH) {
     document.addEventListener('mouseup', up);
   });
 }
-setupHorizontalResize(document.getElementById('leftResizeHandle'), document.querySelector('.left-panel'), 'left', 310, 480, '--left-panel-w');
+setupHorizontalResize(document.getElementById('leftResizeHandle'), document.querySelector('.left-panel'), 'left', 290, 480, '--left-panel-w');
 setupHorizontalResize(document.getElementById('rightResizeHandle'), document.querySelector('.right-panel'), 'right', 280, 540);
 setupVerticalResize(document.getElementById('bottomResizeHandle'), document.querySelector('.bottom-panel'), 100, 560);
 

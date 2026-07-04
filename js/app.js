@@ -1545,9 +1545,9 @@
     const fillPct = Math.round(o.filledQty / o.qty * 100);
     const qtyCell = partial
       ? '<span class="ord-val-primary">' + o.qty + '</span>' +
-        '<span class="ord-fill-pill" title="' + fillPct + '% filled">' +
-        '<span class="ord-fill-pill-bar" style="width:' + fillPct + '%"></span>' +
-        '<span class="ord-fill-pill-label">' + fillPct + '%</span>' +
+        '<span class="ord-fill-frac">' + o.filledQty + '/' + o.qty + ' filled</span>' +
+        '<span class="ord-fill-track" title="' + fillPct + '% filled">' +
+        '<span class="ord-fill-track-bar" style="width:' + fillPct + '%"></span>' +
         '</span>'
       : '<span class="ord-val-primary">' + o.qty + '</span>';
     const statusCell = partial

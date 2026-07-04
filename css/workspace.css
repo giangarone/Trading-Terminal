@@ -1242,38 +1242,29 @@ table.bp-table tr.total-row td {
   margin-top: 2px;
 }
 
-/* Fill-progress pill — shown under the qty on a partially-filled resting order.
-   A rounded track with an inner bar sized to the fill %, and the % label on top. */
-.ord-fill-pill {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 46px;
-  height: 16px;
+/* Fill-progress indicator — shown under the qty on a partially-filled resting order.
+   Filled/total fraction as text, plus a thin underline track sized to the fill %. */
+.ord-fill-frac {
+  display: block;
+  font-size: var(--fs-label);
+  color: var(--text-muted);
+}
+
+.ord-fill-track {
+  display: block;
+  width: 52px;
+  height: 3px;
   margin-top: 4px;
-  padding: 0 6px;
-  border-radius: 5px;
+  margin-left: auto;
+  border-radius: 2px;
   overflow: hidden;
   background: var(--info-dim);
-  vertical-align: middle;
 }
 
-.ord-fill-pill-bar {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
+.ord-fill-track-bar {
+  display: block;
+  height: 100%;
   background: var(--info);
-  opacity: .3;
-}
-
-.ord-fill-pill-label {
-  position: relative;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .02em;
-  color: var(--info);
 }
 
 /* Alert direction indicator (↑ / ↓ with condition label) */

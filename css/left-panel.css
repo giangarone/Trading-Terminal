@@ -5,15 +5,15 @@
   background: var(--bg-base);
   border-right: 1px solid var(--border-subtle);
   overflow-y: auto;
-  padding: 12px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .card {
   background: var(--bg-surface);
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   padding: 12px;
   min-width: 0;
