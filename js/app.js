@@ -4644,6 +4644,54 @@
     ]);
   })();
 
+  /* ---------- chart tools bar tooltips ---------- */
+  /* The chart tools bar scrolls horizontally once its controls have condensed
+     and it still overflows. A scroll container clips overflow on both axes, so
+     the collapsed buttons can't surface their hidden label via a CSS ::after
+     tooltip (it renders below the button, outside the clip). Instead we render a
+     single shared tooltip at the body level with fixed positioning, so it always
+     escapes the clip. Styling mirrors the ::after tooltips (see .floating-tooltip
+     in center-panel.css). */
+  (function initChartToolsTooltips() {
+    const bar = document.querySelector('.chart-tools-bar');
+    if (!bar) return;
+
+    const tip = document.createElement('div');
+    tip.className = 'floating-tooltip';
+    document.body.appendChild(tip);
+
+    /* Only collapsed (icon-only) controls need a tooltip — an expanded control
+       already shows its label. Matches the old CSS selector's intent. */
+    function tooltipTarget(node) {
+      const el = node.closest && node.closest('.ct-collapsed[data-tooltip]');
+      return el && bar.contains(el) ? el : null;
+    }
+
+    function showTooltip(el) {
+      tip.textContent = el.dataset.tooltip;
+      const rect = el.getBoundingClientRect();
+      tip.style.left = (rect.left + rect.width / 2) + 'px';
+      tip.style.top = (rect.bottom + 8) + 'px';
+      tip.classList.add('show');
+    }
+
+    function hideTooltip() {
+      tip.classList.remove('show');
+    }
+
+    bar.addEventListener('mouseover', (e) => {
+      const el = tooltipTarget(e.target);
+      if (el) showTooltip(el);
+    });
+    bar.addEventListener('mouseout', (e) => {
+      const el = tooltipTarget(e.target);
+      /* Ignore moves that stay inside the same control (e.g. onto its icon). */
+      if (el && !el.contains(e.relatedTarget)) hideTooltip();
+    });
+    /* A fixed tooltip would detach from its button while the bar scrolls. */
+    bar.addEventListener('scroll', hideTooltip, { passive: true });
+  })();
+
   /* ---------- symbol selector dropdown ---------- */
   const SYMBOL_LIST = [
     ...['ETHUSD', 'BTCUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'DOGEUSD', 'ADAUSD', 'AVAXUSD', 'LINKUSD', 'MATICUSD',

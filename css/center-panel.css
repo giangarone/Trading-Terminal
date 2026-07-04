@@ -138,10 +138,12 @@
   display: none;
 }
 
-/* Instant tooltip (matches the .cdt-btn drawing-tool tooltips) — shown for
-   collapsed icon-only action buttons (hidden label) and for the always-icon-only
-   .ct-icon topbar buttons (layout, theme, alerts, settings). */
-.ct-action-btn.ct-collapsed[data-tooltip]:hover::after,
+/* Instant tooltip (matches the .cdt-btn drawing-tool tooltips) — shown for the
+   collapsed top-bar account/template selectors (hidden label) and the always-
+   icon-only .ct-icon topbar buttons (theme, alerts, settings). The chart tools
+   bar's collapsed buttons can't use this ::after variant because that bar is a
+   scroll container that clips overflow — their tooltips are rendered at the body
+   level as .floating-tooltip by initChartToolsTooltips() instead. */
 .tb-account.ct-collapsed[data-tooltip]:hover::after,
 .ct-icon[data-tooltip]:hover::after {
   content: attr(data-tooltip);
@@ -161,6 +163,33 @@
   box-shadow: 0 8px 20px var(--shadow-color);
   z-index: 50;
   pointer-events: none;
+}
+
+/* Body-level tooltip for the chart tools bar's collapsed buttons — matches the
+   ::after tooltip styling above but uses fixed positioning (set in JS) so it
+   escapes the bar's horizontal-scroll clipping. */
+.floating-tooltip {
+  position: fixed;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sans);
+  white-space: nowrap;
+  box-shadow: 0 8px 20px var(--shadow-color);
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.floating-tooltip.show {
+  opacity: 1;
+  visibility: visible;
 }
 
 .ct-icon {
@@ -456,9 +485,12 @@
 
 /* Chart Tools Bar — the top row of the chart pane (symbol, timeframes, and the
    chart action buttons). Aligned with the chart, so it sits inside the center
-   panel rather than the full-width top bar. Overflow is visible so collapsed-
-   button tooltips can escape; the collapse logic in app.js keeps its contents
-   within the available width. */
+   panel rather than the full-width top bar. The collapse logic in app.js first
+   condenses the controls to icons; once everything has condensed and the bar
+   still doesn't fit, it scrolls horizontally instead of spilling past the
+   layout. A scroll container clips overflow on BOTH axes, so the collapsed
+   buttons' tooltips can't use CSS ::after here — they are rendered at the body
+   level by initChartToolsTooltips() so they escape the scroll clip. */
 .chart-tools-bar {
   height: 48px;
   flex-shrink: 0;
@@ -468,7 +500,14 @@
   padding: 0 12px;
   background: var(--bg-base);
   border-bottom: 1px solid var(--border-subtle);
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.chart-tools-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .chart-body {
