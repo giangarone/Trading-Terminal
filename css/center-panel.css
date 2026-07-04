@@ -196,7 +196,7 @@
   position: relative;
 }
 
-/* Collapsed to icon-only (shares the .tb-left collapse pass) — hide the label,
+/* Collapsed to icon-only (via the top bar collapse pass) — hide the label,
    balance and caret and center the leading icon like a .ct-icon button. */
 .tb-account.ct-collapsed {
   width: 30px;
@@ -454,24 +454,21 @@
   background: var(--on-accent);
 }
 
-.ohlc-row {
-  height: 26px;
+/* Chart Tools Bar — the top row of the chart pane (symbol, timeframes, and the
+   chart action buttons). Aligned with the chart, so it sits inside the center
+   panel rather than the full-width top bar. Overflow is visible so collapsed-
+   button tooltips can escape; the collapse logic in app.js keeps its contents
+   within the available width. */
+.chart-tools-bar {
+  height: 48px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 16px;
+  gap: 10px;
+  padding: 0 12px;
   background: var(--bg-base);
   border-bottom: 1px solid var(--border-subtle);
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.ohlc-row b {
-  color: var(--text-primary);
-  font-weight: 600;
-  margin-right: 3px;
+  overflow: visible;
 }
 
 .chart-body {
@@ -733,6 +730,7 @@
   justify-content: space-between;
   padding: 0 16px;
   border-top: 1px solid var(--border-subtle);
+  background: var(--bg-base);
 }
 
 .range-group {

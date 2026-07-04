@@ -15,9 +15,9 @@
 
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
   <link rel="stylesheet" href="css/tokens.css?v=12">
-  <link rel="stylesheet" href="css/topbar.css?v=11">
+  <link rel="stylesheet" href="css/topbar.css?v=12">
   <link rel="stylesheet" href="css/left-panel.css?v=10">
-  <link rel="stylesheet" href="css/center-panel.css?v=10">
+  <link rel="stylesheet" href="css/center-panel.css?v=11">
   <link rel="stylesheet" href="css/workspace.css?v=28">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=7">
@@ -42,70 +42,31 @@
           <img class="tb-logo-light" src="assets/logo-light.png" alt="ChartPrime">
         </div>
       </div>
-      <div class="tb-chart-zone">
-        <div class="tb-left">
-          <div class="symbol-block">
-            <div class="symbol-select pop-trigger" id="symSelectTrigger">
-              <span class="sym" id="symSelectLabel">ETHUSD</span>
-            </div>
-          </div>
 
-          <div class="tf-group" id="tfGroup">
-            <button class="tf-btn active" data-tf="15m">15m</button>
-            <button class="tf-btn" data-tf="1h">1h</button>
-            <button class="tf-btn" data-tf="4h">4h</button>
-            <button class="tf-btn" data-tf="D">D</button>
-            <button class="tf-btn tf-more pop-trigger" id="tfMoreTrigger"><span id="tfMoreLabel"></span><span
-                class="material-symbols-outlined" style="font-size:14px;">expand_more</span></button>
-          </div>
-          <button class="ct-action-btn pop-trigger" id="candleTypeTrigger" data-tooltip="Candles"><span
-              class="material-symbols-outlined" style="font-size:15px;">candlestick_chart</span><span class="ct-label"
-              id="candleTypeLabel">Candles</span><span class="material-symbols-outlined ct-caret"
-              style="font-size:15px;">expand_more</span></button>
-          <button class="ct-action-btn pop-trigger" id="indicatorsTrigger" data-tooltip="Indicators"><span
-              class="material-symbols-outlined" style="font-size:15px;">function</span><span
-              class="ct-label">Indicators</span><span class="count-badge" id="indicatorsCount"
-              style="display:none;"></span><span class="material-symbols-outlined ct-caret"
-              style="font-size:15px;">expand_more</span></button>
-          <button class="ct-action-btn" id="replayToggle" data-tooltip="Replay"><span class="material-symbols-outlined"
-              style="font-size:15px;">fast_rewind</span><span class="ct-label">Replay</span></button>
-          <button class="ct-action-btn pop-trigger" id="marketScannerTrigger" data-tooltip="Market Scanner"><span
-              class="material-symbols-outlined" style="font-size:15px;">radar</span><span class="ct-label">Market
-              Scanner</span></button>
-          <button class="ct-action-btn pop-trigger" id="marketSessionsTrigger" data-tooltip="Market Sessions"><span
-              class="material-symbols-outlined" style="font-size:15px;">schedule</span><span class="ct-label">Market
-              Sessions</span></button>
-          <button class="ct-action-btn" id="newsToggle" data-tooltip="News"><span class="material-symbols-outlined"
-              style="font-size:15px;">article</span><span class="ct-label">News</span></button>
+      <div class="tb-stats" style="display:none;" aria-hidden="true">
+        <div class="stat">
+          <span class="val hero" id="hdrLast">4,500.25</span>
+          <span class="chg up" id="hdrChg">+18.25 (+0.41%)</span>
         </div>
-
-        <div class="tb-stats" style="display:none;" aria-hidden="true">
-          <div class="stat">
-            <span class="val hero" id="hdrLast">4,500.25</span>
-            <span class="chg up" id="hdrChg">+18.25 (+0.41%)</span>
-          </div>
-          <div class="stat">
-            <span class="lbl">Bid</span>
-            <span class="val" id="hdrBid">4,500.00</span>
-          </div>
-          <div class="stat">
-            <span class="lbl">Ask</span>
-            <span class="val" id="hdrAsk">4,500.25</span>
-          </div>
-          <div class="stat">
-            <span class="lbl">Day High</span>
-            <span class="val" id="hdrDayHigh">4,505.75</span>
-          </div>
-          <div class="stat">
-            <span class="lbl">Day Low</span>
-            <span class="val" id="hdrDayLow">4,473.25</span>
-          </div>
+        <div class="stat">
+          <span class="lbl">Bid</span>
+          <span class="val" id="hdrBid">4,500.00</span>
         </div>
+        <div class="stat">
+          <span class="lbl">Ask</span>
+          <span class="val" id="hdrAsk">4,500.25</span>
+        </div>
+        <div class="stat">
+          <span class="lbl">Day High</span>
+          <span class="val" id="hdrDayHigh">4,505.75</span>
+        </div>
+        <div class="stat">
+          <span class="lbl">Day Low</span>
+          <span class="val" id="hdrDayLow">4,473.25</span>
+        </div>
+      </div>
 
-        <div class="tb-right">
-          <button class="ct-icon pop-trigger" id="layoutPickerTrigger" data-tooltip="Chart Layout">
-            <span class="material-symbols-outlined">space_dashboard</span>
-          </button>
+      <div class="tb-right">
           <div class="tb-account pop-trigger" id="templatesSelectTrigger">
             <span class="material-symbols-outlined">bookmark</span>
             <span class="tb-account-name" id="templatesSelectName">Scalping</span>
@@ -123,7 +84,6 @@
           <button class="ct-icon pop-trigger" id="settingsTrigger" data-tooltip="Settings"><span
               class="material-symbols-outlined">settings</span></button>
         </div>
-      </div><!-- /.tb-chart-zone -->
     </header>
 
     <div class="pop-menu" id="templatesSelectMenu" style="width:260px;">
@@ -3020,13 +2980,43 @@
       <main class="center-panel">
 
         <div class="ws-pane active" id="wsPane-chart">
-          <div class="ohlc-row">
-            <span><b>O</b><span id="ohlcO">4,493.50</span></span>
-            <span><b>H</b><span id="ohlcH">4,505.75</span></span>
-            <span><b>L</b><span id="ohlcL">4,473.25</span></span>
-            <span><b>C</b><span class="up" id="ohlcC">4,500.25</span></span>
-            <span class="up" id="ohlcChg">+6.75 (+0.13%)</span>
-            <span><b>Vol</b><span id="ohlcVol">24.8K</span></span>
+          <div class="chart-tools-bar">
+            <div class="symbol-block">
+              <div class="symbol-select pop-trigger" id="symSelectTrigger">
+                <span class="sym" id="symSelectLabel">ETHUSD</span>
+              </div>
+            </div>
+
+            <div class="tf-group" id="tfGroup">
+              <button class="tf-btn active" data-tf="15m">15m</button>
+              <button class="tf-btn" data-tf="1h">1h</button>
+              <button class="tf-btn" data-tf="4h">4h</button>
+              <button class="tf-btn" data-tf="D">D</button>
+              <button class="tf-btn tf-more pop-trigger" id="tfMoreTrigger"><span id="tfMoreLabel"></span><span
+                  class="material-symbols-outlined" style="font-size:14px;">expand_more</span></button>
+            </div>
+            <button class="ct-action-btn pop-trigger" id="candleTypeTrigger" data-tooltip="Candles"><span
+                class="material-symbols-outlined" style="font-size:15px;">candlestick_chart</span><span class="ct-label"
+                id="candleTypeLabel">Candles</span><span class="material-symbols-outlined ct-caret"
+                style="font-size:15px;">expand_more</span></button>
+            <button class="ct-action-btn pop-trigger" id="indicatorsTrigger" data-tooltip="Indicators"><span
+                class="material-symbols-outlined" style="font-size:15px;">function</span><span
+                class="ct-label">Indicators</span><span class="count-badge" id="indicatorsCount"
+                style="display:none;"></span><span class="material-symbols-outlined ct-caret"
+                style="font-size:15px;">expand_more</span></button>
+            <button class="ct-action-btn" id="replayToggle" data-tooltip="Replay"><span class="material-symbols-outlined"
+                style="font-size:15px;">fast_rewind</span><span class="ct-label">Replay</span></button>
+            <button class="ct-action-btn pop-trigger" id="marketScannerTrigger" data-tooltip="Market Scanner"><span
+                class="material-symbols-outlined" style="font-size:15px;">radar</span><span class="ct-label">Market
+                Scanner</span></button>
+            <button class="ct-action-btn pop-trigger" id="marketSessionsTrigger" data-tooltip="Market Sessions"><span
+                class="material-symbols-outlined" style="font-size:15px;">schedule</span><span class="ct-label">Market
+                Sessions</span></button>
+            <button class="ct-action-btn" id="newsToggle" data-tooltip="News"><span class="material-symbols-outlined"
+                style="font-size:15px;">article</span><span class="ct-label">News</span></button>
+            <button class="ct-action-btn pop-trigger" id="layoutPickerTrigger" data-tooltip="Chart Layout"><span
+                class="material-symbols-outlined" style="font-size:15px;">space_dashboard</span><span
+                class="ct-label">Layout</span></button>
           </div>
 
           <div class="chart-body">
@@ -5434,7 +5424,7 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js?v=12"></script>
-  <script src="js/app.js?v=152"></script>
+  <script src="js/app.js?v=154"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=19"></script>
   <script src="js/market-scanner.js?v=14"></script>

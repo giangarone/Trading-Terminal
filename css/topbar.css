@@ -1,20 +1,19 @@
 /* ====== Topbar ====== */
 .topbar {
-  height: 48px;
+  height: 56px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
   background: var(--bg-base);
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .tb-logo-zone {
-  width: calc(var(--left-panel-w) + 1px);
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  padding: 0 20px;
-  border-right: 2px solid var(--border-subtle);
   height: 100%;
 }
 
@@ -25,7 +24,7 @@
 }
 
 .tb-logo img {
-  height: 22px;
+  height: 24px;
   width: auto;
   display: block;
 }
@@ -40,30 +39,6 @@
 
 [data-theme="light"] .tb-logo img.tb-logo-light {
   display: block;
-}
-
-.tb-chart-zone {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px 0 8px;
-  gap: 24px;
-  min-width: 0;
-  /* Visible so collapsed-button tooltips can render below the toolbar. The
-     .tb-left collapse logic keeps its contents within the available width. */
-  overflow: visible;
-}
-
-.tb-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1 1 auto;
-  min-width: 0;
-  /* Fills the available space so clientWidth is a stable measurement target for
-     the icon-collapse logic; visible lets tooltips escape (see .tb-chart-zone). */
-  overflow: visible;
 }
 
 .symbol-block {

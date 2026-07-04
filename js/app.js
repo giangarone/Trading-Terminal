@@ -2629,7 +2629,6 @@
     function flashEl(el, isUp) { el.classList.remove('flash-up', 'flash-down'); void el.offsetWidth; el.classList.add(isUp ? 'flash-up' : 'flash-down'); }
     function fmtVol(v) { return v >= 1000 ? (v / 1000).toFixed(1) + 'K' : String(Math.round(v)); }
 
-    const dayOpen = 4493.50;
     const prevClose = BASE_PRICE - 18.25; // matches the +18.25 day change shown at load
     let last = BASE_PRICE;
     let dayHigh = 4505.75, dayLow = 4473.25;
@@ -2646,11 +2645,6 @@
       wlChg: document.getElementById('wlChg-ETHUSD'),
       wlChgAbs: document.getElementById('wlChgAbs-ETHUSD'),
       wlVol: document.getElementById('wlVol-ETHUSD'),
-      ohlcH: document.getElementById('ohlcH'),
-      ohlcL: document.getElementById('ohlcL'),
-      ohlcC: document.getElementById('ohlcC'),
-      ohlcChg: document.getElementById('ohlcChg'),
-      ohlcVol: document.getElementById('ohlcVol'),
     };
 
     function tick() {
@@ -2689,16 +2683,6 @@
         setUpDown(els.wlChgAbs, dayUp);
       }
       if (els.wlVol) els.wlVol.textContent = fmtVol(vol);
-
-      els.ohlcH.textContent = fmt(dayHigh);
-      els.ohlcL.textContent = fmt(dayLow);
-      els.ohlcC.textContent = fmt(last);
-      const ohlcUp = last >= dayOpen;
-      setUpDown(els.ohlcC, ohlcUp);
-      const ohlcChg = last - dayOpen, ohlcChgPct = ohlcChg / dayOpen * 100;
-      els.ohlcChg.textContent = (ohlcUp ? '+' : '') + fmt(ohlcChg) + ' (' + (ohlcUp ? '+' : '') + fmt(ohlcChgPct) + '%)';
-      setUpDown(els.ohlcChg, ohlcUp);
-      els.ohlcVol.textContent = fmtVol(vol);
 
       flashEl(els.hdrLast, tickUp);
       flashEl(els.wlLast, tickUp);
@@ -4568,47 +4552,36 @@
   })();
 
   /* ---------- toolbar icon collapse ---------- */
-  /* When the toolbar runs low on room, controls progressively drop their label
-     to an icon-only state instead of overflowing. Every tool stays visible and
-     one click away; the hidden label is surfaced via an instant tooltip. The
-     .tb-left buttons collapse right-to-left first; the .tb-right account/template
-     selectors then collapse too (which frees width back to .tb-left, since it
-     fills via flex). A ResizeObserver keeps it in sync with window and
-     (resizable) side-panel width changes. */
-  (function initToolbarCollapse() {
-    const tbLeft = document.querySelector('.tb-left');
-    const tbChartZone = document.querySelector('.tb-chart-zone');
-    if (!tbLeft || !tbChartZone) return;
+  /* When a bar runs low on room, its controls progressively drop their label to
+     an icon-only state instead of overflowing. Every tool stays visible and one
+     click away; the hidden label is surfaced via an instant tooltip. Each step
+     toggles `cls` (default 'ct-collapsed'; the timeframe group uses
+     'tf-condensed'). A ResizeObserver keeps each bar in sync with window and
+     (resizable) side-panel width changes.
 
-    /* Collapse order — the first step is the first to condense. .tb-left buttons
-       collapse right-to-left (News is rightmost), then the .tb-right selectors,
-       then the two core chart controls (Indicators, Candles), and finally — only
-       in extreme-narrow cases — the timeframe group condenses to just the
-       selected timeframe plus its dropdown. Each step toggles `cls` (default
-       'ct-collapsed'; the timeframe group uses 'tf-condensed'). */
-    const collapseSteps = [
-      { id: 'newsToggle' },
-      { id: 'marketSessionsTrigger' },
-      { id: 'marketScannerTrigger' },
-      { id: 'replayToggle' },
-      { id: 'templatesSelectTrigger' },
-      { id: 'accountSelectTrigger' },
-      { id: 'indicatorsTrigger' },
-      { id: 'candleTypeTrigger' },
-      { id: 'tfGroup', cls: 'tf-condensed' },
-    ]
+     The chart tools and the account/template selectors live in two separate,
+     independently-sized bars (the center panel's chart tools bar and the full-
+     width top bar), so each gets its own collapse pass. */
+
+  /* Tooltip text for the .tb-account selectors, built from their current value. */
+  function accountTooltip(el) {
+    const name = el.querySelector('.tb-account-name');
+    const balance = el.querySelector('.tb-account-balance');
+    return [name, balance].filter(Boolean).map(n => n.textContent.trim()).filter(Boolean).join(' · ');
+  }
+
+  /* Wire one bar: `container` is the element observed for available width,
+     `flexEl` is the flex child whose overflow is measured, and `stepDefs` lists
+     the controls to condense in order (first = first to condense). */
+  function initBarCollapse(container, flexEl, stepDefs) {
+    if (!container || !flexEl) return;
+
+    const collapseSteps = stepDefs
       .map(step => ({ el: document.getElementById(step.id), cls: step.cls || 'ct-collapsed' }))
       .filter(step => step.el);
 
-    /* Tooltip text for the .tb-right selectors, built from their current value. */
-    function accountTooltip(el) {
-      const name = el.querySelector('.tb-account-name');
-      const balance = el.querySelector('.tb-account-balance');
-      return [name, balance].filter(Boolean).map(n => n.textContent.trim()).filter(Boolean).join(' · ');
-    }
-
     function isOverflowing() {
-      return tbLeft.scrollWidth > tbLeft.clientWidth + 1;
+      return flexEl.scrollWidth > flexEl.clientWidth + 1;
     }
 
     function relayout() {
@@ -4625,10 +4598,10 @@
       }
     }
 
-    /* Observe the chart zone (not .tb-left): its width is set by the window and
-       side panels, and does NOT change when we collapse items — so relayout can
-       never re-trigger the observer (no loop, no warning). Runs synchronously; a
-       boolean still guards re-entrancy. Deliberately no requestAnimationFrame —
+    /* Observe the container, not the flex child: its width is set by the window
+       and side panels, and does NOT change when we collapse items — so relayout
+       can never re-trigger the observer (no loop, no warning). Runs synchronously;
+       a boolean still guards re-entrancy. Deliberately no requestAnimationFrame —
        rAF is throttled in background tabs and would strand the layout. */
     let running = false;
     const safeRelayout = () => {
@@ -4637,11 +4610,38 @@
       relayout();
       running = false;
     };
-    new ResizeObserver(safeRelayout).observe(tbChartZone);
+    new ResizeObserver(safeRelayout).observe(container);
     relayout();
     /* Re-measure once the Material Symbols icon font finishes loading — button
        widths change when it swaps in, and the observer won't otherwise re-fire. */
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(safeRelayout);
+  }
+
+  (function initToolbarCollapse() {
+    /* Chart tools bar: collapse right-to-left (Layout is rightmost), then the two
+       core chart controls (Indicators, Candles), and finally — only in extreme-
+       narrow cases — the timeframe group condenses to just the selected timeframe
+       plus its dropdown. The whole bar is the flex child of the center panel. */
+    const chartToolsBar = document.querySelector('.chart-tools-bar');
+    initBarCollapse(chartToolsBar, chartToolsBar, [
+      { id: 'layoutPickerTrigger' },
+      { id: 'newsToggle' },
+      { id: 'marketSessionsTrigger' },
+      { id: 'marketScannerTrigger' },
+      { id: 'replayToggle' },
+      { id: 'indicatorsTrigger' },
+      { id: 'candleTypeTrigger' },
+      { id: 'tfGroup', cls: 'tf-condensed' },
+    ]);
+
+    /* Top bar: the account/template selectors condense to icons only if the full-
+       width bar ever runs out of room (e.g. a very narrow window). */
+    const topbar = document.querySelector('.topbar');
+    const tbRight = document.querySelector('.tb-right');
+    initBarCollapse(topbar, tbRight, [
+      { id: 'templatesSelectTrigger' },
+      { id: 'accountSelectTrigger' },
+    ]);
   })();
 
   /* ---------- symbol selector dropdown ---------- */
