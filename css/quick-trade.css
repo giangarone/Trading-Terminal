@@ -375,11 +375,39 @@
   box-shadow: 0 0 0 1px var(--text-secondary);
 }
 
-.qt-tick-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 9px;
-  color: var(--text-muted);
+.qt-slider-wrap {
+  position: relative;
+}
+
+/* Percentage bubble that follows the thumb, shown only while hovering/dragging.
+   Styling matches the shared tooltip look (.floating-tooltip in center-panel.css). */
+.qt-slider-bubble {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sans);
+  white-space: nowrap;
+  box-shadow: 0 8px 20px var(--shadow-color);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .12s ease;
+  z-index: 50;
+}
+
+.qt-slider-wrap:hover .qt-slider-bubble,
+.qt-slider-wrap.dragging .qt-slider-bubble {
+  opacity: 1;
+  visibility: visible;
 }
 
 .qt-est-val {

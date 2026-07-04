@@ -16,11 +16,11 @@
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
   <link rel="stylesheet" href="css/tokens.css?v=12">
   <link rel="stylesheet" href="css/topbar.css?v=12">
-  <link rel="stylesheet" href="css/left-panel.css?v=10">
+  <link rel="stylesheet" href="css/left-panel.css?v=11">
   <link rel="stylesheet" href="css/center-panel.css?v=13">
   <link rel="stylesheet" href="css/workspace.css?v=28">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
-  <link rel="stylesheet" href="css/quick-trade.css?v=8">
+  <link rel="stylesheet" href="css/quick-trade.css?v=9">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=35">
   <link rel="stylesheet" href="css/market-scanner.css?v=29">
@@ -3960,9 +3960,9 @@
             </div>
 
             <div class="qt-slider-block">
-              <input type="range" class="qt-slider" id="qtSlider" min="0" max="100" step="1" value="25">
-              <div class="qt-tick-row" id="qtSliderTicks">
-                <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+              <div class="qt-slider-wrap" id="qtSliderWrap">
+                <input type="range" class="qt-slider" id="qtSlider" min="0" max="100" step="1" value="25">
+                <div class="qt-slider-bubble" id="qtSliderBubble">25%</div>
               </div>
             </div>
 
@@ -5433,7 +5433,7 @@
   <script src="js/workspace.js?v=7"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js?v=12"></script>
-  <script src="js/app.js?v=156"></script>
+  <script src="js/app.js?v=160"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=19"></script>
   <script src="js/market-scanner.js?v=14"></script>

@@ -125,36 +125,41 @@
 /* Widths + alignment are shared by the header and the row cells so the columns
    stay lined up as they're toggled on/off. Typography stays on the row cells
    only — the header keeps its uppercase label styling from .wl-cols. */
+/* Symbol is the priority column: it grows to fill free space but never shrinks
+   below a readable minimum, so it stays permanently visible on the left. The
+   value columns give up space first (flex-shrink: 1) and truncate with an
+   ellipsis when the panel is too narrow to fit everything. */
 .wl-sym,
 .wl-cols [data-col="symbol"] {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 52px;
 }
 
 .wl-last,
 .wl-cols [data-col="last"] {
   width: 58px;
-  flex-shrink: 0;
+  flex-shrink: 1;
   text-align: right;
 }
 
 .wl-chgabs,
 .wl-cols [data-col="chgabs"] {
   width: 42px;
-  flex-shrink: 0;
+  flex-shrink: 1;
   text-align: right;
 }
 
 .wl-chg,
 .wl-cols [data-col="chgpct"] {
   width: 40px;
-  flex-shrink: 0;
+  flex-shrink: 1;
   text-align: right;
 }
 
 .wl-vol,
 .wl-cols [data-col="vol"] {
   width: 42px;
-  flex-shrink: 0;
+  flex-shrink: 1;
   text-align: right;
 }
 

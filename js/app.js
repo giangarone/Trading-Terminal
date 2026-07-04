@@ -183,7 +183,14 @@
     const w = el.offsetWidth, h = el.offsetHeight;
     let x = align === 'right' ? anchorRect.right - w : anchorRect.left;
     let y = anchorRect.bottom + 8;
-    if (y + h > vh - 12) y = anchorRect.top - h - 8;
+    /* Prefer opening downward. If the popover is too tall to fit below the anchor,
+       flip it above — but only when that actually keeps it on-screen. For a very
+       tall panel (e.g. Market Sessions) flipping above would push the top off the
+       viewport, so clamp it to the bottom edge instead and keep it fully visible. */
+    if (y + h > vh - 12) {
+      const above = anchorRect.top - h - 8;
+      y = above >= 12 ? above : Math.max(12, vh - h - 12);
+    }
     if (x + w > vw - 12) x = vw - w - 12;
     if (x < 8) x = 8;
     el.style.left = x + 'px';
@@ -732,7 +739,8 @@
   const qtAmountLabel = document.getElementById('qtAmountLabel');
   const qtQtyUnit = document.getElementById('qtQtyUnit');
   const qtSlider = document.getElementById('qtSlider');
-  const qtSliderTicks = document.getElementById('qtSliderTicks');
+  const qtSliderWrap = document.getElementById('qtSliderWrap');
+  const qtSliderBubble = document.getElementById('qtSliderBubble');
   const qtEstSize = document.getElementById('qtEstSize');
   const qtEstValue = document.getElementById('qtEstValue');
   const qtEstFees = document.getElementById('qtEstFees');
@@ -757,16 +765,15 @@
   function qtSliderFill(pct) {
     qtSlider.style.background = 'linear-gradient(to right, var(--border-strong) 0%, var(--border-strong) ' + pct + '%, var(--border-default) ' + pct + '%, var(--border-default) 100%)';
   }
-  function qtSliderTickLabel(val) {
-    if (qtAmountMode === 'Quantity') return qtFmtQty(val) + ' ' + QT_INSTRUMENT_UNIT;
-    if (qtAmountMode === 'USD') return '$' + fmt(val, 0);
-    return Math.round(val) + '%';
-  }
-  function qtUpdateSliderTicks() {
-    const max = qtModeMax(qtAmountMode) || 0;
-    qtSliderTicks.querySelectorAll('span').forEach((span, i) => {
-      span.textContent = qtSliderTickLabel(max * i / 4);
-    });
+  // Position the percentage bubble over the thumb centre. The thumb (16px wide)
+  // travels from 8px to (trackWidth - 8px), so map the value across that range.
+  function qtUpdateSliderBubble() {
+    const pct = parseInt(qtSlider.value, 10);
+    qtSliderBubble.textContent = pct + '%';
+    const thumbWidth = 16;
+    const trackWidth = qtSlider.offsetWidth;
+    const usable = trackWidth - thumbWidth;
+    qtSliderBubble.style.left = (thumbWidth / 2 + usable * pct / 100) + 'px';
   }
   function qtUpdateEstimates(syncSlider) {
     const { qty, usdValue } = qtComputeAmount();
@@ -780,7 +787,7 @@
       qtSlider.value = Math.min(100, Math.round(amt / max * 100));
     }
     qtSliderFill(parseInt(qtSlider.value, 10));
-    qtUpdateSliderTicks();
+    qtUpdateSliderBubble();
   }
   function qtSetAmountMode(mode) {
     qtAmountMode = mode;
@@ -827,6 +834,9 @@
     qtAmountInput.value = qtAmountMode === 'Quantity' ? parseFloat(raw.toFixed(2)) : Math.max(0, Math.round(raw));
     qtUpdateEstimates(false);
   });
+  // Keep the bubble visible while dragging, even if the pointer leaves the track.
+  qtSlider.addEventListener('pointerdown', () => qtSliderWrap.classList.add('dragging'));
+  window.addEventListener('pointerup', () => qtSliderWrap.classList.remove('dragging'));
   qtUpdateEstimates();
 
   function cancelOrder() {
