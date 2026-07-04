@@ -203,11 +203,19 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
     return trades.sort((a, b) => a.time < b.time ? -1 : 1);
   }
 
+  /* Today's live trades are timestamped with seconds (nowTimeStr), but the
+     journal lists every other day's trades as "h:mm AM/PM". Drop the seconds and
+     the leading-zero hour so today matches the rest. */
+  function stripSeconds(timeStr) {
+    const m = /^(\d{1,2}):(\d{2}):\d{2}(.*)$/.exec(timeStr);
+    return m ? String(parseInt(m[1], 10)) + ':' + m[2] + m[3] : timeStr;
+  }
+
   /* tradeHistory close entries record the side of the closing leg, not the
      position — flip it to show the position direction the journal trade represents. */
   function realTodayTrades() {
     return getJournalTrades().slice().reverse().map(t => ({
-      time: t.time,
+      time: stripSeconds(t.time),
       sym: t.symbol,
       side: t.side === 'sell' ? 'Long' : 'Short',
       pnl: t.pnl
