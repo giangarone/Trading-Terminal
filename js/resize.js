@@ -38,59 +38,40 @@ function setupPanel(handle, panel, expandBtn, side, minW, maxW, cssVar, defaultW
     }
   }
 
-  function setCollapsed(collapsed) {
-    state[side] = collapsed;
-    applyCollapsed(collapsed);
-    savePanelCollapseState(state);
+  /* Applies collapsed state + visuals; only writes to storage when `persist`. */
+  function setCollapsed(collapsed, persist) {
+    if (state[side] !== collapsed) {
+      state[side] = collapsed;
+      applyCollapsed(collapsed);
+    }
+    if (persist) savePanelCollapseState(state);
   }
 
   handle.addEventListener('mousedown', (e) => {
     if (e.target.closest('.resize-toggle')) return;
     e.preventDefault();
-    const startedCollapsed = panel.classList.contains('is-collapsed');
     const rect = panel.getBoundingClientRect();
-    const startX = e.clientX, startW = rect.width;
     /* Anchored outer edge — the side that stays put while the panel resizes.
-       Width implied by the cursor is measured from it. */
+       The width implied by the cursor is measured from it, so the panel's
+       collapsed/expanded state is a pure function of the cursor position. That
+       keeps the whole gesture reversible: crossing the threshold back and forth
+       toggles the panel without ever releasing the mouse. */
     const outerEdge = (side === 'left') ? rect.left : rect.right;
     const impliedWidth = (ev) => (side === 'left' ? ev.clientX - outerEdge : outerEdge - ev.clientX);
-    /* Phased expand for a collapsed panel dragged open:
-       expanded — panel has popped open to its minimum width
-       caughtUp — cursor has reached the newly-positioned handle */
-    let expanded = !startedCollapsed;
-    let caughtUp = !startedCollapsed;
     handle.classList.add('dragging');
     document.body.style.userSelect = 'none';
     function move(ev) {
-      let raw;
-      if (startedCollapsed) {
-        const implied = impliedWidth(ev);
-        if (!expanded) {
-          /* Stay collapsed until the drag passes the collapse threshold. */
-          if (implied < collapseThreshold) return;
-          setCollapsed(false);
-          panel.style.width = minW + 'px';
-          document.documentElement.style.setProperty(cssVar, minW + 'px');
-          expanded = true;
-          return;
-        }
-        if (!caughtUp) {
-          /* Hold at the minimum width until the cursor reaches the handle. */
-          if (implied < collapseThreshold) { up(); setCollapsed(true); return; }
-          if (implied < minW) return;
-          caughtUp = true;
-        }
-        raw = implied;
-      } else {
-        const dx = ev.clientX - startX;
-        raw = (side === 'left' ? startW + dx : startW - dx);
-      }
-      if (raw < collapseThreshold) {
-        up();
-        setCollapsed(true);
+      const x = impliedWidth(ev);
+      if (x < collapseThreshold) {
+        /* Below the threshold: snap to the rail, but keep the drag alive so the
+           user can reverse straight back out. */
+        setCollapsed(true, false);
         return;
       }
-      const w = clampResize(raw, minW, maxW);
+      /* At/above the threshold: (re)open. clampResize pins the panel at its
+         minimum until the cursor passes the handle, then tracks it 1:1. */
+      setCollapsed(false, false);
+      const w = clampResize(x, minW, maxW);
       panel.style.width = w + 'px';
       document.documentElement.style.setProperty(cssVar, w + 'px');
     }
@@ -99,6 +80,7 @@ function setupPanel(handle, panel, expandBtn, side, minW, maxW, cssVar, defaultW
       document.body.style.userSelect = '';
       document.removeEventListener('mousemove', move);
       document.removeEventListener('mouseup', up);
+      savePanelCollapseState(state);
     }
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', up);
@@ -108,7 +90,7 @@ function setupPanel(handle, panel, expandBtn, side, minW, maxW, cssVar, defaultW
     expandBtn.addEventListener('mousedown', (e) => e.stopPropagation());
     expandBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      setCollapsed(false);
+      setCollapsed(false, true);
     });
   }
 
