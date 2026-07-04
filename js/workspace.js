@@ -66,6 +66,7 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
   const tjDayMenu = document.getElementById('tjDayMenu');
   const tjDayLabel = document.getElementById('tjDayLabel');
   const tjPnl = document.getElementById('tjPnl');
+  const tjSpark = document.getElementById('tjSpark');
   const tjTrades = document.getElementById('tjTrades');
   const tjWinRate = document.getElementById('tjWinRate');
   const tjBest = document.getElementById('tjBest');
@@ -74,16 +75,25 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
     const sign = n > 0 ? '+' : n < 0 ? '-' : '';
     return sign + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
+  /* Compact form for the tight stat-strip cells: $1.4k above 1000, whole dollars below. */
+  function fmtCompact(n) {
+    const sign = n > 0 ? '+' : n < 0 ? '-' : '';
+    const abs = Math.abs(n);
+    if (abs >= 1000) return sign + '$' + (abs / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return sign + '$' + Math.round(abs);
+  }
   function showJournalDay(idx) {
     const d = journalDays[idx];
     tjDayLabel.textContent = d.label;
     tjPnl.textContent = fmtSigned(d.pnl);
     tjPnl.classList.toggle('up', d.pnl >= 0);
     tjPnl.classList.toggle('down', d.pnl < 0);
+    tjSpark.classList.toggle('up', d.pnl >= 0);
+    tjSpark.classList.toggle('down', d.pnl < 0);
     tjTrades.textContent = d.trades;
     tjWinRate.textContent = d.winRate + '%';
-    tjBest.textContent = fmtSigned(d.best);
-    tjWorst.textContent = fmtSigned(d.worst);
+    tjBest.textContent = fmtCompact(d.best);
+    tjWorst.textContent = fmtCompact(d.worst);
   }
   function closeAllPopoversLocal() {
     document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => m.classList.remove('show'));

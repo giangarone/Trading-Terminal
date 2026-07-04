@@ -16,7 +16,7 @@
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
   <link rel="stylesheet" href="css/tokens.css?v=12">
   <link rel="stylesheet" href="css/topbar.css?v=12">
-  <link rel="stylesheet" href="css/left-panel.css?v=11">
+  <link rel="stylesheet" href="css/left-panel.css?v=12">
   <link rel="stylesheet" href="css/center-panel.css?v=13">
   <link rel="stylesheet" href="css/workspace.css?v=28">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
@@ -2917,17 +2917,44 @@
           </div>
 
           <div id="tjDefaultView">
-            <div class="tj-row"><span class="tj-lbl">Today's P&amp;L</span><span class="tj-val up"
-                id="tjPnl">+$2,975.00</span></div>
-            <div class="tj-row"><span class="tj-lbl">Trades</span><span class="tj-val" id="tjTrades">7</span>
+            <div class="tj-spark up" id="tjSpark">
+              <div class="tj-spark-overlay">
+                <span class="tj-spark-lbl">Today's P&amp;L</span>
+                <span class="tj-spark-val up" id="tjPnl">+$2,975.00</span>
+              </div>
+              <svg class="tj-spark-svg" viewBox="0 0 232 74" preserveAspectRatio="none" aria-hidden="true">
+                <path class="tj-spark-area tj-spark-up"
+                  d="M0,58 L29,54 L58,56 L87,42 L116,46 L145,32 L174,28 L203,18 L232,10 L232,74 L0,74 Z"></path>
+                <path class="tj-spark-line tj-spark-up" fill="none" stroke-width="1.75" stroke-linecap="round"
+                  stroke-linejoin="round" vector-effect="non-scaling-stroke"
+                  d="M0,58 L29,54 L58,56 L87,42 L116,46 L145,32 L174,28 L203,18 L232,10"></path>
+                <path class="tj-spark-area tj-spark-down"
+                  d="M0,14 L29,20 L58,16 L87,30 L116,26 L145,40 L174,44 L203,54 L232,62 L232,74 L0,74 Z"></path>
+                <path class="tj-spark-line tj-spark-down" fill="none" stroke-width="1.75" stroke-linecap="round"
+                  stroke-linejoin="round" vector-effect="non-scaling-stroke"
+                  d="M0,14 L29,20 L58,16 L87,30 L116,26 L145,40 L174,44 L203,54 L232,62"></path>
+              </svg>
             </div>
-            <div class="tj-row"><span class="tj-lbl">Win Rate</span><span class="tj-val" id="tjWinRate">71%</span>
+
+            <div class="tj-mini-strip">
+              <div class="tj-mini-cell">
+                <span class="tj-mini-lbl">Trades</span>
+                <span class="tj-mini-val" id="tjTrades">7</span>
+              </div>
+              <div class="tj-mini-cell">
+                <span class="tj-mini-lbl">Win</span>
+                <span class="tj-mini-val" id="tjWinRate">71%</span>
+              </div>
+              <div class="tj-mini-cell">
+                <span class="tj-mini-lbl">Best</span>
+                <span class="tj-mini-val up" id="tjBest">+$1.4k</span>
+              </div>
+              <div class="tj-mini-cell">
+                <span class="tj-mini-lbl">Worst</span>
+                <span class="tj-mini-val down" id="tjWorst">-$310</span>
+              </div>
             </div>
-            <div class="tj-divider"></div>
-            <div class="tj-row"><span class="tj-lbl">Best Trade</span><span class="tj-val up"
-                id="tjBest">+$1,420.00</span></div>
-            <div class="tj-row"><span class="tj-lbl">Worst Trade</span><span class="tj-val down"
-                id="tjWorst">-$310.00</span></div>
+
             <div class="join-row">
               <button class="ghost-btn" id="tjOpenModal">Open Trading Journal</button>
             </div>
@@ -5430,7 +5457,7 @@
 
   <!-- ====== Scripts (order matters: utils → workspace → overlays → resize → app → right-panel) ====== -->
   <script src="js/utils.js"></script>
-  <script src="js/workspace.js?v=7"></script>
+  <script src="js/workspace.js?v=8"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js?v=12"></script>
   <script src="js/app.js?v=160"></script>
