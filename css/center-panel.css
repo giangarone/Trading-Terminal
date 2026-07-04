@@ -330,8 +330,7 @@
   font-family: var(--sans);
 }
 
-.account-connect-item .pt-title,
-.account-connect-item .pop-icon .material-symbols-outlined {
+.account-connect-item .pt-title {
   color: var(--purple);
 }
 

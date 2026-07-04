@@ -17,12 +17,12 @@
   <link rel="stylesheet" href="css/tokens.css?v=12">
   <link rel="stylesheet" href="css/topbar.css?v=12">
   <link rel="stylesheet" href="css/left-panel.css?v=10">
-  <link rel="stylesheet" href="css/center-panel.css?v=12">
+  <link rel="stylesheet" href="css/center-panel.css?v=13">
   <link rel="stylesheet" href="css/workspace.css?v=28">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=7">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=32">
+  <link rel="stylesheet" href="css/order-lines.css?v=33">
   <link rel="stylesheet" href="css/market-scanner.css?v=29">
   <link rel="stylesheet" href="css/indicators.css?v=9">
   <link rel="stylesheet" href="css/chart-settings.css?v=31">
@@ -67,23 +67,23 @@
       </div>
 
       <div class="tb-right">
-          <div class="tb-account pop-trigger" id="templatesSelectTrigger">
-            <span class="material-symbols-outlined">bookmark</span>
-            <span class="tb-account-name" id="templatesSelectName">Scalping</span>
-          </div>
-          <div class="tb-account pop-trigger" id="accountSelectTrigger">
-            <span class="material-symbols-outlined">account_balance</span>
-            <span class="tb-account-name" id="accountSelectName">BloFin</span>
-            <span class="tb-account-balance" id="accountSelectBalance">$52,430.00</span>
-          </div>
-          <button class="ct-icon" id="themeToggleBtn" aria-label="Switch to light theme"
-              data-tooltip="Switch to light theme"><span class="material-symbols-outlined"
-              id="themeToggleIcon">dark_mode</span></button>
-          <button class="ct-icon pop-trigger" id="alertsTrigger" data-tooltip="Alerts"><span
-              class="material-symbols-outlined">notifications</span></button>
-          <button class="ct-icon pop-trigger" id="settingsTrigger" data-tooltip="Settings"><span
-              class="material-symbols-outlined">settings</span></button>
+        <div class="tb-account pop-trigger" id="templatesSelectTrigger">
+          <span class="material-symbols-outlined">bookmark</span>
+          <span class="tb-account-name" id="templatesSelectName">Scalping</span>
         </div>
+        <div class="tb-account pop-trigger" id="accountSelectTrigger">
+          <span class="material-symbols-outlined">account_balance</span>
+          <span class="tb-account-name" id="accountSelectName">BloFin</span>
+          <span class="tb-account-balance" id="accountSelectBalance">$52,430.00</span>
+        </div>
+        <button class="ct-icon" id="themeToggleBtn" aria-label="Switch to light theme"
+          data-tooltip="Switch to light theme"><span class="material-symbols-outlined"
+            id="themeToggleIcon">dark_mode</span></button>
+        <button class="ct-icon pop-trigger" id="alertsTrigger" data-tooltip="Alerts"><span
+            class="material-symbols-outlined">notifications</span></button>
+        <button class="ct-icon pop-trigger" id="settingsTrigger" data-tooltip="Settings"><span
+            class="material-symbols-outlined">settings</span></button>
+      </div>
     </header>
 
     <div class="pop-menu" id="templatesSelectMenu" style="width:260px;">
@@ -1127,7 +1127,7 @@
                           </div>
                         </div>
                         <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="csBeOffsetValue" readonly value="1">
+                          <input type="text" id="csBeOffsetValue" readonly value="0.06">
                           <div class="price-stepper-arrows">
                             <button type="button" id="csBeOffsetInc"><span
                                 class="material-symbols-outlined">keyboard_arrow_up</span></button>
@@ -1141,9 +1141,8 @@
                     <div class="cs-switch-row cs-switch-row--divided active" id="csBeDynamicFee">
                       <span class="cs-switch-text">
                         <span class="cs-switch-title">Dynamic Fee Offset</span>
-                        <span class="cs-switch-desc">Automatically detect the exchange's trading fees and apply the
-                          exact offset amount to match them, so breakeven truly nets zero instead of a small loss to
-                          fees.</span>
+                        <span class="cs-switch-desc">Automatically detect exchange fees and apply the exact offset, so
+                          breakeven truly nets zero.</span>
                       </span>
                       <button type="button" class="ui-toggle" aria-label="Toggle Dynamic Fee Offset"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
@@ -2783,7 +2782,8 @@
             <span class="card-title">Watchlist</span>
             <div class="card-head-actions">
               <span class="material-symbols-outlined pop-trigger" id="wlAddBtn" title="Add symbol">add</span>
-              <span class="material-symbols-outlined pop-trigger" id="wlColsBtn" title="Customize columns">more_horiz</span>
+              <span class="material-symbols-outlined pop-trigger" id="wlColsBtn"
+                title="Customize columns">more_horiz</span>
             </div>
           </div>
           <div class="wl-tabs" id="wlTabs">
@@ -3004,8 +3004,9 @@
                 class="ct-label">Indicators</span><span class="count-badge" id="indicatorsCount"
                 style="display:none;"></span><span class="material-symbols-outlined ct-caret"
                 style="font-size:15px;">expand_more</span></button>
-            <button class="ct-action-btn" id="replayToggle" data-tooltip="Replay"><span class="material-symbols-outlined"
-                style="font-size:15px;">fast_rewind</span><span class="ct-label">Replay</span></button>
+            <button class="ct-action-btn" id="replayToggle" data-tooltip="Replay"><span
+                class="material-symbols-outlined" style="font-size:15px;">fast_rewind</span><span
+                class="ct-label">Replay</span></button>
             <button class="ct-action-btn pop-trigger" id="marketScannerTrigger" data-tooltip="Market Scanner"><span
                 class="material-symbols-outlined" style="font-size:15px;">radar</span><span class="ct-label">Market
                 Scanner</span></button>
@@ -5050,13 +5051,13 @@
             <span class="cs-radio-dot"></span>
             <span class="cs-radio-text"><span class="cs-radio-title">%</span></span>
           </div>
-          <div class="cs-radio-row" data-unit="fee">
+          <div class="cs-radio-row active" data-unit="fee">
             <span class="cs-radio-dot"></span>
-            <span class="cs-radio-text"><span class="cs-radio-title">Fee</span></span>
+            <span class="cs-radio-text"><span class="cs-radio-title">Fee Amount</span></span>
           </div>
         </div>
         <div class="price-stepper cs-price-stepper">
-          <input type="text" id="slBeOvOffsetValue" readonly value="1">
+          <input type="text" id="slBeOvOffsetValue" readonly value="0.06">
           <div class="price-stepper-arrows">
             <button type="button" id="slBeOvOffsetInc"><span
                 class="material-symbols-outlined">keyboard_arrow_up</span></button>

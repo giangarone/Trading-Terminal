@@ -1185,10 +1185,6 @@
   color: var(--short);
 }
 
-.pop-item.add .pop-icon {
-  color: var(--long);
-}
-
 .pop-text {
   display: flex;
   flex-direction: column;
