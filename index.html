@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="css/center-panel.css?v=13">
   <link rel="stylesheet" href="css/workspace.css?v=28">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
-  <link rel="stylesheet" href="css/quick-trade.css?v=9">
+  <link rel="stylesheet" href="css/quick-trade.css?v=13">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=35">
   <link rel="stylesheet" href="css/market-scanner.css?v=30">
@@ -3851,6 +3851,18 @@
         <div class="card">
           <div id="oePanel-entry">
 
+            <div class="qt-margin-bar">
+              <button type="button" class="qt-margin-mode-btn" id="qtMarginModeBtn" data-mode="cross"
+                aria-label="Toggle margin mode">
+                <span id="qtMarginModeLabel">Cross</span>
+              </button>
+              <button type="button" class="qt-leverage-btn pop-trigger" id="qtLeverageBtn" aria-haspopup="true"
+                aria-label="Leverage">
+                <span class="qt-lev-btn-label">Leverage</span>
+                <span class="qt-lev-btn-val" id="qtLeverageBtnVal">10×</span>
+              </button>
+            </div>
+
             <div class="qt-order-tabs" id="qtOrderTabs">
               <button class="qt-tab active" data-tab="limit">Limit</button>
               <button class="qt-tab" data-tab="market">Market</button>
@@ -3986,25 +3998,6 @@
               <div class="qt-slider-wrap" id="qtSliderWrap">
                 <input type="range" class="qt-slider" id="qtSlider" min="0" max="100" step="1" value="25">
                 <div class="qt-slider-bubble" id="qtSliderBubble">25%</div>
-              </div>
-            </div>
-
-            <label class="tpsl-checkbox-row" id="qtLeverageToggle">
-              <span class="chk-box" id="qtLeverageCheckbox"><span class="material-symbols-outlined">check</span></span>
-              <span>Leverage</span>
-            </label>
-
-            <div class="tpsl-block" id="qtLeverageBlock" style="display:none;">
-              <label class="label-sm">Leverage</label>
-              <div class="price-stepper">
-                <input type="text" id="qtLeverageInput" value="10" data-step="1">
-                <span class="qty-unit">×</span>
-                <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtLeverageInput"><span
-                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                  <button type="button" class="ps-down" data-target="qtLeverageInput"><span
-                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                </div>
               </div>
             </div>
 
@@ -4865,6 +4858,31 @@
     </button>
   </div>
 
+  <!-- Quick Trade: leverage popup (opens from the qtLeverageBtn) -->
+  <div class="pop-menu qt-margin-menu" id="qtMarginMenu">
+    <div class="qt-lev-head">
+      <span class="pop-menu-label">Leverage</span>
+      <div class="qt-lev-input-wrap">
+        <input type="text" class="qt-lev-input" id="qtLevInput" value="10" inputmode="numeric" aria-label="Leverage">
+        <span class="qt-lev-input-unit">×</span>
+      </div>
+    </div>
+    <div class="range-slider-wrap" id="qtLevSliderWrap">
+      <div class="range-slider-track"></div>
+      <input type="range" class="range-slider" id="qtLevSlider" min="1" max="100" step="1" value="10">
+    </div>
+    <div class="qt-lev-presets" id="qtLevPresets">
+      <button type="button" class="qt-lev-chip" data-lev="1">1×</button>
+      <button type="button" class="qt-lev-chip" data-lev="2">2×</button>
+      <button type="button" class="qt-lev-chip" data-lev="5">5×</button>
+      <button type="button" class="qt-lev-chip active" data-lev="10">10×</button>
+      <button type="button" class="qt-lev-chip" data-lev="20">20×</button>
+      <button type="button" class="qt-lev-chip" data-lev="50">50×</button>
+      <button type="button" class="qt-lev-chip" data-lev="75">75×</button>
+      <button type="button" class="qt-lev-chip" data-lev="100">100×</button>
+    </div>
+  </div>
+
   <!-- ===================== SHARED CUSTOM DROPDOWN (Chart Settings / SL override selects) ===================== -->
   <div class="pop-menu" id="csDropdownMenu" style="width:220px;z-index:2100;"></div>
 
@@ -5456,9 +5474,9 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js?v=13"></script>
-  <script src="js/app.js?v=163"></script>
+  <script src="js/app.js?v=167"></script>
   <script src="js/theme.js?v=3"></script>
-  <script src="js/right-panel.js?v=19"></script>
+  <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>
   <script src="js/market-sessions.js?v=4"></script>
 

@@ -53,6 +53,130 @@
   display: block;
 }
 
+/* ====== Quick Trade: margin mode + leverage buttons ====== */
+/* Two full-width buttons above the order tabs: a Cross/Isolated toggle that flips
+   on click, and a Leverage button that opens the leverage popup. */
+.qt-margin-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.qt-margin-mode-btn,
+.qt-leverage-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.qt-margin-mode-btn:hover,
+.qt-leverage-btn:hover {
+  border-color: var(--border-strong);
+}
+
+.qt-lev-btn-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.qt-lev-btn-val {
+  color: var(--text-primary);
+}
+
+/* ====== Quick Trade: leverage popup ====== */
+.qt-margin-menu {
+  width: 236px;
+  padding: 14px;
+}
+
+.qt-lev-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.qt-lev-head .pop-menu-label {
+  padding: 0;
+}
+
+/* editable leverage value — type a custom number, or use the slider/presets */
+.qt-lev-input-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  padding: 3px 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+}
+
+.qt-lev-input-wrap:focus-within {
+  border-color: var(--accent);
+}
+
+.qt-lev-input {
+  width: 34px;
+  background: transparent;
+  border: none;
+  outline: none;
+  text-align: right;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 0;
+}
+
+.qt-lev-input-unit {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+#qtLevSliderWrap {
+  margin: 10px 0 12px;
+}
+
+.qt-lev-presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.qt-lev-chip {
+  padding: 7px 0;
+  text-align: center;
+  border-radius: 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: var(--sans);
+}
+
+.qt-lev-chip:hover:not(.active) {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.qt-lev-chip.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+}
+
 .text-input-qt {
   width: 100%;
   display: flex;

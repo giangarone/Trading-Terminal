@@ -540,7 +540,7 @@
       side,
       orderType: 'Market',
       amount: (qtyInput.value || '1') + ' ' + QT_INSTRUMENT_UNIT,
-      leverage: qtLeverageCheckbox.classList.contains('checked') ? document.getElementById('qtLeverageInput').value + '×' : null,
+      leverage: qtLeverageDetail(),
       price: '$' + fmt(currentPrice)
     };
     requestOrderConfirmation(details, () => fillQuickMarketOrderExecute(side, currentPrice));
@@ -632,7 +632,7 @@
       const isSlippage = QT_SLIPPAGE_IDS.includes(input.id);
       const dataStep = input.dataset.step ? parseFloat(input.dataset.step) : null;
       const step = dataStep !== null ? dataStep : input.id === 'qtTrailDelta' ? 0.1 : isSlippage ? 0.05 : 0.25;
-      const min = input.id === 'qtLeverageInput' ? 1 : isSlippage ? 0.1 : 0;
+      const min = isSlippage ? 0.1 : 0;
       const cur = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
       const next = btn.classList.contains('ps-up') ? cur + step : Math.max(min, cur - step);
       if (dataStep !== null) {
@@ -651,19 +651,92 @@
       const step = parseFloat(input.dataset.step) || 1;
       const v = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
       const snapped = Math.round(v / step) * step;
-      const min = input.id === 'qtLeverageInput' ? 1 : 0;
-      input.value = Number.isInteger(step) ? String(Math.max(min, Math.round(snapped))) : Math.max(min, snapped).toFixed(2);
+      input.value = Number.isInteger(step) ? String(Math.max(0, Math.round(snapped))) : Math.max(0, snapped).toFixed(2);
     });
   });
 
-  /* Leverage toggle — reveal behavior; the value defaults to 10× even while collapsed */
-  const qtLeverageToggle = document.getElementById('qtLeverageToggle');
-  const qtLeverageCheckbox = document.getElementById('qtLeverageCheckbox');
-  const qtLeverageBlock = document.getElementById('qtLeverageBlock');
-  qtLeverageToggle.addEventListener('click', () => {
-    const enabled = qtLeverageCheckbox.classList.toggle('checked');
-    qtLeverageBlock.style.display = enabled ? 'block' : 'none';
+  /* ---------- Margin mode + leverage controls ----------
+     Two full-width buttons above the order tabs: the Cross/Isolated button flips
+     margin mode on click; the Leverage button opens a popup with the slider/presets.
+     Both feed the single source of truth read back into every order-confirmation dialog. */
+  const qtMarginModeBtn = document.getElementById('qtMarginModeBtn');
+  const qtMarginModeLabel = document.getElementById('qtMarginModeLabel');
+  const qtLeverageBtn = document.getElementById('qtLeverageBtn');
+  const qtLeverageBtnVal = document.getElementById('qtLeverageBtnVal');
+  const qtMarginMenu = document.getElementById('qtMarginMenu');
+  const qtLevInput = document.getElementById('qtLevInput');
+  const qtLevSlider = document.getElementById('qtLevSlider');
+  const qtLevPresets = document.getElementById('qtLevPresets');
+  const QT_MIN_LEVERAGE = parseInt(qtLevSlider.min, 10) || 1;
+  const QT_MAX_LEVERAGE = parseInt(qtLevSlider.max, 10) || 100;
+
+  function qtLeverageValue() {
+    return parseInt(qtLevSlider.value, 10) || QT_MIN_LEVERAGE;
+  }
+  function qtMarginMode() {
+    return qtMarginModeBtn.dataset.mode || 'cross';
+  }
+  /* value shown on the leverage row of the order-confirmation dialog */
+  function qtLeverageDetail() {
+    return qtLeverageValue() + '×';
+  }
+
+  /* keep the leverage button, editable input, slider fill and preset highlight in sync.
+     writeInput is skipped while the user is typing in the field so we don't fight them. */
+  function qtSyncLeverageUI(writeInput = true) {
+    const lev = qtLeverageValue();
+    qtLeverageBtnVal.textContent = lev + '×';
+    if (writeInput) qtLevInput.value = lev;
+    fillRangeSlider(qtLevSlider);
+    qtLevPresets.querySelectorAll('.qt-lev-chip').forEach(chip => {
+      chip.classList.toggle('active', parseInt(chip.dataset.lev, 10) === lev);
+    });
+  }
+
+  /* Cross/Isolated toggles directly on click */
+  qtMarginModeBtn.addEventListener('click', () => {
+    const next = qtMarginMode() === 'cross' ? 'isolated' : 'cross';
+    qtMarginModeBtn.dataset.mode = next;
+    qtMarginModeLabel.textContent = next === 'cross' ? 'Cross' : 'Isolated';
   });
+
+  /* Leverage opens the popup */
+  qtLeverageBtn.addEventListener('click', () => {
+    openNear(qtMarginMenu, qtLeverageBtn.getBoundingClientRect(), 'right', qtLeverageBtn);
+  });
+
+  qtLevSlider.addEventListener('input', () => qtSyncLeverageUI());
+
+  qtLevPresets.querySelectorAll('.qt-lev-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      qtLevSlider.value = chip.dataset.lev;
+      qtSyncLeverageUI();
+    });
+  });
+
+  /* custom typed leverage — keep only digits, drive the slider live without
+     reformatting the field mid-keystroke, then clamp/normalize on blur or Enter */
+  qtLevInput.addEventListener('input', () => {
+    const digits = qtLevInput.value.replace(/[^\d]/g, '');
+    if (qtLevInput.value !== digits) qtLevInput.value = digits;
+    if (digits === '') return;
+    const clamped = Math.min(QT_MAX_LEVERAGE, Math.max(QT_MIN_LEVERAGE, parseInt(digits, 10)));
+    qtLevSlider.value = clamped;
+    qtSyncLeverageUI(false);
+  });
+  function qtCommitLeverageInput() {
+    const parsed = parseInt(qtLevInput.value, 10);
+    const clamped = isNaN(parsed) ? qtLeverageValue()
+      : Math.min(QT_MAX_LEVERAGE, Math.max(QT_MIN_LEVERAGE, parsed));
+    qtLevSlider.value = clamped;
+    qtSyncLeverageUI();
+  }
+  qtLevInput.addEventListener('change', qtCommitLeverageInput);
+  qtLevInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { qtCommitLeverageInput(); qtLevInput.blur(); }
+  });
+
+  qtSyncLeverageUI();
 
   function qtPlaceOrder(side, price) {
     const { qty } = qtComputeAmount();
@@ -673,7 +746,7 @@
       side,
       orderType: QT_TAB_LABELS[tab] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market',
       amount: amount + ' ' + QT_INSTRUMENT_UNIT,
-      leverage: qtLeverageCheckbox.classList.contains('checked') ? document.getElementById('qtLeverageInput').value + '×' : null,
+      leverage: qtLeverageDetail(),
       price: '$' + fmt(price)
     };
     requestOrderConfirmation(details, () => qtPlaceOrderExecute(side, price, amount, tab));
@@ -1095,7 +1168,7 @@
       side: order.side,
       orderType: order.orderType,
       amount: order.qty + ' ' + QT_INSTRUMENT_UNIT,
-      leverage: qtLeverageCheckbox.classList.contains('checked') ? document.getElementById('qtLeverageInput').value + '×' : null,
+      leverage: qtLeverageDetail(),
       price: '$' + fmt(order.entry)
     };
     requestOrderConfirmation(details, placeOrderExecute);

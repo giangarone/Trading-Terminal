@@ -360,7 +360,7 @@
   }
   /* leverage currently chosen in the Quick Trade panel — stamped onto positions opened from a fill */
   function currentLeverage() {
-    const el = document.getElementById('qtLeverageInput');
+    const el = document.getElementById('qtLevSlider');
     return Math.max(1, parseInt(el && el.value, 10) || 1);
   }
   function createPositionRow(sym, side, qty, price, dec, meta) {
