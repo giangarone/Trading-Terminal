@@ -27,12 +27,19 @@ function setupPanel(handle, panel, expandBtn, side, minW, maxW, cssVar, defaultW
   let lastWidth = getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim() || defaultWidth;
 
   function applyCollapsed(collapsed) {
-    panel.classList.toggle('is-collapsed', collapsed);
-    document.querySelector('.app').classList.toggle(appClass, collapsed);
     if (collapsed) {
-      lastWidth = panel.style.width || getComputedStyle(panel).width;
+      /* Remember the current expanded width (tracked in the CSS var, which the
+         resize drag keeps in sync) so expanding restores it. Reading the var
+         avoids box-model padding drift and the rail width when the page loads
+         already-collapsed. */
+      const v = getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
+      if (v) lastWidth = v;
+      panel.classList.add('is-collapsed');
+      document.querySelector('.app').classList.add(appClass);
       panel.style.width = '';
     } else {
+      panel.classList.remove('is-collapsed');
+      document.querySelector('.app').classList.remove(appClass);
       panel.style.width = lastWidth;
       document.documentElement.style.setProperty(cssVar, lastWidth);
     }
@@ -119,8 +126,8 @@ function setupVerticalResize(handle, panel, minH, maxH) {
     document.addEventListener('mouseup', up);
   });
 }
-setupPanel(document.getElementById('leftResizeHandle'), document.querySelector('.left-panel'), document.getElementById('leftPanelToggle'), 'left', 290, 480, '--left-panel-w', '290px', 'is-left-collapsed');
-setupPanel(document.getElementById('rightResizeHandle'), document.querySelector('.right-panel'), document.getElementById('rightPanelToggle'), 'right', 280, 540, '--right-panel-w', '300px', 'is-right-collapsed');
+setupPanel(document.getElementById('leftResizeHandle'), document.querySelector('.left-panel'), document.getElementById('leftPanelToggle'), 'left', 290, 360, '--left-panel-w', '290px', 'is-left-collapsed');
+setupPanel(document.getElementById('rightResizeHandle'), document.querySelector('.right-panel'), document.getElementById('rightPanelToggle'), 'right', 280, 360, '--right-panel-w', '300px', 'is-right-collapsed');
 setupVerticalResize(document.getElementById('bottomResizeHandle'), document.querySelector('.bottom-panel'), 100, 560);
 
 /* ---------- watchlist row selection (delegated so added rows work too) ---------- */
