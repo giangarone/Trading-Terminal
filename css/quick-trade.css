@@ -534,37 +534,36 @@
   visibility: visible;
 }
 
-.qt-est-val {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-family: var(--sans);
+/* ====== Quick Trade: order summary (Est. Size / Est. Value / Available / Est. Fees) ====== */
+.qt-summary {
+  margin: 14px 0;
 }
 
-.qt-footer-row {
+.qt-summary-line {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border-subtle);
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.qt-summary-line-label {
   font-size: 11.5px;
+  color: var(--text-secondary);
 }
 
-.qt-footer-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.qt-footer-item .l {
-  color: var(--text-muted);
-}
-
-.qt-footer-item .v {
-  font-family: var(--sans);
-  font-weight: 600;
+.qt-summary-line-val {
+  font-size: 11.5px;
+  font-weight: 500;
   color: var(--text-primary);
+  font-family: var(--sans);
+  text-align: right;
+}
+
+.qt-summary-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 8px 0;
 }
 
 .ai-ask-desc {

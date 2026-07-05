@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="css/center-panel.css?v=13">
   <link rel="stylesheet" href="css/workspace.css?v=28">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
-  <link rel="stylesheet" href="css/quick-trade.css?v=13">
+  <link rel="stylesheet" href="css/quick-trade.css?v=16">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=37">
   <link rel="stylesheet" href="css/market-scanner.css?v=30">
@@ -3977,21 +3977,25 @@
               </div>
             </div>
 
-            <div class="qt-sep"></div>
-
-            <div class="qt-split-row qt-est-row">
-              <div class="qt-col">
-                <span class="label-sm">Est. Size</span>
-                <div class="qt-est-val" id="qtEstSize">1 ETH (1 Contract)</div>
+            <div class="qt-summary">
+              <div class="qt-summary-line">
+                <span class="qt-summary-line-label">Est. Size</span>
+                <span class="qt-summary-line-val" id="qtEstSize">1 ETH (1 Contract)</span>
               </div>
-              <div class="qt-vsep"></div>
-              <div class="qt-col">
-                <span class="label-sm">Est. Value</span>
-                <div class="qt-est-val" id="qtEstValue">$4,500.25 USD</div>
+              <div class="qt-summary-line">
+                <span class="qt-summary-line-label">Est. Value</span>
+                <span class="qt-summary-line-val" id="qtEstValue">$4,500.25</span>
+              </div>
+              <div class="qt-summary-divider"></div>
+              <div class="qt-summary-line">
+                <span class="qt-summary-line-label">Available</span>
+                <span class="qt-summary-line-val" id="qtAvailable">$52,430.00 USDT</span>
+              </div>
+              <div class="qt-summary-line">
+                <span class="qt-summary-line-label">Est. Fees</span>
+                <span class="qt-summary-line-val" id="qtEstFees">$1.25</span>
               </div>
             </div>
-
-            <div class="qt-sep"></div>
 
             <div class="bs-row" id="qtBuySellRow">
               <button class="bs-btn buy" id="qtBuyBtn"><span class="bs-lbl">Buy Limit</span></button>
@@ -4001,13 +4005,6 @@
             <div class="join-row" style="margin-bottom:0;">
               <button class="ghost-btn" id="qtFlatten">Close All</button>
               <button class="ghost-btn danger" id="qtCancelAll">Cancel All</button>
-            </div>
-
-            <div class="qt-footer-row">
-              <span class="qt-footer-item"><span class="l">Available</span><span class="v" id="qtAvailable">$52,430.00
-                  USDT</span></span>
-              <span class="qt-footer-item"><span class="l">Est. Fees</span><span class="v"
-                  id="qtEstFees">$1.25</span></span>
             </div>
           </div>
         </div>
@@ -5487,7 +5484,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=6"></script>
   <script src="js/resize.js?v=13"></script>
-  <script src="js/app.js?v=177"></script>
+  <script src="js/app.js?v=178"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>
