@@ -456,6 +456,12 @@
   display: flex;
   align-items: center;
   gap: 3px;
+  cursor: pointer;
+  transition: border-color var(--t-ui);
+}
+
+.news-filter:hover {
+  border-color: var(--border-strong);
 }
 
 .news-item {

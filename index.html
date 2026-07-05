@@ -16,7 +16,7 @@
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
   <link rel="stylesheet" href="css/tokens.css?v=13">
   <link rel="stylesheet" href="css/topbar.css?v=12">
-  <link rel="stylesheet" href="css/left-panel.css?v=13">
+  <link rel="stylesheet" href="css/left-panel.css?v=14">
   <link rel="stylesheet" href="css/center-panel.css?v=13">
   <link rel="stylesheet" href="css/workspace.css?v=28">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
@@ -2961,8 +2961,14 @@
         <div class="card">
           <div class="card-head">
             <span class="card-title">News</span>
-            <span class="news-filter">All <span class="material-symbols-outlined"
-                style="font-size:13px;">expand_more</span></span>
+            <span class="news-filter pop-trigger cs-dd-trigger" data-target="newsFilterSelect">
+              <span class="cs-select-label">All News</span>
+              <span class="material-symbols-outlined" style="font-size:13px;">expand_more</span>
+            </span>
+            <select id="newsFilterSelect" style="display:none;">
+              <option value="all">All News</option>
+              <option value="asset">Selected Asset</option>
+            </select>
           </div>
           <div class="news-item">
             <span class="news-time">09:42</span>
@@ -2979,6 +2985,14 @@
           <div class="news-item">
             <span class="news-time">09:05</span>
             <span class="news-head">Energy sector rotation accelerates into the close</span>
+          </div>
+          <div class="news-item">
+            <span class="news-time">08:54</span>
+            <span class="news-head">Crude inventories post larger-than-expected draw</span>
+          </div>
+          <div class="news-item">
+            <span class="news-time">08:41</span>
+            <span class="news-head">Dollar eases as Treasury yields slip ahead of CPI</span>
           </div>
         </div>
 
@@ -3984,7 +3998,7 @@
               </div>
               <div class="qt-summary-line">
                 <span class="qt-summary-line-label">Est. Value</span>
-                <span class="qt-summary-line-val" id="qtEstValue">$4,500.25</span>
+                <span class="qt-summary-line-val" id="qtEstValue">$4,500.25 USD</span>
               </div>
               <div class="qt-summary-divider"></div>
               <div class="qt-summary-line">
@@ -5484,7 +5498,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=6"></script>
   <script src="js/resize.js?v=13"></script>
-  <script src="js/app.js?v=178"></script>
+  <script src="js/app.js?v=180"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>

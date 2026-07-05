@@ -901,7 +901,7 @@
     const { qty, usdValue } = qtComputeAmount();
     const qtyDisp = qtFmtQty(qty);
     qtEstSize.textContent = qtyDisp + ' ' + QT_INSTRUMENT_UNIT;
-    qtEstValue.textContent = fmtMoney(usdValue);
+    qtEstValue.textContent = fmtMoney(usdValue) + ' USD';
     qtEstFees.textContent = fmtMoney(Math.max(0, qty) * QT_FEE_PER_CONTRACT);
     if (syncSlider !== false) {
       const max = qtModeMax(qtAmountMode) || 1;
@@ -4841,6 +4841,7 @@
     const chartToolsBar = document.querySelector('.chart-tools-bar');
     initBarCollapse(chartToolsBar, chartToolsBar, [
       { id: 'layoutPickerTrigger' },
+      { id: 'quickOrderToggle' },
       { id: 'newsToggle' },
       { id: 'marketSessionsTrigger' },
       { id: 'marketScannerTrigger' },
