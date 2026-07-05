@@ -439,7 +439,7 @@
     const pos = 'calc(7px + (100% - 14px) * ' + (pct / 100) + ')';
     const track = wrap.querySelector('.range-slider-track');
     if (track) {
-      track.style.background = 'linear-gradient(to right, var(--border-strong) ' + pos + ', var(--border-default) ' + pos + ')';
+      track.style.background = 'linear-gradient(to right, var(--text-secondary) ' + pos + ', var(--border-default) ' + pos + ')';
     }
   }
   window.fillRangeSlider = fillRangeSlider;
@@ -756,6 +756,29 @@
     qtyInput.value = amount;
     createOrder(side, price, 'quick');
     if (order && tab === 'limit') order.orderType = 'Limit';
+    if (order && tab === 'market') order.orderType = 'Market';
+    if (order && tab === 'advanced') {
+      // Honor the explicit advanced selection instead of the direction-inferred type from createOrder
+      order.orderType = QT_ADVANCED_LABELS[qtAdvancedType]; // 'Stop Market' | 'Stop Limit' | 'MIT'
+      // Capture the slippage tolerance (Stop Market / MIT only) so the fill can slip past the trigger
+      const slipId = qtAdvancedType === 'stopMarket' ? 'qtStopMarketSlippage'
+                   : qtAdvancedType === 'mit' ? 'qtMitSlippage' : null;
+      if (slipId) {
+        const slipEl = document.getElementById(slipId);
+        order.slippageTol = slipEl ? (parseFloat((slipEl.value || '').replace(/,/g, '')) || 0) : 0; // percent, e.g. 0.10
+      }
+      // Stop Limit carries a second price (the limit): capture it so the order can rest at the
+      // limit once the stop is crossed, and reset the two-stage trigger flag.
+      if (qtAdvancedType === 'stopLimit') {
+        const limEl = document.getElementById('qtStopLimitPrice');
+        const lim = limEl ? parseFloat((limEl.value || '').replace(/,/g, '')) : NaN;
+        order.limitPrice = roundTick(isNaN(lim) ? order.entry : lim);
+        order.stopTriggered = false;
+      }
+    }
+    // createOrder already rendered with its direction-inferred type; re-render so the corrected
+    // type shows on the working-order pill (the market branch renders via confirmOrderFill instead).
+    if (order && !order.filled && (tab === 'limit' || tab === 'advanced')) render();
     if (tab === 'market') confirmOrderFill();
     qtyInput.value = prevVal;
   }
@@ -836,7 +859,7 @@
     return q.toFixed(2);
   }
   function qtSliderFill(pct) {
-    qtSlider.style.background = 'linear-gradient(to right, var(--border-strong) 0%, var(--border-strong) ' + pct + '%, var(--border-default) ' + pct + '%, var(--border-default) 100%)';
+    qtSlider.style.background = 'linear-gradient(to right, var(--text-secondary) 0%, var(--text-secondary) ' + pct + '%, var(--border-default) ' + pct + '%, var(--border-default) 100%)';
   }
   // Position the percentage bubble over the thumb centre. The thumb (16px wide)
   // travels from 8px to (trackWidth - 8px), so map the value across that range.
@@ -948,6 +971,22 @@
   function confirmOrderFill() {
     if (!order || order.filled) return;
     order.filled = true;
+    // Stop Limit fills at its limit price or better (protected, no slippage): a buy never pays above
+    // the limit, a sell never sells below it, but both take any price improvement the market offers.
+    if (order.orderType === 'Stop Limit' && order.limitPrice != null) {
+      const mkt = qtCurrentPrice();
+      order.entry = order.side === 'buy'
+        ? roundTick(Math.min(order.limitPrice, mkt))
+        : roundTick(Math.max(order.limitPrice, mkt));
+      if (order.sl) order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
+    }
+    // Market-executed stops (Stop Market / MIT) slip past the trigger — realize a fill up to the tolerance
+    if (order.slippageTol > 0) {
+      const dir = order.side === 'buy' ? 1 : -1;                  // buys slip up (worse), sells slip down (worse)
+      const slipFrac = Math.random() * (order.slippageTol / 100); // realized slip in [0, tolerance], like a real stop
+      order.entry = roundTick(order.entry * (1 + dir * slipFrac));
+      if (order.sl) order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE; // risk reflects real entry
+    }
     // Anchor trailing stop to actual fill price so it starts trailing from there
     if (slTrailActive()) {
       const dir = order.side === 'buy' ? 1 : -1;
@@ -969,6 +1008,7 @@
     const e = order.entry;
     order.side = order.side === 'buy' ? 'sell' : 'buy';
     order.tps.forEach(tp => { tp.price = roundTick(2 * e - tp.price); });
+    if (order.limitPrice != null) order.limitPrice = roundTick(2 * e - order.limitPrice); // keep the limit mirrored across the stop
     if (order.sl) {
       order.sl.price = roundTick(2 * e - order.sl.price);
       order.initialRisk = Math.abs(e - order.sl.price) * POINT_VALUE;
@@ -1290,7 +1330,7 @@
     if (beCfg.offsetUnit === 'points') return beCfg.offsetValue;
     if (beCfg.offsetUnit === 'percent') return order.entry * beCfg.offsetValue / 100;
     if (beCfg.offsetUnit === 'fee') {
-      const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
+      const entryFeeRate = /Market|MIT/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
       const exitFeeRate = FEE_RATE_MARKET; // SL exits via a stop order (taker fill)
       return order.entry * (entryFeeRate + exitFeeRate) * beCfg.offsetValue;
     }
@@ -1810,7 +1850,7 @@
     if (atPrice == null) atPrice = tp.price;
     const dir = order.side === 'buy' ? 1 : -1;
     const gross = dir * (atPrice - order.entry) * POINT_VALUE * contracts;
-    const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
+    const entryFeeRate = /Market|MIT/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
     const fee = (order.entry * entryFeeRate + atPrice * FEE_RATE_LIMIT) * contracts;
     return { gross, fee, net: gross - fee };
   }
@@ -1818,7 +1858,7 @@
   function slFeeCalc() {
     const dir = order.side === 'buy' ? 1 : -1;
     const gross = dir * (order.sl.price - order.entry) * POINT_VALUE * order.qty;
-    const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
+    const entryFeeRate = /Market|MIT/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
     const fee = (order.entry * entryFeeRate + order.sl.price * FEE_RATE_MARKET) * order.qty;
     return { gross, fee, net: gross - fee };
   }
@@ -2784,8 +2824,21 @@
         else { updateEntryLinePositionLive(); updateAllTpSlLinePositionsLive(); }
       }
       if (order && !order.filled && !order.pendingConfirm && !order.filling) {
-        const hitEntry = order.fillAbove ? last >= order.entry : last <= order.entry;
-        if (hitEntry) startFillSweep();
+        if (order.orderType === 'Stop Limit') {
+          // Two-stage: cross the stop to arm a resting limit, then fill only at the limit or better.
+          if (!order.stopTriggered) {
+            const stopHit = order.fillAbove ? last >= order.entry : last <= order.entry;
+            if (stopHit) order.stopTriggered = true;
+          }
+          if (order.stopTriggered) {
+            const limit = order.limitPrice != null ? order.limitPrice : order.entry;
+            const limitHit = order.side === 'buy' ? last <= limit : last >= limit;
+            if (limitHit) startFillSweep();
+          }
+        } else {
+          const hitEntry = order.fillAbove ? last >= order.entry : last <= order.entry;
+          if (hitEntry) startFillSweep();
+        }
       }
       simTickCounter++;
       applyTrailingStop(last);
@@ -3428,6 +3481,45 @@
         e.stopPropagation();
         cancelOrder();
       });
+    }
+
+    // ---- Stop Limit: subordinate LIMIT line (styled like BE TRIGGER / TRL OFFSET) ----
+    // The entry line above already represents the STOP (order.entry), so we only add the second
+    // LIMIT line here at order.limitPrice. Drag the line or its label to adjust; clicking the
+    // label opens a small price popup for exact entry.
+    if (!order.filled && order.orderType === 'Stop Limit') {
+      if (order.limitPrice == null) order.limitPrice = order.entry;
+
+      // LIMIT line + value tag at the limit price
+      const limitY = clamp(priceToY(order.limitPrice, H), 10, H - 10);
+      const limitLine = document.createElement('div');
+      limitLine.className = 'ol-line stop-limit-limit ' + order.side;
+      limitLine.style.top = limitY + 'px';
+      layer.appendChild(limitLine);
+
+      // pop-trigger keeps the global outside-click handler from closing the popup this label opens
+      const limitLabel = document.createElement('span');
+      limitLabel.className = 'ol-offset-label stop-limit pop-trigger ' + order.side;
+      limitLabel.innerHTML = '<span class="ol-offset-label-text">LIMIT · ' + fmt(order.limitPrice) + '</span>';
+      limitLabel.style.top = limitY + 'px';
+      layer.appendChild(limitLabel);
+
+      function repositionLimit(h) {
+        const yy = clamp(priceToY(order.limitPrice, h), 10, h - 10) + 'px';
+        limitLine.style.top = yy;
+        limitLabel.style.top = yy;
+        const txt = limitLabel.querySelector('.ol-offset-label-text');
+        if (txt) txt.textContent = 'LIMIT · ' + fmt(order.limitPrice);
+      }
+      function onDragLimit(cy, h) {
+        order.limitPrice = roundTick(yToPrice(cy, h));
+        repositionLimit(h);
+        drawPriceChart();
+      }
+      function onDropLimit(cy, h) { onDragLimit(cy, h); render(); }
+      makeDraggable(limitLine, onDragLimit, onDropLimit, undefined, undefined, 'limit');
+      makeDraggable(limitLabel, onDragLimit, onDropLimit, undefined,
+        () => openOlPriceEdit('limit', limitLabel.getBoundingClientRect(), limitLabel), 'limit');
     }
 
     drawPriceChart();
@@ -5233,6 +5325,13 @@
   orderTypeMenu.querySelectorAll('.pop-item').forEach(it => {
     it.addEventListener('click', () => {
       order.orderType = it.dataset.type;
+      // Switching to Stop Limit from the chart (no panel) needs a limit price: seed it a couple points
+      // past the stop in the trade direction so the two lines are visibly separated and the user can drag.
+      if (order.orderType === 'Stop Limit' && !order.filled) {
+        const dir = order.side === 'buy' ? 1 : -1;
+        if (order.limitPrice == null) order.limitPrice = roundTick(order.entry + dir * 2);
+        order.stopTriggered = false;
+      }
       // Switching to Market snaps the entry to the live price at once (rather than waiting for the
       // next chart tick to move it), mirroring the per-tick market-entry sync in the price loop.
       if (order.orderType === 'Market' && !order.filled) {
@@ -5242,6 +5341,48 @@
       }
       closeAllPopovers();
       render();
+    });
+  });
+
+  /* ---------- Stop Limit price-edit popup (opened by clicking a STOP/LIMIT chart label) ---------- */
+  const olPriceEditMenu = document.getElementById('olPriceEditMenu');
+  const olPriceEditInput = document.getElementById('olPriceEditInput');
+  const olPriceEditLabel = document.getElementById('olPriceEditLabel');
+  let olPriceEditTarget = null; // 'stop' | 'limit'
+  function olPriceEditCurrent() {
+    return olPriceEditTarget === 'limit' ? order.limitPrice : order.entry;
+  }
+  function applyOlPriceEdit(price) {
+    const p = roundTick(price);
+    if (!order || isNaN(p)) return;
+    if (olPriceEditTarget === 'limit') order.limitPrice = p;
+    else setOrderEntryPrice(p);
+    render();
+    olPriceEditInput.value = fmt(olPriceEditCurrent());
+  }
+  function openOlPriceEdit(target, anchorRect, trigger) {
+    if (!order) return;
+    olPriceEditTarget = target;
+    olPriceEditLabel.textContent = target === 'limit' ? 'Limit Price' : 'Stop Price';
+    olPriceEditInput.value = fmt(olPriceEditCurrent());
+    openNear(olPriceEditMenu, anchorRect, 'left', trigger);
+    olPriceEditInput.focus();
+    olPriceEditInput.select();
+  }
+  olPriceEditInput.addEventListener('click', (e) => e.stopPropagation());
+  olPriceEditInput.addEventListener('change', (e) => {
+    e.stopPropagation();
+    const v = parseFloat((e.target.value || '').replace(/,/g, ''));
+    if (!isNaN(v)) applyOlPriceEdit(v);
+  });
+  olPriceEditInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.target.blur(); closeAllPopovers(); }
+  });
+  olPriceEditMenu.querySelectorAll('.ps-up, .ps-down').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!order) return;
+      applyOlPriceEdit(olPriceEditCurrent() + (btn.classList.contains('ps-up') ? 0.25 : -0.25));
     });
   });
 

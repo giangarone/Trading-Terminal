@@ -45,6 +45,7 @@
 .ol-line.sl,
 .ol-line.offset,
 .ol-line.be-trigger,
+.ol-line.stop-limit-limit,
 .ol-line.entry.draggable {
   pointer-events: auto;
   cursor: ns-resize;
@@ -54,6 +55,7 @@
 .ol-line.sl::before,
 .ol-line.offset::before,
 .ol-line.be-trigger::before,
+.ol-line.stop-limit-limit::before,
 .ol-line.entry.draggable::before {
   content: '';
   position: absolute;
@@ -102,6 +104,36 @@
 
 .ol-offset-label.be-trigger:active {
   cursor: grabbing;
+}
+
+/* Stop Limit — the subordinate LIMIT line, dashed in the side color (mirrors the be-trigger style) */
+.ol-line.stop-limit-limit {
+  opacity: .55;
+}
+
+.ol-line.stop-limit-limit.buy {
+  border-color: var(--long-border);
+}
+
+.ol-line.stop-limit-limit.sell {
+  border-color: var(--short-border);
+}
+
+/* STOP + LIMIT value tags — side-colored, draggable, styled like the reference offset labels */
+.ol-offset-label.stop-limit {
+  cursor: pointer;
+}
+
+.ol-offset-label.stop-limit:active {
+  cursor: grabbing;
+}
+
+.ol-offset-label.stop-limit.buy {
+  color: var(--long);
+}
+
+.ol-offset-label.stop-limit.sell {
+  color: var(--short);
 }
 
 /* Tag on the left edge of the trailing TP's offset line. Only one TP can ever trail at a

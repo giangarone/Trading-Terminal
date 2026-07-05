@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=13">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=35">
+  <link rel="stylesheet" href="css/order-lines.css?v=37">
   <link rel="stylesheet" href="css/market-scanner.css?v=30">
   <link rel="stylesheet" href="css/indicators.css?v=9">
   <link rel="stylesheet" href="css/chart-settings.css?v=31">
@@ -4829,6 +4829,19 @@
     </button>
   </div>
 
+  <!-- ===================== STOP LIMIT: STOP/LIMIT PRICE EDIT POPUP ===================== -->
+  <div class="pop-menu" id="olPriceEditMenu" style="width:190px; padding:12px;">
+    <label class="sm-amount-lbl" id="olPriceEditLabel">Stop Price</label>
+    <div class="price-stepper">
+      <input type="text" id="olPriceEditInput">
+      <span class="qty-unit">USD</span>
+      <div class="price-stepper-arrows">
+        <button type="button" class="ps-up"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+        <button type="button" class="ps-down"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== QUICK TRADE: ADVANCED ORDER TYPE DROPDOWN ===================== -->
   <div class="pop-menu" id="qtAdvancedTypeMenu" style="width:200px;">
     <button class="pop-item selected" data-adv-type="stopMarket">
@@ -5474,7 +5487,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js?v=13"></script>
-  <script src="js/app.js?v=167"></script>
+  <script src="js/app.js?v=174"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>
