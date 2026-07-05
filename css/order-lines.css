@@ -803,6 +803,13 @@
   color: var(--accent);
 }
 
+/* Light mode only: the base --accent amber is too bright to read on a pale fill, so darken just
+   this badge's label for legibility. Scoped to the badge — the base --accent is left untouched
+   everywhere else (buttons, prices, warnings) and no new token is introduced. */
+[data-theme="light"] .ol-badge.atr {
+  color: #a15f00;
+}
+
 .ol-badge.be {
   background: var(--long-dim);
   color: var(--long);
