@@ -999,7 +999,10 @@ table.msx-table tbody tr.selected {
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.msx-d-section:last-child {
+/* Last section has no divider. It isn't the container's last child (the actions row follows it),
+   so match both the true last child and the section immediately preceding .msx-d-actions. */
+.msx-d-section:last-child,
+.msx-d-section:has(+ .msx-d-actions) {
   border-bottom: none;
 }
 
