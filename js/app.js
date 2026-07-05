@@ -61,7 +61,7 @@
     }
   };
   /* maps the Order Behavior card's generic order-type options to the actual order type strings used by the order object */
-  const PD_ORDER_TYPE_MAP = { market: 'Market', limit: 'Limit', stop: 'Stop Market', mit: 'MIT' };
+  const PD_ORDER_TYPE_MAP = { market: 'Market', limit: 'Limit', mit: 'Trigger Market' };
   function cloneCsDefaults() { return JSON.parse(JSON.stringify(CS_DEFAULTS)); }
   function loadChartSettings() {
     try {
@@ -496,8 +496,8 @@
     })();
     const fillAbove = entryPrice > currentPrice;
     const autoOrderType = side === 'buy'
-      ? (fillAbove ? 'Stop Market' : 'Limit')
-      : (fillAbove ? 'Limit' : 'Stop Market');
+      ? (fillAbove ? 'Trigger Market' : 'Limit')
+      : (fillAbove ? 'Limit' : 'Trigger Market');
     const orderType = isChartTrade ? (PD_ORDER_TYPE_MAP[chartSettings.positionDefaults.orderType] || 'Market') : autoOrderType;
     // Market chart trades snap to live price immediately so TPs/SL are calculated correctly
     const entry = roundTick((isChartTrade && orderType === 'Market') ? currentPrice : entryPrice);
@@ -565,8 +565,11 @@
   const qtBuyBtn = document.getElementById('qtBuyBtn');
   const qtSellBtn = document.getElementById('qtSellBtn');
   const QT_TAB_LABELS = { limit: 'Limit', market: 'Market' };
-  const QT_ADVANCED_LABELS = { stopMarket: 'Stop Market', stopLimit: 'Stop Limit', mit: 'MIT' };
-  let qtAdvancedType = 'stopMarket';
+  const QT_ADVANCED_LABELS = { stopLimit: 'Stop Limit', mit: 'Trigger Market' };
+  // Shorter text for the advanced tab pill only (space-constrained); the dropdown item and the
+  // recorded order.orderType still read the full "Trigger Market" everywhere else.
+  const QT_ADVANCED_TAB_LABELS = { stopLimit: 'Stop Limit', mit: 'Trigger' };
+  let qtAdvancedType = 'stopLimit';
   function qtSetActiveTab(tabName) {
     const panelName = tabName === 'advanced' ? qtAdvancedType : tabName;
     qtOrderTabs.querySelectorAll('.qt-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
@@ -582,7 +585,7 @@
   });
   qtSetActiveTab('limit');
 
-  /* ---------- advanced order type dropdown (Stop Limit / Stop Market / Trailing Stop / MIT) ---------- */
+  /* ---------- advanced order type dropdown (Stop Limit / Trigger Market) ---------- */
   const qtAdvancedTab = document.getElementById('qtAdvancedTab');
   const qtAdvancedTabLabel = document.getElementById('qtAdvancedTabLabel');
   const qtAdvancedTypeMenu = document.getElementById('qtAdvancedTypeMenu');
@@ -615,14 +618,14 @@
   qtAdvancedTypeMenu.querySelectorAll('.pop-item').forEach(it => {
     it.addEventListener('click', () => {
       qtAdvancedType = it.dataset.advType;
-      qtAdvancedTabLabel.textContent = QT_ADVANCED_LABELS[qtAdvancedType];
+      qtAdvancedTabLabel.textContent = QT_ADVANCED_TAB_LABELS[qtAdvancedType];
       closeAllPopovers();
       qtSetActiveTab('advanced');
     });
   });
 
   /* ---------- generic price stepper arrows (Stop / Limit / Trailing Delta / Trigger / Activation fields) ---------- */
-  const QT_SLIPPAGE_IDS = ['qtStopMarketSlippage', 'qtMitSlippage'];
+  const QT_SLIPPAGE_IDS = ['qtMitSlippage'];
   document.querySelectorAll('.price-stepper-arrows .ps-up, .price-stepper-arrows .ps-down').forEach(btn => {
     btn.addEventListener('click', () => {
       /* position close fields are handled by their own delegated stepper in the positions panel */
@@ -759,10 +762,9 @@
     if (order && tab === 'market') order.orderType = 'Market';
     if (order && tab === 'advanced') {
       // Honor the explicit advanced selection instead of the direction-inferred type from createOrder
-      order.orderType = QT_ADVANCED_LABELS[qtAdvancedType]; // 'Stop Market' | 'Stop Limit' | 'MIT'
-      // Capture the slippage tolerance (Stop Market / MIT only) so the fill can slip past the trigger
-      const slipId = qtAdvancedType === 'stopMarket' ? 'qtStopMarketSlippage'
-                   : qtAdvancedType === 'mit' ? 'qtMitSlippage' : null;
+      order.orderType = QT_ADVANCED_LABELS[qtAdvancedType]; // 'Stop Limit' | 'Trigger Market'
+      // Capture the slippage tolerance (Trigger Market only) so the fill can slip past the trigger
+      const slipId = qtAdvancedType === 'mit' ? 'qtMitSlippage' : null;
       if (slipId) {
         const slipEl = document.getElementById(slipId);
         order.slippageTol = slipEl ? (parseFloat((slipEl.value || '').replace(/,/g, '')) || 0) : 0; // percent, e.g. 0.10
@@ -786,7 +788,7 @@
     const active = qtOrderTabs.querySelector('.qt-tab.active');
     return active ? active.dataset.tab : 'market';
   }
-  const QT_ADVANCED_TRIGGER_IDS = { stopMarket: 'qtStopMarketTrigger', stopLimit: 'qtStopLimitTrigger', mit: 'qtMitTrigger' };
+  const QT_ADVANCED_TRIGGER_IDS = { stopLimit: 'qtStopLimitTrigger', mit: 'qtMitTrigger' };
   function qtActivePrice() {
     const tab = qtActiveTab();
     if (tab === 'limit') return parseFloat(document.getElementById('qtLimitPrice').value.replace(/,/g, ''));
@@ -980,7 +982,7 @@
         : roundTick(Math.max(order.limitPrice, mkt));
       if (order.sl) order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
     }
-    // Market-executed stops (Stop Market / MIT) slip past the trigger — realize a fill up to the tolerance
+    // Trigger Market fills slip past the trigger — realize a fill up to the tolerance
     if (order.slippageTol > 0) {
       const dir = order.side === 'buy' ? 1 : -1;                  // buys slip up (worse), sells slip down (worse)
       const slipFrac = Math.random() * (order.slippageTol / 100); // realized slip in [0, tolerance], like a real stop
@@ -1330,7 +1332,7 @@
     if (beCfg.offsetUnit === 'points') return beCfg.offsetValue;
     if (beCfg.offsetUnit === 'percent') return order.entry * beCfg.offsetValue / 100;
     if (beCfg.offsetUnit === 'fee') {
-      const entryFeeRate = /Market|MIT/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
+      const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
       const exitFeeRate = FEE_RATE_MARKET; // SL exits via a stop order (taker fill)
       return order.entry * (entryFeeRate + exitFeeRate) * beCfg.offsetValue;
     }
@@ -1850,7 +1852,7 @@
     if (atPrice == null) atPrice = tp.price;
     const dir = order.side === 'buy' ? 1 : -1;
     const gross = dir * (atPrice - order.entry) * POINT_VALUE * contracts;
-    const entryFeeRate = /Market|MIT/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
+    const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
     const fee = (order.entry * entryFeeRate + atPrice * FEE_RATE_LIMIT) * contracts;
     return { gross, fee, net: gross - fee };
   }
@@ -1858,7 +1860,7 @@
   function slFeeCalc() {
     const dir = order.side === 'buy' ? 1 : -1;
     const gross = dir * (order.sl.price - order.entry) * POINT_VALUE * order.qty;
-    const entryFeeRate = /Market|MIT/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
+    const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
     const fee = (order.entry * entryFeeRate + order.sl.price * FEE_RATE_MARKET) * order.qty;
     return { gross, fee, net: gross - fee };
   }

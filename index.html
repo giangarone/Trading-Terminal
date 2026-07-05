@@ -1238,8 +1238,7 @@
                           style="display:none;">
                           <option value="market">Market</option>
                           <option value="limit" selected>Limit</option>
-                          <option value="stop">Stop</option>
-                          <option value="mit">MIT — Market if Touched</option>
+                          <option value="mit">Trigger Market</option>
                         </select>
                       </div>
                       <div class="cs-field">
@@ -3867,7 +3866,7 @@
               <button class="qt-tab active" data-tab="limit">Limit</button>
               <button class="qt-tab" data-tab="market">Market</button>
               <button class="qt-tab qt-tab-dropdown" data-tab="advanced" id="qtAdvancedTab">
-                <span id="qtAdvancedTabLabel">Stop Market</span>
+                <span id="qtAdvancedTabLabel">Stop Limit</span>
                 <span class="material-symbols-outlined qt-tab-caret">expand_more</span>
               </button>
             </div>
@@ -3889,33 +3888,6 @@
             <div class="qt-tab-panel" data-tab-panel="market" id="qtTabPanel-market">
               <label class="label-sm" style="margin-top:12px;">Price</label>
               <div class="text-input-qt info qt-disabled-row"><span>Market Price</span></div>
-            </div>
-
-            <div class="qt-tab-panel" data-tab-panel="stopMarket" id="qtTabPanel-stopMarket">
-              <label class="label-sm">Stop</label>
-              <div class="price-stepper">
-                <input type="text" id="qtStopMarketTrigger" placeholder="Stop price" value="4,505.75">
-                <span class="qty-unit">USD</span>
-                <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtStopMarketTrigger"><span
-                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                  <button type="button" class="ps-down" data-target="qtStopMarketTrigger"><span
-                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                </div>
-              </div>
-              <label class="label-sm" style="margin-top:12px;">Price</label>
-              <div class="text-input-qt info qt-disabled-row"><span>Market Price</span></div>
-              <label class="label-sm" style="margin-top:12px;">Slippage Tolerance</label>
-              <div class="price-stepper">
-                <input type="text" id="qtStopMarketSlippage" value="0.10">
-                <span class="qty-unit">%</span>
-                <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtStopMarketSlippage"><span
-                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                  <button type="button" class="ps-down" data-target="qtStopMarketSlippage"><span
-                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                </div>
-              </div>
             </div>
 
             <div class="qt-tab-panel" data-tab-panel="stopLimit" id="qtTabPanel-stopLimit">
@@ -4812,19 +4784,14 @@
       <span class="pop-text"><span class="pt-title">Limit</span><span class="pt-sub">Buy at specific price or
           better</span></span>
     </button>
-    <button class="pop-item" data-type="Stop Market">
-      <span class="pop-icon"><span class="material-symbols-outlined">rule</span></span>
-      <span class="pop-text"><span class="pt-title">Stop Market</span><span class="pt-sub">Buy when price rises to stop
-          level</span></span>
-    </button>
     <button class="pop-item" data-type="Stop Limit">
       <span class="pop-icon"><span class="material-symbols-outlined">swap_horiz</span></span>
       <span class="pop-text"><span class="pt-title">Stop Limit</span><span class="pt-sub">Buy stop order with limit
           price</span></span>
     </button>
-    <button class="pop-item" data-type="MIT">
+    <button class="pop-item" data-type="Trigger Market">
       <span class="pop-icon"><span class="material-symbols-outlined">sync_alt</span></span>
-      <span class="pop-text"><span class="pt-title">MIT (Market If Touched)</span><span class="pt-sub">Buy when price
+      <span class="pop-text"><span class="pt-title">Trigger Market</span><span class="pt-sub">Market order once price
           touches level</span></span>
     </button>
   </div>
@@ -4844,16 +4811,12 @@
 
   <!-- ===================== QUICK TRADE: ADVANCED ORDER TYPE DROPDOWN ===================== -->
   <div class="pop-menu" id="qtAdvancedTypeMenu" style="width:200px;">
-    <button class="pop-item selected" data-adv-type="stopMarket">
-      <span class="pop-text"><span class="pt-title">Stop Market</span><span class="pt-sub">Triggers market order at stop
-          price</span></span>
-    </button>
-    <button class="pop-item" data-adv-type="stopLimit">
+    <button class="pop-item selected" data-adv-type="stopLimit">
       <span class="pop-text"><span class="pt-title">Stop Limit</span><span class="pt-sub">Trigger a limit order at a
           stop price</span></span>
     </button>
     <button class="pop-item" data-adv-type="mit">
-      <span class="pop-text"><span class="pt-title">MIT</span><span class="pt-sub">Market order once price is
+      <span class="pop-text"><span class="pt-title">Trigger Market</span><span class="pt-sub">Market order once price is
           touched</span></span>
     </button>
   </div>
@@ -5487,7 +5450,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=2"></script>
   <script src="js/resize.js?v=13"></script>
-  <script src="js/app.js?v=174"></script>
+  <script src="js/app.js?v=176"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>
