@@ -75,7 +75,7 @@
   border-radius: 7px;
   font-family: var(--sans);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
   line-height: 1;
 }
@@ -375,7 +375,7 @@
   text-align: right;
   font-family: var(--sans);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
   padding: 8px 0;
 }
