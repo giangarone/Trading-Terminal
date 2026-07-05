@@ -551,6 +551,30 @@
     confirmOrderFill();
   }
 
+  // Bridge for the floating Quick Market Order bar (wired in js/overlays.js). Places a market
+  // order at the live price using the amount typed in the bar, reusing the same confirmation +
+  // fill path as the Quick Trade panel. createOrder reads the shared qtyInput, so set it inside
+  // the confirm callback (the fill runs after the user confirms) and restore it afterward.
+  window.placeQuickMarketOrder = function (side, amount) {
+    const currentPrice = qtCurrentPrice();
+    const amt = (amount != null && String(amount).trim() !== '') ? String(amount).trim() : '1';
+    const details = {
+      side,
+      orderType: 'Market',
+      amount: amt + ' ' + QT_INSTRUMENT_UNIT,
+      leverage: qtLeverageDetail(),
+      price: '$' + fmt(currentPrice)
+    };
+    requestOrderConfirmation(details, () => {
+      const prevVal = qtyInput.value;
+      qtyInput.value = amt;
+      createOrder(side, currentPrice, 'quick');
+      order.orderType = 'Market';
+      confirmOrderFill();
+      qtyInput.value = prevVal;
+    });
+  };
+
   /* ---------- Quick Trade panel ---------- */
   const QT_INSTRUMENT_UNIT = 'ETH';      // default instrument for the Quick Trade panel
   const QT_AVAILABLE_BALANCE = 52430.00;
@@ -2769,6 +2793,8 @@
       wlChg: document.getElementById('wlChg-ETHUSD'),
       wlChgAbs: document.getElementById('wlChgAbs-ETHUSD'),
       wlVol: document.getElementById('wlVol-ETHUSD'),
+      qopBuyPrice: document.getElementById('quickOrderBuyPrice'),
+      qopSellPrice: document.getElementById('quickOrderSellPrice'),
     };
 
     function tick() {
@@ -2791,6 +2817,10 @@
       setUpDown(els.hdrChg, dayUp);
       els.hdrBid.textContent = fmt(roundTick(last - TICK));
       els.hdrAsk.textContent = fmt(last);
+
+      // Floating Quick Order bar: buy fills at the ask, sell at the bid
+      if (els.qopBuyPrice) els.qopBuyPrice.textContent = fmt(last);
+      if (els.qopSellPrice) els.qopSellPrice.textContent = fmt(roundTick(last - TICK));
       els.hdrDayHigh.textContent = fmt(dayHigh);
       els.hdrDayLow.textContent = fmt(dayLow);
 

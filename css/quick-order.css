@@ -1,0 +1,163 @@
+/* ===== Quick Market Order — floating, draggable market-order bar =====
+   Toggled from the chart toolbar (Quick Order button), mirrors the News overlay
+   toggle. Built on the shared .pop-menu / .float-panel shell but laid out as a
+   compact horizontal bar instead of the tall panel the base class assumes. */
+
+.quick-order-panel {
+  width: auto;
+  max-height: none;
+  overflow: visible;
+  padding: 0 6px;
+  gap: 6px;
+  flex-direction: column;
+  border-radius: 8px;
+}
+
+/* Main row: drag handle · Market buy · amount · Market sell · close */
+.qop-main {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+/* Left hamburger — the only element that initiates a drag */
+.qop-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  cursor: grab;
+}
+
+.qop-drag-handle:hover {
+  color: var(--text-secondary);
+}
+
+.qop-drag-handle:active {
+  cursor: grabbing;
+}
+
+.qop-drag-handle .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* Connected segmented control: Market buy · amount · Market sell share one
+   rounded container with no gaps (overflow clips each segment to the corners). */
+.qop-group {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+/* Market buy / Market sell blocks */
+.qop-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-width: 104px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  color: #fff;
+}
+
+.qop-side:hover {
+  filter: brightness(1.06);
+}
+
+.qop-side-lbl {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.qop-side-price {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.qop-buy {
+  background: var(--long);
+}
+
+.qop-sell {
+  background: var(--short);
+}
+
+/* Amount field — a text input (never type=number) to avoid native spinners */
+.qop-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 120px;
+  padding: 5px 9px;
+  background: var(--bg-input);
+  border: none;
+  border-radius: 0;
+}
+
+.qop-amount-lbl {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.qop-amount-input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.qop-amount-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Close (×) — inherits .float-panel-close, but this bar has no margin-left:auto row */
+.quick-order-panel .float-panel-close {
+  align-self: center;
+}
+
+/* Percentage preset row — only revealed while the user is entering an amount
+   (the panel gets .qop-typing on amount-input focus, cleared on blur). */
+.qop-presets {
+  display: none;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.quick-order-panel.qop-typing .qop-presets {
+  display: flex;
+}
+
+.qop-pct {
+  padding: 4px 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.qop-pct:hover {
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}

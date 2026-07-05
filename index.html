@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="css/chart-settings.css?v=31">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
+  <link rel="stylesheet" href="css/quick-order.css?v=5">
 </head>
 
 <body>
@@ -3037,6 +3038,9 @@
                 Sessions</span></button>
             <button class="ct-action-btn" id="newsToggle" data-tooltip="News"><span class="material-symbols-outlined"
                 style="font-size:15px;">article</span><span class="ct-label">News</span></button>
+            <button class="ct-action-btn" id="quickOrderToggle" data-tooltip="Quick Market Order"><span
+                class="material-symbols-outlined" style="font-size:15px;">bolt</span><span class="ct-label">Quick
+                Order</span></button>
             <button class="ct-action-btn pop-trigger" id="layoutPickerTrigger" data-tooltip="Chart Layout"><span
                 class="material-symbols-outlined" style="font-size:15px;">space_dashboard</span><span
                 class="ct-label">Layout</span></button>
@@ -5217,6 +5221,39 @@
     </div>
   </div>
 
+  <!-- Quick Market Order — floating, draggable market-order bar (toggled from chart toolbar) -->
+  <div class="pop-menu float-panel quick-order-panel" id="quickOrderPanel" data-persistent="true">
+    <div class="qop-main">
+      <button class="qop-drag-handle" type="button" aria-label="Drag to move Quick Order panel" title="Drag to move">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <div class="qop-group">
+        <button class="qop-side qop-buy" id="quickOrderBuy" type="button">
+          <span class="qop-side-lbl">Market buy</span>
+          <span class="qop-side-price" id="quickOrderBuyPrice">—</span>
+        </button>
+        <div class="qop-amount">
+          <label class="qop-amount-lbl" for="quickOrderAmount">Amount(ETH)</label>
+          <input type="text" class="qop-amount-input" id="quickOrderAmount" placeholder="Enter Here" autocomplete="off"
+            spellcheck="false">
+        </div>
+        <button class="qop-side qop-sell" id="quickOrderSell" type="button">
+          <span class="qop-side-lbl">Market sell</span>
+          <span class="qop-side-price" id="quickOrderSellPrice">—</span>
+        </button>
+      </div>
+      <button class="float-panel-close" id="quickOrderClose" type="button" aria-label="Close Quick Order panel">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="qop-presets">
+      <button class="qop-pct" type="button" data-pct="10">10%</button>
+      <button class="qop-pct" type="button" data-pct="20">20%</button>
+      <button class="qop-pct" type="button" data-pct="50">50%</button>
+      <button class="qop-pct" type="button" data-pct="100">100%</button>
+    </div>
+  </div>
+
   <!-- ===================== TRADING JOURNAL FLOATING PANEL ===================== -->
   <div class="pop-menu float-panel tj-journal-panel" id="tjModalBackdrop" data-persistent="true">
 
@@ -5448,9 +5485,9 @@
   <!-- ====== Scripts (order matters: utils → workspace → overlays → resize → app → right-panel) ====== -->
   <script src="js/utils.js"></script>
   <script src="js/workspace.js?v=12"></script>
-  <script src="js/overlays.js?v=2"></script>
+  <script src="js/overlays.js?v=6"></script>
   <script src="js/resize.js?v=13"></script>
-  <script src="js/app.js?v=176"></script>
+  <script src="js/app.js?v=177"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>
