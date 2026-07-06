@@ -5970,7 +5970,10 @@
     function commit() {
       if (!order || !order.sl) return;
       order.sl.atrMult = parseFloat(input.value) || 2;
-      if (slAtrActive() && !order.filled) placeAtrStop();
+      /* Re-place the stop whether or not the order is filled, so the line stays in sync with the
+         multiplier (and its badge). placeAtrStop() anchors to order.entry, which is valid post-fill,
+         and calls syncQtyFromRisk() — matching the manual SL-drag path. */
+      if (slAtrActive()) placeAtrStop();
       render();
     }
     input.removeAttribute('readonly');
