@@ -930,7 +930,6 @@
   const qtLeverageSummary = document.getElementById('qtLeverageSummary');
   const qtCost = document.getElementById('qtCost');
   const qtLiqPrice = document.getElementById('qtLiqPrice');
-  const qtMaxBuy = document.getElementById('qtMaxBuy');
   const qtAvailable = document.getElementById('qtAvailable');
 
   function qtModeMax(mode) {
@@ -972,7 +971,7 @@
     qtEstFees.textContent = fmt(Math.max(0, qty) * QT_FEE_PER_CONTRACT) + ' ' + quote;
     qtAvailable.textContent = fmt(QT_AVAILABLE_BALANCE) + ' ' + quote;
 
-    // Leverage-driven stats: Cost (margin posted), Liq. Price and Max (buying power).
+    // Leverage-driven stats: Cost (margin posted) and Liq. Price.
     const applies = qtLeverageApplies();
     qtLeverageSummary.hidden = !applies;
     if (applies) {
@@ -980,7 +979,6 @@
       const price = qtCurrentPrice() || 1;
       const fees = Math.max(0, qty) * QT_FEE_PER_CONTRACT;
       const margin = usdValue / lev + fees;            // collateral actually posted
-      const buyingPower = QT_AVAILABLE_BALANCE * lev;  // Max position size
       // Liq. Price assumes a Long (Buy is the primary side; no side is committed while
       // the form is open). Isolated liquidates off just the position margin (drop);
       // Cross backs the position with free balance, pushing the liq further from entry.
@@ -992,7 +990,6 @@
       }
       const liq = price * (1 - drop - cushion);
       qtCost.textContent = fmt(margin) + ' ' + quote;
-      qtMaxBuy.textContent = fmt(buyingPower) + ' ' + quote;
       qtLiqPrice.textContent = liq > 0 ? fmt(liq) + ' ' + quote : '—';
     }
     if (syncSlider !== false) {

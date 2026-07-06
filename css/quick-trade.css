@@ -650,7 +650,7 @@
 .qt-summary-divider {
   height: 1px;
   background: var(--border-subtle);
-  margin: 8px 0;
+  margin: 6px 0;
 }
 
 .ai-ask-desc {
