@@ -29,7 +29,7 @@
   let tpCounter = 1;
   // Static mockup: a partially-filled AAPL limit order that demonstrates the fill pill
   // in the Open Orders tab. Dismissable via its cancel (✕); does not affect real trading.
-  let mockAaplOrder = { sym: 'AAPL', side: 'buy', qty: 20, filledQty: 12, price: 187.50, orderType: 'Limit' };
+  let mockAaplOrder = { sym: 'AAPL', side: 'buy', qty: 20, filledQty: 12, price: 187.50, avgFill: 187.42, orderType: 'Limit' };
   let pendingClickPrice = BASE_PRICE;
   let exitModal = null;                // {tpId, mode, pct}
 
@@ -1694,10 +1694,13 @@
     const fillPct = Math.round(o.filledQty / o.qty * 100);
     const qtyCell = partial
       ? '<span class="ord-val-primary">' + o.qty + '</span>' +
-        '<span class="ord-fill-frac">' + o.filledQty + '/' + o.qty + ' filled</span>' +
-        '<span class="ord-fill-track" title="' + fillPct + '% filled">' +
+        '<span class="fill-progress" data-fill-status="Partially filled" data-fill-pct="' + fillPct + '"' +
+        ' data-fill-filled="' + o.filledQty + '" data-fill-total="' + o.qty + '" data-fill-unit="Shares"' +
+        ' data-fill-avg="' + fmt(o.avgFill != null ? o.avgFill : o.price) + '">' +
+        '<span class="ord-fill-frac">' + o.filledQty + ' / ' + o.qty + ' Shares</span>' +
+        '<span class="ord-fill-track">' +
         '<span class="ord-fill-track-bar" style="width:' + fillPct + '%"></span>' +
-        '</span>'
+        '</span></span>'
       : '<span class="ord-val-primary">' + o.qty + '</span>';
     const statusCell = partial
       ? '<span class="bp-status partial">Partial</span>'
@@ -4952,6 +4955,68 @@
     /* Safety net: a tick re-render can swap the hovered node without firing
        mouseout, so always clear when the cursor leaves the layer entirely. */
     olLayer.addEventListener('mouseleave', hideTooltip);
+  })();
+
+  /* Partially-filled orders in the Positions / Open Orders tabs surface their
+     fill detail (percent, remaining, average fill) on hover of the progress bar.
+     Those tabs live in scroll containers that clip overflow, so — like the chart
+     tools bar — the tooltip is a single body-level element positioned with fixed
+     coords. The Open Orders body re-renders on updates, so hover is delegated on
+     the stable bottom panel rather than per-row listeners. */
+  (function initFillProgressTooltips() {
+    const panel = document.querySelector('.bottom-panel');
+    if (!panel) return;
+
+    const tip = document.createElement('div');
+    tip.className = 'fill-tooltip';
+    document.body.appendChild(tip);
+
+    function tooltipTarget(node) {
+      const el = node.closest && node.closest('.fill-progress[data-fill-status]');
+      return el && panel.contains(el) ? el : null;
+    }
+
+    function buildTooltip(d) {
+      const remaining = parseFloat(d.fillTotal) - parseFloat(d.fillFilled);
+      const remainingStr = Number.isInteger(remaining) ? remaining : fmt(remaining);
+      return (
+        '<div class="fill-tt-title"><span>' + d.fillStatus + '</span>' +
+        '<span class="fill-tt-pct">' + d.fillPct + '%</span></div>' +
+        '<div class="fill-tt-row"><span class="fill-tt-k">Filled</span>' +
+        '<span class="fill-tt-v">' + d.fillFilled + ' / ' + d.fillTotal + ' ' + d.fillUnit + '</span></div>' +
+        '<div class="fill-tt-row"><span class="fill-tt-k">Remaining</span>' +
+        '<span class="fill-tt-v">' + remainingStr + ' ' + d.fillUnit + '</span></div>' +
+        '<div class="fill-tt-row"><span class="fill-tt-k">Avg fill</span>' +
+        '<span class="fill-tt-v">' + d.fillAvg + '</span></div>'
+      );
+    }
+
+    function showTooltip(el) {
+      tip.innerHTML = buildTooltip(el.dataset);
+      tip.classList.add('show');
+      const rect = el.getBoundingClientRect();
+      /* Prefer above the bar (these rows sit low on screen); flip below if cramped. */
+      let top = rect.top - tip.offsetHeight - 8;
+      if (top < 8) top = rect.bottom + 8;
+      tip.style.left = (rect.left + rect.width / 2) + 'px';
+      tip.style.top = top + 'px';
+    }
+
+    function hideTooltip() {
+      tip.classList.remove('show');
+    }
+
+    panel.addEventListener('mouseover', (e) => {
+      const el = tooltipTarget(e.target);
+      if (el) showTooltip(el);
+    });
+    panel.addEventListener('mouseout', (e) => {
+      const el = tooltipTarget(e.target);
+      if (el && !el.contains(e.relatedTarget)) hideTooltip();
+    });
+    /* A fixed tooltip would detach from its bar while the tab scrolls, so hide it
+       on any scroll inside the panel (capture catches the inner scroll wraps). */
+    panel.addEventListener('scroll', hideTooltip, { capture: true, passive: true });
   })();
 
   /* ---------- symbol selector dropdown ---------- */

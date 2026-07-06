@@ -673,7 +673,7 @@ table.bp-table tr.total-row td {
 .pos-header-bar,
 .pos-row-summary {
   display: grid;
-  grid-template-columns: minmax(180px, 1.2fr) 90px 130px 120px 100px 90px 120px 44px;
+  grid-template-columns: minmax(180px, 1.2fr) 120px 130px 120px 100px 90px 120px 44px;
   align-items: center;
 }
 
@@ -861,6 +861,100 @@ table.bp-table tr.total-row td {
   font-size: var(--fs-label);
   color: var(--text-muted);
   margin-top: 2px;
+}
+
+/* Fill-progress indicator — shown under the size on a partially-filled limit
+   order. Mirrors the Open Orders pill: filled/total fraction plus a thin track
+   sized to the fill %. */
+.pos-fill-frac {
+  display: block;
+  font-size: var(--fs-label);
+  color: var(--text-muted);
+}
+
+.pos-fill-track {
+  display: block;
+  width: 52px;
+  height: 3px;
+  margin-top: 4px;
+  margin-left: auto;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--info-dim);
+}
+
+.pos-fill-track-bar {
+  display: block;
+  height: 100%;
+  background: var(--info);
+}
+
+/* Wraps the fill fraction + bar so the whole indicator is one hover target. On
+   hover, initFillProgressTooltips (js/app.js) reads the data-fill-* attributes
+   and shows a .fill-tooltip with the fill %, remaining amount, and average fill
+   price. Shared by the Positions size cell and the Open Orders qty cell. */
+.fill-progress {
+  display: block;
+  cursor: help;
+}
+
+/* Body-level detail tooltip for a partially-filled order's progress bar. Fixed
+   positioning (set in JS) lets it escape the Positions / Open Orders scroll
+   containers that clip overflow. */
+.fill-tooltip {
+  position: fixed;
+  z-index: 60;
+  min-width: 176px;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 9px 11px;
+  box-shadow: 0 10px 28px var(--shadow-color);
+  font-family: var(--sans);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.fill-tooltip.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.fill-tt-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+  padding-bottom: 7px;
+  margin-bottom: 7px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.fill-tt-pct {
+  color: var(--info);
+}
+
+.fill-tt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 11px;
+  padding: 2px 0;
+}
+
+.fill-tt-k {
+  color: var(--text-muted);
+}
+
+.fill-tt-v {
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 /* ── Entry / Mark cell ───────────────────────────────────── */

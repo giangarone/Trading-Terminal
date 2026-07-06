@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/topbar.css?v=12">
   <link rel="stylesheet" href="css/left-panel.css?v=14">
   <link rel="stylesheet" href="css/center-panel.css?v=13">
-  <link rel="stylesheet" href="css/workspace.css?v=28">
+  <link rel="stylesheet" href="css/workspace.css?v=35">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=16">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
@@ -3664,14 +3664,19 @@
                         <span class="pos-sym-ticker">AAPL</span>
                         <span class="pos-side-badge long">Long</span>
                         <span class="pos-type-badge">Stock</span>
-                        <span class="pos-lev-badge">4×</span>
                       </div>
                       <span class="pos-sym-sub">Apple Inc.</span>
                     </div>
                   </div>
                   <div class="pos-col pos-col-size">
                     <span class="pos-size-qty" id="posQty-AAPL">100</span>
-                    <span class="pos-size-unit">Shares</span>
+                    <span class="fill-progress" data-fill-status="Partially filled" data-fill-pct="40"
+                      data-fill-filled="100" data-fill-total="250" data-fill-unit="Shares" data-fill-avg="185.27">
+                      <span class="pos-fill-frac">100 / 250 Shares</span>
+                      <span class="pos-fill-track">
+                        <span class="pos-fill-track-bar" style="width:40%"></span>
+                      </span>
+                    </span>
                   </div>
                   <div class="pos-col pos-col-price">
                     <span class="pos-entry" id="posAvg-AAPL">185.27</span>
@@ -5498,7 +5503,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=6"></script>
   <script src="js/resize.js?v=13"></script>
-  <script src="js/app.js?v=180"></script>
+  <script src="js/app.js?v=184"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>
