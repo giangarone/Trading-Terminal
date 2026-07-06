@@ -579,6 +579,7 @@
   let qtInstrumentUnit = 'ETH';          // amount unit for the Quick Trade panel — reset per asset class on symbol switch
   const QT_AVAILABLE_BALANCE = 52430.00;
   const QT_FEE_PER_CONTRACT = 1.25;
+  const QT_MAINT_MARGIN_RATE = 0.005; // mockup maintenance-margin rate for the Liq. Price estimate
 
   /* The Quick Trade panel reconfigures itself for the selected symbol's asset class:
        - marginMode  → show the Cross/Isolated toggle (a crypto-perp concept, crypto only)
@@ -592,7 +593,7 @@
     forex:   { marginMode: false, leverage: true,  unit: 'Lots',      quickAmounts: [0.1, 0.5, 1, 2, 5] },
   };
   let qtAsset = QT_ASSET_CONFIG.crypto;  // current asset config — the panel defaults to ETHUSD (crypto)
-  let qtCryptoMode = 'perp';             // crypto only: 'perp' (leverage + margin) or 'spot' (1×, no liquidation)
+  let qtCryptoMode = 'spot';             // crypto only: 'spot' (1×, no liquidation) or 'perp' (leverage + margin) — defaults to spot on launch
   function qtCurrentPrice() {
     const lastEl = document.getElementById('hdrLast');
     return lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
@@ -729,6 +730,19 @@
     if (qtAsset.marginMode && qtCryptoMode === 'spot') return null; // spot = 1×, no leverage
     return qtAsset.leverage ? qtLeverageDetail() : null;
   }
+  /* Whether leverage-driven summary stats (Cost, Liq. Price, Max) apply — the asset must
+     support leverage (crypto perp / forex) AND actually be leveraged (>1×). At 1× there is
+     no liquidation and cost equals value, so the extra rows add nothing. */
+  function qtLeverageApplies() {
+    return qtAsset.leverage
+      && !(qtAsset.marginMode && qtCryptoMode === 'spot')
+      && qtLeverageValue() > 1;
+  }
+  /* Quote currency shown next to panel amounts/prices — crypto settles in USDT, everything
+     else in USD. (marginMode is crypto-only, so it doubles as the crypto check.) */
+  function qtQuoteCurrency() {
+    return qtAsset.marginMode ? 'USDT' : 'USD';
+  }
 
   /* keep the leverage button, editable input, slider fill and preset highlight in sync.
      writeInput is skipped while the user is typing in the field so we don't fight them. */
@@ -747,6 +761,7 @@
     const next = qtMarginMode() === 'cross' ? 'isolated' : 'cross';
     qtMarginModeBtn.dataset.mode = next;
     qtMarginModeLabel.textContent = next === 'cross' ? 'Cross' : 'Isolated';
+    qtUpdateEstimates(); // margin mode changes the Liq. Price
   });
 
   /* Fill the margin bar for the current asset + crypto Spot/Perp mode. Spot hides Cross +
@@ -766,6 +781,7 @@
     b.addEventListener('click', () => {
       qtCryptoMode = b.dataset.mode;
       qtApplyMarginMode();
+      qtUpdateEstimates(); // Spot hides the leverage stats; Perp reveals them
     });
   });
 
@@ -774,12 +790,13 @@
     openNear(qtMarginMenu, qtLeverageBtn.getBoundingClientRect(), 'right', qtLeverageBtn);
   });
 
-  qtLevSlider.addEventListener('input', () => qtSyncLeverageUI());
+  qtLevSlider.addEventListener('input', () => { qtSyncLeverageUI(); qtUpdateEstimates(); });
 
   qtLevPresets.querySelectorAll('.qt-lev-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       qtLevSlider.value = chip.dataset.lev;
       qtSyncLeverageUI();
+      qtUpdateEstimates();
     });
   });
 
@@ -792,6 +809,7 @@
     const clamped = Math.min(QT_MAX_LEVERAGE, Math.max(QT_MIN_LEVERAGE, parseInt(digits, 10)));
     qtLevSlider.value = clamped;
     qtSyncLeverageUI(false);
+    qtUpdateEstimates();
   });
   function qtCommitLeverageInput() {
     const parsed = parseInt(qtLevInput.value, 10);
@@ -799,6 +817,7 @@
       : Math.min(QT_MAX_LEVERAGE, Math.max(QT_MIN_LEVERAGE, parsed));
     qtLevSlider.value = clamped;
     qtSyncLeverageUI();
+    qtUpdateEstimates();
   }
   qtLevInput.addEventListener('change', qtCommitLeverageInput);
   qtLevInput.addEventListener('keydown', (e) => {
@@ -908,6 +927,11 @@
   const qtEstSize = document.getElementById('qtEstSize');
   const qtEstValue = document.getElementById('qtEstValue');
   const qtEstFees = document.getElementById('qtEstFees');
+  const qtLeverageSummary = document.getElementById('qtLeverageSummary');
+  const qtCost = document.getElementById('qtCost');
+  const qtLiqPrice = document.getElementById('qtLiqPrice');
+  const qtMaxBuy = document.getElementById('qtMaxBuy');
+  const qtAvailable = document.getElementById('qtAvailable');
 
   function qtModeMax(mode) {
     const price = qtCurrentPrice() || 1;
@@ -942,9 +966,35 @@
   function qtUpdateEstimates(syncSlider) {
     const { qty, usdValue } = qtComputeAmount();
     const qtyDisp = qtFmtQty(qty);
+    const quote = qtQuoteCurrency(); // 'USD' or 'USDT' — no dollar sign, just the code
     qtEstSize.textContent = qtyDisp + ' ' + qtInstrumentUnit;
-    qtEstValue.textContent = fmtMoney(usdValue) + ' USD';
-    qtEstFees.textContent = fmtMoney(Math.max(0, qty) * QT_FEE_PER_CONTRACT);
+    qtEstValue.textContent = fmt(usdValue) + ' ' + quote;
+    qtEstFees.textContent = fmt(Math.max(0, qty) * QT_FEE_PER_CONTRACT) + ' ' + quote;
+    qtAvailable.textContent = fmt(QT_AVAILABLE_BALANCE) + ' ' + quote;
+
+    // Leverage-driven stats: Cost (margin posted), Liq. Price and Max (buying power).
+    const applies = qtLeverageApplies();
+    qtLeverageSummary.hidden = !applies;
+    if (applies) {
+      const lev = qtLeverageValue();
+      const price = qtCurrentPrice() || 1;
+      const fees = Math.max(0, qty) * QT_FEE_PER_CONTRACT;
+      const margin = usdValue / lev + fees;            // collateral actually posted
+      const buyingPower = QT_AVAILABLE_BALANCE * lev;  // Max position size
+      // Liq. Price assumes a Long (Buy is the primary side; no side is committed while
+      // the form is open). Isolated liquidates off just the position margin (drop);
+      // Cross backs the position with free balance, pushing the liq further from entry.
+      // The cross cushion is bounded so the estimate stays a sane positive number.
+      const drop = (1 / lev) - QT_MAINT_MARGIN_RATE; // fractional distance entry → liq
+      let cushion = 0;
+      if (qtMarginMode() === 'cross' && usdValue > 0) {
+        cushion = Math.min(drop, (QT_AVAILABLE_BALANCE / usdValue) * QT_MAINT_MARGIN_RATE * lev);
+      }
+      const liq = price * (1 - drop - cushion);
+      qtCost.textContent = fmt(margin) + ' ' + quote;
+      qtMaxBuy.textContent = fmt(buyingPower) + ' ' + quote;
+      qtLiqPrice.textContent = liq > 0 ? fmt(liq) + ' ' + quote : '—';
+    }
     if (syncSlider !== false) {
       const max = qtModeMax(qtAmountMode) || 1;
       const amt = Math.max(0, parseFloat(qtAmountInput.value) || 0);
@@ -1051,10 +1101,14 @@
     const anyMargin = cfg.marginMode || cfg.leverage;
     qtMarginBar.hidden = !anyMargin;
     qtModeToggle.hidden = !cfg.marginMode;
-    if (cfg.marginMode) qtCryptoMode = 'perp'; // entering a crypto symbol resets to Perp
+    // Note: qtCryptoMode (Spot/Perp) persists across symbol switches — changing symbol
+    // keeps the user's chosen mode rather than resetting it. It defaults to spot on launch.
     qtApplyMarginMode(cfg);
 
     qtRenderQuickAmounts(cfg.quickAmounts);
+
+    // Price-input unit labels track the instrument's quote currency (USD / USDT).
+    document.querySelectorAll('.qt-quote-unit').forEach(el => { el.textContent = qtQuoteCurrency(); });
 
     // Refresh the amount unit + estimates for the new instrument.
     if (qtAmountMode === 'Quantity') qtQtyUnit.textContent = qtInstrumentUnit;

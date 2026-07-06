@@ -673,7 +673,7 @@ table.bp-table tr.total-row td {
 .pos-header-bar,
 .pos-row-summary {
   display: grid;
-  grid-template-columns: minmax(180px, 1.2fr) 120px 130px 120px 100px 90px 120px 44px;
+  grid-template-columns: minmax(180px, 1.2fr) 120px 130px 120px 124px 90px 120px 44px;
   align-items: center;
 }
 
@@ -988,6 +988,7 @@ table.bp-table tr.total-row td {
 
 .pos-margin {
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 /* ── Quick close cell ────────────────────────────────────── */

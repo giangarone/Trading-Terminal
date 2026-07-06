@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/topbar.css?v=13">
   <link rel="stylesheet" href="css/left-panel.css?v=14">
   <link rel="stylesheet" href="css/center-panel.css?v=13">
-  <link rel="stylesheet" href="css/workspace.css?v=35">
+  <link rel="stylesheet" href="css/workspace.css?v=37">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=22">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
@@ -1008,7 +1008,7 @@
                       <div class="cs-field">
                         <label>Default Leverage</label>
                         <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="pdLeverage" value="10" data-step="1">
+                          <input type="text" id="pdLeverage" value="1" data-step="1">
                           <span class="cs-stepper-unit">×</span>
                           <div class="price-stepper-arrows">
                             <button type="button" class="ps-up" data-target="pdLeverage"><span
@@ -3136,7 +3136,7 @@
               <div class="pos-col pos-col-size">Size</div>
               <div class="pos-col pos-col-price">Entry / Mark</div>
               <div class="pos-col pos-col-pnl">Unrealized P&amp;L</div>
-              <div class="pos-col pos-col-margin">Margin</div>
+              <div class="pos-col pos-col-margin">Margin (USD)</div>
               <div class="pos-col pos-col-liq">Liq. Price</div>
               <div class="pos-col pos-col-quickclose">Reverse / Close</div>
               <div class="pos-col pos-col-actions"></div>
@@ -3171,7 +3171,7 @@
                     <span class="pos-pnl-pct down" id="posPct-NQU5">-0.15%</span>
                   </div>
                   <div class="pos-col pos-col-margin">
-                    <span class="pos-margin" id="posMargin-NQU5">$34,352.00</span>
+                    <span class="pos-margin" id="posMargin-NQU5">34,352.00</span>
                   </div>
                   <div class="pos-col pos-col-liq">
                     <span class="pos-liq faint">—</span>
@@ -3198,7 +3198,7 @@
                       <span class="pos-kv-k">Avg Entry</span><span class="pos-kv-v">29,748.00</span>
                       <span class="pos-kv-k">Mark Price</span><span class="pos-kv-v">29,704.75</span>
                       <span class="pos-kv-k">Break Even</span><span class="pos-kv-v">29,749.60</span>
-                      <span class="pos-kv-k">Margin</span><span class="pos-kv-v">$34,352.00</span>
+                      <span class="pos-kv-k">Margin</span><span class="pos-kv-v">34,352.00 USD</span>
                       <span class="pos-kv-k">Liq. Price</span><span class="pos-kv-v faint">—</span>
                     </div>
                   </div>
@@ -3301,7 +3301,7 @@
                     <span class="pos-pnl-pct down" id="posPct-ESU5">-0.21%</span>
                   </div>
                   <div class="pos-col pos-col-margin">
-                    <span class="pos-margin" id="posMargin-ESU5">$18,540.00</span>
+                    <span class="pos-margin" id="posMargin-ESU5">18,540.00</span>
                   </div>
                   <div class="pos-col pos-col-liq">
                     <span class="pos-liq faint">—</span>
@@ -3328,7 +3328,7 @@
                       <span class="pos-kv-k">Avg Entry</span><span class="pos-kv-v">6,015.25</span>
                       <span class="pos-kv-k">Mark Price</span><span class="pos-kv-v">6,028.00</span>
                       <span class="pos-kv-k">Break Even</span><span class="pos-kv-v">6,014.50</span>
-                      <span class="pos-kv-k">Margin</span><span class="pos-kv-v">$18,540.00</span>
+                      <span class="pos-kv-k">Margin</span><span class="pos-kv-v">18,540.00 USD</span>
                       <span class="pos-kv-k">Liq. Price</span><span class="pos-kv-v faint">—</span>
                     </div>
                   </div>
@@ -3426,7 +3426,7 @@
                     <span class="pos-pnl-pct down" id="posPct-SOLUSD">-8.35%</span>
                   </div>
                   <div class="pos-col pos-col-margin">
-                    <span class="pos-margin" id="posMargin-SOLUSD">1,000.44 USD</span>
+                    <span class="pos-margin" id="posMargin-SOLUSD">1,000.44</span>
                   </div>
                   <div class="pos-col pos-col-liq">
                     <span class="pos-liq down">0.2827</span>
@@ -3551,7 +3551,7 @@
                     <span class="pos-pnl-pct up" id="posPct-BTCUSD">+1.32%</span>
                   </div>
                   <div class="pos-col pos-col-margin">
-                    <span class="pos-margin" id="posMargin-BTCUSD">2,500.00 USD</span>
+                    <span class="pos-margin" id="posMargin-BTCUSD">2,500.00</span>
                   </div>
                   <div class="pos-col pos-col-liq">
                     <span class="pos-liq down">52,310.20</span>
@@ -3714,7 +3714,7 @@
                       <span class="pos-kv-k">Avg Entry</span><span class="pos-kv-v">185.27</span>
                       <span class="pos-kv-k">Mark Price</span><span class="pos-kv-v">188.45</span>
                       <span class="pos-kv-k">Break Even</span><span class="pos-kv-v">185.27</span>
-                      <span class="pos-kv-k">Market Value</span><span class="pos-kv-v">$18,845.00</span>
+                      <span class="pos-kv-k">Market Value</span><span class="pos-kv-v">18,845.00 USD</span>
                       <span class="pos-kv-k">Liq. Price</span><span class="pos-kv-v faint">—</span>
                     </div>
                   </div>
@@ -3874,18 +3874,19 @@
           <div id="oePanel-entry">
 
             <div class="qt-margin-bar" id="qtMarginBar">
-              <!-- Spot/Perp mode (crypto only): Perp reveals Cross + Leverage, Spot hides them -->
+              <!-- Spot/Perp mode (crypto only): Perp reveals Cross + Leverage, Spot hides them.
+                   Defaults to Spot on launch, so Cross + Leverage start hidden. -->
               <div class="qt-mode-toggle" id="qtModeToggle">
-                <button type="button" class="qt-mode-btn" data-mode="spot">Spot</button>
-                <button type="button" class="qt-mode-btn active" data-mode="perp">Perp</button>
+                <button type="button" class="qt-mode-btn active" data-mode="spot">Spot</button>
+                <button type="button" class="qt-mode-btn" data-mode="perp">Perp</button>
               </div>
               <button type="button" class="qt-margin-mode-btn" id="qtMarginModeBtn" data-mode="cross"
-                aria-label="Toggle margin mode">
+                aria-label="Toggle margin mode" hidden>
                 <span id="qtMarginModeLabel">Cross</span>
               </button>
               <button type="button" class="qt-leverage-btn pop-trigger" id="qtLeverageBtn" aria-haspopup="true"
-                aria-label="Leverage">
-                <span class="qt-lev-btn-val" id="qtLeverageBtnVal">10×</span>
+                aria-label="Leverage" hidden>
+                <span class="qt-lev-btn-val" id="qtLeverageBtnVal">1×</span>
               </button>
             </div>
 
@@ -3902,7 +3903,7 @@
               <label class="label-sm">Limit Price</label>
               <div class="price-stepper">
                 <input type="text" id="qtLimitPrice" value="4,500.25">
-                <span class="qty-unit">USD</span>
+                <span class="qty-unit qt-quote-unit">USDT</span>
                 <div class="price-stepper-arrows">
                   <button type="button" class="ps-up" data-target="qtLimitPrice"><span
                       class="material-symbols-outlined">keyboard_arrow_up</span></button>
@@ -3921,7 +3922,7 @@
               <label class="label-sm">Stop</label>
               <div class="price-stepper">
                 <input type="text" id="qtStopLimitTrigger" placeholder="Stop price" value="4,505.75">
-                <span class="qty-unit">USD</span>
+                <span class="qty-unit qt-quote-unit">USDT</span>
                 <div class="price-stepper-arrows">
                   <button type="button" class="ps-up" data-target="qtStopLimitTrigger"><span
                       class="material-symbols-outlined">keyboard_arrow_up</span></button>
@@ -3932,7 +3933,7 @@
               <label class="label-sm" style="margin-top:12px;">Price</label>
               <div class="price-stepper">
                 <input type="text" id="qtStopLimitPrice" placeholder="Limit price" value="4,500.25">
-                <span class="qty-unit">USD</span>
+                <span class="qty-unit qt-quote-unit">USDT</span>
                 <div class="price-stepper-arrows">
                   <button type="button" class="ps-up" data-target="qtStopLimitPrice"><span
                       class="material-symbols-outlined">keyboard_arrow_up</span></button>
@@ -3947,7 +3948,7 @@
               <label class="label-sm">Trigger</label>
               <div class="price-stepper">
                 <input type="text" id="qtMitTrigger" placeholder="Trigger price" value="4,498.50">
-                <span class="qty-unit">USD</span>
+                <span class="qty-unit qt-quote-unit">USDT</span>
                 <div class="price-stepper-arrows">
                   <button type="button" class="ps-up" data-target="qtMitTrigger"><span
                       class="material-symbols-outlined">keyboard_arrow_up</span></button>
@@ -4000,21 +4001,36 @@
 
             <div class="qt-summary">
               <div class="qt-summary-line">
-                <span class="qt-summary-line-label">Est. Size</span>
+                <span class="qt-summary-line-label">Size</span>
                 <span class="qt-summary-line-val" id="qtEstSize">1 ETH (1 Contract)</span>
               </div>
               <div class="qt-summary-line">
-                <span class="qt-summary-line-label">Est. Value</span>
-                <span class="qt-summary-line-val" id="qtEstValue">$4,500.25 USD</span>
+                <span class="qt-summary-line-label">Value</span>
+                <span class="qt-summary-line-val" id="qtEstValue">4,500.25 USDT</span>
+              </div>
+              <div id="qtLeverageSummary">
+                <div class="qt-summary-divider"></div>
+                <div class="qt-summary-line">
+                  <span class="qt-summary-line-label">Cost</span>
+                  <span class="qt-summary-line-val" id="qtCost">450.03 USDT</span>
+                </div>
+                <div class="qt-summary-line">
+                  <span class="qt-summary-line-label">Liq. Price</span>
+                  <span class="qt-summary-line-val" id="qtLiqPrice">4,072.73 USDT</span>
+                </div>
+                <div class="qt-summary-line">
+                  <span class="qt-summary-line-label">Max</span>
+                  <span class="qt-summary-line-val" id="qtMaxBuy">524,300.00 USDT</span>
+                </div>
               </div>
               <div class="qt-summary-divider"></div>
               <div class="qt-summary-line">
                 <span class="qt-summary-line-label">Available</span>
-                <span class="qt-summary-line-val" id="qtAvailable">$52,430.00 USDT</span>
+                <span class="qt-summary-line-val" id="qtAvailable">52,430.00 USDT</span>
               </div>
               <div class="qt-summary-line">
-                <span class="qt-summary-line-label">Est. Fees</span>
-                <span class="qt-summary-line-val" id="qtEstFees">$1.25</span>
+                <span class="qt-summary-line-label">Fees</span>
+                <span class="qt-summary-line-val" id="qtEstFees">1.25 USDT</span>
               </div>
             </div>
 
@@ -4861,19 +4877,19 @@
     <div class="qt-lev-head">
       <span class="pop-menu-label">Leverage</span>
       <div class="qt-lev-input-wrap">
-        <input type="text" class="qt-lev-input" id="qtLevInput" value="10" inputmode="numeric" aria-label="Leverage">
+        <input type="text" class="qt-lev-input" id="qtLevInput" value="1" inputmode="numeric" aria-label="Leverage">
         <span class="qt-lev-input-unit">×</span>
       </div>
     </div>
     <div class="range-slider-wrap" id="qtLevSliderWrap">
       <div class="range-slider-track"></div>
-      <input type="range" class="range-slider" id="qtLevSlider" min="1" max="100" step="1" value="10">
+      <input type="range" class="range-slider" id="qtLevSlider" min="1" max="100" step="1" value="1">
     </div>
     <div class="qt-lev-presets" id="qtLevPresets">
-      <button type="button" class="qt-lev-chip" data-lev="1">1×</button>
+      <button type="button" class="qt-lev-chip active" data-lev="1">1×</button>
       <button type="button" class="qt-lev-chip" data-lev="2">2×</button>
       <button type="button" class="qt-lev-chip" data-lev="5">5×</button>
-      <button type="button" class="qt-lev-chip active" data-lev="10">10×</button>
+      <button type="button" class="qt-lev-chip" data-lev="10">10×</button>
       <button type="button" class="qt-lev-chip" data-lev="20">20×</button>
       <button type="button" class="qt-lev-chip" data-lev="50">50×</button>
       <button type="button" class="qt-lev-chip" data-lev="75">75×</button>
@@ -5505,7 +5521,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=6"></script>
   <script src="js/resize.js?v=14"></script>
-  <script src="js/app.js?v=194"></script>
+  <script src="js/app.js?v=199"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>
