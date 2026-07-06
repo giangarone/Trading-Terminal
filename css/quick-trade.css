@@ -122,8 +122,8 @@
 }
 
 .qt-mode-btn.active {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 /* The margin bar and its children carry explicit display rules, so [hidden] alone
