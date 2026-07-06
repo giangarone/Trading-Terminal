@@ -112,7 +112,7 @@
 .qt-quick-amount {
   flex: 1;
   padding: 4px 0;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid var(--border-default);
   background: var(--bg-input);
   font-family: var(--sans);

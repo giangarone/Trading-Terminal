@@ -1199,6 +1199,25 @@
   color: var(--accent);
 }
 
+/* Watchlist add-symbol menu only: reveal a + on hover so it's clear the row adds to the watchlist */
+.sym-select-item--add {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sym-select-add-icon {
+  font-size: 16px;
+  color: var(--text-muted);
+  opacity: 0;
+}
+
+.sym-select-item--add:hover .sym-select-add-icon {
+  opacity: 1;
+  color: var(--accent);
+}
+
 .sym-select-empty {
   padding: 12px 9px;
   font-size: 12px;

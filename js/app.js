@@ -5182,7 +5182,10 @@
       (!q || s.sym.includes(q)) &&
       !(window.watchlistHasSymbol && window.watchlistHasSymbol(s.sym)));
     wlAddList.innerHTML = items.length
-      ? items.map(s => '<button class="sym-select-item" data-sym="' + s.sym + '" data-cat="' + s.cat + '">' + s.sym + '</button>').join('')
+      ? items.map(s => '<button class="sym-select-item sym-select-item--add" data-sym="' + s.sym + '" data-cat="' + s.cat + '">' +
+          '<span class="sym-select-item-label">' + s.sym + '</span>' +
+          '<span class="material-symbols-outlined sym-select-add-icon">add</span>' +
+          '</button>').join('')
       : '<div class="sym-select-empty">No symbols to add</div>';
     wlAddList.querySelectorAll('.sym-select-item').forEach(it => {
       it.addEventListener('click', (e) => {

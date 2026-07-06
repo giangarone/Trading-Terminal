@@ -55,7 +55,6 @@
   gap: 4px;
   cursor: pointer;
   padding: 6px 8px;
-  margin-right: -8px;
   border-radius: 6px;
   transition: background .12s ease;
 }
