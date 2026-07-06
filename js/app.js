@@ -539,8 +539,8 @@
     const details = {
       side,
       orderType: 'Market',
-      amount: (qtyInput.value || '1') + ' ' + QT_INSTRUMENT_UNIT,
-      leverage: qtLeverageDetail(),
+      amount: (qtyInput.value || '1') + ' ' + qtInstrumentUnit,
+      leverage: qtLeverageForOrder(),
       price: '$' + fmt(currentPrice)
     };
     requestOrderConfirmation(details, () => fillQuickMarketOrderExecute(side, currentPrice));
@@ -561,8 +561,8 @@
     const details = {
       side,
       orderType: 'Market',
-      amount: amt + ' ' + QT_INSTRUMENT_UNIT,
-      leverage: qtLeverageDetail(),
+      amount: amt + ' ' + qtInstrumentUnit,
+      leverage: qtLeverageForOrder(),
       price: '$' + fmt(currentPrice)
     };
     requestOrderConfirmation(details, () => {
@@ -576,9 +576,22 @@
   };
 
   /* ---------- Quick Trade panel ---------- */
-  const QT_INSTRUMENT_UNIT = 'ETH';      // default instrument for the Quick Trade panel
+  let qtInstrumentUnit = 'ETH';          // amount unit for the Quick Trade panel — reset per asset class on symbol switch
   const QT_AVAILABLE_BALANCE = 52430.00;
   const QT_FEE_PER_CONTRACT = 1.25;
+
+  /* The Quick Trade panel reconfigures itself for the selected symbol's asset class:
+       - marginMode  → show the Cross/Isolated toggle (a crypto-perp concept, crypto only)
+       - leverage    → show the Leverage control (crypto perps + leveraged retail forex)
+       - unit        → amount unit; crypto derives the coin from the symbol (see qtApplyAssetConfig)
+       - quickAmounts → preset quantity pills for discrete-unit instruments (crypto uses the %/USD slider instead) */
+  const QT_ASSET_CONFIG = {
+    crypto:  { marginMode: true,  leverage: true,  unit: 'ETH',       quickAmounts: null },
+    futures: { marginMode: false, leverage: false, unit: 'Contracts', quickAmounts: [1, 2, 5, 10, 20] },
+    stocks:  { marginMode: false, leverage: false, unit: 'Shares',    quickAmounts: [1, 10, 50, 100, 500] },
+    forex:   { marginMode: false, leverage: true,  unit: 'Lots',      quickAmounts: [0.1, 0.5, 1, 2, 5] },
+  };
+  let qtAsset = QT_ASSET_CONFIG.crypto;  // current asset config — the panel defaults to ETHUSD (crypto)
   function qtCurrentPrice() {
     const lastEl = document.getElementById('hdrLast');
     return lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
@@ -686,6 +699,7 @@
      Two full-width buttons above the order tabs: the Cross/Isolated button flips
      margin mode on click; the Leverage button opens a popup with the slider/presets.
      Both feed the single source of truth read back into every order-confirmation dialog. */
+  const qtMarginBar = document.getElementById('qtMarginBar');
   const qtMarginModeBtn = document.getElementById('qtMarginModeBtn');
   const qtMarginModeLabel = document.getElementById('qtMarginModeLabel');
   const qtLeverageBtn = document.getElementById('qtLeverageBtn');
@@ -706,6 +720,11 @@
   /* value shown on the leverage row of the order-confirmation dialog */
   function qtLeverageDetail() {
     return qtLeverageValue() + '×';
+  }
+  /* Leverage only makes sense for crypto perps and forex — suppress the confirmation
+     dialog's leverage row for cash stocks and exchange-margined futures. */
+  function qtLeverageForOrder() {
+    return qtAsset.leverage ? qtLeverageDetail() : null;
   }
 
   /* keep the leverage button, editable input, slider fill and preset highlight in sync.
@@ -772,8 +791,8 @@
     const details = {
       side,
       orderType: QT_TAB_LABELS[tab] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market',
-      amount: amount + ' ' + QT_INSTRUMENT_UNIT,
-      leverage: qtLeverageDetail(),
+      amount: amount + ' ' + qtInstrumentUnit,
+      leverage: qtLeverageForOrder(),
       price: '$' + fmt(price)
     };
     requestOrderConfirmation(details, () => qtPlaceOrderExecute(side, price, amount, tab));
@@ -852,9 +871,9 @@
   });
   /* ---------- amount type (Quantity / USD / % of Balance) ---------- */
   const QT_MODES = {
-    Quantity: { unit: QT_INSTRUMENT_UNIT, label: 'Quantity', step: 1, default: '1' },
+    Quantity: { unit: qtInstrumentUnit, label: 'Quantity', step: 1, default: '1' },
     USD: { unit: 'USD', label: 'USD Amount', step: 50, default: '100' },
-    '% of Balance': { unit: '%', label: 'Percent of Balance', step: 5, default: '10' },
+    '% of Balance': { unit: '%', label: '% of Balance', step: 5, default: '10' },
   };
   let qtAmountMode = 'Quantity';
   const qtAmountInput = document.getElementById('qtAmountInput');
@@ -900,7 +919,7 @@
   function qtUpdateEstimates(syncSlider) {
     const { qty, usdValue } = qtComputeAmount();
     const qtyDisp = qtFmtQty(qty);
-    qtEstSize.textContent = qtyDisp + ' ' + QT_INSTRUMENT_UNIT;
+    qtEstSize.textContent = qtyDisp + ' ' + qtInstrumentUnit;
     qtEstValue.textContent = fmtMoney(usdValue) + ' USD';
     qtEstFees.textContent = fmtMoney(Math.max(0, qty) * QT_FEE_PER_CONTRACT);
     if (syncSlider !== false) {
@@ -911,28 +930,36 @@
     qtSliderFill(parseInt(qtSlider.value, 10));
     qtUpdateSliderBubble();
   }
+  // Convert a USD value into the amount shown for a given mode — the inverse of qtComputeAmount.
+  function qtAmountForMode(usdValue, mode) {
+    const price = qtCurrentPrice() || 1;
+    if (mode === 'Quantity') return parseFloat((usdValue / price).toFixed(2));
+    if (mode === 'USD') return Math.max(0, Math.round(usdValue));
+    return Math.max(0, parseFloat((usdValue / QT_AVAILABLE_BALANCE * 100).toFixed(1))); // % of Balance
+  }
   function qtSetAmountMode(mode) {
+    // Preserve the entered value across modes by converting through its USD value
+    // (captured before the mode flips) instead of resetting to the mode's default.
+    const { usdValue } = qtComputeAmount();
     qtAmountMode = mode;
     const cfg = QT_MODES[mode];
     qtAmountLabel.textContent = cfg.label;
     qtQtyUnit.textContent = cfg.unit;
-    qtAmountInput.value = cfg.default;
+    qtAmountInput.value = qtAmountForMode(usdValue, mode);
     qtUpdateEstimates();
   }
 
   const qtAmountTypeTrigger = document.getElementById('qtAmountTypeTrigger');
   const qtAmountTypeMenu = document.getElementById('qtAmountTypeMenu');
-  const qtAmountTypeVal = document.getElementById('qtAmountTypeVal');
   qtAmountTypeTrigger.addEventListener('click', (e) => {
     e.stopPropagation();
     qtAmountTypeMenu.querySelectorAll('.pop-item').forEach(it => {
-      it.classList.toggle('selected', it.dataset.amountType === qtAmountTypeVal.textContent);
+      it.classList.toggle('selected', it.dataset.amountType === qtAmountMode);
     });
-    openNear(qtAmountTypeMenu, qtAmountTypeTrigger.getBoundingClientRect(), 'right', qtAmountTypeTrigger);
+    openNear(qtAmountTypeMenu, qtAmountTypeTrigger.getBoundingClientRect(), 'left', qtAmountTypeTrigger);
   });
   qtAmountTypeMenu.querySelectorAll('.pop-item').forEach(it => {
     it.addEventListener('click', () => {
-      qtAmountTypeVal.textContent = it.dataset.amountType;
       closeAllPopovers();
       qtSetAmountMode(it.dataset.amountType);
     });
@@ -960,6 +987,55 @@
   qtSlider.addEventListener('pointerdown', () => qtSliderWrap.classList.add('dragging'));
   window.addEventListener('pointerup', () => qtSliderWrap.classList.remove('dragging'));
   qtUpdateEstimates();
+
+  /* ---------- preset amount pills + per-asset panel reconfiguration ---------- */
+  const qtQuickAmounts = document.getElementById('qtQuickAmounts');
+
+  /* Render the preset quantity pills for the current asset (or clear them for crypto). */
+  function qtRenderQuickAmounts(amounts) {
+    if (!amounts || !amounts.length) {
+      qtQuickAmounts.hidden = true;
+      qtQuickAmounts.innerHTML = '';
+      return;
+    }
+    qtQuickAmounts.hidden = false;
+    qtQuickAmounts.innerHTML = amounts
+      .map(a => '<button type="button" class="qt-quick-amount" data-amt="' + a + '">' + a + '</button>')
+      .join('');
+  }
+
+  /* Preset pills are absolute quantities, so clicking one forces Quantity amount type. */
+  qtQuickAmounts.addEventListener('click', (e) => {
+    const btn = e.target.closest('.qt-quick-amount');
+    if (!btn) return;
+    if (qtAmountMode !== 'Quantity') qtSetAmountMode('Quantity');
+    qtAmountInput.value = btn.dataset.amt;
+    qtQuickAmounts.querySelectorAll('.qt-quick-amount').forEach(b => b.classList.toggle('active', b === btn));
+    qtUpdateEstimates();
+  });
+
+  /* Reconfigure the panel for the selected symbol's asset class. Called from switchSymbol. */
+  function qtApplyAssetConfig(sym) {
+    const cat = symbolCategory(sym);
+    const cfg = QT_ASSET_CONFIG[cat] || QT_ASSET_CONFIG.crypto;
+    qtAsset = cfg;
+    // Crypto shows the coin (ETHUSD → ETH); the others use a fixed unit label.
+    qtInstrumentUnit = cat === 'crypto' ? (sym.replace(/USDT?$/, '') || 'ETH') : cfg.unit;
+    QT_MODES.Quantity.unit = qtInstrumentUnit;
+
+    // Margin controls: hide the whole bar when neither applies, otherwise show only what fits.
+    qtMarginModeBtn.hidden = !cfg.marginMode;
+    qtLeverageBtn.hidden = !cfg.leverage;
+    const anyMargin = cfg.marginMode || cfg.leverage;
+    qtMarginBar.hidden = !anyMargin;
+    qtMarginBar.classList.toggle('single-control', anyMargin && !(cfg.marginMode && cfg.leverage));
+
+    qtRenderQuickAmounts(cfg.quickAmounts);
+
+    // Refresh the amount unit + estimates for the new instrument.
+    if (qtAmountMode === 'Quantity') qtQtyUnit.textContent = qtInstrumentUnit;
+    qtUpdateEstimates();
+  }
 
   function cancelOrder() {
     if (order) {
@@ -1233,8 +1309,8 @@
     const details = {
       side: order.side,
       orderType: order.orderType,
-      amount: order.qty + ' ' + QT_INSTRUMENT_UNIT,
-      leverage: qtLeverageDetail(),
+      amount: order.qty + ' ' + qtInstrumentUnit,
+      leverage: qtLeverageForOrder(),
       price: '$' + fmt(order.entry)
     };
     requestOrderConfirmation(details, placeOrderExecute);
@@ -5032,6 +5108,11 @@
     ...['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD', 'USDCHF', 'EURGBP', 'EURJPY', 'GBPJPY',
       'USDTRY', 'USDMXN', 'USDZAR', 'EURCHF', 'AUDJPY', 'CHFJPY', 'EURAUD'].map(sym => ({ sym, cat: 'forex' })),
   ];
+  /* asset class for a symbol — drives the per-asset Quick Trade panel; defaults to crypto */
+  function symbolCategory(sym) {
+    const found = SYMBOL_LIST.find(s => s.sym === sym);
+    return found ? found.cat : 'crypto';
+  }
   const symSelectTrigger = document.getElementById('symSelectTrigger');
   const symSelectMenu = document.getElementById('symSelectMenu');
   const symSelectSearch = document.getElementById('symSelectSearch');
@@ -5045,8 +5126,11 @@
     document.querySelectorAll('.wl-row.selected').forEach(r => r.classList.remove('selected'));
     const wlRow = document.querySelector('.wl-row[data-sym="' + sym + '"]');
     if (wlRow) wlRow.classList.add('selected');
+    qtApplyAssetConfig(sym);
     showToast('Switched to ' + sym, 'sync_alt');
   }
+  // Exposed so the left-panel watchlist (js/resize.js) can switch symbols too.
+  window.switchSymbol = switchSymbol;
   function renderSymSelectList(filter) {
     const q = (filter || '').trim().toUpperCase();
     const items = SYMBOL_LIST.filter(s => (symSelectCat === 'all' || s.cat === symSelectCat) && (!q || s.sym.includes(q)));

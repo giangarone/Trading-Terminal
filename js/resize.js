@@ -179,6 +179,8 @@ setupVerticalResize(document.getElementById('bottomResizeHandle'), document.quer
   function selectRow(row) {
     wlRows.querySelectorAll('.wl-row').forEach(r => r.classList.remove('selected'));
     row.classList.add('selected');
+    // Switch the active symbol too — relabels the topbar and reconfigures the Quick Trade panel.
+    if (window.switchSymbol && row.dataset.sym) window.switchSymbol(row.dataset.sym);
   }
   wlRows.addEventListener('click', (e) => {
     const row = e.target.closest('.wl-row');

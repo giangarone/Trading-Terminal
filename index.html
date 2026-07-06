@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="css/center-panel.css?v=13">
   <link rel="stylesheet" href="css/workspace.css?v=35">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
-  <link rel="stylesheet" href="css/quick-trade.css?v=16">
+  <link rel="stylesheet" href="css/quick-trade.css?v=18">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=38">
   <link rel="stylesheet" href="css/market-scanner.css?v=31">
@@ -3873,7 +3873,7 @@
         <div class="card">
           <div id="oePanel-entry">
 
-            <div class="qt-margin-bar">
+            <div class="qt-margin-bar" id="qtMarginBar">
               <button type="button" class="qt-margin-mode-btn" id="qtMarginModeBtn" data-mode="cross"
                 aria-label="Toggle margin mode">
                 <span id="qtMarginModeLabel">Cross</span>
@@ -3966,28 +3966,26 @@
               </div>
             </div>
 
-            <div class="qt-split-row">
-              <div class="qt-col">
-                <label class="label-sm">Amount Type</label>
-                <div class="select-input pop-trigger" id="qtAmountTypeTrigger"><span
-                    id="qtAmountTypeVal">Quantity</span><span class="material-symbols-outlined">expand_more</span></div>
-              </div>
-              <div class="qt-col">
-                <label class="label-sm" id="qtAmountLabel">Quantity</label>
-                <div class="qty-row" style="margin-bottom:0;">
-                  <div class="price-stepper">
-                    <input type="text" value="1" class="qty-input" id="qtAmountInput">
-                    <span class="qty-unit" id="qtQtyUnit">ETH</span>
-                    <div class="price-stepper-arrows">
-                      <button type="button" class="qty-inc"><span
-                          class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                      <button type="button" class="qty-dec"><span
-                          class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                    </div>
-                  </div>
+            <!-- The amount label doubles as the amount-type dropdown trigger (opens qtAmountTypeMenu) -->
+            <div class="qt-amount-type-trigger pop-trigger" id="qtAmountTypeTrigger">
+              <span class="label-sm" id="qtAmountLabel">Quantity</span>
+              <span class="material-symbols-outlined qt-amount-type-caret">expand_more</span>
+            </div>
+            <div class="qty-row" style="margin-bottom:0;">
+              <div class="price-stepper">
+                <input type="text" value="1" class="qty-input" id="qtAmountInput">
+                <span class="qty-unit" id="qtQtyUnit">ETH</span>
+                <div class="price-stepper-arrows">
+                  <button type="button" class="qty-inc"><span
+                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                  <button type="button" class="qty-dec"><span
+                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
             </div>
+
+            <!-- Preset amount pills — populated per asset class (stocks/futures/forex); hidden for crypto -->
+            <div class="qt-quick-amounts" id="qtQuickAmounts" hidden></div>
 
             <div class="qt-slider-block">
               <div class="qt-slider-wrap" id="qtSliderWrap">
@@ -5502,8 +5500,8 @@
   <script src="js/utils.js"></script>
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=6"></script>
-  <script src="js/resize.js?v=13"></script>
-  <script src="js/app.js?v=184"></script>
+  <script src="js/resize.js?v=14"></script>
+  <script src="js/app.js?v=191"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>

@@ -85,6 +85,54 @@
   border-color: var(--border-strong);
 }
 
+/* The margin bar and its buttons carry explicit display rules, so [hidden] alone
+   won't collapse them — force it. Cross/Isolated is crypto-only and Leverage is
+   crypto + forex, so the bar may show a single control or be removed entirely. */
+.qt-margin-bar[hidden],
+.qt-margin-mode-btn[hidden],
+.qt-leverage-btn[hidden],
+.qt-quick-amounts[hidden] {
+  display: none;
+}
+
+.qt-margin-bar.single-control {
+  grid-template-columns: 1fr;
+}
+
+/* ====== Quick Trade: preset amount pills ====== */
+/* Discrete-unit assets (stocks/futures/forex) get quick-fill quantity presets.
+   Mirrors the close-position popup pills so the two feel like one component. */
+.qt-quick-amounts {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0;
+
+}
+
+.qt-quick-amount {
+  flex: 1;
+  padding: 4px 0;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-input);
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.qt-quick-amount:hover:not(.active) {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.qt-quick-amount.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+
 .qt-lev-btn-label {
   color: var(--text-secondary);
   font-weight: 500;
@@ -327,21 +375,28 @@
   margin: 14px 0;
 }
 
-.qt-split-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
+/* The amount-type label doubles as the dropdown trigger — label text + chevron, brightens on hover */
+.qt-amount-type-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  width: fit-content;
+  margin-bottom: 6px;
+  cursor: pointer;
 }
 
-.qt-split-row .qt-col {
-  flex: 1;
-  min-width: 0;
+.qt-amount-type-trigger .label-sm {
+  margin-bottom: 0;
 }
 
-.qt-vsep {
-  width: 1px;
-  flex-shrink: 0;
-  background: var(--border-subtle);
+.qt-amount-type-caret {
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.qt-amount-type-trigger:hover .label-sm,
+.qt-amount-type-trigger:hover .qt-amount-type-caret {
+  color: var(--text-secondary);
 }
 
 /* ====== Quick Trade: advanced order types (Stop Limit / Stop Market / Trailing Stop / MIT) ====== */
@@ -469,7 +524,7 @@
 
 .qt-slider {
   width: 100%;
-  margin: 10px 0 8px;
+  margin: 20px 0 8px;
   -webkit-appearance: none;
   appearance: none;
   height: 4px;
