@@ -592,6 +592,7 @@
     forex:   { marginMode: false, leverage: true,  unit: 'Lots',      quickAmounts: [0.1, 0.5, 1, 2, 5] },
   };
   let qtAsset = QT_ASSET_CONFIG.crypto;  // current asset config — the panel defaults to ETHUSD (crypto)
+  let qtCryptoMode = 'perp';             // crypto only: 'perp' (leverage + margin) or 'spot' (1×, no liquidation)
   function qtCurrentPrice() {
     const lastEl = document.getElementById('hdrLast');
     return lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
@@ -700,6 +701,7 @@
      margin mode on click; the Leverage button opens a popup with the slider/presets.
      Both feed the single source of truth read back into every order-confirmation dialog. */
   const qtMarginBar = document.getElementById('qtMarginBar');
+  const qtModeToggle = document.getElementById('qtModeToggle');
   const qtMarginModeBtn = document.getElementById('qtMarginModeBtn');
   const qtMarginModeLabel = document.getElementById('qtMarginModeLabel');
   const qtLeverageBtn = document.getElementById('qtLeverageBtn');
@@ -722,8 +724,9 @@
     return qtLeverageValue() + '×';
   }
   /* Leverage only makes sense for crypto perps and forex — suppress the confirmation
-     dialog's leverage row for cash stocks and exchange-margined futures. */
+     dialog's leverage row for cash stocks, exchange-margined futures, and crypto spot. */
   function qtLeverageForOrder() {
+    if (qtAsset.marginMode && qtCryptoMode === 'spot') return null; // spot = 1×, no leverage
     return qtAsset.leverage ? qtLeverageDetail() : null;
   }
 
@@ -744,6 +747,26 @@
     const next = qtMarginMode() === 'cross' ? 'isolated' : 'cross';
     qtMarginModeBtn.dataset.mode = next;
     qtMarginModeLabel.textContent = next === 'cross' ? 'Cross' : 'Isolated';
+  });
+
+  /* Fill the margin bar for the current asset + crypto Spot/Perp mode. Spot hides Cross +
+     Leverage, leaving just the toggle (spot is always 1×, so no extra info is needed). */
+  function qtApplyMarginMode(cfg) {
+    cfg = cfg || qtAsset;
+    const spot = cfg.marginMode && qtCryptoMode === 'spot';
+    qtMarginModeBtn.hidden = !cfg.marginMode || spot; // Cross/Isolated: crypto perp only
+    qtLeverageBtn.hidden = !cfg.leverage || spot;     // Leverage: crypto perp + forex
+    qtModeToggle.querySelectorAll('.qt-mode-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === (spot ? 'spot' : 'perp'));
+    });
+  }
+
+  /* Spot/Perp toggle (crypto only) */
+  qtModeToggle.querySelectorAll('.qt-mode-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      qtCryptoMode = b.dataset.mode;
+      qtApplyMarginMode();
+    });
   });
 
   /* Leverage opens the popup */
@@ -1023,12 +1046,13 @@
     qtInstrumentUnit = cat === 'crypto' ? (sym.replace(/USDT?$/, '') || 'ETH') : cfg.unit;
     QT_MODES.Quantity.unit = qtInstrumentUnit;
 
-    // Margin controls: hide the whole bar when neither applies, otherwise show only what fits.
-    qtMarginModeBtn.hidden = !cfg.marginMode;
-    qtLeverageBtn.hidden = !cfg.leverage;
+    // Margin controls: hide the whole bar when neither applies. The Spot/Perp toggle is
+    // crypto-only; qtApplyMarginMode fills in Cross/Leverage vs the spot hint.
     const anyMargin = cfg.marginMode || cfg.leverage;
     qtMarginBar.hidden = !anyMargin;
-    qtMarginBar.classList.toggle('single-control', anyMargin && !(cfg.marginMode && cfg.leverage));
+    qtModeToggle.hidden = !cfg.marginMode;
+    if (cfg.marginMode) qtCryptoMode = 'perp'; // entering a crypto symbol resets to Perp
+    qtApplyMarginMode(cfg);
 
     qtRenderQuickAmounts(cfg.quickAmounts);
 

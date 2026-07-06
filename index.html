@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="css/center-panel.css?v=13">
   <link rel="stylesheet" href="css/workspace.css?v=35">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
-  <link rel="stylesheet" href="css/quick-trade.css?v=18">
+  <link rel="stylesheet" href="css/quick-trade.css?v=22">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=40">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
@@ -3874,13 +3874,17 @@
           <div id="oePanel-entry">
 
             <div class="qt-margin-bar" id="qtMarginBar">
+              <!-- Spot/Perp mode (crypto only): Perp reveals Cross + Leverage, Spot hides them -->
+              <div class="qt-mode-toggle" id="qtModeToggle">
+                <button type="button" class="qt-mode-btn" data-mode="spot">Spot</button>
+                <button type="button" class="qt-mode-btn active" data-mode="perp">Perp</button>
+              </div>
               <button type="button" class="qt-margin-mode-btn" id="qtMarginModeBtn" data-mode="cross"
                 aria-label="Toggle margin mode">
                 <span id="qtMarginModeLabel">Cross</span>
               </button>
               <button type="button" class="qt-leverage-btn pop-trigger" id="qtLeverageBtn" aria-haspopup="true"
                 aria-label="Leverage">
-                <span class="qt-lev-btn-label">Leverage</span>
                 <span class="qt-lev-btn-val" id="qtLeverageBtnVal">10×</span>
               </button>
             </div>
@@ -5501,7 +5505,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=6"></script>
   <script src="js/resize.js?v=14"></script>
-  <script src="js/app.js?v=192"></script>
+  <script src="js/app.js?v=194"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>
