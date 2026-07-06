@@ -1333,7 +1333,7 @@ table.msx-table tbody tr.selected {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background .12s, color .12s;
+  transition: background var(--t-ui), color var(--t-ui);
 }
 
 .news-marker.hovered .news-marker-icon,

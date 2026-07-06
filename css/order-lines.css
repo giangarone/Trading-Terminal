@@ -1191,7 +1191,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background .12s, color .12s;
+  transition: background var(--t-ui), color var(--t-ui);
 }
 
 .sym-select-item:hover {

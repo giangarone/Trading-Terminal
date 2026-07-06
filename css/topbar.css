@@ -56,7 +56,7 @@
   cursor: pointer;
   padding: 6px 8px;
   border-radius: 6px;
-  transition: background .12s ease;
+  transition: background var(--t-ui);
 }
 
 .symbol-select:hover {

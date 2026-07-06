@@ -314,7 +314,7 @@
   font-weight: 500;
   padding: 8px 12px;
   outline: none;
-  transition: border-color .12s;
+  transition: border-color var(--t-ui);
 }
 
 .cs-text-input:focus {
@@ -1239,7 +1239,7 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--r-lg);
-  transition: border-color .12s;
+  transition: border-color var(--t-ui);
 }
 
 .bc-exchange-logo {
@@ -1286,7 +1286,7 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: background .12s, border-color .12s, color .12s;
+  transition: background var(--t-ui), border-color var(--t-ui), color var(--t-ui);
   white-space: nowrap;
 }
 
@@ -2162,7 +2162,7 @@
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
-  transition: color 0.15s;
+  transition: color var(--t-ui);
 }
 
 .acct-delete-link .material-symbols-outlined {

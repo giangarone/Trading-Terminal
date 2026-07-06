@@ -98,8 +98,8 @@
   /* compact icon-only button size             */
 
   /* ── Transitions ─────────────────────────────────────────── */
-  --t-ui: .12s ease;
-  /* hover / interactive state changes         */
+  --t-ui: 0s;
+  /* hover / interactive state changes — instant, no fade */
   --t-mid: .2s ease;
   /* panel reveals, menus                      */
 }
