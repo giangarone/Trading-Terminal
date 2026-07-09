@@ -539,21 +539,25 @@
         sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), enabled: false, mode: 'trailing', autoTrailing: false, atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
       }
     }
-    // Chart trades inherit the Position Sizing default. Risk modes hand the order its risk-$ intent so it sizes
-    // live from the stop loss (and blocks placement until one exists); other modes keep the fixed qty resolved
-    // by placeChartLimitTrade. Quick Trade panel orders (source==='quick') are unaffected.
+    // Chart trades inherit the full Position Sizing default — both the method and its value. Each saved sizing
+    // method maps to the order's sizeMode, and the default value seeds that mode's entry in sizeValues (so the
+    // size pill and size menu open in that mode showing that value). Risk modes additionally size the qty live
+    // from the stop loss (syncQtyFromRisk, blocking placement until one exists); the other modes keep the fixed
+    // qty placeChartLimitTrade resolved into qtyInput. Quick Trade panel orders (source==='quick') stay 'contracts'.
     const pd = chartSettings.positionDefaults;
-    const useRiskSizing = isChartTrade && PD_RISK_MODES.includes(pd.sizingMethod);
-    const riskPctDefault = pd.sizingMethod === 'risk_pct';
+    const PD_METHOD_TO_SIZE_MODE = { quantity: 'contracts', dollar: 'dollar', pct_equity: 'percent', risk_pct: 'risk_pct', risk_dollar: 'risk' };
+    const sizeMode = isChartTrade ? (PD_METHOD_TO_SIZE_MODE[pd.sizingMethod] || 'contracts') : 'contracts';
+    const useRiskSizing = isRiskMode(sizeMode);
     const pdVal = parseFloat(String(pd.defaultSize).replace(/[$,%\s]/g, '')) || 0;
     order = {
       side, entry, qty: parseFloat(qtyInput.value) || 1, orderType, fillAbove,
-      sizeMode: useRiskSizing ? (riskPctDefault ? 'risk_pct' : 'risk') : 'contracts', filled: false, filledQty: 0,
+      sizeMode, filled: false, filledQty: 0,
       pendingConfirm: isChartTrade,
       sizeValues: {
-        dollar: 5000, percent: 25,
-        risk: (useRiskSizing && !riskPctDefault) ? pdVal : 500,
-        riskPct: (useRiskSizing && riskPctDefault) ? pdVal : 1
+        dollar:  sizeMode === 'dollar'   ? pdVal : 5000,
+        percent: sizeMode === 'percent'  ? pdVal : 25,
+        risk:    sizeMode === 'risk'     ? pdVal : 500,
+        riskPct: sizeMode === 'risk_pct' ? pdVal : 1
       },
       tps, sl, tpsHitCount: 0,
       initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null
@@ -2091,6 +2095,16 @@
     const riskPerContract = stopDist * POINT_VALUE;
     const riskDollars = effectiveRiskDollars(order.sizeValues, order.sizeMode);
     if (riskPerContract > 0) { order.qty = Math.max(0, Math.floor(riskDollars / riskPerContract * 100) / 100); }
+  }
+
+  /* The unit count implied by a USD ($) or % Account position-size value. Both size off
+     MARGIN_PER_CONTRACT — the single source of truth for the size menu's "Estimated Units"
+     readout, the chart-trade default, and the size-menu Apply. Returns null for modes that
+     derive qty another way (Units is verbatim; Risk modes size from the stop loss). */
+  function unitsForSizeValue(mode, sizeValues) {
+    if (mode === 'dollar')  return +((sizeValues.dollar || 0) / MARGIN_PER_CONTRACT).toFixed(2);
+    if (mode === 'percent') return +((ACCOUNT_BALANCE * (sizeValues.percent || 0) / 100) / MARGIN_PER_CONTRACT).toFixed(2);
+    return null;
   }
 
   /* In a Risk mode, a stop-loss dragged too far (or a risk amount set too low) drives the
@@ -4615,8 +4629,6 @@
   // Modes whose default is expressed relative to the account balance. The balance readout and the
   // size↔balance translation apply only to these — Quantity is an absolute unit count with nothing to translate.
   const PD_BALANCE_RELATIVE_MODES = ['dollar', 'pct_equity', 'risk_pct', 'risk_dollar'];
-  // Modes that size from a risk budget, and so need a default Stop Loss to measure risk per unit.
-  const PD_RISK_MODES = ['risk_pct', 'risk_dollar'];
   const pdSizingMethodGroup = document.getElementById('pdSizingMethodGroup');
   const pdDefaultSize = document.getElementById('pdDefaultSize');
   const pdDefaultSizeUnit = document.getElementById('pdDefaultSizeUnit');
@@ -4698,22 +4710,21 @@
   pdApplySizeMode();
 
   /* Resolve the quantity for a chart right-click "Buy/Sell @ price" trade from the saved Position Sizing
-     default. Quantity mode uses the number verbatim; Dollar / % Equity convert to a unit count using the
-     live price. Risk modes don't resolve to a fixed number here — the pending order carries the risk-$ intent
-     and sizes live from its stop loss (see createOrder / syncQtyFromRisk); this returns only a preview/fallback
-     matching the default stop-loss distance when Expanded auto-attaches one, else 1. Counts round down, floor 1. */
+     default. Quantity mode uses the number verbatim; Dollar / % Account convert to a unit count with
+     unitsForSizeValue (same MARGIN_PER_CONTRACT basis as the size menu, so preview and placed order agree).
+     Risk modes don't resolve to a fixed number here — the pending order carries the risk-$ intent and sizes
+     live from its stop loss (see createOrder / syncQtyFromRisk); this returns only a preview/fallback matching
+     the default stop-loss distance when Expanded auto-attaches one, else 1. Risk preview rounds down, floor 1. */
   const PD_BASE_R_POINTS = 2; // price distance representing 1.0R — matches createOrder's baseR
   function resolveChartTradeQty() {
     const pd = chartSettings.positionDefaults;
     const method = pd.sizingMethod || 'quantity';
     const value = parseFloat(String(pd.defaultSize).replace(/[$,%\s]/g, '')) || 0;
     if (method === 'quantity') return value > 0 ? value : 1;
+    if (method === 'dollar') return unitsForSizeValue('dollar', { dollar: value });
+    if (method === 'pct_equity') return unitsForSizeValue('percent', { percent: value });
 
-    const unitNotional = qtCurrentPrice() * POINT_VALUE; // $ value of one unit at the live price
     const floorQty = (q) => (q > 0 && isFinite(q)) ? Math.max(1, Math.floor(q)) : 1;
-
-    if (method === 'dollar') return floorQty(value / unitNotional);
-    if (method === 'pct_equity') return floorQty((ACCOUNT_BALANCE * value / 100) / unitNotional);
 
     // Risk-mode preview: matches the qty the pending order will show once the default stop attaches (Expanded).
     // Condensed attaches no stop, so there's nothing to preview against → 1 (the order shows a warning instead).
@@ -6458,7 +6469,7 @@
     smQtyInput.value = sizeDraft.qty;
     // dollar
     smDolInput.value = '$' + fmt(sizeDraft.sizeValues.dollar, Number.isInteger(sizeDraft.sizeValues.dollar) ? 0 : 2);
-    const dolQty = +(sizeDraft.sizeValues.dollar / MARGIN_PER_CONTRACT).toFixed(2);
+    const dolQty = unitsForSizeValue('dollar', sizeDraft.sizeValues);
     const dolMargin = +(dolQty * MARGIN_PER_CONTRACT).toFixed(2);
     document.getElementById('smDolQty').textContent = fmt(dolQty, 2) + ' ETH';
     document.getElementById('smDolMargin').textContent = fmtMoney(dolMargin);
@@ -6469,7 +6480,7 @@
     smPctSlider.value = sizeDraft.sizeValues.percent;
     smUpdatePctSlider();
     const posVal = ACCOUNT_BALANCE * sizeDraft.sizeValues.percent / 100;
-    const pctQty = +(posVal / MARGIN_PER_CONTRACT).toFixed(2);
+    const pctQty = unitsForSizeValue('percent', sizeDraft.sizeValues);
     const pctMargin = +(pctQty * MARGIN_PER_CONTRACT).toFixed(2);
     document.getElementById('smPctBal').textContent = fmtMoney(ACCOUNT_BALANCE);
     document.getElementById('smPctPos').textContent = fmtMoney(posVal);
@@ -6598,6 +6609,10 @@
     order.sizeMode = sizeDraft.sizeMode;
     order.qty = sizeDraft.qty;
     order.sizeValues = { ...sizeDraft.sizeValues };
+    // USD / % Account modes carry their intent in sizeValues; re-derive the unit count from it so
+    // fees/PnL/fill use the amount just entered (Risk modes are handled by syncQtyFromRisk below).
+    const derivedQty = unitsForSizeValue(order.sizeMode, order.sizeValues);
+    if (derivedQty !== null) order.qty = derivedQty;
     syncQtyFromRisk(); // keeps parity with the live SL-drag behavior in Risk $ mode
     closeAllPopovers();
     sizeDraft = null;
