@@ -2260,7 +2260,7 @@
     line.style.top = y;
     label.style.top = y;
     const txt = label.querySelector('.ol-offset-label-text');
-    if (txt) txt.textContent = 'BREAKEVEN PRICE · ' + fmt(bePrice);
+    if (txt) txt.textContent = 'BREAKEVEN · ' + fmt(bePrice);
   }
   /* a plain click (no movement) on the handle falls through to onClick (if given) instead of dragging — */
   /* lets a handle double as both a drag target and a menu/edit/place trigger (e.g. the size/type pills, .ol-amt) */
@@ -3795,7 +3795,7 @@
 
         const beLabel = document.createElement('span');
         beLabel.className = 'ol-offset-label breakeven-price';
-        beLabel.innerHTML = '<span class="ol-offset-label-text">BREAKEVEN PRICE · ' + fmt(bePrice) + '</span>';
+        beLabel.innerHTML = '<span class="ol-offset-label-text">BREAKEVEN · ' + fmt(bePrice) + '</span>';
         beLabel.style.top = beY + 'px';
         layer.appendChild(beLabel);
       }
