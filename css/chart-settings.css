@@ -382,6 +382,12 @@
   margin-bottom: 0;
 }
 
+/* Full-width rows: a single field spans the whole card instead of one of the
+   two grid columns. */
+.cs-fields-row--single {
+  grid-template-columns: 1fr;
+}
+
 .cs-field-val {
   font-size: 13px;
   font-weight: 600;

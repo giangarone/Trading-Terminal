@@ -520,7 +520,7 @@
       }
     }
     order = {
-      side, entry, qty: parseInt(qtyInput.value || '1'), orderType, fillAbove,
+      side, entry, qty: parseFloat(qtyInput.value) || 1, orderType, fillAbove,
       sizeMode: 'contracts', filled: false, filledQty: 0,
       pendingConfirm: isChartTrade,
       sizeValues: { dollar: 5000, percent: 25, risk: 500 },
@@ -677,7 +677,10 @@
       const min = isSlippage ? 0.1 : 0;
       const cur = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
       const next = btn.classList.contains('ps-up') ? cur + step : Math.max(min, cur - step);
-      if (dataStep !== null) {
+      const decimals = input.dataset.decimals ? parseInt(input.dataset.decimals, 10) : null;
+      if (decimals !== null) {
+        input.value = next.toFixed(decimals);
+      } else if (dataStep !== null) {
         input.value = Number.isInteger(step) ? String(Math.round(next)) : next.toFixed(2);
       } else {
         input.value = input.id === 'qtTrailDelta' ? next.toFixed(1) : isSlippage ? next.toFixed(2) : fmt(next);
@@ -692,6 +695,12 @@
     input.addEventListener('change', () => {
       const step = parseFloat(input.dataset.step) || 1;
       const v = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
+      const decimals = input.dataset.decimals ? parseInt(input.dataset.decimals, 10) : null;
+      /* fields that allow decimals keep the typed precision instead of snapping to step */
+      if (decimals !== null) {
+        input.value = Math.max(0, v).toFixed(decimals);
+        return;
+      }
       const snapped = Math.round(v / step) * step;
       input.value = Number.isInteger(step) ? String(Math.max(0, Math.round(snapped))) : Math.max(0, snapped).toFixed(2);
     });
@@ -2021,7 +2030,14 @@
     if (!order || order.sizeMode !== 'risk' || !order.sl) return;
     const stopDist = Math.abs(order.entry - order.sl.price);
     const riskPerContract = stopDist * POINT_VALUE;
-    if (riskPerContract > 0) { order.qty = Math.max(0, Math.floor(order.sizeValues.risk / riskPerContract)); }
+    if (riskPerContract > 0) { order.qty = Math.max(0, Math.floor(order.sizeValues.risk / riskPerContract * 100) / 100); }
+  }
+
+  /* Label shown in the entry-bar size pill. Shared by render() and the live SL drag handler. */
+  function sizePillLabel() {
+    return order.sizeMode === 'dollar'  ? '$' + fmt(order.sizeValues.dollar, 0)
+         : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
+         : fmt(order.qty, 2);            // 'contracts' and 'risk' both show qty
   }
 
   /* ---------- TP/SL fee & net PnL helpers ---------- */
@@ -3376,8 +3392,11 @@
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
           order.sl.price = roundTick(yToPrice(cy, h));
           syncSlOnDrag();
+          syncQtyFromRisk();                 // live qty in Risk $ mode (no-op in other modes)
           updateAllTpSlValidityLive();
           updateAllTpSlReadoutsLive();
+          const sizePill = document.getElementById('sizePillTrigger');
+          if (sizePill) sizePill.textContent = sizePillLabel();
           drawPriceChart();
         }
         function onDropSl(cy, h) {
@@ -3524,13 +3543,7 @@
         ? '<span class="ol-chip ghost sl-add" id="slAddHandle">SL</span>'
         : '';
 
-      const sizeLabel = order.sizeMode === 'contracts'
-        ? String(order.qty)
-        : order.sizeMode === 'dollar'
-          ? '$' + fmt(order.sizeValues.dollar, 0)
-          : order.sizeMode === 'percent'
-            ? order.sizeValues.percent + '%'
-            : String(order.qty);
+      const sizeLabel = sizePillLabel();
 
       if (!order.filled) {
         // Resting/working order: placed and waiting for price to reach entry
@@ -3586,7 +3599,7 @@
           '</span>' +
 
           '<span class="ol-pill neutral combo locked" id="orderConfigPill">' +
-          '<span class="ol-pill-seg" id="sizePillTrigger" data-tooltip="Quantity">' + order.qty + '</span>' +
+          '<span class="ol-pill-seg" id="sizePillTrigger" data-tooltip="Quantity">' + fmt(order.qty, 2) + '</span>' +
           '<span class="ol-pill-divider"></span>' +
           '<span class="ol-pill-seg" id="typePillTrigger" data-tooltip="Order Type">' + order.orderType + '</span>' +
           '</span>' +
@@ -4445,19 +4458,24 @@
     dollar: { label: 'Default Dollar Amount', unit: '$', step: 50, default: '500' },
     pct_equity: { label: 'Default % of Equity', unit: '%', step: 1, default: '5' },
     risk_pct: { label: 'Default Risk %', unit: '%', step: 0.25, default: '1' },
+    risk_dollar: { label: 'Default Risk $', unit: '$', step: 50, default: '250' },
   };
-  const pdSizingMethod = document.getElementById('pdSizingMethod');
+  const pdSizingMethodGroup = document.getElementById('pdSizingMethodGroup');
   const pdDefaultSize = document.getElementById('pdDefaultSize');
   const pdDefaultSizeUnit = document.getElementById('pdDefaultSizeUnit');
   const pdDefaultSizeLabel = document.getElementById('pdDefaultSizeLabel');
   function pdApplySizeMode() {
-    const cfg = PD_SIZE_MODES[pdSizingMethod.value] || PD_SIZE_MODES.contracts;
+    const activeRow = pdSizingMethodGroup.querySelector('.cs-radio-row.active');
+    const method = activeRow ? activeRow.dataset.sizing : 'contracts';
+    const cfg = PD_SIZE_MODES[method] || PD_SIZE_MODES.contracts;
     pdDefaultSizeLabel.textContent = cfg.label;
     pdDefaultSizeUnit.textContent = cfg.unit;
     pdDefaultSize.dataset.step = cfg.step;
     pdDefaultSize.value = cfg.default;
   }
-  pdSizingMethod.addEventListener('change', pdApplySizeMode);
+  pdSizingMethodGroup.querySelectorAll('.cs-radio-row').forEach(row => {
+    row.addEventListener('click', pdApplySizeMode);
+  });
   pdApplySizeMode();
 
   function bindColorSwatchMenu(triggerId, menuId, swatchId) {
@@ -4918,6 +4936,36 @@
       e.stopPropagation();
       if (e.key === 'Enter') { e.preventDefault(); commitCustomTimeframe(); }
       if (e.key === 'Escape') { e.preventDefault(); showCustomForm(false); }
+    });
+  })();
+
+  /* ---------- fullscreen (maximize) chart mode ---------- */
+  /* Toggles an in-app maximize: the .is-chart-maximized class on .app hides the
+     side and bottom panels (CSS) so the chart fills the window. Session-only —
+     not persisted, so a reload always starts in the normal layout. */
+  (function initChartFullscreen() {
+    const btn = document.getElementById('chartFullscreenToggle');
+    if (!btn) return;
+    const app = document.querySelector('.app');
+    const icon = btn.querySelector('.material-symbols-outlined');
+
+    function setMaximized(maximized) {
+      app.classList.toggle('is-chart-maximized', maximized);
+      if (icon) icon.textContent = maximized ? 'fullscreen_exit' : 'fullscreen';
+      const label = maximized ? 'Exit fullscreen chart' : 'Fullscreen chart';
+      btn.title = label;
+      btn.setAttribute('aria-label', label);
+    }
+
+    btn.addEventListener('click', () => {
+      setMaximized(!app.classList.contains('is-chart-maximized'));
+    });
+
+    /* Escape exits the maximized view, mirroring the usual fullscreen gesture. */
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && app.classList.contains('is-chart-maximized')) {
+        setMaximized(false);
+      }
     });
   })();
 
@@ -6063,8 +6111,8 @@
   smQtyInput.addEventListener('click', (e) => e.stopPropagation());
   smQtyInput.addEventListener('change', (e) => {
     e.stopPropagation();
-    const v = parseInt((e.target.value || '').replace(/[^0-9]/g, '')) || 1;
-    order.qty = Math.max(1, v);
+    const v = parseFloat((e.target.value || '').replace(/[^0-9.]/g, ''));
+    order.qty = Math.max(0.01, +(v || 0).toFixed(2));
     smQtyInput.value = order.qty;
     render();
   });
@@ -6124,12 +6172,12 @@
       const riskPerContract = stopDist * POINT_VALUE;
       body.innerHTML =
         '<label class="sm-amount-lbl">Risk Amount (USD)</label>' +
-        '<div class="sm-stepper"><button id="smRiskDec">−</button><input type="text" id="smRiskInput" value="$' + fmt(order.sizeValues.risk, 0) + '"><button id="smRiskInc">+</button></div>' +
+        '<div class="sm-stepper"><button id="smRiskDec">−</button><input type="text" id="smRiskInput" value="$' + fmt(order.sizeValues.risk, Number.isInteger(order.sizeValues.risk) ? 0 : 2) + '"><button id="smRiskInc">+</button></div>' +
         '<div class="sm-divider"></div>' +
         '<div class="sm-stat-row"><span class="l">Stop Distance</span><span class="v">' + fmt(stopDist, 2) + ' pts</span></div>' +
         '<div class="sm-stat-row"><span class="l">Risk per Contract</span><span class="v">' + fmtMoney(riskPerContract) + '</span></div>' +
         '<div id="smRiskCalcSlot"></div>';
-      const calcQty = riskPerContract > 0 ? Math.floor(order.sizeValues.risk / riskPerContract) : 0;
+      const calcQty = riskPerContract > 0 ? Math.floor(order.sizeValues.risk / riskPerContract * 100) / 100 : 0;
       const marginReq = calcQty * MARGIN_PER_CONTRACT;
       const sufficient = marginReq <= BUYING_POWER;
       const slot = body.querySelector('#smRiskCalcSlot');
@@ -6156,13 +6204,13 @@
           '<button class="sm-opt-btn ghost" id="smReduceRisk">Reduce Risk Amount</button>' +
           '</div>';
       }
-      document.getElementById('smRiskDec').addEventListener('click', (e) => { e.stopPropagation(); order.sizeValues.risk = Math.max(250, order.sizeValues.risk - 250); syncQtyFromRisk(); refreshSizeBodies(); render(); });
-      document.getElementById('smRiskInc').addEventListener('click', (e) => { e.stopPropagation(); order.sizeValues.risk += 250; syncQtyFromRisk(); refreshSizeBodies(); render(); });
+      document.getElementById('smRiskDec').addEventListener('click', (e) => { e.stopPropagation(); order.sizeValues.risk = Math.max(0, order.sizeValues.risk - 50); syncQtyFromRisk(); refreshSizeBodies(); render(); });
+      document.getElementById('smRiskInc').addEventListener('click', (e) => { e.stopPropagation(); order.sizeValues.risk += 50; syncQtyFromRisk(); refreshSizeBodies(); render(); });
       document.getElementById('smRiskInput').addEventListener('click', (e) => e.stopPropagation());
       document.getElementById('smRiskInput').addEventListener('change', (e) => {
         e.stopPropagation();
         const val = parseFloat((e.target.value || '').replace(/[$,]/g, '')) || 0;
-        order.sizeValues.risk = Math.max(250, Math.round(val));
+        order.sizeValues.risk = Math.max(0, val);
         syncQtyFromRisk();
         refreshSizeBodies();
         render();

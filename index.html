@@ -15,9 +15,9 @@
 
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
   <link rel="stylesheet" href="css/tokens.css?v=15">
-  <link rel="stylesheet" href="css/topbar.css?v=13">
+  <link rel="stylesheet" href="css/topbar.css?v=14">
   <link rel="stylesheet" href="css/left-panel.css?v=14">
-  <link rel="stylesheet" href="css/center-panel.css?v=13">
+  <link rel="stylesheet" href="css/center-panel.css?v=16">
   <link rel="stylesheet" href="css/workspace.css?v=37">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=22">
@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="css/order-lines.css?v=40">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
   <link rel="stylesheet" href="css/indicators.css?v=10">
-  <link rel="stylesheet" href="css/chart-settings.css?v=32">
+  <link rel="stylesheet" href="css/chart-settings.css?v=33">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
   <link rel="stylesheet" href="css/quick-order.css?v=5">
@@ -976,24 +976,54 @@
                     <div class="cs-card-head">
                       <span class="cs-card-title">Default Size</span>
                     </div>
-                    <div class="cs-fields-row">
+                    <div class="cs-fields-row cs-fields-row--single">
                       <div class="cs-field">
                         <label>Position Sizing</label>
-                        <div class="select-input pop-trigger cs-dd-trigger" data-target="pdSizingMethod"><span
-                            class="cs-select-label">Contracts</span><span
-                            class="material-symbols-outlined">expand_more</span></div><select id="pdSizingMethod"
-                          style="display:none;">
-                          <option value="contracts" selected>Contracts</option>
-                          <option value="shares">Shares</option>
-                          <option value="dollar">Dollar Amount</option>
-                          <option value="pct_equity">% Equity</option>
-                          <option value="risk_pct">Risk %</option>
-                        </select>
+                        <div class="cs-radio-group" id="pdSizingMethodGroup">
+                          <div class="cs-radio-row active" data-sizing="contracts">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text">
+                              <span class="cs-radio-title">Contracts</span>
+                            </span>
+                          </div>
+                          <div class="cs-radio-row" data-sizing="shares">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text">
+                              <span class="cs-radio-title">Shares</span>
+                            </span>
+                          </div>
+                          <div class="cs-radio-row" data-sizing="dollar">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text">
+                              <span class="cs-radio-title">Dollar Amount</span>
+                            </span>
+                          </div>
+                          <div class="cs-radio-row" data-sizing="pct_equity">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text">
+                              <span class="cs-radio-title">% Equity</span>
+                            </span>
+                          </div>
+                          <div class="cs-radio-row" data-sizing="risk_pct">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text">
+                              <span class="cs-radio-title">Risk %</span>
+                            </span>
+                          </div>
+                          <div class="cs-radio-row" data-sizing="risk_dollar">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text">
+                              <span class="cs-radio-title">Risk $</span>
+                            </span>
+                          </div>
+                        </div>
                       </div>
+                    </div>
+                    <div class="cs-fields-row cs-fields-row--single">
                       <div class="cs-field">
                         <label id="pdDefaultSizeLabel">Default Contracts</label>
                         <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="pdDefaultSize" value="1" data-step="1">
+                          <input type="text" id="pdDefaultSize" value="1" data-step="1" data-decimals="2">
                           <span class="cs-stepper-unit" id="pdDefaultSizeUnit">contracts</span>
                           <div class="price-stepper-arrows">
                             <button type="button" class="ps-up" data-target="pdDefaultSize"><span
@@ -3107,10 +3137,16 @@
               <button class="range-btn">5Y</button>
               <button class="range-btn">All</button>
             </div>
-            <div class="toggle-pill-group">
-              <button class="toggle-pill">%</button>
-              <button class="toggle-pill">log</button>
-              <button class="toggle-pill active">auto</button>
+            <div class="range-bar-right">
+              <div class="toggle-pill-group">
+                <button class="toggle-pill">%</button>
+                <button class="toggle-pill">log</button>
+                <button class="toggle-pill active">auto</button>
+              </div>
+              <button class="range-fs-btn" id="chartFullscreenToggle" title="Fullscreen chart"
+                aria-label="Fullscreen chart">
+                <span class="material-symbols-outlined">fullscreen</span>
+              </button>
             </div>
           </div>
         </div>
@@ -5167,7 +5203,7 @@
 
     <div class="sm-body" data-mode="percent">
       <div class="sm-pct-display" id="smPctDisplay">25%</div>
-      <input type="range" class="sm-slider" id="smPctSlider" min="0" max="100" step="5" value="25">
+      <input type="range" class="sm-slider" id="smPctSlider" min="0" max="100" step="1" value="25">
       <div class="sm-tick-row"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
       <div class="sm-divider"></div>
       <div class="sm-stat-row"><span class="l">Account Balance</span><span class="v" id="smPctBal">—</span></div>
@@ -5516,8 +5552,8 @@
   <script src="js/utils.js"></script>
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=6"></script>
-  <script src="js/resize.js?v=14"></script>
-  <script src="js/app.js?v=201"></script>
+  <script src="js/resize.js?v=15"></script>
+  <script src="js/app.js?v=209"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>

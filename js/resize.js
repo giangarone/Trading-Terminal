@@ -43,6 +43,12 @@ function setupPanel(handle, panel, expandBtn, side, minW, maxW, cssVar, defaultW
       panel.style.width = lastWidth;
       document.documentElement.style.setProperty(cssVar, lastWidth);
     }
+    /* Keep the always-visible toggle's tooltip in sync with the action it does. */
+    if (expandBtn) {
+      const action = collapsed ? 'Expand panel' : 'Collapse panel';
+      expandBtn.title = action;
+      expandBtn.setAttribute('aria-label', action);
+    }
   }
 
   /* Applies collapsed state + visuals; only writes to storage when `persist`. */
@@ -97,7 +103,7 @@ function setupPanel(handle, panel, expandBtn, side, minW, maxW, cssVar, defaultW
     expandBtn.addEventListener('mousedown', (e) => e.stopPropagation());
     expandBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      setCollapsed(false, true);
+      setCollapsed(!state[side], true);
     });
   }
 

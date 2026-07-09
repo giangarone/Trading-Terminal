@@ -138,9 +138,9 @@
   background: var(--border-subtle);
 }
 
-/* Expand button — only shown while its panel is collapsed. */
+/* Collapse/expand toggle — always visible on each side panel's divider. */
 .resize-toggle {
-  display: none;
+  display: flex;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -158,24 +158,29 @@
   transition: color var(--t-ui), background var(--t-ui), border-color var(--t-ui);
 }
 
-.app.is-left-collapsed #leftResizeHandle .resize-toggle,
-.app.is-right-collapsed #rightResizeHandle .resize-toggle {
-  display: flex;
-}
-
 .resize-toggle:hover {
-  color: var(--text-primary);
-  background: var(--bg-hover);
-  border-color: var(--border-default);
+  color: var(--on-accent);
+  background: var(--accent);
+  border: none;
 }
 
 .resize-toggle .material-symbols-outlined {
   font-size: 16px;
 }
 
-/* Left rail chevron points right (→) to expand; right rail keeps default (←). */
-#leftResizeHandle .resize-toggle .material-symbols-outlined {
+/* The chevron points at the action. Expanded: toward its panel (collapse) —
+   left ← (default), right → (rotated). Collapsed: away from its panel
+   (expand) — the rotation flips. */
+#rightResizeHandle .resize-toggle .material-symbols-outlined {
   transform: rotate(180deg);
+}
+
+.app.is-left-collapsed #leftResizeHandle .resize-toggle .material-symbols-outlined {
+  transform: rotate(180deg);
+}
+
+.app.is-right-collapsed #rightResizeHandle .resize-toggle .material-symbols-outlined {
+  transform: none;
 }
 
 .resize-handle.resize-h {

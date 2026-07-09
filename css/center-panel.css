@@ -796,10 +796,54 @@
   background: var(--bg-input);
 }
 
+.range-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .toggle-pill-group {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* Fullscreen (maximize) chart toggle — icon button on the range bar. */
+.range-fs-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 5px;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+}
+
+.range-fs-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+}
+
+.range-fs-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* Maximized chart: hide the topbar, status bar, side panels, bottom panel, the
+   drawing toolbar, and their resize handles so the chart fills the window. The
+   chart body already flexes to fill, and only a class is toggled, so exiting
+   restores each panel's prior state. The range bar stays visible — it holds the
+   exit button. */
+.app.is-chart-maximized .topbar,
+.app.is-chart-maximized .statusbar,
+.app.is-chart-maximized .left-panel,
+.app.is-chart-maximized #leftResizeHandle,
+.app.is-chart-maximized .right-panel,
+.app.is-chart-maximized #rightResizeHandle,
+.app.is-chart-maximized .bottom-panel,
+.app.is-chart-maximized #bottomResizeHandle,
+.app.is-chart-maximized .chart-draw-toolbar {
+  display: none;
 }
 
 .toggle-pill {
