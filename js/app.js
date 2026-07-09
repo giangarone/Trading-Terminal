@@ -4563,8 +4563,9 @@
     risk_pct: { label: 'Default Risk %', unit: '%', step: 0.25, default: '1' },
     risk_dollar: { label: 'Default Risk $', unit: '$', step: 50, default: '250' },
   };
-  // Sizing modes whose default value is expressed relative to the account balance — these show the
-  // balance readout for context. Contracts / Shares are absolute, so the readout is hidden for them.
+  // Modes whose default is expressed relative to the account balance. The balance readout and the
+  // size↔balance translation apply only to these — Contracts / Shares are absolute unit counts with
+  // no reliable per-instrument price in this generic pane, so there's nothing to translate.
   const PD_BALANCE_RELATIVE_MODES = ['dollar', 'pct_equity', 'risk_pct', 'risk_dollar'];
   const pdSizingMethodGroup = document.getElementById('pdSizingMethodGroup');
   const pdDefaultSize = document.getElementById('pdDefaultSize');
@@ -4583,6 +4584,35 @@
     value.textContent = fmtMoney(ACCOUNT_BALANCE);
     readout.style.display = PD_BALANCE_RELATIVE_MODES.includes(pdActiveSizingMethod()) ? '' : 'none';
   }
+  function pdParseSize() {
+    return parseFloat((pdDefaultSize.value || '0').replace(/[$,%\s]/g, '')) || 0;
+  }
+  function pdPctOfBalance(amount) {
+    const p = ACCOUNT_BALANCE > 0 ? amount / ACCOUNT_BALANCE * 100 : 0;
+    return (p < 1 ? p.toFixed(2) : p.toFixed(1)) + '%';
+  }
+  /* Translate the current default size into balance terms for the active mode, so the user can see what
+     the size represents against their account (e.g. "$5,000 → 9.5% of balance"). Kept in dollars / % of
+     balance only — these are global defaults, so no per-asset quantity is shown. */
+  function updatePdSizeTranslation() {
+    const el = document.getElementById('pdSizeTranslation');
+    if (!el) return;
+    const method = pdActiveSizingMethod();
+    const val = pdParseSize();
+    let text = '';
+    if (val > 0 && PD_BALANCE_RELATIVE_MODES.includes(method)) {
+      if (method === 'dollar') {
+        text = '≈ ' + pdPctOfBalance(val) + ' of balance';
+      } else if (method === 'pct_equity') {
+        text = '≈ ' + fmtMoney(ACCOUNT_BALANCE * val / 100);
+      } else if (method === 'risk_pct') {
+        text = '≈ risking ' + fmtMoney(ACCOUNT_BALANCE * val / 100) + ' per trade';
+      } else if (method === 'risk_dollar') {
+        text = '≈ ' + pdPctOfBalance(val) + ' of balance at risk';
+      }
+    }
+    el.textContent = text;
+  }
   function pdApplySizeMode() {
     const method = pdActiveSizingMethod();
     const cfg = PD_SIZE_MODES[method] || PD_SIZE_MODES.contracts;
@@ -4591,10 +4621,17 @@
     pdDefaultSize.dataset.step = cfg.step;
     pdDefaultSize.value = cfg.default;
     updatePdBalanceDisplay();
+    updatePdSizeTranslation();
   }
   pdSizingMethodGroup.querySelectorAll('.cs-radio-row').forEach(row => {
     row.addEventListener('click', pdApplySizeMode);
   });
+  // Keep the translation live as the size is typed or stepped (the generic stepper mutates the value
+  // without firing an input event, so also listen on its arrows — they run after the generic handler).
+  pdDefaultSize.addEventListener('input', updatePdSizeTranslation);
+  pdDefaultSize.addEventListener('change', updatePdSizeTranslation);
+  document.querySelectorAll('.ps-up[data-target="pdDefaultSize"], .ps-down[data-target="pdDefaultSize"]')
+    .forEach(btn => btn.addEventListener('click', updatePdSizeTranslation));
   pdApplySizeMode();
 
   function bindColorSwatchMenu(triggerId, menuId, swatchId) {
@@ -5085,6 +5122,11 @@
       const label = maximized ? 'Exit fullscreen chart' : 'Fullscreen chart';
       btn.title = label;
       btn.setAttribute('aria-label', label);
+      if (maximized) {
+        showToast('Fullscreen chart · Press Esc to exit', 'fullscreen');
+      } else {
+        showToast('Exited fullscreen chart', 'fullscreen_exit');
+      }
     }
 
     btn.addEventListener('click', () => {
@@ -6214,48 +6256,58 @@
   /* ---------- size & mode dropdown ---------- */
   const sizeMenu = document.getElementById('sizeMenu');
   const smTabs = document.getElementById('smTabs');
+  /* The Entry Amount menu is a staged editor: edits mutate this draft snapshot, not the live
+     order, so the chart is untouched until the user clicks Apply. Cancel (or any dismiss)
+     discards it. Mirrors the Edit Exit Amount popup's exitModal pattern. */
+  let sizeDraft = null;
+  /* Draft copy of syncQtyFromRisk() — derives the staged qty from the draft's risk amount and the
+     live entry / stop-loss on the chart (those aren't edited here). */
+  function syncDraftQtyFromRisk() {
+    if (!sizeDraft || sizeDraft.sizeMode !== 'risk' || !order.sl) return;
+    const riskPerContract = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
+    if (riskPerContract > 0) { sizeDraft.qty = Math.max(0, Math.floor(sizeDraft.sizeValues.risk / riskPerContract * 100) / 100); }
+  }
   function openSizeMenu(anchorRect, trigger) {
     if (trigger && sizeMenu.classList.contains('show') && sizeMenu._openTrigger === trigger) {
       closeAllPopovers();
       return;
     }
-    smTabs.querySelectorAll('.sm-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === order.sizeMode));
-    sizeMenu.querySelectorAll('.sm-body').forEach(b => b.classList.toggle('active', b.dataset.mode === order.sizeMode));
+    sizeDraft = { sizeMode: order.sizeMode, qty: order.qty, sizeValues: { ...order.sizeValues } };
+    smTabs.querySelectorAll('.sm-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === sizeDraft.sizeMode));
+    sizeMenu.querySelectorAll('.sm-body').forEach(b => b.classList.toggle('active', b.dataset.mode === sizeDraft.sizeMode));
     refreshSizeBodies();
     openNear(sizeMenu, anchorRect, 'left', trigger);
   }
   smTabs.querySelectorAll('.sm-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      order.sizeMode = tab.dataset.mode;
+      sizeDraft.sizeMode = tab.dataset.mode;
       smTabs.querySelectorAll('.sm-tab').forEach(t => t.classList.toggle('active', t === tab));
       sizeMenu.querySelectorAll('.sm-body').forEach(b => b.classList.toggle('active', b.dataset.mode === tab.dataset.mode));
-      if (tab.dataset.mode === 'risk') syncQtyFromRisk();
+      if (tab.dataset.mode === 'risk') syncDraftQtyFromRisk();
       refreshSizeBodies();
-      render();
     });
   });
 
   // contracts mode
   const smQtyInput = document.getElementById('smQtyInput');
-  document.getElementById('smQtyDec').addEventListener('click', () => { order.qty = Math.max(1, order.qty - 1); smQtyInput.value = order.qty; render(); });
-  document.getElementById('smQtyInc').addEventListener('click', () => { order.qty = order.qty + 1; smQtyInput.value = order.qty; render(); });
+  document.getElementById('smQtyDec').addEventListener('click', () => { sizeDraft.qty = Math.max(1, sizeDraft.qty - 1); smQtyInput.value = sizeDraft.qty; });
+  document.getElementById('smQtyInc').addEventListener('click', () => { sizeDraft.qty = sizeDraft.qty + 1; smQtyInput.value = sizeDraft.qty; });
   smQtyInput.addEventListener('click', (e) => e.stopPropagation());
   smQtyInput.addEventListener('change', (e) => {
     e.stopPropagation();
     const v = parseFloat((e.target.value || '').replace(/[^0-9.]/g, ''));
-    order.qty = Math.max(0.01, +(v || 0).toFixed(2));
-    smQtyInput.value = order.qty;
-    render();
+    sizeDraft.qty = Math.max(0.01, +(v || 0).toFixed(2));
+    smQtyInput.value = sizeDraft.qty;
   });
   document.getElementById('smQtyQuick').querySelectorAll('button').forEach(b => {
-    b.addEventListener('click', () => { order.qty = parseInt(b.textContent); smQtyInput.value = order.qty; render(); });
+    b.addEventListener('click', () => { sizeDraft.qty = parseInt(b.textContent); smQtyInput.value = sizeDraft.qty; });
   });
 
   // dollar mode
   const smDolInput = document.getElementById('smDolInput');
-  function setDollar(v) { order.sizeValues.dollar = Math.max(500, v); refreshSizeBodies(); render(); }
-  document.getElementById('smDolDec').addEventListener('click', () => setDollar(order.sizeValues.dollar - 500));
-  document.getElementById('smDolInc').addEventListener('click', () => setDollar(order.sizeValues.dollar + 500));
+  function setDollar(v) { sizeDraft.sizeValues.dollar = Math.max(500, v); refreshSizeBodies(); }
+  document.getElementById('smDolDec').addEventListener('click', () => setDollar(sizeDraft.sizeValues.dollar - 500));
+  document.getElementById('smDolInc').addEventListener('click', () => setDollar(sizeDraft.sizeValues.dollar + 500));
   smDolInput.addEventListener('click', (e) => e.stopPropagation());
   smDolInput.addEventListener('change', (e) => {
     e.stopPropagation();
@@ -6266,25 +6318,25 @@
   // percent mode
   const smPctSlider = document.getElementById('smPctSlider');
   smPctSlider.addEventListener('input', () => {
-    order.sizeValues.percent = parseInt(smPctSlider.value);
-    refreshSizeBodies(); render();
+    sizeDraft.sizeValues.percent = parseInt(smPctSlider.value);
+    refreshSizeBodies();
   });
 
   function refreshSizeBodies() {
-    if (!order) return;
-    smQtyInput.value = order.qty;
+    if (!sizeDraft) return;
+    smQtyInput.value = sizeDraft.qty;
     // dollar
-    smDolInput.value = '$' + fmt(order.sizeValues.dollar, 0);
-    const dolQty = +(order.sizeValues.dollar / MARGIN_PER_CONTRACT).toFixed(2);
+    smDolInput.value = '$' + fmt(sizeDraft.sizeValues.dollar, 0);
+    const dolQty = +(sizeDraft.sizeValues.dollar / MARGIN_PER_CONTRACT).toFixed(2);
     const dolMargin = +(dolQty * MARGIN_PER_CONTRACT).toFixed(2);
     document.getElementById('smDolQty').textContent = fmt(dolQty, 2) + ' ETH';
     document.getElementById('smDolMargin').textContent = fmtMoney(dolMargin);
     document.getElementById('smDolBp').textContent = fmtMoney(BUYING_POWER - dolMargin);
 
     // percent
-    document.getElementById('smPctDisplay').textContent = order.sizeValues.percent + '%';
-    smPctSlider.value = order.sizeValues.percent;
-    const posVal = ACCOUNT_BALANCE * order.sizeValues.percent / 100;
+    document.getElementById('smPctDisplay').textContent = sizeDraft.sizeValues.percent + '%';
+    smPctSlider.value = sizeDraft.sizeValues.percent;
+    const posVal = ACCOUNT_BALANCE * sizeDraft.sizeValues.percent / 100;
     const pctQty = +(posVal / MARGIN_PER_CONTRACT).toFixed(2);
     const pctMargin = +(pctQty * MARGIN_PER_CONTRACT).toFixed(2);
     document.getElementById('smPctBal').textContent = fmtMoney(ACCOUNT_BALANCE);
@@ -6303,12 +6355,12 @@
       const riskPerContract = stopDist * POINT_VALUE;
       body.innerHTML =
         '<label class="sm-amount-lbl">Risk Amount (USD)</label>' +
-        '<div class="sm-stepper"><button id="smRiskDec">−</button><input type="text" id="smRiskInput" value="$' + fmt(order.sizeValues.risk, Number.isInteger(order.sizeValues.risk) ? 0 : 2) + '"><button id="smRiskInc">+</button></div>' +
+        '<div class="sm-stepper"><button id="smRiskDec">−</button><input type="text" id="smRiskInput" value="$' + fmt(sizeDraft.sizeValues.risk, Number.isInteger(sizeDraft.sizeValues.risk) ? 0 : 2) + '"><button id="smRiskInc">+</button></div>' +
         '<div class="sm-divider"></div>' +
         '<div class="sm-stat-row"><span class="l">Stop Distance</span><span class="v">' + fmt(stopDist, 2) + ' pts</span></div>' +
         '<div class="sm-stat-row"><span class="l">Risk per Contract</span><span class="v">' + fmtMoney(riskPerContract) + '</span></div>' +
         '<div id="smRiskCalcSlot"></div>';
-      const calcQty = riskPerContract > 0 ? Math.floor(order.sizeValues.risk / riskPerContract * 100) / 100 : 0;
+      const calcQty = riskPerContract > 0 ? Math.floor(sizeDraft.sizeValues.risk / riskPerContract * 100) / 100 : 0;
       const marginReq = calcQty * MARGIN_PER_CONTRACT;
       const sufficient = marginReq <= BUYING_POWER;
       const slot = body.querySelector('#smRiskCalcSlot');
@@ -6341,33 +6393,52 @@
           '<button class="sm-opt-btn ghost" id="smReduceRisk">Reduce Risk Amount</button>' +
           '</div>';
       }
-      document.getElementById('smRiskDec').addEventListener('click', (e) => { e.stopPropagation(); order.sizeValues.risk = Math.max(0, order.sizeValues.risk - 50); syncQtyFromRisk(); refreshSizeBodies(); render(); });
-      document.getElementById('smRiskInc').addEventListener('click', (e) => { e.stopPropagation(); order.sizeValues.risk += 50; syncQtyFromRisk(); refreshSizeBodies(); render(); });
+      document.getElementById('smRiskDec').addEventListener('click', (e) => { e.stopPropagation(); sizeDraft.sizeValues.risk = Math.max(0, sizeDraft.sizeValues.risk - 50); syncDraftQtyFromRisk(); refreshSizeBodies(); });
+      document.getElementById('smRiskInc').addEventListener('click', (e) => { e.stopPropagation(); sizeDraft.sizeValues.risk += 50; syncDraftQtyFromRisk(); refreshSizeBodies(); });
       document.getElementById('smRiskInput').addEventListener('click', (e) => e.stopPropagation());
       document.getElementById('smRiskInput').addEventListener('change', (e) => {
         e.stopPropagation();
         const val = parseFloat((e.target.value || '').replace(/[$,]/g, '')) || 0;
-        order.sizeValues.risk = Math.max(0, val);
-        syncQtyFromRisk();
+        sizeDraft.sizeValues.risk = Math.max(0, val);
+        syncDraftQtyFromRisk();
         refreshSizeBodies();
-        render();
       });
       const useMax = document.getElementById('smUseMax');
       if (useMax) useMax.addEventListener('click', (e) => {
         e.stopPropagation();
         const mq = Math.floor(BUYING_POWER / MARGIN_PER_CONTRACT);
-        order.sizeValues.risk = Math.round(mq * riskPerContract);
-        syncQtyFromRisk(); refreshSizeBodies(); render();
+        sizeDraft.sizeValues.risk = Math.round(mq * riskPerContract);
+        syncDraftQtyFromRisk(); refreshSizeBodies();
         showToast('Risk set to maximum available size', 'check_circle');
       });
       const reduceRisk = document.getElementById('smReduceRisk');
       if (reduceRisk) reduceRisk.addEventListener('click', (e) => {
         e.stopPropagation();
-        order.sizeValues.risk = Math.max(250, Math.round(order.sizeValues.risk / 2 / 250) * 250);
-        syncQtyFromRisk(); refreshSizeBodies(); render();
+        sizeDraft.sizeValues.risk = Math.max(250, Math.round(sizeDraft.sizeValues.risk / 2 / 250) * 250);
+        syncDraftQtyFromRisk(); refreshSizeBodies();
       });
     }
   }
+
+  // Apply — commit the staged draft to the live order, then redraw the chart.
+  document.getElementById('smApply').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!sizeDraft) return;
+    order.sizeMode = sizeDraft.sizeMode;
+    order.qty = sizeDraft.qty;
+    order.sizeValues = { ...sizeDraft.sizeValues };
+    syncQtyFromRisk(); // keeps parity with the live SL-drag behavior in Risk $ mode
+    closeAllPopovers();
+    sizeDraft = null;
+    render();
+    showToast('Entry amount updated', 'check_circle');
+  });
+  // Cancel — discard the draft without touching the order (no render needed).
+  document.getElementById('smCancel').addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeAllPopovers();
+    sizeDraft = null;
+  });
 
   /* ---------- edit exit amount modal ---------- */
   const editBackdrop = document.getElementById('editExitBackdrop');

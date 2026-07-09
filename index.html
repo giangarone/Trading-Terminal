@@ -24,8 +24,8 @@
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=43">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
-  <link rel="stylesheet" href="css/indicators.css?v=11">
-  <link rel="stylesheet" href="css/chart-settings.css?v=35">
+  <link rel="stylesheet" href="css/indicators.css?v=12">
+  <link rel="stylesheet" href="css/chart-settings.css?v=38">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
   <link rel="stylesheet" href="css/quick-order.css?v=5">
@@ -1042,9 +1042,11 @@
                           </div>
                         </div>
                         <div class="cs-size-balance" id="pdBalanceReadout">
-                          <span class="cs-size-balance-label">Available account balance</span>
+                          <span class="cs-size-balance-icon material-symbols-outlined">account_balance_wallet</span>
+                          <span class="cs-size-balance-label">Account balance</span>
                           <span class="cs-size-balance-val" id="pdBalanceValue">$52,430.00</span>
                         </div>
+                        <div class="cs-size-translation" id="pdSizeTranslation"></div>
                       </div>
                     </div>
                     <div class="cs-fields-row">
@@ -4903,7 +4905,8 @@
       <span class="qty-unit">USD</span>
       <div class="price-stepper-arrows">
         <button type="button" class="ps-up"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-        <button type="button" class="ps-down"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+        <button type="button" class="ps-down"><span
+            class="material-symbols-outlined">keyboard_arrow_down</span></button>
       </div>
     </div>
   </div>
@@ -5244,6 +5247,11 @@
 
     <div class="sm-body" data-mode="risk" id="smRiskBody"></div>
 
+    <div class="modal-actions">
+      <button class="btn-cancel" id="smCancel">Cancel</button>
+      <button class="btn-save" id="smApply">Apply</button>
+    </div>
+
   </div>
 
   <!-- ===================== EDIT EXIT AMOUNT POPUP ===================== -->
@@ -5582,7 +5590,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=15"></script>
-  <script src="js/app.js?v=223"></script>
+  <script src="js/app.js?v=227"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>

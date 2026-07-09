@@ -448,14 +448,20 @@
 }
 
 /* Read-only account-balance reference under the Default Size input — context for the balance-relative
-   sizing modes (Dollar Amount, % Equity, Risk %, Risk $). Hidden for Contracts / Shares. Borderless
-   label→value line so it reads as a caption for the field, not a competing card. */
+   sizing modes (Dollar Amount, % Equity, Risk %, Risk $). Hidden for Contracts / Shares. A quiet
+   caption line: a small inline wallet glyph + muted label, with the value nudged up just slightly so
+   it stays a supporting detail rather than a competing element. */
 .cs-size-balance {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 7px;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 0 2px;
+}
+
+.cs-size-balance-icon {
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .cs-size-balance-label {
@@ -464,10 +470,26 @@
 }
 
 .cs-size-balance-val {
+  margin-left: auto;
   font-size: 11.5px;
   font-weight: 500;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+/* Live "what this size means" line under the balance readout — translates the current default size
+   into the complementary terms (dollars / units / % of balance) for the active sizing mode. A quiet
+   accent-tinted caption so it reads as a helpful derivation, not another data row. */
+.cs-size-translation {
+  margin-top: 5px;
+  padding-left: 19px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-size-translation:empty {
+  display: none;
 }
 
 .cs-checkbox-row {
