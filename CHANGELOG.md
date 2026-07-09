@@ -2,7 +2,7 @@
 
 All notable changes to the Trading Terminal are documented here.
 
-## [Unreleased] — 2026-07-09
+## 2026-07-09
 
 ### Added
 - **Panel collapse/expand** — Always-visible collapse/expand buttons for the left and right panels.
