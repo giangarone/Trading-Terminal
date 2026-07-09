@@ -572,6 +572,12 @@
   display: block;
 }
 
+/* The size menu reuses the platform-standard .price-stepper; keep the vertical rhythm the
+   old .sm-stepper provided so labels/dividers below it don't collapse against the control. */
+.size-menu .price-stepper {
+  margin-bottom: 9px;
+}
+
 .sm-stepper {
   display: flex;
   align-items: center;
@@ -654,10 +660,21 @@
   color: var(--long);
 }
 
-.sm-divider {
-  height: 1px;
-  background: var(--border-subtle);
-  margin: 9px 0;
+/* The size menu no longer uses divider lines; sections are separated by whitespace alone.
+   The stat readout sits a comfortable gap below its input control, and status banners
+   (in the Risk tabs) get room above them — except the leading "Waiting for Stop Loss"
+   banner, which stays flush to the top of the body. */
+.size-menu .price-stepper + .sm-stat-row,
+.size-menu .qt-slider-wrap + .sm-stat-row {
+  margin-top: 13px;
+}
+
+.size-menu .sm-state-banner {
+  margin-top: 13px;
+}
+
+.size-menu .sm-body > .sm-state-banner:first-child {
+  margin-top: 0;
 }
 
 .sm-slider {

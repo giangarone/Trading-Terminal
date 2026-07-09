@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=44">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
-  <link rel="stylesheet" href="css/indicators.css?v=12">
+  <link rel="stylesheet" href="css/indicators.css?v=14">
   <link rel="stylesheet" href="css/chart-settings.css?v=41">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
@@ -4041,7 +4041,7 @@
 
             <!-- The amount label doubles as the amount-type dropdown trigger (opens qtAmountTypeMenu) -->
             <div class="qt-amount-type-trigger pop-trigger" id="qtAmountTypeTrigger">
-              <span class="label-sm" id="qtAmountLabel">Quantity</span>
+              <span class="label-sm" id="qtAmountLabel">Units</span>
               <span class="material-symbols-outlined qt-amount-type-caret">expand_more</span>
             </div>
             <div class="qty-row" style="margin-bottom:0;">
@@ -4926,8 +4926,8 @@
 
   <!-- ===================== QUICK TRADE: AMOUNT TYPE DROPDOWN ===================== -->
   <div class="pop-menu" id="qtAmountTypeMenu" style="width:180px;">
-    <button class="pop-item selected" data-amount-type="Quantity">
-      <span class="pop-text"><span class="pt-title">Quantity</span></span>
+    <button class="pop-item selected" data-amount-type="Units">
+      <span class="pop-text"><span class="pt-title">Units</span></span>
     </button>
     <button class="pop-item" data-amount-type="USD">
       <span class="pop-text"><span class="pt-title">USD</span></span>
@@ -5209,10 +5209,12 @@
 
     <div class="sm-body" data-mode="contracts">
       <label class="sm-amount-lbl">Units</label>
-      <div class="sm-stepper">
-        <button id="smQtyDec">−</button>
+      <div class="price-stepper">
         <input type="text" id="smQtyInput" value="1">
-        <button id="smQtyInc">+</button>
+        <div class="price-stepper-arrows">
+          <button type="button" id="smQtyInc"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+          <button type="button" id="smQtyDec"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+        </div>
       </div>
       <label class="sm-amount-lbl">Quick Select</label>
       <div class="sm-quick" id="smQtyQuick">
@@ -5222,12 +5224,13 @@
 
     <div class="sm-body" data-mode="dollar">
       <label class="sm-amount-lbl">Dollar Amount</label>
-      <div class="sm-stepper">
-        <button id="smDolDec">−</button>
+      <div class="price-stepper">
         <input type="text" id="smDolInput" value="$5,000">
-        <button id="smDolInc">+</button>
+        <div class="price-stepper-arrows">
+          <button type="button" id="smDolInc"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+          <button type="button" id="smDolDec"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+        </div>
       </div>
-      <div class="sm-divider"></div>
       <div class="sm-stat-row"><span class="l">Estimated Units</span><span class="v" id="smDolQty">—</span></div>
       <div class="sm-stat-row"><span class="l">Est. Margin Required</span><span class="v" id="smDolMargin">—</span>
       </div>
@@ -5236,10 +5239,18 @@
     </div>
 
     <div class="sm-body" data-mode="percent">
-      <div class="sm-pct-display" id="smPctDisplay">25%</div>
-      <input type="range" class="sm-slider" id="smPctSlider" min="0" max="100" step="1" value="25">
-      <div class="sm-tick-row"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
-      <div class="sm-divider"></div>
+      <label class="sm-amount-lbl">Percent of Account</label>
+      <div class="price-stepper">
+        <input type="text" id="smPctInput" value="25%">
+        <div class="price-stepper-arrows">
+          <button type="button" id="smPctInc"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+          <button type="button" id="smPctDec"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+        </div>
+      </div>
+      <div class="qt-slider-wrap sm-pct-slider-wrap" id="smPctSliderWrap">
+        <input type="range" class="qt-slider" id="smPctSlider" min="0" max="100" step="1" value="25">
+        <div class="qt-slider-bubble" id="smPctSliderBubble">25%</div>
+      </div>
       <div class="sm-stat-row"><span class="l">Account Balance</span><span class="v" id="smPctBal">—</span></div>
       <div class="sm-stat-row"><span class="l">Position Value</span><span class="v" id="smPctPos">—</span></div>
       <div class="sm-stat-row"><span class="l">Estimated Units</span><span class="v" id="smPctQty">—</span></div>
@@ -5593,7 +5604,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=15"></script>
-  <script src="js/app.js?v=241"></script>
+  <script src="js/app.js?v=244"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>

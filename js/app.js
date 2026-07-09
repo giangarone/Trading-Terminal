@@ -962,13 +962,13 @@
     if (order && !order.filled && sym === 'ETHUSD') cancelOrder();
     else showToast('No pending ' + sym + ' orders to cancel', 'info');
   });
-  /* ---------- amount type (Quantity / USD / % of Balance) ---------- */
+  /* ---------- amount type (Units / USD / % of Balance) ---------- */
   const QT_MODES = {
-    Quantity: { unit: qtInstrumentUnit, label: 'Quantity', step: 1, default: '1' },
+    Units: { unit: qtInstrumentUnit, label: 'Units', step: 1, default: '1' },
     USD: { unit: 'USD', label: 'USD Amount', step: 50, default: '100' },
     '% of Balance': { unit: '%', label: '% of Balance', step: 5, default: '10' },
   };
-  let qtAmountMode = 'Quantity';
+  let qtAmountMode = 'Units';
   const qtAmountInput = document.getElementById('qtAmountInput');
   const qtAmountLabel = document.getElementById('qtAmountLabel');
   const qtQtyUnit = document.getElementById('qtQtyUnit');
@@ -985,14 +985,14 @@
 
   function qtModeMax(mode) {
     const price = qtCurrentPrice() || 1;
-    if (mode === 'Quantity') return Math.max(0.01, ACCOUNT_BALANCE / price);
+    if (mode === 'Units') return Math.max(0.01, ACCOUNT_BALANCE / price);
     if (mode === 'USD') return ACCOUNT_BALANCE;
     return 100;
   }
   function qtComputeAmount() {
     const amt = Math.max(0, parseFloat(qtAmountInput.value) || 0);
     const price = qtCurrentPrice() || 1;
-    if (qtAmountMode === 'Quantity') return { qty: amt, usdValue: amt * price };
+    if (qtAmountMode === 'Units') return { qty: amt, usdValue: amt * price };
     if (qtAmountMode === 'USD') return { qty: amt / price, usdValue: amt };
     const usdValue = ACCOUNT_BALANCE * (amt / 100);
     return { qty: usdValue / price, usdValue };
@@ -1054,7 +1054,7 @@
   // Convert a USD value into the amount shown for a given mode — the inverse of qtComputeAmount.
   function qtAmountForMode(usdValue, mode) {
     const price = qtCurrentPrice() || 1;
-    if (mode === 'Quantity') return parseFloat((usdValue / price).toFixed(2));
+    if (mode === 'Units') return parseFloat((usdValue / price).toFixed(2));
     if (mode === 'USD') return Math.max(0, Math.round(usdValue));
     return Math.max(0, parseFloat((usdValue / ACCOUNT_BALANCE * 100).toFixed(1))); // % of Balance
   }
@@ -1101,7 +1101,7 @@
     const pct = parseInt(qtSlider.value, 10);
     const max = qtModeMax(qtAmountMode);
     const raw = pct / 100 * max;
-    qtAmountInput.value = qtAmountMode === 'Quantity' ? parseFloat(raw.toFixed(2)) : Math.max(0, Math.round(raw));
+    qtAmountInput.value = qtAmountMode === 'Units' ? parseFloat(raw.toFixed(2)) : Math.max(0, Math.round(raw));
     qtUpdateEstimates(false);
   });
   // Keep the bubble visible while dragging, even if the pointer leaves the track.
@@ -1125,11 +1125,11 @@
       .join('');
   }
 
-  /* Preset pills are absolute quantities, so clicking one forces Quantity amount type. */
+  /* Preset pills are absolute quantities, so clicking one forces Units amount type. */
   qtQuickAmounts.addEventListener('click', (e) => {
     const btn = e.target.closest('.qt-quick-amount');
     if (!btn) return;
-    if (qtAmountMode !== 'Quantity') qtSetAmountMode('Quantity');
+    if (qtAmountMode !== 'Units') qtSetAmountMode('Units');
     qtAmountInput.value = btn.dataset.amt;
     qtQuickAmounts.querySelectorAll('.qt-quick-amount').forEach(b => b.classList.toggle('active', b === btn));
     qtUpdateEstimates();
@@ -1142,7 +1142,7 @@
     qtAsset = cfg;
     // Crypto shows the coin (ETHUSD → ETH); the others use a fixed unit label.
     qtInstrumentUnit = cat === 'crypto' ? (sym.replace(/USDT?$/, '') || 'ETH') : cfg.unit;
-    QT_MODES.Quantity.unit = qtInstrumentUnit;
+    QT_MODES.Units.unit = qtInstrumentUnit;
 
     // Margin controls: hide the whole bar when neither applies. The Spot/Perp toggle is
     // crypto-only; qtApplyMarginMode fills in Cross/Leverage vs the spot hint.
@@ -1159,7 +1159,7 @@
     document.querySelectorAll('.qt-quote-unit').forEach(el => { el.textContent = qtQuoteCurrency(); });
 
     // Refresh the amount unit + estimates for the new instrument.
-    if (qtAmountMode === 'Quantity') qtQtyUnit.textContent = qtInstrumentUnit;
+    if (qtAmountMode === 'Units') qtQtyUnit.textContent = qtInstrumentUnit;
     qtUpdateEstimates();
   }
 
@@ -6383,6 +6383,8 @@
     sizeMenu.querySelectorAll('.sm-body').forEach(b => b.classList.toggle('active', b.dataset.mode === sizeDraft.sizeMode));
     refreshSizeBodies();
     openNear(sizeMenu, anchorRect, 'left', trigger);
+    // The pre-open refresh runs while the slider is hidden (offsetWidth 0); reposition the bubble now that it's laid out.
+    requestAnimationFrame(smUpdatePctSlider);
   }
   smTabs.querySelectorAll('.sm-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -6411,7 +6413,7 @@
 
   // dollar mode
   const smDolInput = document.getElementById('smDolInput');
-  function setDollar(v) { sizeDraft.sizeValues.dollar = Math.max(500, v); refreshSizeBodies(); }
+  function setDollar(v) { sizeDraft.sizeValues.dollar = Math.max(500, +(Number(v) || 0).toFixed(2)); refreshSizeBodies(); }
   document.getElementById('smDolDec').addEventListener('click', () => setDollar(sizeDraft.sizeValues.dollar - 500));
   document.getElementById('smDolInc').addEventListener('click', () => setDollar(sizeDraft.sizeValues.dollar + 500));
   smDolInput.addEventListener('click', (e) => e.stopPropagation());
@@ -6421,18 +6423,41 @@
     setDollar(v);
   });
 
-  // percent mode
+  // percent mode — a custom-entry stepper and a Quick-Trade-styled slider share one percent value
+  const smPctInput = document.getElementById('smPctInput');
   const smPctSlider = document.getElementById('smPctSlider');
-  smPctSlider.addEventListener('input', () => {
-    sizeDraft.sizeValues.percent = parseInt(smPctSlider.value);
-    refreshSizeBodies();
+  const smPctSliderWrap = document.getElementById('smPctSliderWrap');
+  const smPctSliderBubble = document.getElementById('smPctSliderBubble');
+  function setPercent(v) { sizeDraft.sizeValues.percent = Math.max(0, Math.min(100, +(Number(v) || 0).toFixed(2))); refreshSizeBodies(); }
+  smPctSlider.addEventListener('input', () => setPercent(parseInt(smPctSlider.value, 10)));
+  document.getElementById('smPctInc').addEventListener('click', () => setPercent(sizeDraft.sizeValues.percent + 1));
+  document.getElementById('smPctDec').addEventListener('click', () => setPercent(sizeDraft.sizeValues.percent - 1));
+  smPctInput.addEventListener('click', (e) => e.stopPropagation());
+  smPctInput.addEventListener('change', (e) => {
+    e.stopPropagation();
+    const v = parseFloat((e.target.value || '').replace(/[^0-9.]/g, ''));
+    setPercent(v || 0);
   });
+  // Keep the bubble visible while dragging, even if the pointer leaves the track (matches qtSlider).
+  smPctSlider.addEventListener('pointerdown', () => smPctSliderWrap.classList.add('dragging'));
+  window.addEventListener('pointerup', () => smPctSliderWrap.classList.remove('dragging'));
+
+  // Fill the slider track up to the thumb and position the percentage bubble over it,
+  // mirroring the Quick Trade panel slider (qtSliderFill / qtUpdateSliderBubble).
+  function smUpdatePctSlider() {
+    const pct = sizeDraft ? sizeDraft.sizeValues.percent : 0;
+    smPctSlider.style.background = 'linear-gradient(to right, var(--text-secondary) 0%, var(--text-secondary) ' + pct + '%, var(--border-default) ' + pct + '%, var(--border-default) 100%)';
+    smPctSliderBubble.textContent = pct + '%';
+    const thumbWidth = 16;
+    const usable = smPctSlider.offsetWidth - thumbWidth;
+    smPctSliderBubble.style.left = (thumbWidth / 2 + usable * pct / 100) + 'px';
+  }
 
   function refreshSizeBodies() {
     if (!sizeDraft) return;
     smQtyInput.value = sizeDraft.qty;
     // dollar
-    smDolInput.value = '$' + fmt(sizeDraft.sizeValues.dollar, 0);
+    smDolInput.value = '$' + fmt(sizeDraft.sizeValues.dollar, Number.isInteger(sizeDraft.sizeValues.dollar) ? 0 : 2);
     const dolQty = +(sizeDraft.sizeValues.dollar / MARGIN_PER_CONTRACT).toFixed(2);
     const dolMargin = +(dolQty * MARGIN_PER_CONTRACT).toFixed(2);
     document.getElementById('smDolQty').textContent = fmt(dolQty, 2) + ' ETH';
@@ -6440,8 +6465,9 @@
     document.getElementById('smDolBp').textContent = fmtMoney(BUYING_POWER - dolMargin);
 
     // percent
-    document.getElementById('smPctDisplay').textContent = sizeDraft.sizeValues.percent + '%';
+    smPctInput.value = sizeDraft.sizeValues.percent + '%';
     smPctSlider.value = sizeDraft.sizeValues.percent;
+    smUpdatePctSlider();
     const posVal = ACCOUNT_BALANCE * sizeDraft.sizeValues.percent / 100;
     const pctQty = +(posVal / MARGIN_PER_CONTRACT).toFixed(2);
     const pctMargin = +(pctQty * MARGIN_PER_CONTRACT).toFixed(2);
@@ -6473,16 +6499,24 @@
     const riskDollars = effectiveRiskDollars(sizeDraft.sizeValues, mode);
 
     const pctVal = sizeDraft.sizeValues.riskPct || 0;
+    // Shared markup for the stacked-arrow price stepper; the buttons keep their per-mode ids so the existing handlers bind.
+    const riskStepper = (value) =>
+      '<div class="price-stepper">' +
+        '<input type="text" id="' + p + 'Input" value="' + value + '">' +
+        '<div class="price-stepper-arrows">' +
+          '<button type="button" id="' + p + 'Inc"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>' +
+          '<button type="button" id="' + p + 'Dec"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>' +
+        '</div>' +
+      '</div>';
     const inputBlock = isPct
       ? '<label class="sm-amount-lbl">Risk (% of Account)</label>' +
-        '<div class="sm-stepper"><button id="' + p + 'Dec">−</button><input type="text" id="' + p + 'Input" value="' + (Number.isInteger(pctVal) ? pctVal : pctVal.toFixed(2)) + '%"><button id="' + p + 'Inc">+</button></div>' +
+        riskStepper((Number.isInteger(pctVal) ? pctVal : pctVal.toFixed(2)) + '%') +
         '<div class="sm-stat-row"><span class="l">Risk Amount</span><span class="v">' + fmtMoney(riskDollars) + '</span></div>'
       : '<label class="sm-amount-lbl">Risk Amount (USD)</label>' +
-        '<div class="sm-stepper"><button id="' + p + 'Dec">−</button><input type="text" id="' + p + 'Input" value="$' + fmt(sizeDraft.sizeValues.risk, Number.isInteger(sizeDraft.sizeValues.risk) ? 0 : 2) + '"><button id="' + p + 'Inc">+</button></div>';
+        riskStepper('$' + fmt(sizeDraft.sizeValues.risk, Number.isInteger(sizeDraft.sizeValues.risk) ? 0 : 2));
 
     body.innerHTML =
       inputBlock +
-      '<div class="sm-divider"></div>' +
       '<div class="sm-stat-row"><span class="l">Stop Distance</span><span class="v">' + fmt(stopDist, 2) + ' pts</span></div>' +
       '<div class="sm-stat-row"><span class="l">Risk per Unit</span><span class="v">' + fmtMoney(riskPerContract) + '</span></div>' +
       '<div id="' + p + 'CalcSlot"></div>';
@@ -6494,7 +6528,6 @@
     if (calcQty === 0) {
       // Stop-loss too far (or risk amount too small): quantity floors to 0, no position possible.
       slot.innerHTML =
-        '<div class="sm-divider"></div>' +
         '<div class="sm-state-banner warn"><span class="material-symbols-outlined">error</span>Stop-loss exceeds risk limit</div>' +
         '<div class="sm-note warn">Move the stop-loss closer or increase your risk amount to open a position.</div>';
     } else if (sufficient) {
@@ -6502,7 +6535,6 @@
         '<div class="sm-stat-row"><span class="l">Calculated Units</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
         '<div class="sm-stat-row"><span class="l">Margin Required</span><span class="v">' + fmtMoney(marginReq) + '</span></div>' +
         '<div class="sm-stat-row"><span class="l">Buying Power Available</span><span class="v up">' + fmtMoney(BUYING_POWER - marginReq) + '</span></div>' +
-        '<div class="sm-divider"></div>' +
         '<div class="sm-state-banner ok"><span class="material-symbols-outlined">check_circle</span>Sufficient Buying Power</div>' +
         '<div class="sm-note">Position size auto-adjusts when the stop loss is moved.</div>';
     } else {
@@ -6512,7 +6544,6 @@
         '<div class="sm-stat-row"><span class="l">Calculated Units</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
         '<div class="sm-stat-row"><span class="l">Max Available Units</span><span class="v">' + maxQty.toFixed(2) + ' ETH</span></div>' +
         '<div class="sm-stat-row"><span class="l">Actual Risk</span><span class="v">' + fmtMoney(actualRisk) + '</span></div>' +
-        '<div class="sm-divider"></div>' +
         '<div class="sm-state-banner bad"><span class="material-symbols-outlined">error</span>Insufficient Buying Power</div>' +
         '<div class="sm-options">' +
         '<span class="sm-options-lbl">Options</span>' +
