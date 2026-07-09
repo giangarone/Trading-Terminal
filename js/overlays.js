@@ -19,7 +19,8 @@ if (newsToggle) newsToggle.addEventListener('click', () => {
   const panel = document.getElementById('quickOrderPanel');
   if (!toggle || !panel) return;
 
-  const AVAILABLE_BALANCE = 52430.00; // mirrors QT_AVAILABLE_BALANCE in app.js
+  // Reads the single account-balance source of truth exposed by app.js (falls back if not yet loaded).
+  const availableBalance = () => (window.getAccountBalance ? window.getAccountBalance() : 52430.00);
   const buyBtn = document.getElementById('quickOrderBuy');
   const sellBtn = document.getElementById('quickOrderSell');
   const amountInput = document.getElementById('quickOrderAmount');
@@ -73,7 +74,7 @@ if (newsToggle) newsToggle.addEventListener('click', () => {
       const pct = parseFloat(btn.dataset.pct) || 0;
       const price = currentPrice();
       if (!price) return;
-      const qty = (pct / 100) * AVAILABLE_BALANCE / price;
+      const qty = (pct / 100) * availableBalance() / price;
       amountInput.value = qty.toFixed(2);
       amountInput.focus();
     });

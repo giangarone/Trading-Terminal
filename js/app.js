@@ -15,7 +15,12 @@
   const VISIBLE_BARS = 90;         // default on-screen candle density; older bars sit off to the left, reachable by panning
   const MARGIN_PER_CONTRACT = 13200; // mock margin / contract (ballpark ES futures margin)
   const BUYING_POWER = 87643.20;   // matches Order Entry panel
-  const ACCOUNT_BALANCE = 20000;   // mock, used for % of Account mode
+  // Single source of truth for the active account's balance. Seeded to the default account (BloFin) and
+  // kept in sync by the topbar account switcher (renderAccountSelect). Everything that needs the account
+  // balance — chart % sizing, the Quick Trade panel, the quick-order overlay, the Default Size readout —
+  // reads this so they can never disagree again. Exposed on window for the overlays.js IIFE.
+  let ACCOUNT_BALANCE = 52430.00;
+  window.getAccountBalance = () => ACCOUNT_BALANCE;
   const TP_TRAIL_DEFAULT = { offsetValue: 0.05, offsetUnit: 'percent' }; // seed for a TP's trailing offset
 
   const chart = document.getElementById('chartPlaceholder');
@@ -579,7 +584,6 @@
 
   /* ---------- Quick Trade panel ---------- */
   let qtInstrumentUnit = 'ETH';          // amount unit for the Quick Trade panel — reset per asset class on symbol switch
-  const QT_AVAILABLE_BALANCE = 52430.00;
   const QT_FEE_PER_CONTRACT = 1.25;
   const QT_MAINT_MARGIN_RATE = 0.005; // mockup maintenance-margin rate for the Liq. Price estimate
 
@@ -945,8 +949,8 @@
 
   function qtModeMax(mode) {
     const price = qtCurrentPrice() || 1;
-    if (mode === 'Quantity') return Math.max(0.01, QT_AVAILABLE_BALANCE / price);
-    if (mode === 'USD') return QT_AVAILABLE_BALANCE;
+    if (mode === 'Quantity') return Math.max(0.01, ACCOUNT_BALANCE / price);
+    if (mode === 'USD') return ACCOUNT_BALANCE;
     return 100;
   }
   function qtComputeAmount() {
@@ -954,7 +958,7 @@
     const price = qtCurrentPrice() || 1;
     if (qtAmountMode === 'Quantity') return { qty: amt, usdValue: amt * price };
     if (qtAmountMode === 'USD') return { qty: amt / price, usdValue: amt };
-    const usdValue = QT_AVAILABLE_BALANCE * (amt / 100);
+    const usdValue = ACCOUNT_BALANCE * (amt / 100);
     return { qty: usdValue / price, usdValue };
   }
   function qtFmtQty(q) {
@@ -980,7 +984,7 @@
     qtEstSize.textContent = qtyDisp + ' ' + qtInstrumentUnit;
     qtEstValue.textContent = fmt(usdValue) + ' ' + quote;
     qtEstFees.textContent = fmt(Math.max(0, qty) * QT_FEE_PER_CONTRACT) + ' ' + quote;
-    qtAvailable.textContent = fmt(QT_AVAILABLE_BALANCE) + ' ' + quote;
+    qtAvailable.textContent = fmt(ACCOUNT_BALANCE) + ' ' + quote;
 
     // Leverage-driven stats: Cost (margin posted) and Liq. Price.
     const applies = qtLeverageApplies();
@@ -997,7 +1001,7 @@
       const drop = (1 / lev) - QT_MAINT_MARGIN_RATE; // fractional distance entry → liq
       let cushion = 0;
       if (qtMarginMode() === 'cross' && usdValue > 0) {
-        cushion = Math.min(drop, (QT_AVAILABLE_BALANCE / usdValue) * QT_MAINT_MARGIN_RATE * lev);
+        cushion = Math.min(drop, (ACCOUNT_BALANCE / usdValue) * QT_MAINT_MARGIN_RATE * lev);
       }
       const liq = price * (1 - drop - cushion);
       qtCost.textContent = fmt(margin) + ' ' + quote;
@@ -1016,7 +1020,7 @@
     const price = qtCurrentPrice() || 1;
     if (mode === 'Quantity') return parseFloat((usdValue / price).toFixed(2));
     if (mode === 'USD') return Math.max(0, Math.round(usdValue));
-    return Math.max(0, parseFloat((usdValue / QT_AVAILABLE_BALANCE * 100).toFixed(1))); // % of Balance
+    return Math.max(0, parseFloat((usdValue / ACCOUNT_BALANCE * 100).toFixed(1))); // % of Balance
   }
   function qtSetAmountMode(mode) {
     // Preserve the entered value across modes by converting through its USD value
@@ -3831,6 +3835,9 @@
   const accountSelectList = document.getElementById('accountSelectList');
   function renderAccountSelect() {
     const acct = ACCOUNTS.find(a => a.id === selectedAccountId);
+    // Keep the single balance source of truth in sync with the selected account so chart % sizing,
+    // Quick Trade, the quick-order overlay, and the Default Size readout all reflect the same figure.
+    ACCOUNT_BALANCE = acct.balance;
     document.getElementById('accountSelectName').textContent = acct.id;
     document.getElementById('accountSelectBalance').textContent = fmtMoney(acct.balance);
     accountSelectList.innerHTML = ACCOUNTS.map(a =>
@@ -3844,6 +3851,9 @@
         e.stopPropagation();
         selectedAccountId = it.dataset.account;
         renderAccountSelect();
+        // The active balance just changed — refresh anything that displays or sizes off it.
+        qtUpdateEstimates();
+        updatePdBalanceDisplay();
         closeAllPopovers();
         showToast('Switched to ' + selectedAccountId, 'account_balance');
       });
@@ -4540,18 +4550,34 @@
     risk_pct: { label: 'Default Risk %', unit: '%', step: 0.25, default: '1' },
     risk_dollar: { label: 'Default Risk $', unit: '$', step: 50, default: '250' },
   };
+  // Sizing modes whose default value is expressed relative to the account balance — these show the
+  // balance readout for context. Contracts / Shares are absolute, so the readout is hidden for them.
+  const PD_BALANCE_RELATIVE_MODES = ['dollar', 'pct_equity', 'risk_pct', 'risk_dollar'];
   const pdSizingMethodGroup = document.getElementById('pdSizingMethodGroup');
   const pdDefaultSize = document.getElementById('pdDefaultSize');
   const pdDefaultSizeUnit = document.getElementById('pdDefaultSizeUnit');
   const pdDefaultSizeLabel = document.getElementById('pdDefaultSizeLabel');
-  function pdApplySizeMode() {
+  function pdActiveSizingMethod() {
     const activeRow = pdSizingMethodGroup.querySelector('.cs-radio-row.active');
-    const method = activeRow ? activeRow.dataset.sizing : 'contracts';
+    return activeRow ? activeRow.dataset.sizing : 'contracts';
+  }
+  /* Refresh the account-balance readout: keep it current with the active account and show it only for
+     balance-relative sizing modes. */
+  function updatePdBalanceDisplay() {
+    const readout = document.getElementById('pdBalanceReadout');
+    const value = document.getElementById('pdBalanceValue');
+    if (!readout || !value) return;
+    value.textContent = fmtMoney(ACCOUNT_BALANCE);
+    readout.style.display = PD_BALANCE_RELATIVE_MODES.includes(pdActiveSizingMethod()) ? '' : 'none';
+  }
+  function pdApplySizeMode() {
+    const method = pdActiveSizingMethod();
     const cfg = PD_SIZE_MODES[method] || PD_SIZE_MODES.contracts;
     pdDefaultSizeLabel.textContent = cfg.label;
     pdDefaultSizeUnit.textContent = cfg.unit;
     pdDefaultSize.dataset.step = cfg.step;
     pdDefaultSize.value = cfg.default;
+    updatePdBalanceDisplay();
   }
   pdSizingMethodGroup.querySelectorAll('.cs-radio-row').forEach(row => {
     row.addEventListener('click', pdApplySizeMode);
