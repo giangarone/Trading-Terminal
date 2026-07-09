@@ -448,7 +448,7 @@
 }
 
 /* Conversion readout under the Default Size input, for the balance-relative sizing modes (Dollar Amount,
-   % Equity, Risk %, Risk $; hidden for Contracts / Shares). Structured as an explicit equation — the
+   % Equity, Risk %, Risk $; the equation is hidden for Quantity, which shows only the balance). Structured as an explicit equation — the
    entered value is echoed on the left, "=", then its equivalent — so it's unmistakably a conversion of
    what was typed above. The account balance sits below as the reference it's measured against, both
    grouped in one inset panel that reads as an extension of the field. */

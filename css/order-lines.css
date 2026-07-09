@@ -310,6 +310,13 @@
   background: var(--bg-base);
 }
 
+/* Risk $ sizing with no stop loss: the quantity can't be computed, so the size segment shows the same
+   amber warning icon used for invalid TP/SL chips instead of a misleading number. */
+.ol-pill-warning {
+  font-size: 13px !important;
+  color: var(--accent);
+}
+
 .ol-pill-divider {
   width: 1px;
   height: 100%;

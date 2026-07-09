@@ -22,10 +22,10 @@
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=22">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=43">
+  <link rel="stylesheet" href="css/order-lines.css?v=44">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
   <link rel="stylesheet" href="css/indicators.css?v=12">
-  <link rel="stylesheet" href="css/chart-settings.css?v=39">
+  <link rel="stylesheet" href="css/chart-settings.css?v=41">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
   <link rel="stylesheet" href="css/quick-order.css?v=5">
@@ -989,28 +989,22 @@
                       <div class="cs-field">
                         <label>Position Sizing</label>
                         <div class="cs-radio-group" id="pdSizingMethodGroup">
-                          <div class="cs-radio-row active" data-sizing="contracts">
+                          <div class="cs-radio-row active" data-sizing="quantity">
                             <span class="cs-radio-dot"></span>
                             <span class="cs-radio-text">
-                              <span class="cs-radio-title">Contracts</span>
-                            </span>
-                          </div>
-                          <div class="cs-radio-row" data-sizing="shares">
-                            <span class="cs-radio-dot"></span>
-                            <span class="cs-radio-text">
-                              <span class="cs-radio-title">Shares</span>
+                              <span class="cs-radio-title">Units</span>
                             </span>
                           </div>
                           <div class="cs-radio-row" data-sizing="dollar">
                             <span class="cs-radio-dot"></span>
                             <span class="cs-radio-text">
-                              <span class="cs-radio-title">Dollar Amount</span>
+                              <span class="cs-radio-title">USD</span>
                             </span>
                           </div>
                           <div class="cs-radio-row" data-sizing="pct_equity">
                             <span class="cs-radio-dot"></span>
                             <span class="cs-radio-text">
-                              <span class="cs-radio-title">% Equity</span>
+                              <span class="cs-radio-title">% Account</span>
                             </span>
                           </div>
                           <div class="cs-radio-row" data-sizing="risk_pct">
@@ -1030,10 +1024,10 @@
                     </div>
                     <div class="cs-fields-row cs-fields-row--single">
                       <div class="cs-field">
-                        <label id="pdDefaultSizeLabel">Default Contracts</label>
+                        <label id="pdDefaultSizeLabel">Default Units</label>
                         <div class="price-stepper cs-price-stepper">
                           <input type="text" id="pdDefaultSize" value="1" data-step="1" data-decimals="2">
-                          <span class="cs-stepper-unit" id="pdDefaultSizeUnit">contracts</span>
+                          <span class="cs-stepper-unit" id="pdDefaultSizeUnit">units</span>
                           <div class="price-stepper-arrows">
                             <button type="button" class="ps-up" data-target="pdDefaultSize"><span
                                 class="material-symbols-outlined">keyboard_arrow_up</span></button>
@@ -5206,14 +5200,14 @@
   <!-- ===================== SIZE & MODE DROPDOWN ===================== -->
   <div class="pop-menu size-menu" id="sizeMenu">
     <div class="sm-tabs" id="smTabs">
-      <button class="sm-tab" data-mode="contracts">Contracts</button>
-      <button class="sm-tab" data-mode="dollar">$ Amount</button>
+      <button class="sm-tab" data-mode="contracts">Units</button>
+      <button class="sm-tab" data-mode="dollar">USD</button>
       <button class="sm-tab" data-mode="percent">% Account</button>
       <button class="sm-tab" data-mode="risk">Risk $</button>
     </div>
 
     <div class="sm-body" data-mode="contracts">
-      <label class="sm-amount-lbl">Quantity</label>
+      <label class="sm-amount-lbl">Units</label>
       <div class="sm-stepper">
         <button id="smQtyDec">−</button>
         <input type="text" id="smQtyInput" value="1">
@@ -5233,7 +5227,7 @@
         <button id="smDolInc">+</button>
       </div>
       <div class="sm-divider"></div>
-      <div class="sm-stat-row"><span class="l">Estimated Quantity</span><span class="v" id="smDolQty">—</span></div>
+      <div class="sm-stat-row"><span class="l">Estimated Units</span><span class="v" id="smDolQty">—</span></div>
       <div class="sm-stat-row"><span class="l">Est. Margin Required</span><span class="v" id="smDolMargin">—</span>
       </div>
       <div class="sm-stat-row"><span class="l">Buying Power Available</span><span class="v up" id="smDolBp">—</span>
@@ -5247,7 +5241,7 @@
       <div class="sm-divider"></div>
       <div class="sm-stat-row"><span class="l">Account Balance</span><span class="v" id="smPctBal">—</span></div>
       <div class="sm-stat-row"><span class="l">Position Value</span><span class="v" id="smPctPos">—</span></div>
-      <div class="sm-stat-row"><span class="l">Estimated Quantity</span><span class="v" id="smPctQty">—</span></div>
+      <div class="sm-stat-row"><span class="l">Estimated Units</span><span class="v" id="smPctQty">—</span></div>
       <div class="sm-stat-row"><span class="l">Est. Margin Required</span><span class="v" id="smPctMargin">—</span>
       </div>
     </div>
@@ -5597,7 +5591,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=15"></script>
-  <script src="js/app.js?v=233"></script>
+  <script src="js/app.js?v=240"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>

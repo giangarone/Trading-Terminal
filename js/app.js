@@ -54,7 +54,9 @@
     atrStop: { multiplier: 2.0 },
     trailingTp: { distanceValue: 0.5, distanceUnit: 'percent' },
     globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true, lockRR: false },
-    positionDefaults: { orderType: 'limit', quickMarketSize: '1' },
+    // sizingMethod + defaultSize drive the size of chart right-click "Buy/Sell @ price" trades (the
+    // Default Size card). quickMarketSize is separate — it only sizes the right-click "Buy/Sell Market" actions.
+    positionDefaults: { orderType: 'limit', quickMarketSize: '1', sizingMethod: 'quantity', defaultSize: '1' },
     news: {
       position: 'by-sentiment',
       sentimentFilter: 'all',
@@ -293,7 +295,7 @@
     e.preventDefault();
     const rect = chart.getBoundingClientRect();
     pendingClickPrice = roundTick(yToPrice(e.clientY - rect.top, rect.height));
-    const qty = parseFloat(qtyInput.value || '1') || 1;
+    const qty = resolveChartTradeQty();
     const lastEl = document.getElementById('hdrLast');
     const currentPrice = lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
     const below = pendingClickPrice < currentPrice;
@@ -306,8 +308,17 @@
     ctxQuickMarketShortLbl.textContent = 'Sell Market ' + quickMarketQtyStr + ' ETH';
     openAt(ctxMenu, e.clientX, e.clientY);
   });
-  document.getElementById('ctxLong').addEventListener('click', () => { createOrder('buy', pendingClickPrice); closeAllPopovers(); });
-  document.getElementById('ctxShort').addEventListener('click', () => { createOrder('sell', pendingClickPrice); closeAllPopovers(); });
+  // Chart right-click "Buy/Sell @ price" trades size themselves from the Position Sizing default (Default
+  // Size card in Trade Defaults). createOrder reads the shared qtyInput, so bridge the resolved quantity
+  // through it and restore the panel value afterward (same pattern as the quick-market fills).
+  function placeChartLimitTrade(side) {
+    const prevVal = qtyInput.value;
+    qtyInput.value = resolveChartTradeQty();
+    createOrder(side, pendingClickPrice);
+    qtyInput.value = prevVal;
+  }
+  document.getElementById('ctxLong').addEventListener('click', () => { placeChartLimitTrade('buy'); closeAllPopovers(); });
+  document.getElementById('ctxShort').addEventListener('click', () => { placeChartLimitTrade('sell'); closeAllPopovers(); });
   document.getElementById('ctxQuickMarketLong').addEventListener('click', () => { fillQuickMarketOrder('buy'); closeAllPopovers(); });
   document.getElementById('ctxQuickMarketShort').addEventListener('click', () => { fillQuickMarketOrder('sell'); closeAllPopovers(); });
 
@@ -528,14 +539,20 @@
         sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), enabled: false, mode: 'trailing', autoTrailing: false, atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
       }
     }
+    // Chart trades inherit the Position Sizing default. Risk modes hand the order its risk-$ intent so it sizes
+    // live from the stop loss (and blocks placement until one exists); other modes keep the fixed qty resolved
+    // by placeChartLimitTrade. Quick Trade panel orders (source==='quick') are unaffected.
+    const pd = chartSettings.positionDefaults;
+    const useRiskSizing = isChartTrade && PD_RISK_MODES.includes(pd.sizingMethod);
     order = {
       side, entry, qty: parseFloat(qtyInput.value) || 1, orderType, fillAbove,
-      sizeMode: 'contracts', filled: false, filledQty: 0,
+      sizeMode: useRiskSizing ? 'risk' : 'contracts', filled: false, filledQty: 0,
       pendingConfirm: isChartTrade,
-      sizeValues: { dollar: 5000, percent: 25, risk: 500 },
+      sizeValues: { dollar: 5000, percent: 25, risk: useRiskSizing ? pdDefaultRiskDollars(pd) : 500 },
       tps, sl, tpsHitCount: 0,
       initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null
     };
+    if (useRiskSizing) syncQtyFromRisk(); // compute qty now if Expanded auto-attached an SL; no-op without one
     render();
   }
 
@@ -2064,6 +2081,12 @@
      floored quantity to 0 — no position can be opened. Shared by the size menu, the on-chart
      SL chip, and the live-drag toggle so the check stays in one place. */
   const RISK_LIMIT_MSG = 'The selected stop-loss exceeds your risk limit. Move the stop-loss closer or increase your risk amount.';
+  /* Risk $ sizing derives quantity from the stop-loss distance, so with no stop the size can't be computed.
+     Block placement and surface a warning (on the size pill) instead of a misleading number. */
+  const RISK_NO_SL_MSG = 'Add a stop loss to size this order by your risk amount.';
+  function riskNeedsStop() {
+    return !!order && order.sizeMode === 'risk' && !order.sl;
+  }
   function riskLimitExceeded() {
     if (!order || order.sizeMode !== 'risk' || !order.sl) return false;
     const stopDist = Math.abs(order.entry - order.sl.price);
@@ -2144,7 +2167,7 @@
   /* Reasons an otherwise-placeable order still can't be submitted: a TP/SL on the wrong side
      of price, or (Risk $ mode) a stop-loss so far it drives the quantity to 0. */
   function orderPlaceBlocked() {
-    return !orderTpSlValid() || riskLimitExceeded();
+    return !orderTpSlValid() || riskLimitExceeded() || riskNeedsStop();
   }
   /* toggle the entry chip's disabled state without a full render(), so it reacts live while dragging */
   function updateEntryPlaceableState() {
@@ -3621,7 +3644,12 @@
         ? '<span class="ol-chip ghost sl-add" id="slAddHandle">SL</span>'
         : '';
 
-      const sizeLabel = sizePillLabel();
+      // Risk $ with no stop loss can't be sized: show the same amber warning icon used for invalid TP/SL chips
+      // in the Quantity segment (with a hover tooltip) instead of a misleading number.
+      const sizeSegHtml = riskNeedsStop()
+        ? '<span class="ol-pill-seg ol-pill-seg--warn" id="sizePillTrigger"' + warnTipAttr(RISK_NO_SL_MSG) + '>' +
+            '<span class="material-symbols-outlined ol-pill-warning">error</span></span>'
+        : '<span class="ol-pill-seg" id="sizePillTrigger" data-tooltip="Quantity">' + sizePillLabel() + '</span>';
 
       if (!order.filled) {
         // Resting/working order: placed and waiting for price to reach entry
@@ -3639,13 +3667,13 @@
           '<span class="material-symbols-outlined">swap_vert</span>' +
           '</span>' +
 
-          '<span class="' + entryClass + '" id="entryPriceHandle">' +
+          '<span class="' + entryClass + '" id="entryPriceHandle"' + (riskNeedsStop() ? warnTipAttr(RISK_NO_SL_MSG) : '') + '>' +
           '<span class="ol-chip-fill"></span>' +
           '<span class="ol-chip-lbl">' + sideLabel + '</span>' +
           '</span>' +
 
           '<span class="ol-pill neutral combo" id="orderConfigPill">' +
-          '<span class="ol-pill-seg" id="sizePillTrigger" data-tooltip="Quantity">' + sizeLabel + '</span>' +
+          sizeSegHtml +
           '<span class="ol-pill-divider"></span>' +
           '<span class="ol-pill-seg" id="typePillTrigger" data-tooltip="Order Type">' + order.orderType + '</span>' +
           '</span>' +
@@ -4555,29 +4583,34 @@
   }
 
   /* ---------- Chart Trades: Default Size field tracks the selected sizing method ---------- */
+  // csSlDraft is declared here (ahead of the targets/SL table below) because the risk-sizing note reads it.
+  let csSlDraft = null;
   const PD_SIZE_MODES = {
-    contracts: { label: 'Default Contracts', unit: 'contracts', step: 1, default: '1' },
-    shares: { label: 'Default Shares', unit: 'shares', step: 1, default: '1' },
-    dollar: { label: 'Default Dollar Amount', unit: '$', step: 50, default: '500' },
-    pct_equity: { label: 'Default % of Equity', unit: '%', step: 1, default: '5' },
+    // Quantity is a universal unit count — these are global defaults, so the unit stays neutral ("units")
+    // rather than borrowing a specific asset's term (contracts / shares / lots). On a trade it becomes
+    // that many of whatever the symbol uses.
+    quantity: { label: 'Default Units', unit: 'units', step: 1, default: '1' },
+    dollar: { label: 'Default USD Amount', unit: '$', step: 50, default: '500' },
+    pct_equity: { label: 'Default % of Account', unit: '%', step: 1, default: '5' },
     risk_pct: { label: 'Default Risk %', unit: '%', step: 0.25, default: '1' },
     risk_dollar: { label: 'Default Risk $', unit: '$', step: 50, default: '250' },
   };
   // Modes whose default is expressed relative to the account balance. The balance readout and the
-  // size↔balance translation apply only to these — Contracts / Shares are absolute unit counts with
-  // no reliable per-instrument price in this generic pane, so there's nothing to translate.
+  // size↔balance translation apply only to these — Quantity is an absolute unit count with nothing to translate.
   const PD_BALANCE_RELATIVE_MODES = ['dollar', 'pct_equity', 'risk_pct', 'risk_dollar'];
+  // Modes that size from a risk budget, and so need a default Stop Loss to measure risk per unit.
+  const PD_RISK_MODES = ['risk_pct', 'risk_dollar'];
   const pdSizingMethodGroup = document.getElementById('pdSizingMethodGroup');
   const pdDefaultSize = document.getElementById('pdDefaultSize');
   const pdDefaultSizeUnit = document.getElementById('pdDefaultSizeUnit');
   const pdDefaultSizeLabel = document.getElementById('pdDefaultSizeLabel');
   function pdActiveSizingMethod() {
     const activeRow = pdSizingMethodGroup.querySelector('.cs-radio-row.active');
-    return activeRow ? activeRow.dataset.sizing : 'contracts';
+    return activeRow ? activeRow.dataset.sizing : 'quantity';
   }
-  /* Refresh the account-balance readout: keep it current with the active account. The Available balance
-     row shows for every mode; the conversion equation only for balance-relative modes (Contracts / Shares
-     are absolute unit counts with nothing to translate, so they display the balance alone). */
+  /* Refresh the account-balance readout: keep it current with the active account. The Account Balance
+     row shows for every mode; the conversion equation only for balance-relative modes (Quantity is an
+     absolute unit count with nothing to translate, so it displays the balance alone). */
   function updatePdBalanceDisplay() {
     const panel = document.getElementById('pdSizeConvert');
     const value = document.getElementById('pdBalanceValue');
@@ -4621,15 +4654,20 @@
     inEl.textContent = echo;
     outEl.textContent = equiv;
   }
-  function pdApplySizeMode() {
-    const method = pdActiveSizingMethod();
-    const cfg = PD_SIZE_MODES[method] || PD_SIZE_MODES.contracts;
+  /* Apply a sizing mode's label / unit / step to the Default Size field. valueOverride restores a persisted
+     value (used when loading saved settings); without it the field resets to the mode's own default. */
+  function pdApplyModeConfig(method, valueOverride) {
+    const cfg = PD_SIZE_MODES[method] || PD_SIZE_MODES.quantity;
     pdDefaultSizeLabel.textContent = cfg.label;
     pdDefaultSizeUnit.textContent = cfg.unit;
     pdDefaultSize.dataset.step = cfg.step;
-    pdDefaultSize.value = cfg.default;
+    pdDefaultSize.value = (valueOverride != null && valueOverride !== '') ? valueOverride : cfg.default;
     updatePdBalanceDisplay();
     updatePdSizeConversion();
+  }
+  // Radio click: switch to the clicked mode and reset the value to that mode's default.
+  function pdApplySizeMode() {
+    pdApplyModeConfig(pdActiveSizingMethod());
   }
   pdSizingMethodGroup.querySelectorAll('.cs-radio-row').forEach(row => {
     row.addEventListener('click', pdApplySizeMode);
@@ -4641,6 +4679,38 @@
   document.querySelectorAll('.ps-up[data-target="pdDefaultSize"], .ps-down[data-target="pdDefaultSize"]')
     .forEach(btn => btn.addEventListener('click', updatePdSizeConversion));
   pdApplySizeMode();
+
+  /* Resolve the quantity for a chart right-click "Buy/Sell @ price" trade from the saved Position Sizing
+     default. Quantity mode uses the number verbatim; Dollar / % Equity convert to a unit count using the
+     live price. Risk modes don't resolve to a fixed number here — the pending order carries the risk-$ intent
+     and sizes live from its stop loss (see createOrder / syncQtyFromRisk); this returns only a preview/fallback
+     matching the default stop-loss distance when Expanded auto-attaches one, else 1. Counts round down, floor 1. */
+  const PD_BASE_R_POINTS = 2; // price distance representing 1.0R — matches createOrder's baseR
+  function resolveChartTradeQty() {
+    const pd = chartSettings.positionDefaults;
+    const method = pd.sizingMethod || 'quantity';
+    const value = parseFloat(String(pd.defaultSize).replace(/[$,%\s]/g, '')) || 0;
+    if (method === 'quantity') return value > 0 ? value : 1;
+
+    const unitNotional = qtCurrentPrice() * POINT_VALUE; // $ value of one unit at the live price
+    const floorQty = (q) => (q > 0 && isFinite(q)) ? Math.max(1, Math.floor(q)) : 1;
+
+    if (method === 'dollar') return floorQty(value / unitNotional);
+    if (method === 'pct_equity') return floorQty((ACCOUNT_BALANCE * value / 100) / unitNotional);
+
+    // Risk-mode preview: matches the qty the pending order will show once the default stop attaches (Expanded).
+    // Condensed attaches no stop, so there's nothing to preview against → 1 (the order shows a warning instead).
+    const sl = chartSettings.tpSlDisplayMode === 'expanded' ? chartSettings.defaultStopLoss : null;
+    if (!sl) return 1;
+    const riskPerUnit = sl.r * PD_BASE_R_POINTS * POINT_VALUE;
+    const riskDollars = pdDefaultRiskDollars(pd);
+    return riskPerUnit > 0 ? floorQty(riskDollars / riskPerUnit) : 1;
+  }
+  /* The risk budget (in $) a Risk-mode default represents: Risk $ verbatim, Risk % as a share of balance. */
+  function pdDefaultRiskDollars(pd) {
+    const value = parseFloat(String(pd.defaultSize).replace(/[$,%\s]/g, '')) || 0;
+    return pd.sizingMethod === 'risk_pct' ? (ACCOUNT_BALANCE * value / 100) : value;
+  }
 
   function bindColorSwatchMenu(triggerId, menuId, swatchId) {
     const trigger = document.getElementById(triggerId);
@@ -4678,7 +4748,6 @@
   });
   /* ---------- default targets / stop loss table (Expanded mode entry defaults) ---------- */
   let csTargetsDraft = [];
-  let csSlDraft = null;
   const CS_MAX_TARGETS = 5;
   function renderTargetsTable() {
     const rowsEl = document.getElementById('csTargetRows');
@@ -4779,6 +4848,13 @@
     document.getElementById('pdOrderType').value = s.positionDefaults.orderType;
     document.getElementById('pdQuickMarketSize').value = s.positionDefaults.quickMarketSize;
 
+    // Restore the Default Size card: activate the saved sizing method, then apply its saved value (not the
+    // mode default). csSlDraft is already set above, so the risk note reflects the correct SL state.
+    const pdMethod = s.positionDefaults.sizingMethod || 'quantity';
+    pdSizingMethodGroup.querySelectorAll('.cs-radio-row')
+      .forEach(r => r.classList.toggle('active', r.dataset.sizing === pdMethod));
+    pdApplyModeConfig(pdMethod, s.positionDefaults.defaultSize);
+
     const sn = s.news || CS_DEFAULTS.news;
     document.querySelectorAll('#csNewsPositionGroup .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.mode === sn.position));
     document.querySelectorAll('#csNewsSentimentGroup .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.mode === sn.sentimentFilter));
@@ -4838,6 +4914,10 @@
         quickMarketSize: (parseFloat(document.getElementById('pdQuickMarketSize').value) > 0
           ? document.getElementById('pdQuickMarketSize').value
           : '1'),
+        sizingMethod: pdActiveSizingMethod(),
+        defaultSize: (pdParseSize() > 0
+          ? pdDefaultSize.value
+          : (PD_SIZE_MODES[pdActiveSizingMethod()] || PD_SIZE_MODES.quantity).default),
       },
       news: {
         position: document.querySelector('#csNewsPositionGroup .cs-radio-row.active')?.dataset.mode || 'by-sentiment',
@@ -6366,7 +6446,7 @@
         '<div class="sm-stepper"><button id="smRiskDec">−</button><input type="text" id="smRiskInput" value="$' + fmt(sizeDraft.sizeValues.risk, Number.isInteger(sizeDraft.sizeValues.risk) ? 0 : 2) + '"><button id="smRiskInc">+</button></div>' +
         '<div class="sm-divider"></div>' +
         '<div class="sm-stat-row"><span class="l">Stop Distance</span><span class="v">' + fmt(stopDist, 2) + ' pts</span></div>' +
-        '<div class="sm-stat-row"><span class="l">Risk per Contract</span><span class="v">' + fmtMoney(riskPerContract) + '</span></div>' +
+        '<div class="sm-stat-row"><span class="l">Risk per Unit</span><span class="v">' + fmtMoney(riskPerContract) + '</span></div>' +
         '<div id="smRiskCalcSlot"></div>';
       const calcQty = riskPerContract > 0 ? Math.floor(sizeDraft.sizeValues.risk / riskPerContract * 100) / 100 : 0;
       const marginReq = calcQty * MARGIN_PER_CONTRACT;
@@ -6380,7 +6460,7 @@
           '<div class="sm-note warn">Move the stop-loss closer or increase your risk amount to open a position.</div>';
       } else if (sufficient) {
         slot.innerHTML =
-          '<div class="sm-stat-row"><span class="l">Calculated Quantity</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
+          '<div class="sm-stat-row"><span class="l">Calculated Units</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
           '<div class="sm-stat-row"><span class="l">Margin Required</span><span class="v">' + fmtMoney(marginReq) + '</span></div>' +
           '<div class="sm-stat-row"><span class="l">Buying Power Available</span><span class="v up">' + fmtMoney(BUYING_POWER - marginReq) + '</span></div>' +
           '<div class="sm-divider"></div>' +
@@ -6390,8 +6470,8 @@
         const maxQty = Math.floor(BUYING_POWER / MARGIN_PER_CONTRACT);
         const actualRisk = maxQty * riskPerContract;
         slot.innerHTML =
-          '<div class="sm-stat-row"><span class="l">Calculated Quantity</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
-          '<div class="sm-stat-row"><span class="l">Max Available Quantity</span><span class="v">' + maxQty.toFixed(2) + ' ETH</span></div>' +
+          '<div class="sm-stat-row"><span class="l">Calculated Units</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
+          '<div class="sm-stat-row"><span class="l">Max Available Units</span><span class="v">' + maxQty.toFixed(2) + ' ETH</span></div>' +
           '<div class="sm-stat-row"><span class="l">Actual Risk</span><span class="v">' + fmtMoney(actualRisk) + '</span></div>' +
           '<div class="sm-divider"></div>' +
           '<div class="sm-state-banner bad"><span class="material-symbols-outlined">error</span>Insufficient Buying Power</div>' +
