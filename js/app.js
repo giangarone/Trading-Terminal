@@ -54,7 +54,7 @@
     atrStop: { multiplier: 2.0 },
     trailingTp: { distanceValue: 0.5, distanceUnit: 'percent' },
     globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true, lockRR: false },
-    positionDefaults: { orderType: 'limit' },
+    positionDefaults: { orderType: 'limit', quickMarketSize: '1' },
     news: {
       position: 'by-sentiment',
       sentimentFilter: 'all',
@@ -78,6 +78,7 @@
         // would otherwise wipe it out entirely, leaving it undefined (renders as "NaN" in the UI).
         merged.moveSlToBreakeven = Object.assign({}, CS_DEFAULTS.moveSlToBreakeven, merged.moveSlToBreakeven);
         merged.breakevenLine = Object.assign({}, CS_DEFAULTS.breakevenLine, merged.breakevenLine);
+        merged.positionDefaults = Object.assign({}, CS_DEFAULTS.positionDefaults, merged.positionDefaults);
         // 'Points' was removed as a trailing-distance unit — migrate any persisted value to %
         if (merged.trailingStop && merged.trailingStop.distanceUnit === 'points') merged.trailingStop.distanceUnit = 'percent';
         // Trailing TP now mirrors the tp-trail-menu (only % / Ticks) — migrate any persisted 'points' to %
@@ -298,10 +299,11 @@
     const below = pendingClickPrice < currentPrice;
     const priceStr = fmt(pendingClickPrice);
     const qtyStr = qty.toFixed(2);
+    const quickMarketQtyStr = quickMarketSize().toFixed(2);
     ctxLongLbl.textContent = 'Buy ' + qtyStr + ' ETH @ ' + priceStr;
     ctxShortLbl.textContent = 'Sell ' + qtyStr + ' ETH @ ' + priceStr;
-    ctxQuickMarketLongLbl.textContent = 'Buy Market ' + qtyStr + ' ETH';
-    ctxQuickMarketShortLbl.textContent = 'Sell Market ' + qtyStr + ' ETH';
+    ctxQuickMarketLongLbl.textContent = 'Buy Market ' + quickMarketQtyStr + ' ETH';
+    ctxQuickMarketShortLbl.textContent = 'Sell Market ' + quickMarketQtyStr + ' ETH';
     openAt(ctxMenu, e.clientX, e.clientY);
   });
   document.getElementById('ctxLong').addEventListener('click', () => { createOrder('buy', pendingClickPrice); closeAllPopovers(); });
@@ -538,6 +540,12 @@
   }
 
   // Chart right-click "Market Buy/Sell" trades go straight to a market fill (no pending entry chip), same as the Quick Trade panel's Market tab
+  // The chart right-click Buy Market / Sell Market actions use their own default size, set in
+  // Trade Defaults (positionDefaults.quickMarketSize), independent of the Quick Trade panel amount.
+  function quickMarketSize() {
+    const v = parseFloat(chartSettings.positionDefaults.quickMarketSize);
+    return (v && v > 0) ? v : 1;
+  }
   function fillQuickMarketOrder(side) {
     const currentPrice = (() => {
       const el = document.getElementById('hdrLast');
@@ -546,16 +554,21 @@
     const details = {
       side,
       orderType: 'Market',
-      amount: (qtyInput.value || '1') + ' ' + qtInstrumentUnit,
+      amount: quickMarketSize() + ' ' + qtInstrumentUnit,
       leverage: qtLeverageForOrder(),
       price: '$' + fmt(currentPrice)
     };
     requestOrderConfirmation(details, () => fillQuickMarketOrderExecute(side, currentPrice));
   }
+  // createOrder reads the shared qtyInput, so apply the quick-market default for the fill and
+  // restore the panel's amount afterward (same bridge pattern as placeQuickMarketOrder below).
   function fillQuickMarketOrderExecute(side, currentPrice) {
+    const prevVal = qtyInput.value;
+    qtyInput.value = quickMarketSize();
     createOrder(side, currentPrice, 'quick');
     order.orderType = 'Market';
     confirmOrderFill();
+    qtyInput.value = prevVal;
   }
 
   // Bridge for the floating Quick Market Order bar (wired in js/overlays.js). Places a market
@@ -4719,6 +4732,7 @@
     document.getElementById('csGbLockRR').classList.toggle('checked', s.globalBehavior.lockRR);
 
     document.getElementById('pdOrderType').value = s.positionDefaults.orderType;
+    document.getElementById('pdQuickMarketSize').value = s.positionDefaults.quickMarketSize;
 
     const sn = s.news || CS_DEFAULTS.news;
     document.querySelectorAll('#csNewsPositionGroup .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.mode === sn.position));
@@ -4776,6 +4790,9 @@
       },
       positionDefaults: {
         orderType: document.getElementById('pdOrderType').value,
+        quickMarketSize: (parseFloat(document.getElementById('pdQuickMarketSize').value) > 0
+          ? document.getElementById('pdQuickMarketSize').value
+          : '1'),
       },
       news: {
         position: document.querySelector('#csNewsPositionGroup .cs-radio-row.active')?.dataset.mode || 'by-sentiment',
