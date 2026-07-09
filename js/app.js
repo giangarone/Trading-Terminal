@@ -4578,11 +4578,11 @@
   /* Refresh the account-balance readout: keep it current with the active account and show it only for
      balance-relative sizing modes. */
   function updatePdBalanceDisplay() {
-    const readout = document.getElementById('pdBalanceReadout');
+    const panel = document.getElementById('pdSizeConvert');
     const value = document.getElementById('pdBalanceValue');
-    if (!readout || !value) return;
+    if (!panel || !value) return;
     value.textContent = fmtMoney(ACCOUNT_BALANCE);
-    readout.style.display = PD_BALANCE_RELATIVE_MODES.includes(pdActiveSizingMethod()) ? '' : 'none';
+    panel.style.display = PD_BALANCE_RELATIVE_MODES.includes(pdActiveSizingMethod()) ? '' : 'none';
   }
   function pdParseSize() {
     return parseFloat((pdDefaultSize.value || '0').replace(/[$,%\s]/g, '')) || 0;
@@ -4591,27 +4591,32 @@
     const p = ACCOUNT_BALANCE > 0 ? amount / ACCOUNT_BALANCE * 100 : 0;
     return (p < 1 ? p.toFixed(2) : p.toFixed(1)) + '%';
   }
-  /* Translate the current default size into balance terms for the active mode, so the user can see what
-     the size represents against their account (e.g. "$5,000 → 9.5% of balance"). Kept in dollars / % of
-     balance only — these are global defaults, so no per-asset quantity is shown. */
-  function updatePdSizeTranslation() {
-    const el = document.getElementById('pdSizeTranslation');
-    if (!el) return;
+  /* Render the conversion as an equation: echo the entered value on the left, its balance-equivalent on
+     the right, so it clearly reads as a conversion of the size typed above. Dollars / % of balance only
+     — these are global defaults, so no per-asset quantity is shown. */
+  function updatePdSizeConversion() {
+    const inEl = document.getElementById('pdConvertInput');
+    const outEl = document.getElementById('pdConvertOutput');
+    if (!inEl || !outEl) return;
     const method = pdActiveSizingMethod();
+    if (!PD_BALANCE_RELATIVE_MODES.includes(method)) return; // panel hidden for absolute modes
     const val = pdParseSize();
-    let text = '';
-    if (val > 0 && PD_BALANCE_RELATIVE_MODES.includes(method)) {
-      if (method === 'dollar') {
-        text = '≈ ' + pdPctOfBalance(val) + ' of balance';
-      } else if (method === 'pct_equity') {
-        text = '≈ ' + fmtMoney(ACCOUNT_BALANCE * val / 100);
-      } else if (method === 'risk_pct') {
-        text = '≈ risking ' + fmtMoney(ACCOUNT_BALANCE * val / 100) + ' per trade';
-      } else if (method === 'risk_dollar') {
-        text = '≈ ' + pdPctOfBalance(val) + ' of balance at risk';
-      }
+    let echo = '', equiv = '';
+    if (method === 'dollar') {
+      echo = fmtMoney(val);
+      equiv = pdPctOfBalance(val) + ' of balance';
+    } else if (method === 'pct_equity') {
+      echo = val + '% of balance';
+      equiv = fmtMoney(ACCOUNT_BALANCE * val / 100);
+    } else if (method === 'risk_pct') {
+      echo = val + '% of balance';
+      equiv = fmtMoney(ACCOUNT_BALANCE * val / 100) + ' at risk';
+    } else if (method === 'risk_dollar') {
+      echo = fmtMoney(val);
+      equiv = pdPctOfBalance(val) + ' of balance at risk';
     }
-    el.textContent = text;
+    inEl.textContent = echo;
+    outEl.textContent = equiv;
   }
   function pdApplySizeMode() {
     const method = pdActiveSizingMethod();
@@ -4621,17 +4626,17 @@
     pdDefaultSize.dataset.step = cfg.step;
     pdDefaultSize.value = cfg.default;
     updatePdBalanceDisplay();
-    updatePdSizeTranslation();
+    updatePdSizeConversion();
   }
   pdSizingMethodGroup.querySelectorAll('.cs-radio-row').forEach(row => {
     row.addEventListener('click', pdApplySizeMode);
   });
-  // Keep the translation live as the size is typed or stepped (the generic stepper mutates the value
+  // Keep the conversion live as the size is typed or stepped (the generic stepper mutates the value
   // without firing an input event, so also listen on its arrows — they run after the generic handler).
-  pdDefaultSize.addEventListener('input', updatePdSizeTranslation);
-  pdDefaultSize.addEventListener('change', updatePdSizeTranslation);
+  pdDefaultSize.addEventListener('input', updatePdSizeConversion);
+  pdDefaultSize.addEventListener('change', updatePdSizeConversion);
   document.querySelectorAll('.ps-up[data-target="pdDefaultSize"], .ps-down[data-target="pdDefaultSize"]')
-    .forEach(btn => btn.addEventListener('click', updatePdSizeTranslation));
+    .forEach(btn => btn.addEventListener('click', updatePdSizeConversion));
   pdApplySizeMode();
 
   function bindColorSwatchMenu(triggerId, menuId, swatchId) {
