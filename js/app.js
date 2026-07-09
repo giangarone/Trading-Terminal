@@ -4604,16 +4604,16 @@
     let echo = '', equiv = '';
     if (method === 'dollar') {
       echo = fmtMoney(val);
-      equiv = pdPctOfBalance(val) + ' of balance';
+      equiv = pdPctOfBalance(val);
     } else if (method === 'pct_equity') {
-      echo = val + '% of balance';
+      echo = val + '%';
       equiv = fmtMoney(ACCOUNT_BALANCE * val / 100);
     } else if (method === 'risk_pct') {
-      echo = val + '% of balance';
-      equiv = fmtMoney(ACCOUNT_BALANCE * val / 100) + ' at risk';
+      echo = val + '%';
+      equiv = fmtMoney(ACCOUNT_BALANCE * val / 100);
     } else if (method === 'risk_dollar') {
       echo = fmtMoney(val);
-      equiv = pdPctOfBalance(val) + ' of balance at risk';
+      equiv = pdPctOfBalance(val);
     }
     inEl.textContent = echo;
     outEl.textContent = equiv;

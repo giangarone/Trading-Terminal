@@ -470,19 +470,19 @@
 /* Echo of the entered value — deliberately matches the muted input-caption tone so it reads as
    "the number above", with the equivalent (the answer) carrying the emphasis. */
 .cs-size-convert-in {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 .cs-size-convert-op {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
 }
 
 .cs-size-convert-out {
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 500;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
@@ -501,8 +501,8 @@
 }
 
 .cs-size-convert-ref-label {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 11.5px;
+  color: var(--text-secondary);
 }
 
 .cs-size-convert-ref-val {
