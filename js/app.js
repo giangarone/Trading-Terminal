@@ -44,6 +44,7 @@
     ],
     defaultStopLoss: { r: 1.0, type: 'stopMarket' },
     moveSlToBreakeven: { trigger: 'tp1', customR: 1, pctToTp: 50, offsetValue: 0.06, offsetUnit: 'fee', dynamicFee: true },
+    breakevenLine: { enabled: false },
     trailingStop: { distanceValue: 1.0, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
     atrStop: { multiplier: 2.0 },
     trailingTp: { distanceValue: 0.5, distanceUnit: 'percent' },
@@ -71,6 +72,7 @@
         // Object.assign is shallow, so a save from before a breakeven field existed (e.g. 'pctToTp')
         // would otherwise wipe it out entirely, leaving it undefined (renders as "NaN" in the UI).
         merged.moveSlToBreakeven = Object.assign({}, CS_DEFAULTS.moveSlToBreakeven, merged.moveSlToBreakeven);
+        merged.breakevenLine = Object.assign({}, CS_DEFAULTS.breakevenLine, merged.breakevenLine);
         // 'Points' was removed as a trailing-distance unit — migrate any persisted value to %
         if (merged.trailingStop && merged.trailingStop.distanceUnit === 'points') merged.trailingStop.distanceUnit = 'percent';
         // Trailing TP now mirrors the tp-trail-menu (only % / Ticks) — migrate any persisted 'points' to %
@@ -1522,6 +1524,14 @@
     }
     return beCfg.offsetValue * TICK; // ticks
   }
+  /* Breakeven Price overlay line (Chart settings): the price at which the position nets zero after a flat
+     0.06% exchange fee (fixed — this is a mockup). Long breaks even above entry, short below. */
+  const BREAKEVEN_LINE_FEE = 0.0006; // 0.06%
+  function breakevenLinePrice() {
+    if (!order) return null;
+    const dir = order.side === 'buy' ? 1 : -1;
+    return roundTick(order.entry + dir * order.entry * BREAKEVEN_LINE_FEE);
+  }
   /* step config for the breakeven offset field — allows 0 (SL lands exactly at entry) and decimals for
      fine control. Ticks stay whole since a fractional tick is meaningless. */
   function beOffsetParams(unit) {
@@ -2236,6 +2246,21 @@
       row.style.top = y + 'px';
       line.style.top = y + 'px';
     }
+  }
+  /* Reposition the Breakeven Price overlay while the entry is dragged — it's derived from entry, so its
+     line and label track the entry live instead of only snapping back into place on drop. */
+  function updateBreakevenLineLive() {
+    if (!order || !chartSettings.breakevenLine.enabled) return;
+    const line = layer.querySelector('.ol-line.breakeven-price');
+    const label = layer.querySelector('.ol-offset-label.breakeven-price');
+    if (!line || !label) return;
+    const bePrice = breakevenLinePrice();
+    if (bePrice === null) return;
+    const y = clamp(priceToY(bePrice, rectH()), 10, rectH() - 10) + 'px';
+    line.style.top = y;
+    label.style.top = y;
+    const txt = label.querySelector('.ol-offset-label-text');
+    if (txt) txt.textContent = 'BREAKEVEN PRICE · ' + fmt(bePrice);
   }
   /* a plain click (no movement) on the handle falls through to onClick (if given) instead of dragging — */
   /* lets a handle double as both a drag target and a menu/edit/place trigger (e.g. the size/type pills, .ol-amt) */
@@ -3553,6 +3578,7 @@
         updateAllTpSlLinePositionsLive();
         updateAllTpSlValidityLive();
         updateAllTpSlReadoutsLive();
+        updateBreakevenLineLive();
         drawPriceChart();
       }
 
@@ -3754,6 +3780,25 @@
       makeDraggable(limitLine, onDragLimit, onDropLimit, undefined, undefined, 'limit');
       makeDraggable(limitLabel, onDragLimit, onDropLimit, undefined,
         () => openOlPriceEdit('limit', limitLabel.getBoundingClientRect(), limitLabel), 'limit');
+    }
+
+    // ---- Breakeven Price line (Chart settings overlay, styled like TRL OFFSET / BE TRIGGER) ----
+    // A gray, non-draggable reference line at the fee-adjusted entry price; its label carries the value.
+    if (chartSettings.breakevenLine.enabled) {
+      const bePrice = breakevenLinePrice();
+      if (bePrice !== null) {
+        const beY = clamp(priceToY(bePrice, H), 10, H - 10);
+        const beLine = document.createElement('div');
+        beLine.className = 'ol-line breakeven-price';
+        beLine.style.top = beY + 'px';
+        layer.appendChild(beLine);
+
+        const beLabel = document.createElement('span');
+        beLabel.className = 'ol-offset-label breakeven-price';
+        beLabel.innerHTML = '<span class="ol-offset-label-text">BREAKEVEN PRICE · ' + fmt(bePrice) + '</span>';
+        beLabel.style.top = beY + 'px';
+        layer.appendChild(beLabel);
+      }
     }
 
     drawPriceChart();
@@ -4624,6 +4669,8 @@
     document.querySelectorAll('#csBeOffsetUnitToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.moveSlToBreakeven.offsetUnit));
     document.getElementById('csBeDynamicFee').classList.toggle('active', s.moveSlToBreakeven.dynamicFee !== false);
 
+    document.getElementById('csShowBreakevenLine').classList.toggle('active', !!s.breakevenLine.enabled);
+
     document.getElementById('csTsDistanceValue').value = s.trailingStop.distanceValue;
     document.querySelectorAll('#csTsDistanceUnitToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingStop.distanceUnit));
     document.querySelectorAll('#csTsStartToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingStop.start));
@@ -4679,6 +4726,9 @@
         offsetUnit: document.querySelector('#csBeOffsetUnitToggle .cs-radio-row.active').dataset.unit,
         dynamicFee: document.getElementById('csBeDynamicFee').classList.contains('active'),
       },
+      breakevenLine: {
+        enabled: document.getElementById('csShowBreakevenLine').classList.contains('active'),
+      },
       trailingStop: {
         distanceValue: parseFloat(document.getElementById('csTsDistanceValue').value) || 1,
         distanceUnit: document.querySelector('#csTsDistanceUnitToggle .cs-radio-row.active').dataset.unit,
@@ -4721,6 +4771,8 @@
         },
       },
     };
+    // Rebuild the order-line overlay (Breakeven Price line reads these settings), then redraw the canvas.
+    render();
     scheduleDrawPriceChart();
     persistChartSettingsIfEnabled();
   }

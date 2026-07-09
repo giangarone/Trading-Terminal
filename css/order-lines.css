@@ -106,6 +106,18 @@
   cursor: grabbing;
 }
 
+/* Breakeven Price overlay line (Chart settings) — a gray, non-interactive reference at the fee-adjusted entry */
+.ol-line.breakeven-price {
+  border-color: var(--text-secondary);
+  opacity: .55;
+}
+
+.ol-offset-label.breakeven-price {
+  color: var(--text-secondary);
+  cursor: default;
+  pointer-events: none;
+}
+
 /* Stop Limit — the subordinate LIMIT line, dashed in the side color (mirrors the be-trigger style) */
 .ol-line.stop-limit-limit {
   opacity: .55;
@@ -154,7 +166,6 @@
   white-space: nowrap;
   pointer-events: auto;
   cursor: pointer;
-  padding: 4px 0;
 }
 
 .ol-line.ghost {
