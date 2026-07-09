@@ -386,6 +386,12 @@
   display: inline-flex;
 }
 
+/* Risk $ mode: stop-loss dragged too far drives quantity to 0. Reveal the same warning
+   icon shown for a wrong-side chip (the chip also takes the invalid restyle below). */
+.ol-chip.sl.risk-exceeded .ol-chip-warning {
+  display: inline-flex;
+}
+
 .ol-chip.tp {
   background: var(--long-chip);
   border: 1px solid var(--long-border);
@@ -401,14 +407,16 @@
 }
 
 .ol-chip.tp.invalid,
-.ol-chip.sl.invalid {
+.ol-chip.sl.invalid,
+.ol-chip.sl.risk-exceeded {
   background: var(--bg-sunken);
   border-color: var(--accent-border);
   color: var(--accent);
 }
 
 .ol-chip.tp.invalid .ol-amt,
-.ol-chip.sl.invalid .ol-amt {
+.ol-chip.sl.invalid .ol-amt,
+.ol-chip.sl.risk-exceeded .ol-amt {
   color: var(--accent);
 }
 

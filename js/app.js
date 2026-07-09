@@ -1389,7 +1389,7 @@
 
   /* clicking the BUY/SELL entry chip places a pending chart order — blocked while TP/SL sit on the wrong side of entry */
   function placeOrder() {
-    if (!order || !order.pendingConfirm || !orderTpSlValid()) return;
+    if (!order || !order.pendingConfirm || orderPlaceBlocked()) return;
     const details = {
       side: order.side,
       orderType: order.orderType,
@@ -2033,6 +2033,33 @@
     if (riskPerContract > 0) { order.qty = Math.max(0, Math.floor(order.sizeValues.risk / riskPerContract * 100) / 100); }
   }
 
+  /* In Risk $ mode, a stop-loss dragged too far (or a risk amount set too low) drives the
+     floored quantity to 0 — no position can be opened. Shared by the size menu, the on-chart
+     SL chip, and the live-drag toggle so the check stays in one place. */
+  const RISK_LIMIT_MSG = 'The selected stop-loss exceeds your risk limit. Move the stop-loss closer or increase your risk amount.';
+  function riskLimitExceeded() {
+    if (!order || order.sizeMode !== 'risk' || !order.sl) return false;
+    const stopDist = Math.abs(order.entry - order.sl.price);
+    const riskPerContract = stopDist * POINT_VALUE;
+    return riskPerContract > 0
+      && Math.floor(order.sizeValues.risk / riskPerContract * 100) / 100 === 0;
+  }
+
+  /* Explains why a TP/SL chip is flagged invalid (wrong side of entry). Direction-aware so it
+     names the side the level should be on. */
+  function wrongSideTip(kind) {
+    const isLong = order.side === 'buy';
+    return kind === 'tp'
+      ? 'Take profit is on the wrong side of price. Move it ' + (isLong ? 'above' : 'below') + ' price to lock in a profit.'
+      : 'Stop loss is on the wrong side of price. Move it ' + (isLong ? 'below' : 'above') + ' price — otherwise it would trigger immediately.';
+  }
+
+  /* Builds the attribute string that turns a chip's warning icon into a wrapped hover tooltip.
+     Shared by the wrong-side (TP/SL) and risk-limit (SL) warnings. */
+  function warnTipAttr(msg) {
+    return ' data-tooltip="' + msg + '" data-tooltip-wrap';
+  }
+
   /* Label shown in the entry-bar size pill. Shared by render() and the live SL drag handler. */
   function sizePillLabel() {
     return order.sizeMode === 'dollar'  ? '$' + fmt(order.sizeValues.dollar, 0)
@@ -2087,12 +2114,17 @@
     if (!order) return true;
     return order.tps.every(tp => tpSlSideOk('tp', tp.price)) && (!order.sl || tpSlSideOk('sl', order.sl.price));
   }
+  /* Reasons an otherwise-placeable order still can't be submitted: a TP/SL on the wrong side
+     of price, or (Risk $ mode) a stop-loss so far it drives the quantity to 0. */
+  function orderPlaceBlocked() {
+    return !orderTpSlValid() || riskLimitExceeded();
+  }
   /* toggle the entry chip's disabled state without a full render(), so it reacts live while dragging */
   function updateEntryPlaceableState() {
     if (!order) return;
     const handle = document.getElementById('entryPriceHandle');
     if (!handle) return;
-    handle.classList.toggle('disabled', order.pendingConfirm && !order.filled && !orderTpSlValid());
+    handle.classList.toggle('disabled', order.pendingConfirm && !order.filled && orderPlaceBlocked());
   }
   /* re-check every TP/SL chip's invalid state without a full render() — used while dragging Entry/TP/SL */
   function updateAllTpSlValidityLive() {
@@ -2103,7 +2135,10 @@
     });
     if (order.sl) {
       const slChip = layer.querySelector('.ol-chip.sl');
-      if (slChip) slChip.classList.toggle('invalid', !tpSlSideOk('sl', order.sl.price) && !slSideWarningSuppressed());
+      if (slChip) {
+        slChip.classList.toggle('invalid', !tpSlSideOk('sl', order.sl.price) && !slSideWarningSuppressed());
+        slChip.classList.toggle('risk-exceeded', riskLimitExceeded());
+      }
     }
     updateEntryPlaceableState();
   }
@@ -3160,7 +3195,7 @@
         row.style.top = y + 'px';
         const tpSign = tpNet >= 0 ? '+' : '';
         row.innerHTML =
-          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning">error</span>TP' + (idx + 1) + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="ol-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span>' + badgeHtml + '</span>' +
+          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning"' + (tpInvalid ? warnTipAttr(wrongSideTip('tp')) : '') + '>error</span>TP' + (idx + 1) + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="ol-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span>' + badgeHtml + '</span>' +
           modeBtnHtml +
           '<span class="ol-tp-meta">' +
           '<span class="ol-tp-meta-pct" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
@@ -3366,8 +3401,8 @@
         row.className = 'ol-side-row';
         row.style.top = y + 'px';
         row.innerHTML =
-          '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + '">' +
-          '<span class="material-symbols-outlined ol-chip-warning">error</span>SL' +
+          '<span class="ol-chip sl' + (slInvalid ? ' invalid' : '') + (riskLimitExceeded() ? ' risk-exceeded' : '') + '">' +
+          '<span class="material-symbols-outlined ol-chip-warning"' + (slInvalid ? warnTipAttr(wrongSideTip('sl')) : riskLimitExceeded() ? warnTipAttr(RISK_LIMIT_MSG) : '') + '>error</span>SL' +
           '<span class="ol-amt ' + (slNet >= 0 ? 'up' : 'down') + '"><span class="ol-amt-val">' + slSign + fmtMoney(slNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(slGross, slFee, slNet) + '</span></span>' +
           badgeHtml +
           '</span>' +
@@ -3496,7 +3531,7 @@
       const y = clamp(priceToY(order.entry, H), 10, H - 10);
       const canDragEntry = !order.filled && !(order.pendingConfirm && order.orderType === 'Market');
       const placeable = !order.filled && order.pendingConfirm;
-      const blocked = placeable && !orderTpSlValid();
+      const blocked = placeable && orderPlaceBlocked();
 
       const line = document.createElement('div');
       line.className = 'ol-line entry ' + order.side + (canDragEntry ? ' draggable' : '');
@@ -5132,6 +5167,7 @@
 
     function showTooltip(el) {
       tip.textContent = el.dataset.tooltip;
+      tip.classList.toggle('wrap', el.hasAttribute('data-tooltip-wrap'));
       const rect = el.getBoundingClientRect();
       tip.style.left = (rect.left + rect.width / 2) + 'px';
       tip.style.top = (rect.bottom + 8) + 'px';
@@ -6181,7 +6217,13 @@
       const marginReq = calcQty * MARGIN_PER_CONTRACT;
       const sufficient = marginReq <= BUYING_POWER;
       const slot = body.querySelector('#smRiskCalcSlot');
-      if (sufficient) {
+      if (calcQty === 0) {
+        // Stop-loss too far (or risk amount too small): quantity floors to 0, no position possible.
+        slot.innerHTML =
+          '<div class="sm-divider"></div>' +
+          '<div class="sm-state-banner warn"><span class="material-symbols-outlined">error</span>Stop-loss exceeds risk limit</div>' +
+          '<div class="sm-note warn">Move the stop-loss closer or increase your risk amount to open a position.</div>';
+      } else if (sufficient) {
         slot.innerHTML =
           '<div class="sm-stat-row"><span class="l">Calculated Quantity</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
           '<div class="sm-stat-row"><span class="l">Margin Required</span><span class="v">' + fmtMoney(marginReq) + '</span></div>' +

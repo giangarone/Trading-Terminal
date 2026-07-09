@@ -192,6 +192,13 @@
   visibility: visible;
 }
 
+/* Opt-in multi-line variant (data-tooltip-wrap) for longer messages that shouldn't be one line. */
+.floating-tooltip.wrap {
+  white-space: normal;
+  max-width: 240px;
+  text-align: center;
+}
+
 .ct-icon {
   width: 30px;
   height: 30px;
