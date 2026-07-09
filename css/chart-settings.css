@@ -455,7 +455,7 @@
 .cs-size-convert {
   margin-top: 8px;
   background: var(--bg-input);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-sm);
   overflow: hidden;
 }
@@ -465,6 +465,8 @@
   align-items: baseline;
   gap: 7px;
   padding: 9px 11px;
+  border-bottom: 1px solid var(--border-default);
+  justify-content: flex-end;
 }
 
 /* Echo of the entered value — deliberately matches the muted input-caption tone so it reads as
@@ -491,8 +493,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 7px 11px;
-  border-top: 1px solid var(--border-subtle);
+  padding: 9px 11px;
 }
 
 .cs-size-convert-ref-icon {

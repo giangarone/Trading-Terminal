@@ -4557,7 +4557,7 @@
   /* ---------- Chart Trades: Default Size field tracks the selected sizing method ---------- */
   const PD_SIZE_MODES = {
     contracts: { label: 'Default Contracts', unit: 'contracts', step: 1, default: '1' },
-    shares: { label: 'Default Shares', unit: 'shares', step: 1, default: '100' },
+    shares: { label: 'Default Shares', unit: 'shares', step: 1, default: '1' },
     dollar: { label: 'Default Dollar Amount', unit: '$', step: 50, default: '500' },
     pct_equity: { label: 'Default % of Equity', unit: '%', step: 1, default: '5' },
     risk_pct: { label: 'Default Risk %', unit: '%', step: 0.25, default: '1' },
@@ -4575,14 +4575,17 @@
     const activeRow = pdSizingMethodGroup.querySelector('.cs-radio-row.active');
     return activeRow ? activeRow.dataset.sizing : 'contracts';
   }
-  /* Refresh the account-balance readout: keep it current with the active account and show it only for
-     balance-relative sizing modes. */
+  /* Refresh the account-balance readout: keep it current with the active account. The Available balance
+     row shows for every mode; the conversion equation only for balance-relative modes (Contracts / Shares
+     are absolute unit counts with nothing to translate, so they display the balance alone). */
   function updatePdBalanceDisplay() {
     const panel = document.getElementById('pdSizeConvert');
     const value = document.getElementById('pdBalanceValue');
     if (!panel || !value) return;
+    const eq = panel.querySelector('.cs-size-convert-eq');
     value.textContent = fmtMoney(ACCOUNT_BALANCE);
-    panel.style.display = PD_BALANCE_RELATIVE_MODES.includes(pdActiveSizingMethod()) ? '' : 'none';
+    panel.style.display = '';
+    if (eq) eq.style.display = PD_BALANCE_RELATIVE_MODES.includes(pdActiveSizingMethod()) ? '' : 'none';
   }
   function pdParseSize() {
     return parseFloat((pdDefaultSize.value || '0').replace(/[$,%\s]/g, '')) || 0;
@@ -4604,16 +4607,16 @@
     let echo = '', equiv = '';
     if (method === 'dollar') {
       echo = fmtMoney(val);
-      equiv = pdPctOfBalance(val);
+      equiv = pdPctOfBalance(val) + ' of account';
     } else if (method === 'pct_equity') {
-      echo = val + '%';
+      echo = val + '% of account';
       equiv = fmtMoney(ACCOUNT_BALANCE * val / 100);
     } else if (method === 'risk_pct') {
-      echo = val + '%';
+      echo = val + '% risk';
       equiv = fmtMoney(ACCOUNT_BALANCE * val / 100);
     } else if (method === 'risk_dollar') {
-      echo = fmtMoney(val);
-      equiv = pdPctOfBalance(val);
+      echo = fmtMoney(val) + ' risk';
+      equiv = pdPctOfBalance(val) + ' of account';
     }
     inEl.textContent = echo;
     outEl.textContent = equiv;
