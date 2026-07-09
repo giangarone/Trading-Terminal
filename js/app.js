@@ -544,11 +544,17 @@
     // by placeChartLimitTrade. Quick Trade panel orders (source==='quick') are unaffected.
     const pd = chartSettings.positionDefaults;
     const useRiskSizing = isChartTrade && PD_RISK_MODES.includes(pd.sizingMethod);
+    const riskPctDefault = pd.sizingMethod === 'risk_pct';
+    const pdVal = parseFloat(String(pd.defaultSize).replace(/[$,%\s]/g, '')) || 0;
     order = {
       side, entry, qty: parseFloat(qtyInput.value) || 1, orderType, fillAbove,
-      sizeMode: useRiskSizing ? 'risk' : 'contracts', filled: false, filledQty: 0,
+      sizeMode: useRiskSizing ? (riskPctDefault ? 'risk_pct' : 'risk') : 'contracts', filled: false, filledQty: 0,
       pendingConfirm: isChartTrade,
-      sizeValues: { dollar: 5000, percent: 25, risk: useRiskSizing ? pdDefaultRiskDollars(pd) : 500 },
+      sizeValues: {
+        dollar: 5000, percent: 25,
+        risk: (useRiskSizing && !riskPctDefault) ? pdVal : 500,
+        riskPct: (useRiskSizing && riskPctDefault) ? pdVal : 1
+      },
       tps, sl, tpsHitCount: 0,
       initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null
     };
@@ -1255,7 +1261,7 @@
     order = {
       side: newSide, entry, qty, orderType: 'Market', fillAbove: false,
       sizeMode: 'contracts', filled: true, pendingConfirm: false,
-      sizeValues: { dollar: 5000, percent: 25, risk: 500 },
+      sizeValues: { dollar: 5000, percent: 25, risk: 500, riskPct: 1 },
       tps: [], sl: null, tpsHitCount: 0, initialRisk: null
     };
     orderHistory.unshift({ symbol: 'ETHUSD', side: newSide, qty, price: entry, status: 'filled', type: 'Market', time: nowTimeStr(), pnl: null });
@@ -2070,29 +2076,40 @@
     }).join('');
   }
 
+  // Risk $ and Risk % size the position the same way — from the stop-loss distance and a risk budget in
+  // dollars. They differ only in how that budget is expressed: an absolute amount vs a % of the account.
+  const RISK_MODES = ['risk', 'risk_pct'];
+  function isRiskMode(mode) { return RISK_MODES.includes(mode); }
+  function effectiveRiskDollars(sizeValues, mode) {
+    return mode === 'risk_pct'
+      ? ACCOUNT_BALANCE * (sizeValues.riskPct || 0) / 100
+      : (sizeValues.risk || 0);
+  }
   function syncQtyFromRisk() {
-    if (!order || order.sizeMode !== 'risk' || !order.sl) return;
+    if (!order || !isRiskMode(order.sizeMode) || !order.sl) return;
     const stopDist = Math.abs(order.entry - order.sl.price);
     const riskPerContract = stopDist * POINT_VALUE;
-    if (riskPerContract > 0) { order.qty = Math.max(0, Math.floor(order.sizeValues.risk / riskPerContract * 100) / 100); }
+    const riskDollars = effectiveRiskDollars(order.sizeValues, order.sizeMode);
+    if (riskPerContract > 0) { order.qty = Math.max(0, Math.floor(riskDollars / riskPerContract * 100) / 100); }
   }
 
-  /* In Risk $ mode, a stop-loss dragged too far (or a risk amount set too low) drives the
+  /* In a Risk mode, a stop-loss dragged too far (or a risk amount set too low) drives the
      floored quantity to 0 — no position can be opened. Shared by the size menu, the on-chart
      SL chip, and the live-drag toggle so the check stays in one place. */
   const RISK_LIMIT_MSG = 'The selected stop-loss exceeds your risk limit. Move the stop-loss closer or increase your risk amount.';
-  /* Risk $ sizing derives quantity from the stop-loss distance, so with no stop the size can't be computed.
+  /* Risk sizing derives quantity from the stop-loss distance, so with no stop the size can't be computed.
      Block placement and surface a warning (on the size pill) instead of a misleading number. */
   const RISK_NO_SL_MSG = 'Add a stop loss to size this order by your risk amount.';
   function riskNeedsStop() {
-    return !!order && order.sizeMode === 'risk' && !order.sl;
+    return !!order && isRiskMode(order.sizeMode) && !order.sl;
   }
   function riskLimitExceeded() {
-    if (!order || order.sizeMode !== 'risk' || !order.sl) return false;
+    if (!order || !isRiskMode(order.sizeMode) || !order.sl) return false;
     const stopDist = Math.abs(order.entry - order.sl.price);
     const riskPerContract = stopDist * POINT_VALUE;
+    const riskDollars = effectiveRiskDollars(order.sizeValues, order.sizeMode);
     return riskPerContract > 0
-      && Math.floor(order.sizeValues.risk / riskPerContract * 100) / 100 === 0;
+      && Math.floor(riskDollars / riskPerContract * 100) / 100 === 0;
   }
 
   /* Explains why a TP/SL chip is flagged invalid (wrong side of entry). Direction-aware so it
@@ -2114,7 +2131,7 @@
   function sizePillLabel() {
     return order.sizeMode === 'dollar'  ? '$' + fmt(order.sizeValues.dollar, 0)
          : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
-         : fmt(order.qty, 2);            // 'contracts' and 'risk' both show qty
+         : fmt(order.qty, 2);            // 'contracts', 'risk' and 'risk_pct' all show qty
   }
 
   /* ---------- TP/SL fee & net PnL helpers ---------- */
@@ -6351,9 +6368,10 @@
   /* Draft copy of syncQtyFromRisk() — derives the staged qty from the draft's risk amount and the
      live entry / stop-loss on the chart (those aren't edited here). */
   function syncDraftQtyFromRisk() {
-    if (!sizeDraft || sizeDraft.sizeMode !== 'risk' || !order.sl) return;
+    if (!sizeDraft || !isRiskMode(sizeDraft.sizeMode) || !order.sl) return;
     const riskPerContract = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
-    if (riskPerContract > 0) { sizeDraft.qty = Math.max(0, Math.floor(sizeDraft.sizeValues.risk / riskPerContract * 100) / 100); }
+    const riskDollars = effectiveRiskDollars(sizeDraft.sizeValues, sizeDraft.sizeMode);
+    if (riskPerContract > 0) { sizeDraft.qty = Math.max(0, Math.floor(riskDollars / riskPerContract * 100) / 100); }
   }
   function openSizeMenu(anchorRect, trigger) {
     if (trigger && sizeMenu.classList.contains('show') && sizeMenu._openTrigger === trigger) {
@@ -6371,7 +6389,7 @@
       sizeDraft.sizeMode = tab.dataset.mode;
       smTabs.querySelectorAll('.sm-tab').forEach(t => t.classList.toggle('active', t === tab));
       sizeMenu.querySelectorAll('.sm-body').forEach(b => b.classList.toggle('active', b.dataset.mode === tab.dataset.mode));
-      if (tab.dataset.mode === 'risk') syncDraftQtyFromRisk();
+      if (isRiskMode(tab.dataset.mode)) syncDraftQtyFromRisk();
       refreshSizeBodies();
     });
   });
@@ -6432,80 +6450,114 @@
     document.getElementById('smPctQty').textContent = fmt(pctQty, 2) + ' ETH';
     document.getElementById('smPctMargin').textContent = fmtMoney(pctMargin);
 
-    // risk — rebuilt each time since it has 3 distinct states
-    const body = document.getElementById('smRiskBody');
+    // risk / risk % — both rebuilt each time; renderRiskBody handles the $ vs % input and the shared stats.
+    renderRiskBody(document.getElementById('smRiskBody'), 'risk');
+    renderRiskBody(document.getElementById('smRiskPctBody'), 'risk_pct');
+  }
+
+  /* Renders one of the two Risk bodies (Risk $ or Risk %). Both size the position identically from the
+     stop-loss distance and a dollar risk budget; they differ only in the input control and how the budget
+     is expressed. Element ids are prefixed per mode so both bodies can coexist in the DOM. */
+  function renderRiskBody(body, mode) {
+    if (!body) return;
     if (!order.sl) {
       body.innerHTML =
         '<div class="sm-state-banner warn"><span class="material-symbols-outlined">hourglass_empty</span>Waiting for Stop Loss</div>' +
         '<div class="sm-empty"><span class="material-symbols-outlined">south</span><br>Drag the stop loss line on the chart<br>to calculate position size.</div>';
-    } else {
-      const stopDist = Math.abs(order.entry - order.sl.price);
-      const riskPerContract = stopDist * POINT_VALUE;
-      body.innerHTML =
-        '<label class="sm-amount-lbl">Risk Amount (USD)</label>' +
-        '<div class="sm-stepper"><button id="smRiskDec">−</button><input type="text" id="smRiskInput" value="$' + fmt(sizeDraft.sizeValues.risk, Number.isInteger(sizeDraft.sizeValues.risk) ? 0 : 2) + '"><button id="smRiskInc">+</button></div>' +
-        '<div class="sm-divider"></div>' +
-        '<div class="sm-stat-row"><span class="l">Stop Distance</span><span class="v">' + fmt(stopDist, 2) + ' pts</span></div>' +
-        '<div class="sm-stat-row"><span class="l">Risk per Unit</span><span class="v">' + fmtMoney(riskPerContract) + '</span></div>' +
-        '<div id="smRiskCalcSlot"></div>';
-      const calcQty = riskPerContract > 0 ? Math.floor(sizeDraft.sizeValues.risk / riskPerContract * 100) / 100 : 0;
-      const marginReq = calcQty * MARGIN_PER_CONTRACT;
-      const sufficient = marginReq <= BUYING_POWER;
-      const slot = body.querySelector('#smRiskCalcSlot');
-      if (calcQty === 0) {
-        // Stop-loss too far (or risk amount too small): quantity floors to 0, no position possible.
-        slot.innerHTML =
-          '<div class="sm-divider"></div>' +
-          '<div class="sm-state-banner warn"><span class="material-symbols-outlined">error</span>Stop-loss exceeds risk limit</div>' +
-          '<div class="sm-note warn">Move the stop-loss closer or increase your risk amount to open a position.</div>';
-      } else if (sufficient) {
-        slot.innerHTML =
-          '<div class="sm-stat-row"><span class="l">Calculated Units</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
-          '<div class="sm-stat-row"><span class="l">Margin Required</span><span class="v">' + fmtMoney(marginReq) + '</span></div>' +
-          '<div class="sm-stat-row"><span class="l">Buying Power Available</span><span class="v up">' + fmtMoney(BUYING_POWER - marginReq) + '</span></div>' +
-          '<div class="sm-divider"></div>' +
-          '<div class="sm-state-banner ok"><span class="material-symbols-outlined">check_circle</span>Sufficient Buying Power</div>' +
-          '<div class="sm-note">Position size auto-adjusts when the stop loss is moved.</div>';
-      } else {
-        const maxQty = Math.floor(BUYING_POWER / MARGIN_PER_CONTRACT);
-        const actualRisk = maxQty * riskPerContract;
-        slot.innerHTML =
-          '<div class="sm-stat-row"><span class="l">Calculated Units</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
-          '<div class="sm-stat-row"><span class="l">Max Available Units</span><span class="v">' + maxQty.toFixed(2) + ' ETH</span></div>' +
-          '<div class="sm-stat-row"><span class="l">Actual Risk</span><span class="v">' + fmtMoney(actualRisk) + '</span></div>' +
-          '<div class="sm-divider"></div>' +
-          '<div class="sm-state-banner bad"><span class="material-symbols-outlined">error</span>Insufficient Buying Power</div>' +
-          '<div class="sm-options">' +
-          '<span class="sm-options-lbl">Options</span>' +
-          '<button class="sm-opt-btn primary" id="smUseMax">Use Maximum Available (' + maxQty + ' ETH)</button>' +
-          '<button class="sm-opt-btn ghost" id="smReduceRisk">Reduce Risk Amount</button>' +
-          '</div>';
-      }
-      document.getElementById('smRiskDec').addEventListener('click', (e) => { e.stopPropagation(); sizeDraft.sizeValues.risk = Math.max(0, sizeDraft.sizeValues.risk - 50); syncDraftQtyFromRisk(); refreshSizeBodies(); });
-      document.getElementById('smRiskInc').addEventListener('click', (e) => { e.stopPropagation(); sizeDraft.sizeValues.risk += 50; syncDraftQtyFromRisk(); refreshSizeBodies(); });
-      document.getElementById('smRiskInput').addEventListener('click', (e) => e.stopPropagation());
-      document.getElementById('smRiskInput').addEventListener('change', (e) => {
-        e.stopPropagation();
-        const val = parseFloat((e.target.value || '').replace(/[$,]/g, '')) || 0;
-        sizeDraft.sizeValues.risk = Math.max(0, val);
-        syncDraftQtyFromRisk();
-        refreshSizeBodies();
-      });
-      const useMax = document.getElementById('smUseMax');
-      if (useMax) useMax.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const mq = Math.floor(BUYING_POWER / MARGIN_PER_CONTRACT);
-        sizeDraft.sizeValues.risk = Math.round(mq * riskPerContract);
-        syncDraftQtyFromRisk(); refreshSizeBodies();
-        showToast('Risk set to maximum available size', 'check_circle');
-      });
-      const reduceRisk = document.getElementById('smReduceRisk');
-      if (reduceRisk) reduceRisk.addEventListener('click', (e) => {
-        e.stopPropagation();
-        sizeDraft.sizeValues.risk = Math.max(250, Math.round(sizeDraft.sizeValues.risk / 2 / 250) * 250);
-        syncDraftQtyFromRisk(); refreshSizeBodies();
-      });
+      return;
     }
+    const isPct = mode === 'risk_pct';
+    const p = isPct ? 'smRiskPct' : 'smRisk';
+    const stopDist = Math.abs(order.entry - order.sl.price);
+    const riskPerContract = stopDist * POINT_VALUE;
+    const riskDollars = effectiveRiskDollars(sizeDraft.sizeValues, mode);
+
+    const pctVal = sizeDraft.sizeValues.riskPct || 0;
+    const inputBlock = isPct
+      ? '<label class="sm-amount-lbl">Risk (% of Account)</label>' +
+        '<div class="sm-stepper"><button id="' + p + 'Dec">−</button><input type="text" id="' + p + 'Input" value="' + (Number.isInteger(pctVal) ? pctVal : pctVal.toFixed(2)) + '%"><button id="' + p + 'Inc">+</button></div>' +
+        '<div class="sm-stat-row"><span class="l">Risk Amount</span><span class="v">' + fmtMoney(riskDollars) + '</span></div>'
+      : '<label class="sm-amount-lbl">Risk Amount (USD)</label>' +
+        '<div class="sm-stepper"><button id="' + p + 'Dec">−</button><input type="text" id="' + p + 'Input" value="$' + fmt(sizeDraft.sizeValues.risk, Number.isInteger(sizeDraft.sizeValues.risk) ? 0 : 2) + '"><button id="' + p + 'Inc">+</button></div>';
+
+    body.innerHTML =
+      inputBlock +
+      '<div class="sm-divider"></div>' +
+      '<div class="sm-stat-row"><span class="l">Stop Distance</span><span class="v">' + fmt(stopDist, 2) + ' pts</span></div>' +
+      '<div class="sm-stat-row"><span class="l">Risk per Unit</span><span class="v">' + fmtMoney(riskPerContract) + '</span></div>' +
+      '<div id="' + p + 'CalcSlot"></div>';
+
+    const calcQty = riskPerContract > 0 ? Math.floor(riskDollars / riskPerContract * 100) / 100 : 0;
+    const marginReq = calcQty * MARGIN_PER_CONTRACT;
+    const sufficient = marginReq <= BUYING_POWER;
+    const slot = body.querySelector('#' + p + 'CalcSlot');
+    if (calcQty === 0) {
+      // Stop-loss too far (or risk amount too small): quantity floors to 0, no position possible.
+      slot.innerHTML =
+        '<div class="sm-divider"></div>' +
+        '<div class="sm-state-banner warn"><span class="material-symbols-outlined">error</span>Stop-loss exceeds risk limit</div>' +
+        '<div class="sm-note warn">Move the stop-loss closer or increase your risk amount to open a position.</div>';
+    } else if (sufficient) {
+      slot.innerHTML =
+        '<div class="sm-stat-row"><span class="l">Calculated Units</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
+        '<div class="sm-stat-row"><span class="l">Margin Required</span><span class="v">' + fmtMoney(marginReq) + '</span></div>' +
+        '<div class="sm-stat-row"><span class="l">Buying Power Available</span><span class="v up">' + fmtMoney(BUYING_POWER - marginReq) + '</span></div>' +
+        '<div class="sm-divider"></div>' +
+        '<div class="sm-state-banner ok"><span class="material-symbols-outlined">check_circle</span>Sufficient Buying Power</div>' +
+        '<div class="sm-note">Position size auto-adjusts when the stop loss is moved.</div>';
+    } else {
+      const maxQty = Math.floor(BUYING_POWER / MARGIN_PER_CONTRACT);
+      const actualRisk = maxQty * riskPerContract;
+      slot.innerHTML =
+        '<div class="sm-stat-row"><span class="l">Calculated Units</span><span class="v">' + calcQty.toFixed(2) + ' ETH</span></div>' +
+        '<div class="sm-stat-row"><span class="l">Max Available Units</span><span class="v">' + maxQty.toFixed(2) + ' ETH</span></div>' +
+        '<div class="sm-stat-row"><span class="l">Actual Risk</span><span class="v">' + fmtMoney(actualRisk) + '</span></div>' +
+        '<div class="sm-divider"></div>' +
+        '<div class="sm-state-banner bad"><span class="material-symbols-outlined">error</span>Insufficient Buying Power</div>' +
+        '<div class="sm-options">' +
+        '<span class="sm-options-lbl">Options</span>' +
+        '<button class="sm-opt-btn primary" id="' + p + 'UseMax">Use Maximum Available (' + maxQty + ' ETH)</button>' +
+        '<button class="sm-opt-btn ghost" id="' + p + 'ReduceRisk">Reduce Risk Amount</button>' +
+        '</div>';
+    }
+
+    // Set the risk budget from a dollar figure, translating back to a % when in Risk % mode.
+    const setBudgetDollars = (dollars) => {
+      if (isPct) sizeDraft.sizeValues.riskPct = ACCOUNT_BALANCE > 0 ? Math.max(0, +(dollars / ACCOUNT_BALANCE * 100).toFixed(2)) : 0;
+      else sizeDraft.sizeValues.risk = Math.max(0, dollars);
+    };
+    const stepBudget = (dir) => {
+      if (isPct) sizeDraft.sizeValues.riskPct = Math.max(0, +((pctVal + dir * 0.25).toFixed(2)));
+      else sizeDraft.sizeValues.risk = Math.max(0, sizeDraft.sizeValues.risk + dir * 50);
+    };
+
+    body.querySelector('#' + p + 'Dec').addEventListener('click', (e) => { e.stopPropagation(); stepBudget(-1); syncDraftQtyFromRisk(); refreshSizeBodies(); });
+    body.querySelector('#' + p + 'Inc').addEventListener('click', (e) => { e.stopPropagation(); stepBudget(1); syncDraftQtyFromRisk(); refreshSizeBodies(); });
+    const inp = body.querySelector('#' + p + 'Input');
+    inp.addEventListener('click', (e) => e.stopPropagation());
+    inp.addEventListener('change', (e) => {
+      e.stopPropagation();
+      const val = parseFloat((e.target.value || '').replace(/[$,%\s]/g, '')) || 0;
+      if (isPct) sizeDraft.sizeValues.riskPct = Math.max(0, val);
+      else sizeDraft.sizeValues.risk = Math.max(0, val);
+      syncDraftQtyFromRisk();
+      refreshSizeBodies();
+    });
+    const useMax = body.querySelector('#' + p + 'UseMax');
+    if (useMax) useMax.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const mq = Math.floor(BUYING_POWER / MARGIN_PER_CONTRACT);
+      setBudgetDollars(Math.round(mq * riskPerContract));
+      syncDraftQtyFromRisk(); refreshSizeBodies();
+      showToast('Risk set to maximum available size', 'check_circle');
+    });
+    const reduceRisk = body.querySelector('#' + p + 'ReduceRisk');
+    if (reduceRisk) reduceRisk.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (isPct) sizeDraft.sizeValues.riskPct = Math.max(0.25, +((pctVal / 2).toFixed(2)));
+      else sizeDraft.sizeValues.risk = Math.max(250, Math.round(sizeDraft.sizeValues.risk / 2 / 250) * 250);
+      syncDraftQtyFromRisk(); refreshSizeBodies();
+    });
   }
 
   // Apply — commit the staged draft to the live order, then redraw the chart.
