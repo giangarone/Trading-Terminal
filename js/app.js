@@ -5,6 +5,9 @@
   const POINT_VALUE = 50;          // $ per point per contract (ES)
   const FEE_RATE_MARKET = 0.0006;  // 0.06% taker fee (market / stop-market fills)
   const FEE_RATE_LIMIT = 0.0002;  // 0.02% maker fee (limit / stop-limit fills)
+  // Round-trip taker fee as a percentage of entry (entry fill + exit fill). This is what Dynamic Fee
+  // Offset auto-fills into the breakeven 'Fee Amount' field so the SL lands at a true net-zero exit.
+  const BE_ROUND_TRIP_FEE_PCT = FEE_RATE_MARKET * 2 * 100; // 0.12%
   let TICK = 0.25;
   const PX_PER_POINT = 22;         // vertical px per 1.0 point
   const BASE_PRICE = 4500.25;      // anchors chart's vertical price scale
@@ -48,7 +51,7 @@
       { pct: 25, r: 4.0, type: 'limit' }
     ],
     defaultStopLoss: { r: 1.0, type: 'stopMarket' },
-    moveSlToBreakeven: { trigger: 'tp1', customR: 1, pctToTp: 50, offsetValue: 0.06, offsetUnit: 'fee', dynamicFee: true },
+    moveSlToBreakeven: { trigger: 'tp1', customR: 1, pctToTp: 50, offsetValue: BE_ROUND_TRIP_FEE_PCT, offsetUnit: 'fee', dynamicFee: true },
     breakevenLine: { enabled: false },
     trailingStop: { distanceValue: 1.0, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
     atrStop: { multiplier: 2.0 },
@@ -300,12 +303,17 @@
     const currentPrice = lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
     const below = pendingClickPrice < currentPrice;
     const priceStr = fmt(pendingClickPrice);
-    const qtyStr = qty.toFixed(2);
     const quickMarketQtyStr = quickMarketSize().toFixed(2);
-    ctxLongLbl.textContent = 'Buy ' + qtyStr + ' ETH @ ' + priceStr;
-    ctxShortLbl.textContent = 'Sell ' + qtyStr + ' ETH @ ' + priceStr;
-    ctxQuickMarketLongLbl.textContent = 'Buy Market ' + quickMarketQtyStr + ' ETH';
-    ctxQuickMarketShortLbl.textContent = 'Sell Market ' + quickMarketQtyStr + ' ETH';
+    // Risk-based sizing (Risk $ / Risk %) can't know the quantity until a stop-loss distance is set,
+    // so the label omits it — showing a placeholder qty here would be misleading. Fixed-size methods
+    // (Quantity / Dollar / % Account) resolve to a real number, so those keep the quantity.
+    const PD_RISK_SIZING_METHODS = ['risk_pct', 'risk_dollar'];
+    const isRiskSizing = PD_RISK_SIZING_METHODS.includes(chartSettings.positionDefaults.sizingMethod);
+    const qtyStr = qty.toFixed(2);
+    ctxLongLbl.textContent = isRiskSizing ? 'Buy ETHUSD @ ' + priceStr : 'Buy ' + qtyStr + ' ETHUSD @ ' + priceStr;
+    ctxShortLbl.textContent = isRiskSizing ? 'Sell ETHUSD @ ' + priceStr : 'Sell ' + qtyStr + ' ETHUSD @ ' + priceStr;
+    ctxQuickMarketLongLbl.textContent = 'Buy Market ' + quickMarketQtyStr + ' ETHUSD';
+    ctxQuickMarketShortLbl.textContent = 'Sell Market ' + quickMarketQtyStr + ' ETHUSD';
     openAt(ctxMenu, e.clientX, e.clientY);
   });
   // Chart right-click "Buy/Sell @ price" trades size themselves from the Position Sizing default (Default
@@ -1556,25 +1564,25 @@
   }
   /* effective config = this SL's own override if set, otherwise the global Chart Settings default */
   function getEffectiveBeConfig() { return (order && order.sl && order.sl.beOverride) || chartSettings.moveSlToBreakeven; }
-  /* price distance for a breakeven offset config — 'fee' covers the round-trip entry+exit fee
-     (offsetValue is a multiplier on top of that, so 1 = exactly break even on fees; 0 = exactly entry) */
+  /* price distance for a breakeven offset config. The 'fee' unit's value is a percentage of entry, applied
+     exactly like 'percent' — Dynamic Fee Offset auto-fills it with the round-trip entry+exit fee (0.12%),
+     so the SL lands a fraction beyond entry that covers both fills and nets to zero. */
   function breakevenOffsetPrice(beCfg) {
     if (beCfg.offsetUnit === 'points') return beCfg.offsetValue;
     if (beCfg.offsetUnit === 'percent') return order.entry * beCfg.offsetValue / 100;
-    if (beCfg.offsetUnit === 'fee') {
-      const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
-      const exitFeeRate = FEE_RATE_MARKET; // SL exits via a stop order (taker fill)
-      return order.entry * (entryFeeRate + exitFeeRate) * beCfg.offsetValue;
-    }
+    if (beCfg.offsetUnit === 'fee') return order.entry * beCfg.offsetValue / 100;
     return beCfg.offsetValue * TICK; // ticks
   }
-  /* Breakeven Price overlay line (Chart settings): the price at which the position nets zero after a flat
-     0.06% exchange fee (fixed — this is a mockup). Long breaks even above entry, short below. */
-  const BREAKEVEN_LINE_FEE = 0.0006; // 0.06%
+  /* Breakeven Price overlay line (Chart settings): the price at which the position nets zero after the
+     round-trip exchange fee (entry fill + exit fill). Entry fee depends on the order type (maker vs taker);
+     the exit is a taker fill. Long breaks even above entry, short below. */
   function breakevenLinePrice() {
     if (!order) return null;
     const dir = order.side === 'buy' ? 1 : -1;
-    return roundTick(order.entry + dir * order.entry * BREAKEVEN_LINE_FEE);
+    const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
+    const exitFeeRate = FEE_RATE_MARKET; // exit fills as a taker order
+    const roundTripFee = entryFeeRate + exitFeeRate;
+    return roundTick(order.entry + dir * order.entry * roundTripFee);
   }
   /* step config for the breakeven offset field — allows 0 (SL lands exactly at entry) and decimals for
      fine control. Ticks stay whole since a fractional tick is meaningless. */
@@ -1582,7 +1590,7 @@
     if (unit === 'ticks') return { min: 0, max: 200, step: 1 };
     if (unit === 'points') return { min: 0, max: 200, step: 0.25 };
     if (unit === 'percent') return { min: 0, max: 50, step: 0.1 };
-    return { min: 0, max: 10, step: 0.1 }; // fee multiplier
+    return { min: 0, max: 10, step: 0.1 }; // fee percentage (of entry)
   }
   /* the reference target for the '% to Target' breakeven trigger — TP1 (the first take-profit). */
   function breakevenRefTp() { return (order && order.tps.length) ? order.tps[0] : null; }
@@ -4343,7 +4351,7 @@
     csSyncBeDynamicFee();
   }
   /* Dynamic Fee Offset (global default): only shown for the 'Fee Amount' unit. While on, it auto-fills
-     the exact fee offset (0.06) and locks the offset input — matching the per-trade breakeven popup. */
+     the round-trip fee offset (0.12%) and locks the offset input — matching the per-trade breakeven popup. */
   function csSyncBeDynamicFee() {
     const row = document.getElementById('csBeDynamicFee');
     if (!row) return;
@@ -4351,7 +4359,7 @@
     row.style.display = isFee ? '' : 'none';
     const locked = isFee && row.classList.contains('active');
     const input = document.getElementById('csBeOffsetValue');
-    if (locked) input.value = 0.06;
+    if (locked) input.value = BE_ROUND_TRIP_FEE_PCT;
     input.disabled = locked;
     document.getElementById('csBeOffsetInc').disabled = locked;
     document.getElementById('csBeOffsetDec').disabled = locked;
@@ -4622,7 +4630,7 @@
     // that many of whatever the symbol uses.
     quantity: { label: 'Default Units', unit: 'units', step: 1, default: '1' },
     dollar: { label: 'Default USD Amount', unit: '$', step: 50, default: '500' },
-    pct_equity: { label: 'Default % of Account', unit: '%', step: 1, default: '5' },
+    pct_equity: { label: 'Default Account %', unit: '%', step: 1, default: '5' },
     risk_pct: { label: 'Default Risk %', unit: '%', step: 0.25, default: '1' },
     risk_dollar: { label: 'Default Risk $', unit: '$', step: 50, default: '250' },
   };
@@ -6084,9 +6092,9 @@
     document.getElementById('slBeOvCustomRWrap').style.display = trigger === 'customR' ? '' : 'none';
     document.getElementById('slBeOvPctWrap').style.display = trigger === 'pct' ? '' : 'none';
   }
-  /* Dynamic Fee Offset: only relevant for the 'Fee Amount' unit. While on, it auto-fills the exact
-     fee offset (0.06) and locks the offset input; switching units or toggling off makes it editable again. */
-  const BE_DYNAMIC_FEE_VALUE = 0.06;
+  /* Dynamic Fee Offset: only relevant for the 'Fee Amount' unit. While on, it auto-fills the round-trip
+     fee offset (0.12%) and locks the offset input; switching units or toggling off makes it editable again. */
+  const BE_DYNAMIC_FEE_VALUE = BE_ROUND_TRIP_FEE_PCT;
   function syncBeOvDynamicFee() {
     const ov = order && order.sl && order.sl.beOverride;
     if (!ov) return;

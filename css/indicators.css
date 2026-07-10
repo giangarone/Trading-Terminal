@@ -475,7 +475,7 @@
 
 /* Size & mode dropdown */
 .size-menu {
-  width: 360px;
+  width: 380px;
 }
 
 .sm-tabs {
@@ -503,6 +503,7 @@
 
 .sm-tab:hover {
   color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 .sm-tab.active {
@@ -664,8 +665,8 @@
    The stat readout sits a comfortable gap below its input control, and status banners
    (in the Risk tabs) get room above them — except the leading "Waiting for Stop Loss"
    banner, which stays flush to the top of the body. */
-.size-menu .price-stepper + .sm-stat-row,
-.size-menu .qt-slider-wrap + .sm-stat-row {
+.size-menu .price-stepper+.sm-stat-row,
+.size-menu .qt-slider-wrap+.sm-stat-row {
   margin-top: 13px;
 }
 
@@ -673,7 +674,7 @@
   margin-top: 13px;
 }
 
-.size-menu .sm-body > .sm-state-banner:first-child {
+.size-menu .sm-body>.sm-state-banner:first-child {
   margin-top: 0;
 }
 
