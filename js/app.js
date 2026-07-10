@@ -2097,10 +2097,21 @@
       ? ACCOUNT_BALANCE * (sizeValues.riskPct || 0) / 100
       : (sizeValues.risk || 0);
   }
+  /* Per-contract risk used to size Risk $ / Risk % orders. This is the NET loss a single
+     contract takes if the stop is hit — the raw stop distance PLUS the round-trip fee (entry
+     fill + stop-market exit) — so the sized position's loss at the stop matches the SL chip's
+     net figure (slFeeCalc) exactly. Entry fee depends on order type (maker vs taker); the SL
+     always exits as a taker/market fill. Assumes order.sl exists (callers guard for it). */
+  function netRiskPerContract() {
+    const stopDist = Math.abs(order.entry - order.sl.price);
+    const grossRisk = stopDist * POINT_VALUE;
+    const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
+    const feePerContract = order.entry * entryFeeRate + order.sl.price * FEE_RATE_MARKET;
+    return grossRisk + feePerContract;
+  }
   function syncQtyFromRisk() {
     if (!order || !isRiskMode(order.sizeMode) || !order.sl) return;
-    const stopDist = Math.abs(order.entry - order.sl.price);
-    const riskPerContract = stopDist * POINT_VALUE;
+    const riskPerContract = netRiskPerContract();
     const riskDollars = effectiveRiskDollars(order.sizeValues, order.sizeMode);
     if (riskPerContract > 0) { order.qty = Math.max(0, Math.floor(riskDollars / riskPerContract * 100) / 100); }
   }
@@ -2127,8 +2138,7 @@
   }
   function riskLimitExceeded() {
     if (!order || !isRiskMode(order.sizeMode) || !order.sl) return false;
-    const stopDist = Math.abs(order.entry - order.sl.price);
-    const riskPerContract = stopDist * POINT_VALUE;
+    const riskPerContract = netRiskPerContract();
     const riskDollars = effectiveRiskDollars(order.sizeValues, order.sizeMode);
     return riskPerContract > 0
       && Math.floor(riskDollars / riskPerContract * 100) / 100 === 0;
