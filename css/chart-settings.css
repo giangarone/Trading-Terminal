@@ -603,6 +603,12 @@
   cursor: pointer;
 }
 
+.cs-radio-row.disabled {
+  opacity: .4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .cs-radio-dot {
   flex-shrink: 0;
   width: 16px;

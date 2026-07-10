@@ -2,6 +2,12 @@
 
 All notable changes to the Trading Terminal are documented here.
 
+## 2026-07-10
+
+### Changed
+- **Start Trailing options validated by take-profit count** — In the SL gear menu, "After TP1/TP2/TP3 Hit" options are now greyed out and unclickable when the trade doesn't have enough take profits to reach them (e.g. with 1 TP, only "Immediately" and "After TP1 Hit" are selectable). Reachability accounts for already-hit TPs, so a still-reachable trigger isn't greyed out after an earlier TP fills.
+- **Start Trailing selection clamps when a TP is removed** — If the selected trigger becomes unreachable after removing a take profit (e.g. "After TP3 Hit" with TP3 removed), it clamps down to the highest still-valid option (TP3→TP2→TP1→Immediately) while keeping trailing enabled, instead of silently never starting.
+
 ## 2026-07-09
 
 ### Added

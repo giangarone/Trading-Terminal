@@ -1467,6 +1467,7 @@
     if (order.sl && !order.sl.beActive && (order.tps.length < 1 || order.sl.beTpId === id)) {
       order.sl.beTpId = null;
     }
+    reconcileTrailStart();
     render();
   }
   function removeSl() {
@@ -1696,6 +1697,19 @@
     if (!order || !order.sl) return null;
     if (!order.sl.trailOverride) order.sl.trailOverride = makeSlConfig();
     return order.sl.trailOverride;
+  }
+  function trailStartMaxTp() {
+    // Highest TP-hit level still reachable: already-hit TPs + pending TPs, capped at 3.
+    return Math.min(3, (order.tpsHitCount || 0) + order.tps.length);
+  }
+  function reconcileTrailStart() {
+    // Clamp an unreachable Start-Trailing trigger down to the highest valid option; keep trailing on.
+    if (!order || !order.sl || !order.sl.trailOverride) return; // nothing configured to fix
+    const cfg = order.sl.trailOverride;
+    const m = /^tp(\d)$/.exec(cfg.start);
+    if (!m) return; // 'immediate' is always valid
+    const maxTp = trailStartMaxTp();
+    if (+m[1] > maxTp) cfg.start = maxTp >= 1 ? 'tp' + maxTp : 'immediate';
   }
   function slAtrMult() { return (order && order.sl && order.sl.atrMult) || chartSettings.atrStop.multiplier || 2.0; }
   /* min/max/step/decimal-places for a trailing distance value, by unit */
@@ -6158,7 +6172,12 @@
     if (!cfg) return;
     document.getElementById('slDistanceValue').value = (+cfg.distanceValue).toFixed(slDistanceParams(cfg.distanceUnit).dp);
     slDistanceUnitToggle.querySelectorAll('.cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === cfg.distanceUnit));
-    slStartToggle.querySelectorAll('.cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === cfg.start));
+    const maxTp = trailStartMaxTp();
+    slStartToggle.querySelectorAll('.cs-radio-row').forEach(b => {
+      const m = /^tp(\d)$/.exec(b.dataset.unit);
+      b.classList.toggle('disabled', !!m && +m[1] > maxTp);
+      b.classList.toggle('active', b.dataset.unit === cfg.start);
+    });
     document.getElementById('slAtrMultiplier').value = slAtrMult().toFixed(2);
     const be = ensureBeOverride();
     slBeOvTriggerToggle.querySelectorAll('.cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === be.trigger));
@@ -6184,6 +6203,7 @@
     document.getElementById('slTrailSettings').style.display = (on && mode === 'trailing') ? '' : 'none';
     document.getElementById('slAtrSettings').style.display = (on && mode === 'atr') ? '' : 'none';
     document.getElementById('slBeSettings').style.display = (on && mode === 'breakeven') ? '' : 'none';
+    reconcileTrailStart();
     populateSlSettings();
   }
   function openSlGearMenu(anchorRect, trigger) {
@@ -6261,6 +6281,7 @@
   slStartToggle.querySelectorAll('.cs-radio-row').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (btn.classList.contains('disabled')) return;
       const cfg = ensureSlConfig();
       if (!cfg || btn.dataset.unit === cfg.start) return;
       cfg.start = btn.dataset.unit;
