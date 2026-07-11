@@ -666,9 +666,8 @@
 }
 
 .ind-doc-fav:hover {
-  color: var(--accent);
   border-color: var(--border-strong);
-  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .ind-doc-fav .material-symbols-outlined {
