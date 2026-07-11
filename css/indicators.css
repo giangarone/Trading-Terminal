@@ -328,7 +328,6 @@
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  scrollbar-width: thin;
   scrollbar-color: var(--border-default) transparent;
 }
 
@@ -514,6 +513,7 @@
 
 .ind-settings-header {
   padding: 15px 16px 13px;
+  border: none;
 }
 
 .ind-settings-title {
@@ -529,7 +529,7 @@
 .ind-settings-tabs {
   display: flex;
   gap: 20px;
-  padding: 0 16px;
+  padding: 8px 16px 0 16px;
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
@@ -541,7 +541,7 @@
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   padding: 0 0 11px;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
@@ -549,12 +549,12 @@
 }
 
 .ind-settings-tab:hover {
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .ind-settings-tab.active {
-  color: var(--text-primary);
-  border-bottom-color: var(--text-primary);
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 .ind-settings-body {
@@ -562,7 +562,6 @@
   overflow-y: auto;
   min-height: 0;
   flex: 1;
-  scrollbar-width: thin;
   scrollbar-color: var(--border-default) transparent;
 }
 

@@ -459,7 +459,7 @@
   background: transparent;
   border: none;
   outline: none;
-  text-align: right;
+  text-align: left;
   font-family: var(--sans);
   font-size: 13px;
   font-weight: 500;

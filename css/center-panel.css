@@ -578,6 +578,15 @@
   max-width: calc(100% - 90px);
 }
 
+/* Symbol/timeframe/exchange header and the OHLC quote sit together on one row
+   (wrapping only if the chart is too narrow to fit both). */
+.cl-top-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
 .cl-header {
   display: flex;
   align-items: center;
@@ -586,15 +595,6 @@
   font-weight: 500;
   color: var(--text-primary);
   line-height: 1.2;
-}
-
-.cl-sep {
-  color: var(--text-muted);
-}
-
-.cl-timeframe,
-.cl-exchange {
-  color: var(--text-secondary);
 }
 
 .cl-live {
@@ -700,20 +700,30 @@
   white-space: nowrap;
 }
 
-/* When an indicator is hidden, dim the label and drop its value. */
+/* When an indicator is hidden, dim its label and drop its value. */
 .cl-ind-row.hidden .cl-ind-name,
-.cl-ind-row.hidden .cl-ind-params,
-.cl-ind-row.hidden .cl-ind-value {
+.cl-ind-row.hidden .cl-ind-params {
   color: var(--text-muted);
   opacity: .6;
 }
 
-/* Actions appear only on row hover; they replace the reserved space to the right. */
+.cl-ind-row.hidden .cl-ind-value {
+  display: none;
+}
+
+/* On hover the action buttons take over the params/value slot — pinned right after the
+   indicator name — instead of appearing beside them. Because the name and the buttons never
+   change width, the buttons stay in a fixed spot, so a user can hide/unhide repeatedly
+   without the buttons shifting or having to re-hover. */
+.cl-ind-row:hover .cl-ind-params,
+.cl-ind-row:hover .cl-ind-value {
+  display: none;
+}
+
 .cl-ind-actions {
   display: none;
   align-items: center;
   gap: 1px;
-  margin-left: 1px;
 }
 
 .cl-ind-row:hover .cl-ind-actions {

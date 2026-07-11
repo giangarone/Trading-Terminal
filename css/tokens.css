@@ -179,8 +179,11 @@ body {
   background: var(--accent-dim);
 }
 
+/* Note: do NOT set `scrollbar-width` here. In Chrome 121+ the standard
+   `scrollbar-width` property takes precedence over `::-webkit-scrollbar` and
+   disables our custom 5px styling, giving the wide default bar instead. We keep
+   only `scrollbar-color` (which doesn't override webkit) for Firefox. */
 * {
-  scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
 }
 

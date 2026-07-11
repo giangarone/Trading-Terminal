@@ -14,17 +14,17 @@
     rel="stylesheet">
 
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
-  <link rel="stylesheet" href="css/tokens.css?v=15">
+  <link rel="stylesheet" href="css/tokens.css?v=16">
   <link rel="stylesheet" href="css/topbar.css?v=14">
   <link rel="stylesheet" href="css/left-panel.css?v=14">
-  <link rel="stylesheet" href="css/center-panel.css?v=18">
+  <link rel="stylesheet" href="css/center-panel.css?v=20">
   <link rel="stylesheet" href="css/workspace.css?v=37">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=22">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=44">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
-  <link rel="stylesheet" href="css/indicators.css?v=17">
+  <link rel="stylesheet" href="css/indicators.css?v=18">
   <link rel="stylesheet" href="css/chart-settings.css?v=42">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
@@ -3100,9 +3100,7 @@
                 style="font-size:15px;">expand_more</span></button>
             <button class="ct-action-btn pop-trigger" id="indicatorsTrigger" data-tooltip="Indicators"><span
                 class="material-symbols-outlined" style="font-size:15px;">function</span><span
-                class="ct-label">Indicators</span><span class="count-badge" id="indicatorsCount"
-                style="display:none;"></span><span class="material-symbols-outlined ct-caret"
-                style="font-size:15px;">expand_more</span></button>
+                class="ct-label">Indicators</span></button>
             <button class="ct-action-btn" id="replayToggle" data-tooltip="Replay"><span
                 class="material-symbols-outlined" style="font-size:15px;">fast_rewind</span><span
                 class="ct-label">Replay</span></button>
@@ -3151,15 +3149,17 @@
               <div class="chart-placeholder chart-pane primary" id="chartPlaceholder">
                 <canvas id="priceChartCanvas"></canvas>
                 <div class="chart-legend" id="chartLegend">
-                  <div class="cl-header">
-                    <span class="cl-symbol" id="clSymbol">ETH / USD</span>
-                    <span class="cl-sep">·</span>
-                    <span class="cl-timeframe" id="clTimeframe">15m</span>
-                    <span class="cl-sep">·</span>
-                    <span class="cl-exchange" id="clExchange">BloFin</span>
-                    <span class="cl-live" id="clLive" title="Live"></span>
+                  <div class="cl-top-row">
+                    <div class="cl-header">
+                      <span class="cl-symbol" id="clSymbol">ETHUSD</span>
+                      <span class="cl-sep">·</span>
+                      <span class="cl-timeframe" id="clTimeframe">15m</span>
+                      <span class="cl-sep">·</span>
+                      <span class="cl-exchange" id="clExchange">BloFin</span>
+                      <span class="cl-live" id="clLive" title="Live"></span>
+                    </div>
+                    <div class="cl-ohlc" id="clOhlc"></div>
                   </div>
-                  <div class="cl-ohlc" id="clOhlc"></div>
                   <div class="cl-indicators" id="clIndicators"></div>
                 </div>
                 <div id="orderLineLayer"></div>
@@ -4518,7 +4518,7 @@
     </div>
     <div class="ind-settings-body" id="indSettingsBody"></div>
     <div class="ind-settings-footer">
-      <button class="ind-settings-defaults" id="indSettingsDefaults">Defaults<span
+      <button class="ind-settings-defaults pop-trigger" id="indSettingsDefaults">Defaults<span
           class="material-symbols-outlined">expand_more</span></button>
       <div class="ind-settings-actions">
         <button class="ind-settings-btn" id="indSettingsCancel">Cancel</button>
@@ -4527,16 +4527,38 @@
     </div>
   </div>
 
+  <!-- Defaults menu for indicator settings footer (mockup only — items show a toast). -->
+  <div class="pop-menu" id="indSettingsDefaultsMenu" style="width:200px;">
+    <button class="pop-item" id="indDefaultsReset">
+      <span class="pop-text"><span class="pt-title">Reset settings</span></span>
+    </button>
+    <button class="pop-item" id="indDefaultsSave">
+      <span class="pop-text"><span class="pt-title">Save as default</span></span>
+    </button>
+  </div>
+
   <!-- Shared color swatch menu for indicator settings color fields (delegated open/select). -->
   <div class="pop-menu ind-color-menu" id="indColorMenu" style="width:auto;">
-    <button class="pop-item" data-color="var(--info)"><span class="cs-color-swatch" style="background:var(--info);"></span><span class="pop-text"><span class="pt-title">Blue</span></span></button>
-    <button class="pop-item" data-color="var(--purple)"><span class="cs-color-swatch" style="background:var(--purple);"></span><span class="pop-text"><span class="pt-title">Purple</span></span></button>
-    <button class="pop-item" data-color="var(--intel)"><span class="cs-color-swatch" style="background:var(--intel);"></span><span class="pop-text"><span class="pt-title">Teal</span></span></button>
-    <button class="pop-item" data-color="var(--accent)"><span class="cs-color-swatch" style="background:var(--accent);"></span><span class="pop-text"><span class="pt-title">Gold</span></span></button>
-    <button class="pop-item" data-color="var(--long)"><span class="cs-color-swatch" style="background:var(--long);"></span><span class="pop-text"><span class="pt-title">Green</span></span></button>
-    <button class="pop-item" data-color="var(--short)"><span class="cs-color-swatch" style="background:var(--short);"></span><span class="pop-text"><span class="pt-title">Red</span></span></button>
-    <button class="pop-item" data-color="#f472b6"><span class="cs-color-swatch" style="background:#f472b6;"></span><span class="pop-text"><span class="pt-title">Pink</span></span></button>
-    <button class="pop-item" data-color="#94a3b8"><span class="cs-color-swatch" style="background:#94a3b8;"></span><span class="pop-text"><span class="pt-title">Gray</span></span></button>
+    <button class="pop-item" data-color="var(--info)"><span class="cs-color-swatch"
+        style="background:var(--info);"></span><span class="pop-text"><span class="pt-title">Blue</span></span></button>
+    <button class="pop-item" data-color="var(--purple)"><span class="cs-color-swatch"
+        style="background:var(--purple);"></span><span class="pop-text"><span
+          class="pt-title">Purple</span></span></button>
+    <button class="pop-item" data-color="var(--intel)"><span class="cs-color-swatch"
+        style="background:var(--intel);"></span><span class="pop-text"><span
+          class="pt-title">Teal</span></span></button>
+    <button class="pop-item" data-color="var(--accent)"><span class="cs-color-swatch"
+        style="background:var(--accent);"></span><span class="pop-text"><span
+          class="pt-title">Gold</span></span></button>
+    <button class="pop-item" data-color="var(--long)"><span class="cs-color-swatch"
+        style="background:var(--long);"></span><span class="pop-text"><span
+          class="pt-title">Green</span></span></button>
+    <button class="pop-item" data-color="var(--short)"><span class="cs-color-swatch"
+        style="background:var(--short);"></span><span class="pop-text"><span class="pt-title">Red</span></span></button>
+    <button class="pop-item" data-color="#f472b6"><span class="cs-color-swatch" style="background:#f472b6;"></span><span
+        class="pop-text"><span class="pt-title">Pink</span></span></button>
+    <button class="pop-item" data-color="#94a3b8"><span class="cs-color-swatch" style="background:#94a3b8;"></span><span
+        class="pop-text"><span class="pt-title">Gray</span></span></button>
   </div>
 
   <!-- ===================== MARKET SCANNER MODAL ===================== -->
@@ -5256,7 +5278,8 @@
         <input type="text" id="smQtyInput" value="1">
         <div class="price-stepper-arrows">
           <button type="button" id="smQtyInc"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-          <button type="button" id="smQtyDec"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+          <button type="button" id="smQtyDec"><span
+              class="material-symbols-outlined">keyboard_arrow_down</span></button>
         </div>
       </div>
       <label class="sm-amount-lbl">Quick Select</label>
@@ -5271,7 +5294,8 @@
         <input type="text" id="smDolInput" value="$5,000">
         <div class="price-stepper-arrows">
           <button type="button" id="smDolInc"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-          <button type="button" id="smDolDec"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+          <button type="button" id="smDolDec"><span
+              class="material-symbols-outlined">keyboard_arrow_down</span></button>
         </div>
       </div>
       <div class="sm-stat-row"><span class="l">Estimated Units</span><span class="v" id="smDolQty">—</span></div>
@@ -5287,7 +5311,8 @@
         <input type="text" id="smPctInput" value="25%">
         <div class="price-stepper-arrows">
           <button type="button" id="smPctInc"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
-          <button type="button" id="smPctDec"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+          <button type="button" id="smPctDec"><span
+              class="material-symbols-outlined">keyboard_arrow_down</span></button>
         </div>
       </div>
       <div class="qt-slider-wrap sm-pct-slider-wrap" id="smPctSliderWrap">
@@ -5647,7 +5672,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=15"></script>
-  <script src="js/app.js?v=259"></script>
+  <script src="js/app.js?v=267"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>

@@ -151,6 +151,7 @@
   let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | 'offset:<id>' | 'tp-add' | 'sl-add' | null — which order-line handle is currently hovered/dragged
   let isDraggingOrderLine = false; // true for the duration of any order-line drag — blocks the price-tick auto-render from wiping live drag visuals
   let isHoveringBarControls = false; // true when pointer is over a non-drag interactive element inside an entry/TP/SL bar — suppresses the chart crosshair
+  let isHoveringIndLegend = false; // true when pointer is over an indicator row in the chart legend — suppresses the chart crosshair
   layer.addEventListener('mouseover', (e) => {
     if (e.target.closest('.ol-pill-seg, .ol-gear, .ol-amt, .ol-tp-meta, .ol-entry-pnl')) {
       isHoveringBarControls = true;
@@ -3137,7 +3138,7 @@
     const rect = chart.getBoundingClientRect();
     const x = e.clientX - rect.left, y = e.clientY - rect.top;
     const plotW = rect.width - AXIS_RIGHT_W, ih = rect.height - AXIS_BOTTOM_H;
-    if (isPanning || hoveringNewsMarker || hoveredHandle || isHoveringBarControls || x < 0 || x > plotW || y < 0 || y > ih) {
+    if (isPanning || hoveringNewsMarker || hoveredHandle || isHoveringBarControls || isHoveringIndLegend || x < 0 || x > plotW || y < 0 || y > ih) {
       if (crosshair) { crosshair = null; scheduleDrawPriceChart(); updateLegendValues(); }
       return;
     }
@@ -3158,6 +3159,20 @@
   const clExchange = document.getElementById('clExchange');
   const clOhlc = document.getElementById('clOhlc');
   const clIndicators = document.getElementById('clIndicators');
+
+  /* Hovering an indicator row in the legend suppresses the chart crosshair (same mechanism
+     as the order-line bar controls) so the row reads as an interactive element, not chart space. */
+  clIndicators.addEventListener('mouseover', (e) => {
+    if (e.target.closest('.cl-ind-row')) {
+      isHoveringIndLegend = true;
+      if (crosshair) { crosshair = null; scheduleDrawPriceChart(); updateLegendValues(); }
+    }
+  });
+  clIndicators.addEventListener('mouseout', (e) => {
+    if (!e.relatedTarget || !e.relatedTarget.closest('.cl-ind-row')) {
+      isHoveringIndLegend = false;
+    }
+  });
 
   /* Indicators that draw on the price scale ("overlays") show a numeric value in the legend
      that tracks the current bar (a moving average of closes over the instance's length).
@@ -3241,7 +3256,6 @@
   /* Adds a fresh instance of `name` to the chart (always adds — never toggles off). */
   function addIndicatorInstance(name) {
     chartIndicators.push({ id: ++indInstanceSeq, name, hidden: false, settings: defaultSettingsFor(name) });
-    updateIndicatorsCount();
     renderLegendIndicators();
     showToast(name + ' added to chart', 'function');
   }
@@ -3291,14 +3305,8 @@
     const i = Math.round((crosshair.x - slot / 2 - panX) / slot + baseIndexOffset);
     return clamp(i, 0, candleBars.length - 1);
   }
-  /* Formats a raw symbol into the "BASE / QUOTE" style for crypto pairs; leaves other
-     symbols (equities, futures) as-is. */
   function legendSymbolLabel() {
-    const sym = currentSymbol();
-    for (const q of ['USDT', 'USDC', 'USD']) {
-      if (sym.length > q.length && sym.endsWith(q)) return sym.slice(0, -q.length) + ' / ' + q;
-    }
-    return sym;
+    return currentSymbol();
   }
   function legendTimeframe() {
     const activeBtn = document.querySelector('#tfGroup .tf-btn.active[data-tf]');
@@ -3341,7 +3349,9 @@
       row.dataset.name = inst.name;
       const paramsStr = legendParamsFor(inst);
       const params = paramsStr ? `<span class="cl-ind-params">${paramsStr}</span>` : '';
-      const value = (meta.overlay && !hidden)
+      /* Always render the value span for overlays (CSS hides it while hidden or hovered). Keeping
+         it in the DOM lets the Hide toggle flip state in place without a rebuild. */
+      const value = meta.overlay
         ? `<span class="cl-ind-value" style="color:${color}">${fmt(legendMaValue(legendPeriodFor(inst), barIndex))}</span>`
         : '';
       row.innerHTML =
@@ -3390,20 +3400,26 @@
     const btn = e.target.closest('.cl-ind-btn');
     if (!btn) return;
     e.stopPropagation();
-    const id = +btn.closest('.cl-ind-row').dataset.id;
+    const row = btn.closest('.cl-ind-row');
+    const id = +row.dataset.id;
     const inst = instanceById(id);
     if (!inst) return;
     const act = btn.dataset.act;
     if (act === 'hide') {
+      /* Toggle in place (no rebuild) so the action buttons keep their position while the cursor
+         stays on the row — lets the user hide/unhide rapidly without chasing moving buttons. */
       inst.hidden = !inst.hidden;
-      renderLegendIndicators();
+      row.classList.toggle('hidden', inst.hidden);
+      const icon = btn.querySelector('.material-symbols-outlined');
+      if (icon) icon.textContent = inst.hidden ? 'visibility_off' : 'visibility';
+      btn.setAttribute('data-tooltip', inst.hidden ? 'Show' : 'Hide');
+      updateLegendValues();
     } else if (act === 'settings') {
       openIndicatorSettings(id);
     } else if (act === 'remove') {
       chartIndicators = chartIndicators.filter(i => i.id !== id);
       if (settingsInst && settingsInst.id === id) closeAllPopovers();
-      updateIndicatorsCount();
-      renderLegendIndicators();
+        renderLegendIndicators();
       showToast(inst.name + ' removed', 'delete');
     }
   });
@@ -3595,17 +3611,27 @@
       closeAllPopoversExcept(indSettingsPopup);
     });
   });
-  /* ✕ and Cancel revert; Ok keeps; Defaults resets to schema defaults. */
+  /* ✕ and Cancel revert; Ok keeps. */
   document.getElementById('indSettingsClose').addEventListener('click', (e) => { e.stopPropagation(); revertSettings(); closeAllPopovers(); });
   document.getElementById('indSettingsCancel').addEventListener('click', (e) => { e.stopPropagation(); revertSettings(); closeAllPopovers(); });
   document.getElementById('indSettingsOk').addEventListener('click', (e) => { e.stopPropagation(); closeAllPopovers(); });
-  document.getElementById('indSettingsDefaults').addEventListener('click', (e) => {
+  /* Defaults is a mockup-only menu — its items just show a toast. The label always stays "Defaults". */
+  const indSettingsDefaultsTrigger = document.getElementById('indSettingsDefaults');
+  const indSettingsDefaultsMenu = document.getElementById('indSettingsDefaultsMenu');
+  indSettingsDefaultsTrigger.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (!settingsInst) return;
-    settingsInst.settings = defaultSettingsFor(settingsInst.name);
-    renderLegendIndicators();
-    updateLegendValues();
-    renderSettingsBody();
+    openNear(indSettingsDefaultsMenu, indSettingsDefaultsTrigger.getBoundingClientRect(), 'left', indSettingsDefaultsTrigger);
+  });
+  /* Only dismiss the Defaults menu itself — the indicator settings popup stays open. */
+  document.getElementById('indDefaultsReset').addEventListener('click', (e) => {
+    e.stopPropagation();
+    indSettingsDefaultsMenu.classList.remove('show');
+    showToast('Settings reset to defaults', 'restart_alt');
+  });
+  document.getElementById('indDefaultsSave').addEventListener('click', (e) => {
+    e.stopPropagation();
+    indSettingsDefaultsMenu.classList.remove('show');
+    showToast('Saved as default', 'bookmark_add');
   });
   makeFloatPanelDraggable(indSettingsPopup);
 
@@ -6081,6 +6107,8 @@
     const wlRow = document.querySelector('.wl-row[data-sym="' + sym + '"]');
     if (wlRow) wlRow.classList.add('selected');
     qtApplyAssetConfig(sym);
+    /* keep the chart legend's symbol in sync with the selected asset (#symSelectLabel) */
+    if (window.updateChartLegend) window.updateChartLegend();
     showToast('Switched to ' + sym, 'sync_alt');
   }
   // Exposed so the left-panel watchlist (js/resize.js) can switch symbols too.
@@ -6213,7 +6241,6 @@
   /* ---------- indicators modal ---------- */
   const indicatorsTrigger = document.getElementById('indicatorsTrigger');
   const indicatorsMenu = document.getElementById('indicatorsMenu');
-  const indicatorsCount = document.getElementById('indicatorsCount');
   const indicatorSearch = document.getElementById('indicatorSearch');
   const indicatorSearchClear = document.getElementById('indicatorSearchClear');
   const indicatorList = document.getElementById('indicatorList');
@@ -6275,14 +6302,12 @@
 
   const CAT_LABELS = { classic: 'Classic Indicators', l1: 'Trade Flow Intelligence (L1)', l2: 'Order Book Intelligence (L2)', chartprime: 'ChartPrime' };
   const FLAGSHIP_CATS = ['l1', 'l2'];
-  /* Deterministic "users" count per indicator (social proof) — stable within a session, tiered
-     by category so mainstream classics read as most popular and niche PRO tools least. */
+  /* Deterministic "users" count per indicator (social proof) — stable within a session. */
   function computeIndUsers(d) {
     let h = 0;
     for (let i = 0; i < d.name.length; i++) h = (h * 31 + d.name.charCodeAt(i)) >>> 0;
     const frac = (h % 1000) / 1000;
-    const RANGES = { classic: [180000, 2400000], chartprime: [60000, 520000], l1: [12000, 140000], l2: [6000, 90000] };
-    const [lo, hi] = RANGES[d.cat] || [10000, 200000];
+    const [lo, hi] = [100, 8000];
     return Math.round(lo + frac * (hi - lo));
   }
   IND_DATA.forEach(d => { d.users = computeIndUsers(d); });
@@ -6431,12 +6456,6 @@
       showToast('Pro unlocked — ChartPrime Intelligence™ is now active', 'workspace_premium');
     }, 200);
   });
-
-  function updateIndicatorsCount() {
-    const n = chartIndicators.length;
-    indicatorsCount.style.display = n > 0 ? 'inline-flex' : 'none';
-    indicatorsCount.textContent = n;
-  }
 
   let indActiveCat = 'all';
   function getIndSearch() { return indicatorSearch.value; }

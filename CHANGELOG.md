@@ -5,17 +5,23 @@ All notable changes to the Trading Terminal are documented here.
 ## 2026-07-11
 
 ### Added
-- **Chart legend (top-left overlay)** — The chart now shows a legend in its top-left corner: the asset (`ETH / USD`), timeframe, and exchange on the first line with a live indicator dot, and the O/H/L/C values plus the candle's change (absolute and %) on the second line, color-coded by candle direction. The OHLC tracks the candle under the crosshair while hovering and falls back to the latest candle otherwise; it also reflects timeframe, symbol, and account changes.
+- **Chart legend (top-left overlay)** — The chart now shows a legend in its top-left corner: the asset (`ETHUSD`), timeframe, and exchange on the first line with a live indicator dot, and the O/H/L/C values plus the candle's change (absolute and %) on the second line, color-coded by candle direction. The OHLC tracks the candle under the crosshair while hovering and falls back to the latest candle otherwise; it also reflects timeframe, symbol, and account changes.
 - **Indicators in the chart legend** — Each indicator instance appears as its own legend row (e.g. `MA 60 close 0` with its live value). Hovering a row reveals **Hide**, **Settings**, and **Remove** action buttons (each with a tooltip). Overlay indicators (MA, EMA, SMA, VWAP, Bollinger Bands, etc.) show a numeric value tracking the current bar; others render as name-only rows.
-- **Indicator users count** — Each row in the Indicators panel now shows how many traders use that indicator (e.g. `1.3M`), tiered by category.
+- **Indicator users count** — Each row in the Indicators panel now shows how many traders use that indicator, in a 100–8k range.
 - **Favorites tab & star** — The Indicators panel has a Favorites tab. Hovering any indicator reveals a star button to add/remove it from favorites; favorited rows show a gold filled star. Favorites start empty.
 - **Per-instance indicator settings** — Clicking a legend row's **Settings** (⚙) opens a real editor for that instance. Edits apply live to that instance's legend row only.
 
 ### Changed
-- **Indicator Settings modal redesign (TradingView-style)** — The per-instance settings editor now opens **centered** on screen with a **tabbed** layout (Inputs / Style / Visibility), compact **label-left rows** grouped under plain uppercase section headers (Smoothing, Calculation, Line, Show On) instead of bordered cards, and a footer with **Defaults / Cancel / Ok**. Cancel and ✕ revert to the settings as they were when opened; Ok keeps them; Defaults resets to the indicator's defaults. Cleaner and built to scale to indicators with many settings.
+- **Indicator Settings modal redesign (TradingView-style)** — The per-instance settings editor now opens **centered** on screen with a **tabbed** layout (Inputs / Style / Visibility), compact **label-left rows** grouped under plain uppercase section headers (Smoothing, Calculation, Line, Show On) instead of bordered cards, and a footer with **Defaults / Cancel / Ok**. Cancel and ✕ revert to the settings as they were when opened; Ok keeps them. Cleaner and built to scale to indicators with many settings.
+- **Defaults menu in indicator settings** — The footer **Defaults** button now opens a small menu with **Reset settings** and **Save as default** (mockup-only — each shows a toast). The button label always reads "Defaults".
+- **Simplified Indicators toolbar button** — Removed the count badge and dropdown caret from the chart toolbar's **Indicators** button, leaving just the icon and label.
 - **Indicators panel is now a draggable window** — The Indicators dropdown opens centered in the screen instead of anchored below the Indicators button, and can be repositioned by dragging its header. The search field and buttons stay clickable; only the title/empty header area acts as the grab handle.
 - **Click an indicator to add it to the chart** — The on/off toggle has been removed from the Indicators panel. Clicking an indicator now adds it directly to the chart legend, and clicking again adds **another independent instance** (multiple instances supported, each with its own settings). Removing an instance is done from its legend row.
 - **Removed the "Active only" filter** — The Indicators panel footer and its active-only toggle were removed, since active indicators are now visible directly on the chart.
+- **Crosshair suppressed over legend indicator rows** — Hovering an indicator row in the chart legend now hides the chart crosshair, so the row reads as an interactive control rather than chart space.
+
+### Fixed
+- **Thin scrollbars now apply in Chrome** — Removed the `scrollbar-width: thin` declarations that, since Chrome 121, silently overrode the custom `::-webkit-scrollbar` styling and forced the wide default scrollbar. Scrollbars across the terminal now render at the intended 5px.
 
 ## 2026-07-10
 
