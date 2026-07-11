@@ -732,6 +732,21 @@
   display: none;
 }
 
+/* A hidden indicator keeps its Show (crossed-out eye) button visible at all times, so it can be
+   un-hidden without hovering. The other actions still only appear on hover. */
+.cl-ind-row.hidden .cl-ind-actions {
+  display: inline-flex;
+}
+
+.cl-ind-row.hidden .cl-ind-actions .cl-ind-btn {
+  display: none;
+}
+
+.cl-ind-row.hidden .cl-ind-actions .cl-ind-btn[data-act="hide"],
+.cl-ind-row.hidden:hover .cl-ind-actions .cl-ind-btn {
+  display: flex;
+}
+
 .cl-ind-btn {
   width: 20px;
   height: 20px;
