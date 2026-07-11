@@ -6150,6 +6150,17 @@
     renderSymSelectList('');
     symSelectSearch.focus();
   });
+  /* Double-clicking the chart legend header opens the same symbol selector. */
+  const clHeaderEl = document.querySelector('.cl-header');
+  if (clHeaderEl && symSelectMenu) {
+    clHeaderEl.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      openNear(symSelectMenu, clHeaderEl.getBoundingClientRect(), 'left', clHeaderEl);
+      symSelectSearch.value = '';
+      renderSymSelectList('');
+      symSelectSearch.focus();
+    });
+  }
   symSelectSearch.addEventListener('input', () => renderSymSelectList(symSelectSearch.value));
   symSelectSearch.addEventListener('click', (e) => e.stopPropagation());
   symSelectTabs.forEach(tab => {

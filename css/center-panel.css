@@ -595,6 +595,20 @@
   font-weight: 400;
   color: var(--text-primary);
   line-height: 1.2;
+  /* Hoverable like the indicator rows: transparent border + border-box (and a compensating
+     negative margin) so the hover border can appear without shifting the header. */
+  pointer-events: auto;
+  cursor: default;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  border-radius: 5px;
+  transition: background .12s ease, border-color .12s ease;
+}
+
+.cl-header:hover {
+  border-color: var(--border-default);
 }
 
 .cl-live {
@@ -1084,7 +1098,8 @@
 .app.is-chart-maximized #rightResizeHandle,
 .app.is-chart-maximized .bottom-panel,
 .app.is-chart-maximized #bottomResizeHandle,
-.app.is-chart-maximized .chart-draw-toolbar {
+.app.is-chart-maximized .chart-draw-toolbar,
+.app.is-chart-maximized .chart-tools-bar {
   display: none;
 }
 
