@@ -3399,6 +3399,15 @@
      (a paused rAF would leave the legend permanently un-initialized). */
   setTimeout(() => { chartLegendReady = true; updateChartLegend(); }, 0);
 
+  /* Double-clicking a legend row (anywhere but its action buttons) opens that instance's settings. */
+  clIndicators.addEventListener('dblclick', (e) => {
+    if (e.target.closest('.cl-ind-btn')) return;
+    const row = e.target.closest('.cl-ind-row');
+    if (!row) return;
+    e.stopPropagation();
+    openIndicatorSettings(+row.dataset.id);
+  });
+
   clIndicators.addEventListener('click', (e) => {
     const btn = e.target.closest('.cl-ind-btn');
     if (!btn) return;

@@ -667,14 +667,19 @@
   line-height: 1;
   pointer-events: auto;
   width: fit-content;
+  /* Transparent border by default + border-box sizing so the hover border can be added
+     without changing the row's size. */
+  border: 1px solid transparent;
+  box-sizing: border-box;
   /* Semi-transparent chart-colored backing so the legend text stays legible over
      any candles, indicators, or drawings beneath it. Matches the chart bg (--bg-sunken). */
   background: color-mix(in srgb, var(--bg-sunken) 50%, transparent);
-  transition: background .12s ease;
+  transition: background .12s ease, border-color .12s ease;
+  cursor: default;
 }
 
 .cl-ind-row:hover {
-  background: var(--bg-surface);
+  border-color: var(--border-default);
 }
 
 .cl-ind-label {
