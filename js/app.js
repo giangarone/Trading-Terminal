@@ -3354,6 +3354,9 @@
       const value = meta.overlay
         ? `<span class="cl-ind-value" style="color:${color}">${fmt(legendMaValue(legendPeriodFor(inst), barIndex))}</span>`
         : '';
+      /* On hover the action buttons simply appear to the right of the params/value (which stay
+         visible). The row only grows on hover — it never shrinks — so it can't pull its edge out
+         from under the cursor, which is what caused the old hide/unhide flicker loop. */
       row.innerHTML =
         `<span class="cl-ind-label"><span class="cl-ind-name">${meta.abbr}</span>${params}${value}</span>` +
         `<span class="cl-ind-actions">` +

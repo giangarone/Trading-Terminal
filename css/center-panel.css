@@ -714,15 +714,9 @@
   display: none;
 }
 
-/* On hover the action buttons take over the params/value slot — pinned right after the
-   indicator name — instead of appearing beside them. Because the name and the buttons never
-   change width, the buttons stay in a fixed spot, so a user can hide/unhide repeatedly
-   without the buttons shifting or having to re-hover. */
-.cl-ind-row:hover .cl-ind-params,
-.cl-ind-row:hover .cl-ind-value {
-  display: none;
-}
-
+/* On hover the action buttons appear to the right of the params/value (which stay visible). The
+   row only ever grows on hover, never shrinks, so it can't pull its edge out from under the
+   cursor — which is what previously caused a hide/unhide flicker loop over .cl-ind-value. */
 .cl-ind-actions {
   display: none;
   align-items: center;
@@ -731,6 +725,11 @@
 
 .cl-ind-row:hover .cl-ind-actions {
   display: inline-flex;
+}
+
+/* Hide the live value on hover so the action buttons take its place. */
+.cl-ind-row:hover .cl-ind-value {
+  display: none;
 }
 
 .cl-ind-btn {
