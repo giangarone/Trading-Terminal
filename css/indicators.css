@@ -467,6 +467,7 @@
 
 /* Star appears on row hover; when favorited it's always visible and gold-filled. */
 .ind-fav-btn {
+  position: relative;
   width: 22px;
   height: 22px;
   display: flex;
@@ -479,6 +480,26 @@
   color: var(--text-muted);
   opacity: 0;
   transition: opacity var(--t-ui), color var(--t-ui), background var(--t-ui);
+}
+
+/* Tooltip below the star, right-aligned so it can't clip off the panel's right edge. */
+.ind-fav-btn[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sans);
+  white-space: nowrap;
+  box-shadow: 0 8px 20px var(--shadow-color);
+  z-index: 60;
+  pointer-events: none;
 }
 
 .ind-row:hover .ind-fav-btn {
@@ -501,6 +522,238 @@
 
 .ind-fav-btn.on .material-symbols-outlined {
   font-variation-settings: 'FILL' 1;
+}
+
+/* Doc ("Read More") button — mirrors the favorite star: hidden until the row is hovered. */
+.ind-doc-btn {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-xs);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity var(--t-ui), color var(--t-ui), background var(--t-ui);
+}
+
+.ind-row:hover .ind-doc-btn {
+  opacity: 1;
+}
+
+.ind-doc-btn:hover {
+  color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.ind-doc-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Tooltip below the button (rows sit near the panel top, so an upward tooltip could clip).
+   Matches the shared .cl-ind-btn tooltip styling. */
+.ind-doc-btn[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sans);
+  white-space: nowrap;
+  box-shadow: 0 8px 20px var(--shadow-color);
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* ===== IN-PANEL DOCUMENTATION VIEW ===== */
+/* Shown in place of the category tabs + list panes when the panel is in doc-mode. */
+#indicatorsMenu.doc-mode .ind-cats,
+#indicatorsMenu.doc-mode .ind-panes,
+#indicatorsMenu.doc-mode .ind-search-wrap {
+  display: none;
+}
+
+.ind-doc {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#indicatorsMenu.doc-mode .ind-doc {
+  display: flex;
+}
+
+.ind-doc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.ind-doc-back {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--t-ui), border-color var(--t-ui), background var(--t-ui);
+}
+
+.ind-doc-back:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+
+.ind-doc-back .material-symbols-outlined {
+  font-size: 17px;
+}
+
+.ind-doc-heading {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ind-doc-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ind-doc-fav {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  background: none;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color var(--t-ui), border-color var(--t-ui), background var(--t-ui);
+}
+
+.ind-doc-fav:hover {
+  color: var(--accent);
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+
+.ind-doc-fav .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.ind-doc-fav.on {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-dim);
+}
+
+.ind-doc-fav.on .material-symbols-outlined {
+  font-variation-settings: 'FILL' 1;
+}
+
+.ind-doc-add {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 16px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 12px;
+  font-weight: var(--fw-semi);
+  font-family: inherit;
+  cursor: pointer;
+  transition: filter var(--t-ui);
+}
+
+.ind-doc-add:hover {
+  filter: brightness(1.1);
+}
+
+.ind-doc-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 4px 22px 22px;
+}
+
+.ind-doc-section {
+  margin-top: 18px;
+}
+
+.ind-doc-section:first-child {
+  margin-top: 16px;
+}
+
+.ind-doc-h {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 7px;
+}
+
+.ind-doc-p {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.ind-doc-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ind-doc-list li {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.ind-doc-list li::marker {
+  color: var(--accent);
 }
 
 /* ===== INDICATOR SETTINGS MODAL — TradingView-style: centered, tabbed, compact label-left rows =====

@@ -6300,6 +6300,412 @@
     { name: 'Prime Screener', desc: 'An on-chart dashboard for scanning different assets and spotting opportunities at a glance.', cat: 'chartprime' },
   ];
 
+  /* Per-indicator documentation shown in the panel's in-panel "Read More" doc view.
+     Keyed by IND_DATA name. Each section is optional — renderIndDoc skips any that's absent,
+     so the content adapts to what's relevant for each indicator. Educational, not advice. */
+  const IND_DOCS = {
+    'Moving Average': {
+      tagline: 'The foundational trend filter — a smoothed line of average price.',
+      overview: 'A Moving Average (MA) plots the average closing price over a chosen number of bars, producing a smooth line that filters out short-term noise and reveals the underlying trend. It is the single most widely used indicator in technical analysis and the building block for dozens of others.',
+      howItWorks: 'For each bar, the MA sums the closing prices of the last N bars and divides by N. As new bars form, the window slides forward, so the line continuously updates. A longer length produces a slower, smoother line; a shorter length hugs price more closely.',
+      features: ['Works on any market and timeframe', 'Reveals trend direction at a glance', 'Acts as dynamic support and resistance', 'Foundation for crossovers and envelopes'],
+      howToUse: ['Read trend from slope: rising = uptrend, falling = downtrend, flat = range', 'Use price crossing the MA as a simple trend-change cue', 'Combine a fast and slow MA and trade their crossovers', 'Treat the MA as a moving support/resistance level in trends'],
+      settings: [{ name: 'Length', detail: 'Number of bars averaged. Common values: 20 (short), 50 (medium), 200 (long-term).' }, { name: 'Source', detail: 'Price used per bar — usually Close, but Open/High/Low/HL2 are available.' }],
+      signals: ['Price crossing above the MA — potential shift to bullish', 'Price crossing below the MA — potential shift to bearish', 'Fast MA crossing a slow MA — momentum confirmation'],
+      tips: ['Longer lengths lag more but whipsaw less', 'In ranging markets MAs give frequent false signals — pair with a trend-strength filter like ADX'],
+    },
+    'EMA': {
+      tagline: 'A faster moving average that reacts quickly to recent price.',
+      overview: 'The Exponential Moving Average (EMA) is a moving average that weights recent bars more heavily than older ones, so it turns faster than a Simple Moving Average. Traders use it when they want a trend line that responds quickly to fresh price action.',
+      howItWorks: 'Rather than treating every bar in the window equally, the EMA applies an exponentially decaying weight, giving the most recent close the greatest influence. This makes it hug price more tightly and change direction sooner than an SMA of the same length.',
+      features: ['Reacts faster than an SMA', 'Popular for the 9, 21, 50, and 200 lengths', 'Great for crossover systems', 'Smoother than raw price but responsive'],
+      howToUse: ['Use short EMAs (9/21) for entries in trending markets', 'Trade 9/21 or 50/200 EMA crossovers for trend shifts', 'Use the EMA as a trailing support line to hold trends'],
+      settings: [{ name: 'Length', detail: 'Bars in the average. 9 and 21 for scalping, 50 and 200 for the broader trend.' }, { name: 'Source', detail: 'Price input per bar, typically Close.' }],
+      signals: ['Fast EMA crossing above slow EMA — bullish momentum', 'Fast EMA crossing below slow EMA — bearish momentum', 'Price rejecting off a rising EMA — trend continuation'],
+      tips: ['Faster reaction means more false signals in chop', 'The 200 EMA is watched by many traders as a major trend line'],
+    },
+    'SMA': {
+      tagline: 'The classic simple average of price over a period.',
+      overview: 'The Simple Moving Average (SMA) averages closing prices over N bars with equal weight for each. It is the most straightforward trend line and the benchmark against which other averages are compared.',
+      howItWorks: 'Every bar in the lookback window counts equally: sum the last N closes and divide by N. Because old and new bars matter the same, the SMA is smoother and slower to react than an EMA of the same length.',
+      features: ['Equal weighting — very smooth', 'Predictable, well-understood behavior', 'Strong as a long-term trend reference'],
+      howToUse: ['Use the 50 and 200 SMA to define the primary trend', 'Watch the "golden cross" (50 above 200) and "death cross" (50 below 200)', 'Use as a slow anchor alongside a faster EMA'],
+      settings: [{ name: 'Length', detail: 'Bars averaged equally. 50 and 200 are the institutional standards.' }, { name: 'Source', detail: 'Usually Close.' }],
+      signals: ['Golden cross — 50 SMA crossing above 200 SMA', 'Death cross — 50 SMA crossing below 200 SMA'],
+      tips: ['Slower than EMA, so fewer whipsaws but later entries', 'Best for defining the big-picture trend rather than timing entries'],
+    },
+    'VWAP': {
+      tagline: 'The volume-weighted average price — where the average trade filled.',
+      overview: 'VWAP shows the average price of an asset weighted by the volume traded at each level. Because it reflects where the bulk of volume actually transacted, institutions use it as a fair-value benchmark and a reference for execution quality.',
+      howItWorks: 'For each bar VWAP multiplies price by volume, keeps a running total, and divides by cumulative volume since the session start. Levels where a lot traded pull VWAP toward them, so it represents the volume-weighted "center of gravity" of the session.',
+      features: ['Intraday fair-value benchmark', 'Resets each session by default', 'Optional standard-deviation bands', 'Heavily used by institutional desks'],
+      howToUse: ['Treat price above VWAP as intraday bullish, below as bearish', 'Look for pullbacks to VWAP as trend-continuation entries', 'Use VWAP bands to gauge stretched, mean-reverting moves'],
+      settings: [{ name: 'Anchor', detail: 'When the calculation resets — session, week, or a custom anchor point.' }, { name: 'Bands', detail: 'Optional standard-deviation envelopes around VWAP.' }],
+      signals: ['Price reclaiming VWAP after a dip — intraday strength', 'Repeated rejection at VWAP — resistance overhead', 'Price far from VWAP — possible mean reversion'],
+      tips: ['Most meaningful on intraday timeframes', 'VWAP is a magnet — extended moves often revisit it'],
+    },
+    'RSI': {
+      tagline: 'The momentum oscillator for overbought and oversold conditions.',
+      overview: 'The Relative Strength Index (RSI) measures the speed and magnitude of recent price changes on a 0–100 scale. It helps identify when a move may be overextended and when momentum is quietly shifting before price does.',
+      howItWorks: 'RSI compares the average size of up-closes to the average size of down-closes over the lookback period, then normalizes the result to a 0–100 range. High readings mean up-moves dominate; low readings mean down-moves dominate.',
+      features: ['Bounded 0–100 oscillator', 'Classic 70/30 overbought/oversold bands', 'Reveals momentum divergence', 'Works across all markets'],
+      howToUse: ['Watch 70+ for overbought and 30- for oversold conditions', 'Hunt for divergence between RSI and price for early reversal warnings', 'In strong trends, use 50 as the bull/bear dividing line'],
+      settings: [{ name: 'Length', detail: 'Lookback period. 14 is standard; shorter is more sensitive.' }, { name: 'Overbought / Oversold', detail: 'Threshold levels, default 70 and 30.' }],
+      signals: ['Bearish divergence — price higher high, RSI lower high', 'Bullish divergence — price lower low, RSI higher low', 'RSI crossing back through 30 or 70'],
+      tips: ['Overbought can stay overbought in strong trends — do not short blindly', 'Divergence is a warning, not a trigger — wait for price confirmation'],
+    },
+    'Stochastic RSI': {
+      tagline: 'A more sensitive RSI for spotting short-term momentum extremes.',
+      overview: 'Stochastic RSI applies the Stochastic formula to RSI values instead of price, producing a faster, more sensitive oscillator. It reaches overbought and oversold far more often than RSI, making it useful for timing short-term turns.',
+      howItWorks: 'It measures where the current RSI sits within its own high-low range over a lookback window, scaling that to 0–100. Because it is an oscillator of an oscillator, it swings quickly and frequently.',
+      features: ['Highly sensitive momentum reader', '%K and %D signal lines', 'Frequent overbought/oversold cycles', 'Good for short-term timing'],
+      howToUse: ['Use %K/%D crossovers in oversold/overbought zones for entries', 'Confirm with the higher-timeframe trend to avoid counter-trend traps', 'Combine with support/resistance for higher-quality signals'],
+      settings: [{ name: 'Stoch Length', detail: 'Lookback for the Stochastic calculation.' }, { name: 'RSI Length', detail: 'Underlying RSI period.' }, { name: 'K / D Smoothing', detail: 'Smoothing applied to the signal lines.' }],
+      signals: ['%K crossing %D below 20 — potential bounce', '%K crossing %D above 80 — potential pullback'],
+      tips: ['Very noisy — expect many signals, filter aggressively', 'Best used with a trend filter, not on its own'],
+    },
+    'MACD': {
+      tagline: 'Trend and momentum in one — the moving-average convergence/divergence.',
+      overview: 'MACD combines trend and momentum by measuring the relationship between two EMAs. Its line, signal, and histogram together show whether momentum is building, fading, or flipping, making it one of the most popular all-round indicators.',
+      howItWorks: 'The MACD line is the difference between a fast and a slow EMA (default 12 and 26). A signal line (default 9-EMA of the MACD) is plotted on top, and the histogram shows the gap between them — expanding bars mean accelerating momentum, shrinking bars mean it is fading.',
+      features: ['Combines trend and momentum', 'MACD line, signal line, and histogram', 'Zero-line context for trend bias', 'Divergence detection'],
+      howToUse: ['Trade MACD/signal-line crossovers for momentum shifts', 'Use the zero line as the bull/bear boundary', 'Watch histogram divergence against price for early warnings'],
+      settings: [{ name: 'Fast Length', detail: 'Fast EMA period, default 12.' }, { name: 'Slow Length', detail: 'Slow EMA period, default 26.' }, { name: 'Signal Length', detail: 'Signal-line EMA, default 9.' }],
+      signals: ['MACD crossing above signal — bullish momentum', 'MACD crossing below signal — bearish momentum', 'Histogram divergence against price'],
+      tips: ['Crossovers above zero (bullish) or below zero (bearish) carry more weight', 'Lags in fast markets — combine with a leading oscillator'],
+    },
+    'Bollinger Bands': {
+      tagline: 'Volatility envelopes that expand and contract around price.',
+      overview: 'Bollinger Bands wrap a moving average in an upper and lower band set a number of standard deviations away. The bands widen when volatility rises and narrow when it falls, framing price within a dynamic, statistically-derived channel.',
+      howItWorks: 'A middle SMA is plotted, then the standard deviation of price over the same period is calculated and multiplied (default ×2) to place the outer bands. Because standard deviation tracks volatility, the envelope breathes with the market.',
+      features: ['Adaptive volatility channel', 'Squeeze detection for breakouts', 'Mean-reversion reference', 'Works on any timeframe'],
+      howToUse: ['Watch for a "squeeze" (narrow bands) preceding volatility expansion', 'Fade touches of the outer bands in ranging markets', 'In trends, riding the upper/lower band signals strength, not reversal'],
+      settings: [{ name: 'Length', detail: 'Period of the middle SMA and standard deviation, default 20.' }, { name: 'StdDev', detail: 'Band width multiplier, default 2.' }],
+      signals: ['Band squeeze — volatility contraction before a breakout', 'Price walking the upper band — strong uptrend', 'Repeated failure at a band in a range — mean reversion'],
+      tips: ['A band touch is not automatically a reversal — read the trend first', 'Squeezes signal that a move is coming, not its direction'],
+    },
+    'ATR': {
+      tagline: 'A pure volatility gauge — the average range price travels.',
+      overview: 'Average True Range (ATR) measures how much an asset typically moves per bar, giving a single number for current volatility. It says nothing about direction; instead it is the go-to tool for sizing stops and targets to the market’s real movement.',
+      howItWorks: 'For each bar, True Range is the largest of: high minus low, high minus previous close, or low minus previous close (capturing gaps). ATR is a moving average of True Range, so it rises in volatile conditions and falls in quiet ones.',
+      features: ['Direction-agnostic volatility reading', 'Ideal for stop and target placement', 'Adapts position size to conditions', 'Foundation for Supertrend and Keltner Channels'],
+      howToUse: ['Place stops a multiple of ATR away to avoid normal noise', 'Scale position size down when ATR is high', 'Set profit targets in ATR multiples for consistency'],
+      settings: [{ name: 'Length', detail: 'Averaging period for True Range, default 14.' }],
+      signals: ['Rising ATR — volatility expanding', 'Falling ATR — market calming into a range'],
+      tips: ['ATR is absolute, not percentage — compare within the same asset', 'A 1.5–3× ATR stop is a common starting point'],
+    },
+    'Volume': {
+      tagline: 'The fuel behind price — how much trading is happening.',
+      overview: 'Volume shows the number of units traded per bar, revealing the conviction behind a price move. Moves on high volume carry more weight; moves on thin volume are more suspect. It is the oldest confirmation tool in the book.',
+      howItWorks: 'Each bar’s volume is plotted as a column, often colored by whether the bar closed up or down. Optional moving averages of volume help distinguish genuinely elevated activity from the norm.',
+      features: ['Confirms the strength of a move', 'Up/down colored columns', 'Optional volume moving average', 'Universal across markets'],
+      howToUse: ['Confirm breakouts with a volume surge', 'Be wary of moves on shrinking volume', 'Watch climactic volume spikes for potential exhaustion'],
+      settings: [{ name: 'MA Length', detail: 'Optional moving average of volume to define the "normal" baseline.' }],
+      signals: ['Breakout on high volume — higher reliability', 'Rally on falling volume — weakening participation', 'Volume climax — possible exhaustion top or bottom'],
+      tips: ['Volume leads price at turning points', 'Always judge volume relative to its recent average, not in absolute terms'],
+    },
+    'Volume Profile': {
+      tagline: 'A horizontal map of where volume traded by price.',
+      overview: 'Volume Profile displays trading volume horizontally across price levels rather than over time, revealing which prices the market accepted and which it rejected. High-volume nodes act as magnets and support/resistance; low-volume nodes are where price moves fast.',
+      howItWorks: 'Over a chosen range, all volume is bucketed by the price at which it traded, forming a horizontal histogram. The Point of Control (POC) is the highest-volume price, and the Value Area contains the bulk (typically 70%) of traded volume.',
+      features: ['Point of Control and Value Area', 'Reveals high- and low-volume nodes', 'Session, visible-range, or fixed-range modes', 'Structure-based support/resistance'],
+      howToUse: ['Trade reactions at the POC and Value Area edges', 'Expect quick moves through low-volume gaps', 'Use high-volume nodes as targets and defensive levels'],
+      settings: [{ name: 'Range', detail: 'What span the profile covers — session, visible range, or fixed range.' }, { name: 'Value Area %', detail: 'Share of volume defining the Value Area, default 70%.' }],
+      signals: ['Rejection at the POC — strong support/resistance', 'Price accelerating through a low-volume node', 'Return to Value Area after leaving it'],
+      tips: ['High-volume nodes attract price; low-volume nodes repel it', 'Great for choosing targets and defining risk around structure'],
+    },
+    'Support & Resistance': {
+      tagline: 'Automatic marking of key levels where price tends to react.',
+      overview: 'This tool identifies and draws the horizontal price levels where the market has repeatedly reversed or paused. Support and resistance are the backbone of price-action trading, defining where reactions, breakouts, and risk are placed.',
+      howItWorks: 'The indicator scans recent swing highs and lows and clusters levels that price has tested multiple times, drawing zones that update as new structure forms. The more touches and volume a level has, the stronger it is considered.',
+      features: ['Auto-detected key levels', 'Zones rather than single lines', 'Strength based on number of touches', 'Updates with new structure'],
+      howToUse: ['Buy near support and sell near resistance in ranges', 'Trade breakouts through a level with a retest confirmation', 'Anchor stops just beyond the level you are trading'],
+      settings: [{ name: 'Sensitivity', detail: 'How significant a swing must be to register as a level.' }, { name: 'Lookback', detail: 'How far back structure is scanned.' }],
+      signals: ['Bounce off support/resistance — range trade', 'Break and retest of a level — continuation', 'Repeated tests weakening a level — impending break'],
+      tips: ['Treat levels as zones, not exact prices', 'A broken resistance often becomes new support, and vice versa'],
+    },
+    'Pivot Points': {
+      tagline: 'Pre-calculated intraday support and resistance from prior range.',
+      overview: 'Pivot Points project a central pivot and a ladder of support and resistance levels for the current session from the previous period’s high, low, and close. Day traders use them as objective, widely-watched reference levels.',
+      howItWorks: 'The central pivot is the average of the prior period’s high, low, and close. Support (S1–S3) and resistance (R1–R3) levels are then derived with fixed formulas. Because the levels are formulaic and popular, they can become self-fulfilling.',
+      features: ['Objective, formula-based levels', 'Central pivot plus multiple S/R bands', 'Daily, weekly, or monthly anchoring', 'Multiple calculation methods'],
+      howToUse: ['Use the central pivot as the intraday bull/bear line', 'Fade or take profit at R1/S1 in ranges', 'Trade extensions to R2/R3 or S2/S3 on trend days'],
+      settings: [{ name: 'Type', detail: 'Calculation method — Traditional, Fibonacci, Camarilla, Woodie.' }, { name: 'Timeframe', detail: 'Anchor period — daily, weekly, monthly.' }],
+      signals: ['Holding above the central pivot — intraday bullish bias', 'Rejection at R1/R2 — resistance', 'Reclaim of a lost pivot level'],
+      tips: ['Most effective on intraday charts', 'Confluence with other levels makes a pivot far stronger'],
+    },
+    'Supertrend': {
+      tagline: 'A clean trend-following line and trailing-stop tool.',
+      overview: 'Supertrend plots a single line that flips above or below price to signal trend direction, using volatility to set its distance. Its simplicity — green line below price for up, red above for down — makes it a favorite for trend trading and trailing stops.',
+      howItWorks: 'Using ATR to measure volatility, Supertrend places bands a multiple of ATR from price. When price closes through the band, the trend flips and the line jumps to the other side, trailing price at a volatility-adjusted distance.',
+      features: ['Single, unambiguous trend line', 'ATR-based, volatility-adaptive', 'Built-in trailing stop', 'Clear flip signals'],
+      howToUse: ['Trade in the direction of the line’s color', 'Use the line as a trailing stop to ride trends', 'Enter on flips confirmed by the higher-timeframe trend'],
+      settings: [{ name: 'ATR Length', detail: 'Volatility lookback, default 10.' }, { name: 'Multiplier', detail: 'ATR distance for the bands, default 3.' }],
+      signals: ['Line flipping below price — uptrend begins', 'Line flipping above price — downtrend begins'],
+      tips: ['Whipsaws in ranges — best in trending conditions', 'A higher multiplier gives fewer, steadier signals'],
+    },
+    'Ichimoku Cloud': {
+      tagline: 'A complete trend, momentum, and support/resistance system.',
+      overview: 'Ichimoku Kinko Hyo is an all-in-one system whose five lines and shaded "cloud" convey trend, momentum, and support/resistance at a glance. Once its components are learned, it offers a full trading framework on a single overlay.',
+      howItWorks: 'It plots the Conversion and Base lines (midpoints of recent ranges), a Lagging Span (price shifted back), and two Leading Spans that form the cloud (Kumo) projected forward. The cloud’s color and thickness show trend direction and strength.',
+      features: ['Five-component all-in-one system', 'Forward-projected cloud', 'Dynamic support/resistance', 'Trend, momentum, and bias together'],
+      howToUse: ['Trade long above the cloud, short below it', 'Use Conversion/Base crossovers for entries', 'Confirm with the Lagging Span clear of price'],
+      settings: [{ name: 'Conversion', detail: 'Tenkan-sen period, default 9.' }, { name: 'Base', detail: 'Kijun-sen period, default 26.' }, { name: 'Lagging Span', detail: 'Displacement, default 26.' }],
+      signals: ['Price breaking above the cloud — bullish', 'Price breaking below the cloud — bearish', 'Cloud twist — trend change ahead'],
+      tips: ['A thick cloud is stronger support/resistance', 'Best signals come when all components align'],
+    },
+    'Parabolic SAR': {
+      tagline: 'Trailing dots that flag trend direction and reversals.',
+      overview: 'The Parabolic SAR ("stop and reverse") prints a trail of dots above or below price that flip sides when the trend reverses. It is a straightforward tool for staying with a trend and managing a trailing stop.',
+      howItWorks: 'In an uptrend, dots sit below price and accelerate upward via an acceleration factor; when price crosses the dots, the SAR flips above and the trend is considered reversed. The acceleration factor tightens the trail as the trend extends.',
+      features: ['Clear dot-based trend signal', 'Accelerating trailing stop', 'Simple reversal flags', 'Good for trending markets'],
+      howToUse: ['Hold longs while dots are below price', 'Use the dots as a trailing stop level', 'Treat a dot flip as an exit or reversal cue'],
+      settings: [{ name: 'Step', detail: 'Acceleration factor increment, default 0.02.' }, { name: 'Max', detail: 'Maximum acceleration factor, default 0.2.' }],
+      signals: ['Dots flipping below price — uptrend', 'Dots flipping above price — downtrend'],
+      tips: ['Poor in sideways markets — expect frequent flips', 'Pair with ADX to trade it only when a trend exists'],
+    },
+    'ADX': {
+      tagline: 'A meter of trend strength — regardless of direction.',
+      overview: 'The Average Directional Index (ADX) measures how strong a trend is, not which way it points. It is the classic filter for deciding whether to deploy trend-following tools or step aside during rangebound conditions.',
+      howItWorks: 'ADX is derived from the Directional Movement indicators (+DI and −DI), which compare rising and falling ranges. ADX itself rises as one direction dominates and falls when the market is choppy, plotting on a 0–100 scale (usually read 0–50).',
+      features: ['Pure trend-strength reading', '+DI / −DI directional components', 'Key 20/25 threshold', 'Filters trend vs. range'],
+      howToUse: ['Trade trends only when ADX is above ~25', 'Avoid or fade breakouts when ADX is low and falling', 'Use +DI/−DI crossovers for directional bias'],
+      settings: [{ name: 'Length', detail: 'Smoothing period, default 14.' }, { name: 'Threshold', detail: 'Trend cutoff level, commonly 20 or 25.' }],
+      signals: ['ADX rising through 25 — trend strengthening', 'ADX falling below 20 — trend fading into a range', '+DI crossing −DI — directional shift'],
+      tips: ['ADX says how strong, +DI/−DI say which way', 'A falling ADX in a trend warns of momentum loss'],
+    },
+    'CCI': {
+      tagline: 'Finds momentum extremes and potential reversals.',
+      overview: 'The Commodity Channel Index (CCI) measures how far price has strayed from its statistical average, oscillating around zero. Despite the name it works on any market and is used to spot overextended moves and emerging momentum.',
+      howItWorks: 'CCI compares the current typical price to a moving average of typical price, scaled by mean deviation. Readings above +100 flag unusually strong up-moves; below −100 flag strong down-moves. Most action falls between ±100.',
+      features: ['Unbounded momentum oscillator', '±100 extreme thresholds', 'Divergence detection', 'Works on all markets'],
+      howToUse: ['Watch ±100 crosses for momentum entries', 'Use zero-line crosses for bias changes', 'Look for CCI/price divergence at extremes'],
+      settings: [{ name: 'Length', detail: 'Lookback period, default 20.' }],
+      signals: ['CCI crossing above +100 — strong bullish momentum', 'CCI crossing below −100 — strong bearish momentum', 'Divergence at extremes'],
+      tips: ['In strong trends CCI can stay beyond ±100 — do not fade blindly', 'Best combined with structure and trend context'],
+    },
+    'Williams %R': {
+      tagline: 'A fast overbought/oversold oscillator.',
+      overview: 'Williams %R measures where the current close sits relative to the high-low range of the lookback period, on an inverted 0 to −100 scale. It is a quick read on overbought and oversold conditions and momentum shifts.',
+      howItWorks: 'For the lookback window it plots how close price is to the recent high (near 0 = strong, overbought) versus the recent low (near −100 = weak, oversold). It is essentially the Stochastic’s %K on an inverted scale.',
+      features: ['Fast momentum reader', '−20 / −80 extreme levels', 'Leading turn signals', 'Simple to interpret'],
+      howToUse: ['Watch −20 for overbought and −80 for oversold', 'Use exits from extremes as timing cues', 'Confirm with the prevailing trend'],
+      settings: [{ name: 'Length', detail: 'Lookback period, default 14.' }],
+      signals: ['Rising back through −80 — potential bounce', 'Falling back through −20 — potential pullback'],
+      tips: ['Very responsive — expect early and frequent signals', 'Overbought/oversold persists in strong trends'],
+    },
+    'Fibonacci Retracement': {
+      tagline: 'Maps likely pullback and reaction zones within a move.',
+      overview: 'Fibonacci Retracement overlays horizontal levels at key ratios between a swing high and low, marking where a pullback may find support or resistance before the trend resumes. It is one of the most widely watched pullback-timing tools.',
+      howItWorks: 'You anchor the tool to a significant swing; it divides that range at the Fibonacci ratios (23.6%, 38.2%, 50%, 61.8%, 78.6%). Because so many traders watch these ratios, price frequently reacts around them.',
+      features: ['Key 38.2 / 50 / 61.8% levels', 'Objective pullback zones', 'Extensions for targets', 'Works on any timeframe'],
+      howToUse: ['Look for entries where price reacts at a Fib level', 'Treat the 61.8% "golden pocket" as a prime reaction zone', 'Use Fibonacci extensions to set profit targets'],
+      settings: [{ name: 'Levels', detail: 'Which ratios to display; 61.8% is the most watched.' }, { name: 'Anchors', detail: 'The swing high and low the grid is drawn from.' }],
+      signals: ['Reaction at 38.2% — shallow pullback, strong trend', 'Reaction at 61.8% — deep but valid pullback', 'Break beyond 78.6% — trend likely failing'],
+      tips: ['Anchor to clear, significant swings for reliable levels', 'Confluence with support/resistance strengthens a Fib level'],
+    },
+    'Large Lot / Block Trade Detector': {
+      tagline: 'Flags unusually large executed trades — the footprints of size.',
+      overview: 'This L1 tool highlights individual executed trades that are far larger than normal, the kind of prints associated with institutional or "smart money" participation. It surfaces where big players are actually transacting, not just quoting.',
+      howItWorks: 'It monitors the trade tape and compares each execution’s size to a rolling baseline of typical trade size. Prints that exceed the threshold are marked on the chart and colored by aggressor side, so outsized activity stands out immediately.',
+      features: ['Real-time large-print detection', 'Buy/sell aggressor coloring', 'Adaptive size threshold', 'Institutional footprint mapping'],
+      howToUse: ['Note where large prints cluster — those levels matter', 'Weigh clusters of aggressive buy prints as demand, sell prints as supply', 'Combine with structure to confirm defended levels'],
+      settings: [{ name: 'Size Threshold', detail: 'How many times the baseline a trade must be to flag.' }, { name: 'Baseline Window', detail: 'Lookback that defines "normal" trade size.' }],
+      signals: ['Cluster of large buy prints at support — accumulation', 'Large sell prints capping a rally — distribution'],
+      tips: ['One big print is noise; clusters are signal', 'Aggressor side matters — who crossed the spread tells the story'],
+    },
+    'Aggressive Order Flow': {
+      tagline: 'Reads whether aggressive buyers or sellers control the tape.',
+      overview: 'This L1 indicator measures the balance of market (aggressor) orders to reveal which side is actively pushing price. It answers a simple but crucial question: are buyers or sellers the ones lifting offers and hitting bids right now?',
+      howItWorks: 'By classifying each execution as buyer- or seller-initiated and summing the net over a window, it produces a running measure of aggression. Sustained positive flow means buyers are lifting offers; sustained negative flow means sellers are hitting bids.',
+      features: ['Net aggressor-flow reading', 'Real-time buyer/seller balance', 'Momentum-of-flow view', 'Divergence detection vs. price'],
+      howToUse: ['Trade with the dominant aggressor side in trends', 'Watch for flow flipping ahead of price', 'Flag divergence where price rises but buy-flow fades'],
+      settings: [{ name: 'Window', detail: 'Lookback over which net aggression is summed.' }, { name: 'Smoothing', detail: 'Optional smoothing of the flow line.' }],
+      signals: ['Rising buy aggression with price — healthy trend', 'Price up but aggression fading — weakening rally', 'Flow flip against the move — early reversal warning'],
+      tips: ['Flow often turns before price — treat it as leading', 'Confirm with price structure before acting'],
+    },
+    'Smart Volume Spike Detector': {
+      tagline: 'Flags abnormal volume and classifies what it means.',
+      overview: 'This L1 tool detects abnormal volume bursts and, crucially, classifies each one — continuation, exhaustion, absorption, liquidation, or fake breakout — so a spike becomes actionable context rather than a raw number.',
+      howItWorks: 'It compares each bar’s volume to an adaptive baseline to detect spikes, then reads the accompanying price behavior (range, close location, follow-through) to categorize the spike’s likely meaning and label it on the chart.',
+      features: ['Adaptive spike detection', 'Contextual classification of spikes', 'On-chart labels', 'Separates continuation from exhaustion'],
+      howToUse: ['Trust continuation spikes in the trend direction', 'Fade exhaustion and liquidation spikes at extremes', 'Treat absorption spikes as evidence of a defended level'],
+      settings: [{ name: 'Sensitivity', detail: 'How large a spike must be to register.' }, { name: 'Baseline Window', detail: 'Lookback defining normal volume.' }],
+      signals: ['Continuation spike — momentum likely persists', 'Exhaustion spike — move may be ending', 'Absorption spike — large passive orders holding a level'],
+      tips: ['Classification is a probability, not a certainty', 'Combine with structure — an exhaustion spike at resistance is strongest'],
+    },
+    'Whale Movement': {
+      tagline: 'Detects large institutional orders that can move markets.',
+      overview: 'Whale Movement surfaces the activity of the largest participants — the "whales" whose orders are big enough to shift price. It aims to put retail traders on the same side as the size, rather than in front of it.',
+      howItWorks: 'It aggregates unusually large orders and executions across the tape, tracks their aggressor side and persistence, and highlights when whale activity concentrates at a level or in a direction.',
+      features: ['Whale-scale activity tracking', 'Directional bias of large players', 'Level concentration alerts', 'Real-time footprint'],
+      howToUse: ['Align entries with net whale direction', 'Respect levels where whale activity concentrates', 'Be cautious taking the opposite side of persistent size'],
+      settings: [{ name: 'Whale Threshold', detail: 'Minimum size to qualify as whale activity.' }, { name: 'Window', detail: 'Aggregation lookback.' }],
+      signals: ['Whale buying into support — accumulation', 'Whale selling into strength — distribution'],
+      tips: ['Follow persistent size, do not fight it', 'Whale prints at structure carry the most weight'],
+    },
+    'Limit Order Heatmap': {
+      tagline: 'Visualizes resting bid/ask liquidity as a live heatmap.',
+      overview: 'This L2 tool renders the order book as a color heatmap beside price, showing where large resting limit orders sit. Those pools of liquidity act as magnets, walls, and breakout fuel, and the heatmap makes them visible in real time.',
+      howItWorks: 'It samples the depth of book over time and paints each price level by resting size — brighter/warmer where liquidity is thick. As orders are added or pulled, the heatmap updates, revealing walls forming and dissolving.',
+      features: ['Live depth-of-book heatmap', 'Liquidity wall detection', 'Support/resistance from resting orders', 'Breakout-zone mapping'],
+      howToUse: ['Expect reactions at thick liquidity walls', 'Watch walls being pulled as a sign a level will break', 'Target thin zones above/below current price'],
+      settings: [{ name: 'Depth', detail: 'How far into the book to visualize.' }, { name: 'Intensity', detail: 'Color scaling for resting size.' }],
+      signals: ['Price stalling at a bright wall — strong level', 'Wall pulled just before touch — likely break', 'Thin zone — fast move potential'],
+      tips: ['Liquidity can be spoofed — corroborate with executed flow', 'Walls that absorb rather than pull are the real ones'],
+    },
+    'Iceberg Detector': {
+      tagline: 'Uncovers hidden orders that refresh as they fill.',
+      overview: 'Iceberg orders show only a small slice of a much larger hidden order, refreshing as each slice fills. This L2 tool detects that refreshing behavior, exposing large institutional interest that is deliberately concealed in the book.',
+      howItWorks: 'It watches for a price level that keeps getting filled yet repeatedly replenishes with similar size — the signature of an iceberg. When the refresh pattern is detected, the hidden level is flagged.',
+      features: ['Hidden-order detection', 'Refresh-pattern recognition', 'Reveals concealed institutional size', 'Level-defense alerts'],
+      howToUse: ['Treat detected icebergs as strongly defended levels', 'Fade moves into a large buy iceberg (support)', 'Watch for the iceberg lifting as the level gives way'],
+      settings: [{ name: 'Refresh Sensitivity', detail: 'How many refreshes qualify as an iceberg.' }, { name: 'Level Tolerance', detail: 'Price tolerance for grouping refills.' }],
+      signals: ['Persistent refills at a level — iceberg support/resistance', 'Iceberg exhausted and pulled — level breaks'],
+      tips: ['Icebergs mark where big players truly want to transact', 'When an iceberg disappears, the level often fails fast'],
+    },
+    'Spoofing Detector': {
+      tagline: 'Flags large fake orders placed to mislead, then canceled.',
+      overview: 'Spoofing is the placement of large orders with no intent to fill, meant to bait other traders before being canceled. This L2 tool detects that appear-then-vanish behavior so you are not fooled by manufactured pressure.',
+      howItWorks: 'It tracks large orders that appear in the book and are canceled quickly without being filled, especially when they briefly move price. Repeated patterns at a level are flagged as probable spoofing.',
+      features: ['Fake-order detection', 'Rapid place-and-cancel tracking', 'Manipulation alerts', 'Protects against false walls'],
+      howToUse: ['Distrust walls that repeatedly appear and vanish', 'Avoid chasing moves driven by spoofed pressure', 'Wait for executed flow to confirm a level is real'],
+      settings: [{ name: 'Cancel Window', detail: 'How fast an order must be pulled to count as spoofing.' }, { name: 'Size Threshold', detail: 'Minimum order size to monitor.' }],
+      signals: ['Large order flashing then canceled — likely spoof', 'Repeated spoofing at a level — manufactured pressure'],
+      tips: ['Executed volume never lies — resting size can', 'Spoofing often precedes a move the opposite way'],
+    },
+    'Liquidity Vacuum': {
+      tagline: 'Identifies thin zones where price can move fast.',
+      overview: 'A liquidity vacuum is a price region with little resting order book depth. When price enters one, it can travel quickly with little resistance. This L2 tool highlights those thin zones before price reaches them.',
+      howItWorks: 'By scanning depth of book, it finds price ranges where resting liquidity is unusually sparse compared to surrounding levels, marking them as vacuum zones prone to rapid, low-friction moves.',
+      features: ['Thin-liquidity zone mapping', 'Fast-move anticipation', 'Breakout target zones', 'Real-time depth scanning'],
+      howToUse: ['Expect acceleration when price enters a vacuum', 'Use vacuum edges as quick targets', 'Avoid placing passive orders inside a vacuum'],
+      settings: [{ name: 'Thinness Threshold', detail: 'How sparse depth must be to flag a vacuum.' }, { name: 'Depth', detail: 'How far into the book to scan.' }],
+      signals: ['Price entering a vacuum — rapid move likely', 'Vacuum above/below — path of least resistance'],
+      tips: ['Vacuums explain why price sometimes "gaps" without news', 'Great for setting realistic fast-move targets'],
+    },
+    'Liquidation Heatmap': {
+      tagline: 'Maps estimated liquidation zones for leveraged traders.',
+      overview: 'This L2 tool estimates where clusters of leveraged positions would be force-closed, drawing those liquidation zones on the chart. Price is often drawn to these pools, since triggering them creates cascades of forced buying or selling.',
+      howItWorks: 'Using leverage tiers and recent positioning, it models where long and short liquidations would trigger and shades those price zones by estimated size. Larger pools are highlighted as stronger magnets.',
+      features: ['Estimated liquidation zones', 'Long vs. short pool mapping', 'Cascade-risk highlighting', 'Magnet-level detection'],
+      howToUse: ['Anticipate price hunting large liquidation pools', 'Expect sharp acceleration once a pool triggers', 'Use pools as targets and reversal areas'],
+      settings: [{ name: 'Leverage Tiers', detail: 'Which leverage levels to model (e.g. 10x, 25x, 50x).' }, { name: 'Intensity', detail: 'Color scaling for pool size.' }],
+      signals: ['Price approaching a large pool — magnet effect', 'Liquidation cascade — sharp, fast move', 'Reversal after a pool is swept'],
+      tips: ['Liquidation zones are estimates, not certainties', 'Sweeps of a pool often mark local exhaustion'],
+    },
+    'Open Interest Analysis': {
+      tagline: 'Shows whether new money is entering or leaving the market.',
+      overview: 'Open Interest (OI) counts the total open derivative positions. This L2 tool reads OI alongside price to reveal whether a move is backed by fresh positioning or just short-covering — a key distinction for judging conviction.',
+      howItWorks: 'It tracks changes in OI relative to price. Rising price with rising OI means new longs; rising price with falling OI means shorts covering. The tool classifies each combination to characterize the move’s participation.',
+      features: ['Price/OI relationship classification', 'New-money vs. covering detection', 'Trend-conviction gauge', 'Squeeze-risk context'],
+      howToUse: ['Trust trends where OI rises with price', 'Be cautious of rallies driven only by short-covering', 'Watch OI drops as positions unwind'],
+      settings: [{ name: 'Window', detail: 'Lookback for OI change measurement.' }],
+      signals: ['Price up + OI up — new longs, strong move', 'Price up + OI down — short covering, weaker', 'Price down + OI up — new shorts'],
+      tips: ['OI reveals the quality behind a price move', 'Rapid OI build-up raises squeeze risk both ways'],
+    },
+    'Institutional Order Blocks': {
+      tagline: 'Marks high-probability institutional buy/sell zones.',
+      overview: 'Order blocks are the price zones where institutions likely built positions before a strong move. This L2 tool identifies them by combining order flow and liquidity, marking areas price often returns to and reacts from.',
+      howItWorks: 'It locates the consolidation or last opposing candle before an impulsive move, corroborates it with order-flow and liquidity evidence, and draws the resulting zone. Revisits to these blocks are watched for reactions.',
+      features: ['Auto order-block detection', 'Flow + liquidity confirmation', 'Bullish and bearish zones', 'Revisit reaction alerts'],
+      howToUse: ['Look for entries when price returns to a fresh order block', 'Use block boundaries for tight risk placement', 'Favor blocks aligned with the higher-timeframe trend'],
+      settings: [{ name: 'Sensitivity', detail: 'How strong the ensuing move must be to validate a block.' }, { name: 'Mitigation', detail: 'Whether to hide blocks once revisited.' }],
+      signals: ['Reaction at a bullish block — demand', 'Rejection at a bearish block — supply', 'Clean break through a block — invalidation'],
+      tips: ['Fresh, untested blocks tend to react best', 'Confluence with liquidity levels raises the odds'],
+    },
+    'Absorption Detector': {
+      tagline: 'Spots aggressive orders being soaked up by passive size.',
+      overview: 'Absorption occurs when heavy aggressive buying or selling fails to move price because large passive orders are absorbing it. This L2 tool detects that stall, which frequently precedes a reversal as the aggressors give up.',
+      howItWorks: 'It compares aggressive order flow against the resulting price movement. When strong flow meets little price change at a level, absorption is flagged — evidence that a large passive player is defending that price.',
+      features: ['Absorption detection at levels', 'Flow-vs-movement analysis', 'Reversal-warning signals', 'Defended-level mapping'],
+      howToUse: ['Watch for reversals after clear absorption', 'Trade toward the absorbing side once flow flips', 'Respect the absorbed level as strong support/resistance'],
+      settings: [{ name: 'Flow Threshold', detail: 'Aggressive flow needed to test for absorption.' }, { name: 'Movement Tolerance', detail: 'How little price may move to count as absorbed.' }],
+      signals: ['Heavy selling, price holding — buyers absorbing', 'Heavy buying, price stalling — sellers absorbing'],
+      tips: ['Absorption marks where big passive players defend price', 'Wait for flow to flip before trading the reversal'],
+    },
+    'Trap Detector': {
+      tagline: 'Detects failed breakouts that trap traders.',
+      overview: 'A trap is a breakout or breakdown that quickly fails, snapping back and leaving the traders who chased it offside. This L2 tool identifies those failures, which often fuel sharp moves as trapped positions are forced out.',
+      howItWorks: 'It watches for price breaking a level and then reversing back through it without follow-through, corroborated by order-flow and liquidity behavior. The failed break is flagged as a bull or bear trap.',
+      features: ['Failed-breakout detection', 'Bull and bear trap flags', 'Flow-confirmed reversals', 'Stop-run identification'],
+      howToUse: ['Fade a confirmed trap back into the range', 'Target the far side where trapped traders exit', 'Avoid chasing breakouts into obvious liquidity'],
+      settings: [{ name: 'Break Buffer', detail: 'How far beyond a level counts as a break.' }, { name: 'Reversal Window', detail: 'How quickly price must reverse to flag a trap.' }],
+      signals: ['Break above resistance then failure — bull trap', 'Break below support then reclaim — bear trap'],
+      tips: ['Traps often occur right at obvious levels where stops rest', 'The reclaim is the trade — not the initial break'],
+    },
+    'Exhaustion Detector': {
+      tagline: 'Flags when aggressive flow stops moving price efficiently.',
+      overview: 'Exhaustion is the point where continued aggressive buying or selling produces less and less price movement — the move is running out of fuel. This L2 tool detects that inefficiency, an early warning that a trend may be ending.',
+      howItWorks: 'It measures how much price moves per unit of aggressive flow. When large flow yields diminishing price progress near an extreme, exhaustion is flagged as momentum decays.',
+      features: ['Momentum-exhaustion detection', 'Efficiency-of-flow analysis', 'Trend-end warnings', 'Extreme-zone context'],
+      howToUse: ['Tighten stops or take profit on exhaustion signals', 'Look for reversals when exhaustion meets structure', 'Avoid adding to a trend showing exhaustion'],
+      settings: [{ name: 'Efficiency Threshold', detail: 'Price-per-flow level that defines exhaustion.' }, { name: 'Window', detail: 'Measurement lookback.' }],
+      signals: ['Big buy flow, tiny price gain — buyer exhaustion', 'Big sell flow, tiny price drop — seller exhaustion'],
+      tips: ['Exhaustion warns of a pause or reversal, not its exact timing', 'Strongest at prior highs/lows or major levels'],
+    },
+    'Smart Liquidity Sweep Detector': {
+      tagline: 'Detects liquidity sweeps and judges reversal vs. continuation.',
+      overview: 'A liquidity sweep is a quick push beyond a level to trigger resting stops before price decides its real direction. This L2 tool detects sweeps and, importantly, classifies whether the sweep is likely a reversal or a continuation.',
+      howItWorks: 'It identifies price spiking through a known liquidity level and then reads the follow-through in order flow to judge intent — a sweep that reverses signals a stop-hunt, while one that continues signals genuine breakout momentum.',
+      features: ['Sweep detection at liquidity levels', 'Reversal vs. continuation classification', 'Stop-hunt identification', 'Flow-confirmed intent'],
+      howToUse: ['Fade sweeps flagged as reversals back through the level', 'Ride sweeps flagged as continuation in the break direction', 'Use swept levels as tight invalidation points'],
+      settings: [{ name: 'Level Source', detail: 'Which liquidity levels are monitored for sweeps.' }, { name: 'Confirmation', detail: 'Flow follow-through required to classify intent.' }],
+      signals: ['Sweep and reversal — stop-hunt, fade it', 'Sweep and continuation — real breakout'],
+      tips: ['Not every sweep reverses — the classification is the edge', 'Sweeps cluster at obvious highs, lows, and round numbers'],
+    },
+    'Delta Divergence Signal': {
+      tagline: 'Warns when price and aggressive flow disagree.',
+      overview: 'Delta is the net of aggressive buying minus selling. This L2 tool flags when price makes a new extreme but delta does not confirm it — a divergence that warns the move is losing the flow behind it and may reverse.',
+      howItWorks: 'It tracks cumulative delta against price. When price prints a higher high while delta prints a lower high (or the bearish mirror), the divergence is marked, signaling that aggressors are no longer supporting the move.',
+      features: ['Price vs. delta divergence detection', 'Bullish and bearish signals', 'Early reversal warnings', 'Flow-confirmed weakness'],
+      howToUse: ['Treat divergence as a heads-up to manage risk', 'Look for reversals when divergence meets a key level', 'Confirm with a price trigger before entering'],
+      settings: [{ name: 'Lookback', detail: 'Window for comparing price and delta extremes.' }, { name: 'Sensitivity', detail: 'How pronounced the divergence must be.' }],
+      signals: ['Price higher high, delta lower high — bearish divergence', 'Price lower low, delta higher low — bullish divergence'],
+      tips: ['Divergence signals weakening momentum, not an instant reversal', 'Strongest at prior swing points and major levels'],
+    },
+    'Market Oracle Plus': {
+      tagline: 'A ChartPrime trend and signal toolkit for clearer decisions.',
+      overview: 'Market Oracle Plus is a ChartPrime all-in-one toolkit that blends trend detection, momentum, and on-chart signals into a single, clean overlay designed to help traders act with more clarity as conditions shift.',
+      howItWorks: 'It fuses multiple trend and momentum models into a unified signal engine, filtering conflicting inputs and presenting concise buy/sell and trend-state cues rather than a cluttered stack of separate indicators.',
+      features: ['Unified trend + signal engine', 'Adaptive to changing conditions', 'Clean on-chart cues', 'Reduces indicator clutter'],
+      howToUse: ['Follow the toolkit’s trend state for directional bias', 'Use its signals as entries within that bias', 'Layer with your own structure for confirmation'],
+      settings: [{ name: 'Sensitivity', detail: 'How reactive the signal engine is.' }, { name: 'Mode', detail: 'Preset profiles for different trading styles.' }],
+      signals: ['Trend-state flip — directional change', 'In-trend signal — continuation entry'],
+      tips: ['Best treated as a decision aid, not a black box', 'Align its bias with the higher timeframe'],
+    },
+    'Market Dynamics': {
+      tagline: 'A ChartPrime liquidity and structure mapping toolkit.',
+      overview: 'Market Dynamics is a ChartPrime toolkit that maps market structure in real time — reaction zones, breakouts, gaps, and institutional areas — giving traders a live picture of where price is likely to react.',
+      howItWorks: 'It continuously analyzes structure and liquidity to draw and update zones as the market evolves, highlighting breakouts and fills and marking areas of institutional interest without manual charting.',
+      features: ['Real-time structure mapping', 'Reaction and institutional zones', 'Breakout and gap detection', 'Auto-updating levels'],
+      howToUse: ['Trade reactions at highlighted zones', 'Use breakout markers with retest confirmation', 'Watch institutional areas as high-probability levels'],
+      settings: [{ name: 'Zone Sensitivity', detail: 'How significant structure must be to be drawn.' }, { name: 'Display', detail: 'Which zone types to show.' }],
+      signals: ['Reaction at a mapped zone', 'Confirmed breakout of structure', 'Fill of a flagged gap'],
+      tips: ['Confluence between zone types raises reliability', 'Keep the display uncluttered — show only what you trade'],
+    },
+    'Prime Oscillators Plus': {
+      tagline: 'A ChartPrime momentum toolkit for building and fading moves.',
+      overview: 'Prime Oscillators Plus is a ChartPrime momentum suite that shows when momentum is building, fading, or flipping, packaging several refined oscillators into a single, readable panel.',
+      howItWorks: 'It combines multiple momentum measures with smoothing and divergence detection, presenting a consolidated read on momentum state so you are not juggling several separate oscillators.',
+      features: ['Consolidated momentum panel', 'Build/fade/flip states', 'Built-in divergence detection', 'Configurable presets'],
+      howToUse: ['Enter as momentum builds in the trend direction', 'Reduce risk as momentum fades', 'Use flips and divergences as reversal warnings'],
+      settings: [{ name: 'Sensitivity', detail: 'Responsiveness of the momentum read.' }, { name: 'Divergence', detail: 'Toggle divergence detection.' }],
+      signals: ['Momentum building — trend continuation', 'Momentum fading — caution', 'Momentum flip — potential reversal'],
+      tips: ['Momentum is a context tool — combine with structure', 'Fading momentum warns before price turns'],
+    },
+    'Prime Screener': {
+      tagline: 'A ChartPrime on-chart dashboard for scanning opportunities.',
+      overview: 'Prime Screener is a ChartPrime on-chart dashboard that scans multiple assets at once and surfaces the ones lining up with your criteria, so opportunities can be spotted at a glance without flipping through charts.',
+      howItWorks: 'It evaluates a set of assets against configurable conditions — trend, momentum, and signal states — and displays the results in a compact on-chart table that updates live as markets move.',
+      features: ['Multi-asset scanning', 'On-chart dashboard table', 'Configurable criteria', 'Live updates'],
+      howToUse: ['Define the conditions you care about', 'Scan the table for assets meeting them', 'Drill into flagged assets for a closer look'],
+      settings: [{ name: 'Watchlist', detail: 'Which assets to scan.' }, { name: 'Criteria', detail: 'Conditions that flag an opportunity.' }],
+      signals: ['Asset meeting all criteria — candidate', 'Criteria change — watchlist re-ranking'],
+      tips: ['Keep criteria focused to avoid noise', 'Use it to shortlist, then confirm on the chart'],
+    },
+  };
+
   const CAT_LABELS = { classic: 'Classic Indicators', l1: 'Trade Flow Intelligence (L1)', l2: 'Order Book Intelligence (L2)', chartprime: 'ChartPrime' };
   const FLAGSHIP_CATS = ['l1', 'l2'];
   /* Deterministic "users" count per indicator (social proof) — stable within a session. */
@@ -6313,7 +6719,7 @@
   IND_DATA.forEach(d => { d.users = computeIndUsers(d); });
   function fmtUsers(n) {
     if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+    if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
     return String(n);
   }
 
@@ -6331,16 +6737,20 @@
       `<div class="ind-row-info"><span class="ind-row-name">${d.name}${flagshipBadge}</span><span class="ind-row-desc">${d.desc}</span></div>` +
       `<div class="ind-row-meta">` +
       `<span class="ind-users" title="${d.users.toLocaleString()} users"><span class="material-symbols-outlined">group</span>${fmtUsers(d.users)}</span>` +
-      `<button class="ind-fav-btn${fav ? ' on' : ''}" data-fav aria-label="${fav ? 'Remove from favorites' : 'Add to favorites'}"><span class="material-symbols-outlined">star</span></button>` +
+      `<button class="ind-doc-btn" data-doc data-tooltip="Read More" aria-label="Read documentation"><span class="material-symbols-outlined">menu_book</span></button>` +
+      `<button class="ind-fav-btn${fav ? ' on' : ''}" data-fav data-tooltip="${fav ? 'Remove from favorites' : 'Add to favorites'}" aria-label="${fav ? 'Remove from favorites' : 'Add to favorites'}"><span class="material-symbols-outlined">star</span></button>` +
       `</div>`;
     row.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (e.target.closest('[data-doc]')) { openIndDoc(d, isFlagship); return; }
       const favBtn = e.target.closest('[data-fav]');
       if (favBtn) {
         const isFav = indFavorites.has(d.name);
         if (isFav) indFavorites.delete(d.name); else indFavorites.add(d.name);
         favBtn.classList.toggle('on', !isFav);
-        favBtn.setAttribute('aria-label', !isFav ? 'Remove from favorites' : 'Add to favorites');
+        const favLabel = !isFav ? 'Remove from favorites' : 'Add to favorites';
+        favBtn.setAttribute('aria-label', favLabel);
+        favBtn.setAttribute('data-tooltip', favLabel);
         if (indActiveCat === 'favorites') renderIndList(getIndSearch(), indActiveCat);
         return;
       }
@@ -6465,6 +6875,7 @@
     if (indicatorsMenu.classList.contains('show') && indicatorsMenu._openTrigger === indicatorsTrigger) {
       closeAllPopovers(); return;
     }
+    indicatorsMenu.classList.remove('doc-mode'); // always open on the list, never mid-doc
     renderIndList(getIndSearch(), indActiveCat);
     openCentered(indicatorsMenu, indicatorsTrigger);
     indicatorSearch.focus();
@@ -6499,6 +6910,100 @@
       renderIndList(getIndSearch(), indActiveCat);
     });
   });
+
+  /* ---------- indicator documentation ("Read More") in-panel doc view ---------- */
+  const indDoc = document.getElementById('indDoc');
+  const indDocTitle = document.getElementById('indDocTitle');
+  const indDocBadge = document.getElementById('indDocBadge');
+  const indDocBody = document.getElementById('indDocBody');
+  const indDocAdd = document.getElementById('indDocAdd');
+  const indDocFav = document.getElementById('indDocFav');
+  const indDocFavLabel = document.getElementById('indDocFavLabel');
+  let indDocTarget = null; // { d, isFlagship } currently shown
+
+  /* Reflects the current indicator's favorite state onto the doc-view star. */
+  function syncIndDocFav() {
+    if (!indDocTarget) return;
+    const fav = indFavorites.has(indDocTarget.d.name);
+    const label = fav ? 'Remove from favorites' : 'Add to favorites';
+    indDocFav.classList.toggle('on', fav);
+    indDocFav.setAttribute('aria-label', label);
+    indDocFavLabel.textContent = label;
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  /* Builds the doc body from an IND_DOCS entry, emitting only the sections that exist so the
+     content adapts per indicator. Falls back to the row's short description when no doc exists. */
+  function renderIndDoc(d) {
+    const doc = IND_DOCS[d.name];
+    if (!doc) return `<p class="ind-doc-p">${escHtml(d.desc)}</p>`;
+    let html = '';
+    const section = (title, inner) => `<div class="ind-doc-section"><h4 class="ind-doc-h">${title}</h4>${inner}</div>`;
+    const para = (title, text) => text ? section(title, `<p class="ind-doc-p">${escHtml(text)}</p>`) : '';
+    const list = (title, items) => (items && items.length)
+      ? section(title, `<ul class="ind-doc-list">${items.map(i => `<li>${escHtml(i)}</li>`).join('')}</ul>`) : '';
+    html += para('Overview', doc.overview);
+    html += para('How it works', doc.howItWorks);
+    html += list('Key features', doc.features);
+    html += list('How to use it effectively', doc.howToUse);
+    html += list('Signals to watch', doc.signals);
+    html += list('Tips', doc.tips);
+    return html;
+  }
+
+  function openIndDoc(d, isFlagship) {
+    indDocTarget = { d, isFlagship };
+    indDocTitle.textContent = d.name;
+    indDocBadge.style.display = isFlagship ? 'inline-flex' : 'none';
+    indDocBody.innerHTML = renderIndDoc(d);
+    indDocBody.scrollTop = 0;
+    syncIndDocFav();
+    indicatorsMenu.classList.add('doc-mode');
+  }
+
+  function closeIndDoc() {
+    indicatorsMenu.classList.remove('doc-mode');
+    indDocTarget = null;
+    /* Favorites view is a filtered list, so re-render it in case the doc-view star changed things. */
+    if (indActiveCat === 'favorites') renderIndList(getIndSearch(), indActiveCat);
+  }
+
+  document.getElementById('indDocBack').addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeIndDoc();
+  });
+  indDocAdd.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!indDocTarget) return;
+    const { d, isFlagship } = indDocTarget;
+    if (isFlagship && !indProUnlocked) { closeIndDoc(); showIndLockOverlay(); return; }
+    addIndicatorInstance(d.name);
+  });
+  indDocFav.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!indDocTarget) return;
+    const name = indDocTarget.d.name;
+    const nowFav = !indFavorites.has(name);
+    if (nowFav) indFavorites.add(name); else indFavorites.delete(name);
+    syncIndDocFav();
+    /* Keep the underlying panel row's star in sync so it's already updated on return. */
+    const label = nowFav ? 'Remove from favorites' : 'Add to favorites';
+    document.querySelectorAll(`.ind-row[data-name="${CSS.escape(name)}"] .ind-fav-btn`).forEach(btn => {
+      btn.classList.toggle('on', nowFav);
+      btn.setAttribute('aria-label', label);
+      btn.setAttribute('data-tooltip', label);
+    });
+  });
+  /* Escape backs out of the doc view first (rather than closing the whole panel). */
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && indicatorsMenu.classList.contains('doc-mode')) {
+      e.stopPropagation();
+      closeIndDoc();
+    }
+  }, true);
 
   /* ---------- order type dropdown ---------- */
   const orderTypeMenu = document.getElementById('orderTypeMenu');

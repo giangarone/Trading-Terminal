@@ -17,14 +17,14 @@
   <link rel="stylesheet" href="css/tokens.css?v=16">
   <link rel="stylesheet" href="css/topbar.css?v=14">
   <link rel="stylesheet" href="css/left-panel.css?v=14">
-  <link rel="stylesheet" href="css/center-panel.css?v=20">
+  <link rel="stylesheet" href="css/center-panel.css?v=21">
   <link rel="stylesheet" href="css/workspace.css?v=37">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=22">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=44">
+  <link rel="stylesheet" href="css/order-lines.css?v=45">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
-  <link rel="stylesheet" href="css/indicators.css?v=18">
+  <link rel="stylesheet" href="css/indicators.css?v=24">
   <link rel="stylesheet" href="css/chart-settings.css?v=42">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
@@ -4500,6 +4500,23 @@
         </div>
       </div>
     </div>
+    <!-- In-panel documentation view: shown (via #indicatorsMenu.doc-mode) in place of the
+         category tabs and list panes when a row's "Read More" button is clicked. -->
+    <div class="ind-doc" id="indDoc">
+      <div class="ind-doc-header">
+        <button class="ind-doc-back" id="indDocBack" aria-label="Back to indicators"><span
+            class="material-symbols-outlined">arrow_back</span></button>
+        <div class="ind-doc-heading">
+          <span class="ind-doc-title" id="indDocTitle"></span>
+          <span class="ind-pro-badge" id="indDocBadge" style="display:none;">PRO</span>
+        </div>
+        <button class="ind-doc-fav" id="indDocFav" aria-label="Add to favorites"><span
+            class="material-symbols-outlined">star</span><span class="ind-doc-fav-label"
+            id="indDocFavLabel">Add to favorites</span></button>
+        <button class="ind-doc-add" id="indDocAdd">Add to chart</button>
+      </div>
+      <div class="ind-doc-body ind-list-wrap" id="indDocBody"></div>
+    </div>
   </div>
 
   <!-- ===================== INDICATOR SETTINGS MODAL ===================== -->
@@ -5672,7 +5689,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=15"></script>
-  <script src="js/app.js?v=267"></script>
+  <script src="js/app.js?v=274"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>
