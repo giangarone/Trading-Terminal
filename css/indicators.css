@@ -30,6 +30,26 @@
   flex-shrink: 0;
 }
 
+/* The Indicators panel is a draggable window — its header doubles as the grab handle.
+   The search field and buttons keep their own cursors so they stay clearly interactive. */
+#indicatorsMenu .float-panel-header {
+  cursor: grab;
+  user-select: none;
+}
+
+#indicatorsMenu .float-panel-header.dragging {
+  cursor: grabbing;
+}
+
+#indicatorsMenu .float-panel-header input,
+#indicatorsMenu .float-panel-header button {
+  cursor: auto;
+}
+
+#indicatorsMenu .float-panel-header button {
+  cursor: pointer;
+}
+
 .float-panel-title {
   font-size: 12px;
   font-weight: 600;
@@ -409,20 +429,6 @@
   transition: transform .15s, background .15s;
 }
 
-.ind-row.active .ui-toggle-track {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.ind-row.active .ui-toggle-thumb {
-  transform: translateX(16px);
-  background: var(--on-accent);
-}
-
-.ind-row.active .ind-row-name {
-  color: var(--text-primary);
-}
-
 .ind-empty {
   display: flex;
   flex-direction: column;
@@ -438,39 +444,302 @@
   font-size: 28px;
 }
 
-.float-panel-footer {
+/* Right side of a panel row: users count + favorite star. */
+.ind-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ind-users {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.ind-users .material-symbols-outlined {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Star appears on row hover; when favorited it's always visible and gold-filled. */
+.ind-fav-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-xs);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity var(--t-ui), color var(--t-ui), background var(--t-ui);
+}
+
+.ind-row:hover .ind-fav-btn {
+  opacity: 1;
+}
+
+.ind-fav-btn:hover {
+  color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.ind-fav-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.ind-fav-btn.on {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.ind-fav-btn.on .material-symbols-outlined {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* ===== INDICATOR SETTINGS MODAL — TradingView-style: centered, tabbed, compact label-left rows =====
+   Deliberately does NOT use .cs-card: sections are separated by whitespace + a plain uppercase
+   header, keeping dense settings lists easy to scan. */
+.ind-settings-popup {
+  width: 360px;
+  max-height: min(640px, 86vh);
+}
+
+.ind-settings-header {
+  padding: 15px 16px 13px;
+}
+
+.ind-settings-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Tabs — active tab underlined, matching the reference's Inputs / Style / Visibility strip. */
+.ind-settings-tabs {
+  display: flex;
+  gap: 20px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.ind-settings-tab {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding: 0 0 11px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--t-ui);
+}
+
+.ind-settings-tab:hover {
+  color: var(--text-secondary);
+}
+
+.ind-settings-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--text-primary);
+}
+
+.ind-settings-body {
+  padding: 6px 16px 12px;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+.ind-settings-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ind-settings-body::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 4px;
+}
+
+/* Plain uppercase section header — replaces the card chrome. */
+.ind-set-section {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 18px 0 4px;
+}
+
+.ind-set-section:first-child {
+  padding-top: 6px;
+}
+
+/* Label-left / control-right row. */
+.ind-set-row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+  column-gap: 14px;
+  min-height: 34px;
+  margin: 4px 0;
+}
+
+.ind-set-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ind-set-control {
+  max-width: 200px;
+}
+
+.ind-set-control .select-input {
+  padding: 7px 10px;
+  font-size: 12.5px;
+}
+
+/* Number field — reuse the platform stepper; keep the arrows quiet until hover for a cleaner look. */
+.ind-set-stepper .price-stepper-arrows {
+  opacity: 0;
+  transition: opacity var(--t-ui);
+}
+
+.ind-set-stepper:hover .price-stepper-arrows,
+.ind-set-stepper:focus-within .price-stepper-arrows {
+  opacity: 1;
+}
+
+.ind-set-stepper input {
+  padding: 7px 0;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+/* Boolean rows — TradingView-style square checkbox + label. */
+.ind-set-check-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ind-set-check {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  border-radius: 5px;
+  border: 1.5px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--t-ui), border-color var(--t-ui);
+}
+
+.ind-set-check .material-symbols-outlined {
+  font-size: 13px;
+  color: var(--on-accent);
+  opacity: 0;
+}
+
+.ind-set-check.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.ind-set-check.checked .material-symbols-outlined {
+  opacity: 1;
+}
+
+/* Footer — Defaults on the left, Cancel / Ok on the right. */
+.ind-settings-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
+  padding: 11px 16px;
   border-top: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
 
-.ind-active-label {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.ind-active-toggle {
+.ind-settings-defaults {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 2px;
   background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  color: var(--text-secondary);
   font-family: inherit;
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: color var(--t-ui), border-color var(--t-ui);
 }
 
-.ind-active-toggle:hover {
+.ind-settings-defaults:hover {
   color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
-.ind-active-toggle.on {
+.ind-settings-defaults .material-symbols-outlined {
+  font-size: 15px;
+}
+
+.ind-settings-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ind-settings-btn {
+  border-radius: var(--r-sm);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 8px 18px;
+  cursor: pointer;
+  border: 1px solid var(--border-default);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  transition: filter var(--t-ui), color var(--t-ui), border-color var(--t-ui);
+}
+
+.ind-settings-btn:hover {
   color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.ind-settings-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.ind-settings-btn.primary:hover {
+  filter: brightness(1.08);
+  color: var(--on-accent);
+}
+
+/* Shared color swatch menu for settings color fields. */
+.ind-color-menu {
+  min-width: 140px;
 }
 
 /* Size & mode dropdown */

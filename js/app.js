@@ -228,6 +228,54 @@
       m.classList.remove('show');
     });
   }
+  /* Opens a floating panel centered in the viewport (rather than anchored to its trigger).
+     Used for draggable window panels like the Indicators dropdown. Toggles closed if the
+     same trigger reopens it, mirroring openNear's behaviour. */
+  function openCentered(el, trigger) {
+    if (trigger && el.classList.contains('show') && el._openTrigger === trigger) {
+      closeAllPopovers();
+      return;
+    }
+    const parentMenu = trigger ? trigger.closest('.pop-menu, .ctx-menu') : null;
+    closeAllPopoversExcept(el, parentMenu);
+    el.classList.add('show');
+    el._openTrigger = trigger || null;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const w = el.offsetWidth, h = el.offsetHeight;
+    el.style.left = Math.max(8, Math.round((vw - w) / 2)) + 'px';
+    el.style.top = Math.max(8, Math.round((vh - h) / 2)) + 'px';
+  }
+  /* Makes a floating panel draggable by its header. Dragging is ignored when it starts on
+     an interactive control (the search field, its buttons, or the close button) so those
+     stay clickable; only the title/empty header area acts as the grab handle. */
+  function makeFloatPanelDraggable(panel) {
+    const header = panel.querySelector('.float-panel-header');
+    if (!header) return;
+    header.addEventListener('mousedown', (e) => {
+      if (e.target.closest('input, button')) return;
+      e.preventDefault();
+      const rect = panel.getBoundingClientRect();
+      const grabX = e.clientX - rect.left;
+      const grabY = e.clientY - rect.top;
+      header.classList.add('dragging');
+      function onMove(ev) {
+        const vw = window.innerWidth, vh = window.innerHeight;
+        let x = ev.clientX - grabX;
+        let y = ev.clientY - grabY;
+        x = Math.max(8, Math.min(x, vw - panel.offsetWidth - 8));
+        y = Math.max(8, Math.min(y, vh - panel.offsetHeight - 8));
+        panel.style.left = x + 'px';
+        panel.style.top = y + 'px';
+      }
+      function onUp() {
+        header.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
   /* exposed so overlays.js (loaded before this script) can share the same popover engine */
   window.openNear = openNear;
   window.closeAllPopovers = closeAllPopovers;
@@ -3090,17 +3138,476 @@
     const x = e.clientX - rect.left, y = e.clientY - rect.top;
     const plotW = rect.width - AXIS_RIGHT_W, ih = rect.height - AXIS_BOTTOM_H;
     if (isPanning || hoveringNewsMarker || hoveredHandle || isHoveringBarControls || x < 0 || x > plotW || y < 0 || y > ih) {
-      if (crosshair) { crosshair = null; scheduleDrawPriceChart(); }
+      if (crosshair) { crosshair = null; scheduleDrawPriceChart(); updateLegendValues(); }
       return;
     }
     crosshair = { x, y };
     scheduleDrawPriceChart();
+    updateLegendValues();
   });
   chart.addEventListener('mouseleave', () => {
     if (!crosshair) return;
     crosshair = null;
     scheduleDrawPriceChart();
+    updateLegendValues();
   });
+
+  /* ---------- chart legend (top-left: symbol/timeframe/exchange, OHLC, indicators) ---------- */
+  const clSymbol = document.getElementById('clSymbol');
+  const clTimeframe = document.getElementById('clTimeframe');
+  const clExchange = document.getElementById('clExchange');
+  const clOhlc = document.getElementById('clOhlc');
+  const clIndicators = document.getElementById('clIndicators');
+
+  /* Indicators that draw on the price scale ("overlays") show a numeric value in the legend
+     that tracks the current bar (a moving average of closes over the instance's length).
+     `abbr` is the short code shown; `period` is the fallback value window when an instance
+     has no explicit length. Indicators not listed here render without a value (oscillators,
+     order-flow tools that would live in a sub-pane). */
+  const IND_LEGEND_OVERLAY = {
+    'Moving Average': { abbr: 'MA', period: 60 },
+    'EMA': { abbr: 'EMA', period: 20 },
+    'SMA': { abbr: 'SMA', period: 50 },
+    'VWAP': { abbr: 'VWAP', period: 30 },
+    'Bollinger Bands': { abbr: 'BB', period: 20 },
+    'Supertrend': { abbr: 'Supertrend', period: 10 },
+    'Parabolic SAR': { abbr: 'PSAR', period: 6 },
+    'Ichimoku Cloud': { abbr: 'Ichimoku', period: 26 },
+    'Pivot Points': { abbr: 'Pivots', period: 20 },
+    'Support & Resistance': { abbr: 'S/R', period: 40 },
+  };
+  const IND_LEGEND_PALETTE = ['--info', '--purple', '--intel', '--accent', '--long', '--short'];
+
+  /* ---- indicator instances on the chart ----
+     Each entry is an independent instance {id, name, hidden, settings}; the same indicator can
+     appear multiple times, each with its own settings. Rendered top→bottom in the legend. */
+  let chartIndicators = [];
+  let indInstanceSeq = 0;
+  const indFavorites = new Set(); // favorited indicator names (starts empty)
+  function instanceById(id) { return chartIndicators.find(i => i.id === id); }
+
+  /* IND_DATA is declared later in this scope; guard the indicator rows until the deferred init
+     below runs so early callers (e.g. renderAccountSelect at startup) don't hit the temporal
+     dead zone. OHLC + header still populate before then. */
+  let chartLegendReady = false;
+
+  /* Stable fallback color per indicator, keyed off its position in the master IND_DATA list.
+     Only used when an instance has no explicit color in its settings. */
+  function legendColorFor(name) {
+    const idx = Math.max(0, IND_DATA.findIndex(d => d.name === name));
+    return IND_LEGEND_PALETTE[idx % IND_LEGEND_PALETTE.length];
+  }
+
+  /* ---- per-instance settings schema (the settings design system) ----
+     A small vocabulary of field types (number / select / color / toggle) rendered with the
+     global cs-* settings components, so every indicator's settings share one design language.
+     Indicators without a specific schema fall back to GENERIC_SCHEMA so all are editable. */
+  const SRC_OPTS = [
+    { value: 'close', label: 'Close' }, { value: 'open', label: 'Open' },
+    { value: 'high', label: 'High' }, { value: 'low', label: 'Low' },
+    { value: 'hl2', label: 'HL2' }, { value: 'hlc3', label: 'HLC3' }, { value: 'ohlc4', label: 'OHLC4' },
+  ];
+  const MA_METHOD_OPTS = [
+    { value: 'SMA', label: 'SMA' }, { value: 'EMA', label: 'EMA' },
+    { value: 'WMA', label: 'WMA' }, { value: 'RMA', label: 'RMA' },
+  ];
+  const numF = (key, label, def, opt = {}) => ({ type: 'number', key, label, default: def, step: opt.step ?? 1, decimals: opt.decimals ?? 0, min: opt.min ?? 0 });
+  const selF = (key, label, options, def) => ({ type: 'select', key, label, options, default: def });
+  const colF = (key, label, def = 'auto') => ({ type: 'color', key, label, default: def });
+  const tglF = (key, label, desc, def) => ({ type: 'toggle', key, label, desc, default: def });
+  const IND_SETTINGS_SCHEMA = {
+    'Moving Average': { inputs: [numF('length', 'Length', 60), selF('method', 'Method', MA_METHOD_OPTS, 'SMA'), selF('source', 'Source', SRC_OPTS, 'close'), numF('offset', 'Offset', 0)], style: [colF('color', 'Line Color', 'var(--info)')] },
+    'EMA': { inputs: [numF('length', 'Length', 20), selF('source', 'Source', SRC_OPTS, 'close'), numF('offset', 'Offset', 0)], style: [colF('color', 'Line Color', 'var(--purple)')] },
+    'SMA': { inputs: [numF('length', 'Length', 50), selF('source', 'Source', SRC_OPTS, 'close'), numF('offset', 'Offset', 0)], style: [colF('color', 'Line Color', 'var(--intel)')] },
+    'VWAP': { inputs: [selF('anchor', 'Anchor', [{ value: 'session', label: 'Session' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }], 'session'), selF('source', 'Source', SRC_OPTS, 'hlc3')], style: [colF('color', 'Line Color', 'var(--accent)')] },
+    'Bollinger Bands': { inputs: [numF('length', 'Length', 20), selF('source', 'Source', SRC_OPTS, 'close'), numF('stdDev', 'StdDev', 2, { step: 0.1, decimals: 1 })], style: [colF('color', 'Basis Color', 'var(--info)'), tglF('showMiddle', 'Show Basis', 'Show the middle basis line.', true)] },
+    'Supertrend': { inputs: [numF('atrLength', 'ATR Length', 10), numF('factor', 'Factor', 3, { step: 0.1, decimals: 1 })], style: [colF('color', 'Line Color', 'var(--long)')] },
+    'RSI': { inputs: [numF('length', 'Length', 14), selF('source', 'Source', SRC_OPTS, 'close')], style: [colF('color', 'Line Color', 'var(--purple)')] },
+    'MACD': { inputs: [numF('fast', 'Fast Length', 12), numF('slow', 'Slow Length', 26), numF('signal', 'Signal Smoothing', 9), selF('source', 'Source', SRC_OPTS, 'close')], style: [colF('color', 'Line Color', 'var(--info)')] },
+  };
+  const GENERIC_SCHEMA = { inputs: [numF('length', 'Length', 14), selF('source', 'Source', SRC_OPTS, 'close')], style: [colF('color', 'Color', 'auto')] };
+  function getIndSchema(name) { return IND_SETTINGS_SCHEMA[name] || GENERIC_SCHEMA; }
+  function defaultSettingsFor(name) {
+    const schema = getIndSchema(name);
+    const s = {};
+    [...schema.inputs, ...schema.style].forEach(f => {
+      let def = f.default;
+      if (f.type === 'color' && (def == null || def === 'auto')) def = 'var(' + legendColorFor(name) + ')';
+      s[f.key] = def;
+    });
+    return s;
+  }
+
+  /* Adds a fresh instance of `name` to the chart (always adds — never toggles off). */
+  function addIndicatorInstance(name) {
+    chartIndicators.push({ id: ++indInstanceSeq, name, hidden: false, settings: defaultSettingsFor(name) });
+    updateIndicatorsCount();
+    renderLegendIndicators();
+    showToast(name + ' added to chart', 'function');
+  }
+
+  function indLegendMeta(name) {
+    const o = IND_LEGEND_OVERLAY[name];
+    return o ? { abbr: o.abbr, overlay: true, period: o.period } : { abbr: name, overlay: false, period: 14 };
+  }
+  function legendColorForInst(inst) {
+    return inst.settings.color || ('var(' + legendColorFor(inst.name) + ')');
+  }
+  function legendPeriodFor(inst) {
+    const s = inst.settings;
+    return s.length || s.atrLength || s.slow || indLegendMeta(inst.name).period;
+  }
+  /* Compact params string shown after the abbreviation (e.g. "60 close 0"). Only indicators
+     with a real schema get params; generic-schema ones show just their name. */
+  function legendParamsFor(inst) {
+    const schema = IND_SETTINGS_SCHEMA[inst.name];
+    if (!schema) return '';
+    const parts = [];
+    schema.inputs.forEach(f => {
+      const v = inst.settings[f.key];
+      if (v == null || v === '') return;
+      if (f.type === 'number') parts.push(String(v));
+      else if (f.key === 'source') parts.push(v);
+    });
+    return parts.join(' ');
+  }
+  /* Average close over `period` bars ending at barIndex — the value shown for overlay indicators. */
+  function legendMaValue(period, barIndex) {
+    const end = clamp(barIndex, 0, candleBars.length - 1);
+    const start = Math.max(0, end - period + 1);
+    let sum = 0, count = 0;
+    for (let i = start; i <= end; i++) { sum += candleBars[i].close; count++; }
+    return count ? sum / count : candleBars[end].close;
+  }
+  /* Which candle the crosshair sits over (mirrors drawPriceChart's slot geometry); falls
+     back to the latest candle when the cursor isn't over the chart. */
+  function legendBarIndex() {
+    if (!crosshair) return candleBars.length - 1;
+    const rect = chart.getBoundingClientRect();
+    const plotW = Math.max(0, rect.width - AXIS_RIGHT_W);
+    if (plotW <= 0) return candleBars.length - 1;
+    const slot = plotW / (VISIBLE_BARS + FUTURE_BARS);
+    const baseIndexOffset = candleBars.length - VISIBLE_BARS;
+    const i = Math.round((crosshair.x - slot / 2 - panX) / slot + baseIndexOffset);
+    return clamp(i, 0, candleBars.length - 1);
+  }
+  /* Formats a raw symbol into the "BASE / QUOTE" style for crypto pairs; leaves other
+     symbols (equities, futures) as-is. */
+  function legendSymbolLabel() {
+    const sym = currentSymbol();
+    for (const q of ['USDT', 'USDC', 'USD']) {
+      if (sym.length > q.length && sym.endsWith(q)) return sym.slice(0, -q.length) + ' / ' + q;
+    }
+    return sym;
+  }
+  function legendTimeframe() {
+    const activeBtn = document.querySelector('#tfGroup .tf-btn.active[data-tf]');
+    if (activeBtn) return activeBtn.dataset.tf;
+    const moreLabel = document.getElementById('tfMoreLabel');
+    if (moreLabel && moreLabel.textContent.trim()) return moreLabel.textContent.trim();
+    return '15m';
+  }
+  function legendExchange() {
+    const el = document.getElementById('accountSelectName');
+    return el ? el.textContent.trim() : '';
+  }
+
+  function renderLegendOhlc(bar) {
+    const dir = bar.close >= bar.open ? 'up' : 'down';
+    const change = bar.close - bar.open;
+    const changePct = bar.open ? (change / bar.open) * 100 : 0;
+    const sign = change >= 0 ? '+' : '';
+    const items = [['O', bar.open], ['H', bar.high], ['L', bar.low], ['C', bar.close]]
+      .map(([label, val]) =>
+        `<span class="cl-ohlc-item"><span class="cl-ohlc-label">${label}</span><span class="cl-ohlc-val ${dir}">${fmt(val)}</span></span>`)
+      .join('');
+    clOhlc.innerHTML = items +
+      `<span class="cl-ohlc-change ${dir}">${sign}${fmt(change)} (${sign}${fmt(changePct)}%)</span>`;
+  }
+
+  /* Full rebuild of the indicator rows — one row per instance. Called when the instance set,
+     hide state, or settings change. Live value refreshes go through updateLegendValues(). */
+  function renderLegendIndicators() {
+    if (!chartLegendReady) return;
+    const barIndex = legendBarIndex();
+    clIndicators.innerHTML = '';
+    chartIndicators.forEach(inst => {
+      const meta = indLegendMeta(inst.name);
+      const color = legendColorForInst(inst);
+      const hidden = inst.hidden;
+      const row = document.createElement('div');
+      row.className = 'cl-ind-row' + (hidden ? ' hidden' : '');
+      row.dataset.id = inst.id;
+      row.dataset.name = inst.name;
+      const paramsStr = legendParamsFor(inst);
+      const params = paramsStr ? `<span class="cl-ind-params">${paramsStr}</span>` : '';
+      const value = (meta.overlay && !hidden)
+        ? `<span class="cl-ind-value" style="color:${color}">${fmt(legendMaValue(legendPeriodFor(inst), barIndex))}</span>`
+        : '';
+      row.innerHTML =
+        `<span class="cl-ind-label"><span class="cl-ind-name">${meta.abbr}</span>${params}${value}</span>` +
+        `<span class="cl-ind-actions">` +
+        `<button class="cl-ind-btn" data-act="hide" data-tooltip="${hidden ? 'Show' : 'Hide'}"><span class="material-symbols-outlined">${hidden ? 'visibility_off' : 'visibility'}</span></button>` +
+        `<button class="cl-ind-btn" data-act="settings" data-tooltip="Settings"><span class="material-symbols-outlined">tune</span></button>` +
+        `<button class="cl-ind-btn danger" data-act="remove" data-tooltip="Remove"><span class="material-symbols-outlined">delete</span></button>` +
+        `</span>`;
+      clIndicators.appendChild(row);
+    });
+  }
+
+  /* Lightweight refresh of the OHLC line + indicator values for the current bar, without
+     rebuilding the DOM (so hovering an action button isn't interrupted). */
+  function updateLegendValues() {
+    const barIndex = legendBarIndex();
+    renderLegendOhlc(candleBars[barIndex]);
+    clIndicators.querySelectorAll('.cl-ind-row').forEach(row => {
+      const inst = instanceById(+row.dataset.id);
+      if (!inst || inst.hidden) return;
+      const valEl = row.querySelector('.cl-ind-value');
+      if (indLegendMeta(inst.name).overlay && valEl) {
+        valEl.textContent = fmt(legendMaValue(legendPeriodFor(inst), barIndex));
+      }
+    });
+  }
+
+  /* Header (symbol/timeframe/exchange) + values + indicator rows. Used on init and whenever
+     the symbol, timeframe, or account changes. */
+  function updateChartLegend() {
+    clSymbol.textContent = legendSymbolLabel();
+    clTimeframe.textContent = legendTimeframe();
+    clExchange.textContent = legendExchange();
+    renderLegendIndicators();
+    updateLegendValues();
+  }
+  window.updateChartLegend = updateChartLegend;
+  window.renderLegendIndicators = renderLegendIndicators;
+  /* Deferred to a macrotask so IND_DATA (declared later in this scope) is ready. setTimeout is used
+     rather than requestAnimationFrame so this one-time init still runs when the tab isn't painting
+     (a paused rAF would leave the legend permanently un-initialized). */
+  setTimeout(() => { chartLegendReady = true; updateChartLegend(); }, 0);
+
+  clIndicators.addEventListener('click', (e) => {
+    const btn = e.target.closest('.cl-ind-btn');
+    if (!btn) return;
+    e.stopPropagation();
+    const id = +btn.closest('.cl-ind-row').dataset.id;
+    const inst = instanceById(id);
+    if (!inst) return;
+    const act = btn.dataset.act;
+    if (act === 'hide') {
+      inst.hidden = !inst.hidden;
+      renderLegendIndicators();
+    } else if (act === 'settings') {
+      openIndicatorSettings(id);
+    } else if (act === 'remove') {
+      chartIndicators = chartIndicators.filter(i => i.id !== id);
+      if (settingsInst && settingsInst.id === id) closeAllPopovers();
+      updateIndicatorsCount();
+      renderLegendIndicators();
+      showToast(inst.name + ' removed', 'delete');
+    }
+  });
+
+  /* ---------- per-instance settings editor (TradingView-style: centered, tabbed, compact) ----------
+     One shared modal (#indSettingsPopup), repopulated per open. Compact label-left rows grouped under
+     plain uppercase section headers (no card chrome). Edits apply live; Cancel/✕ revert to the snapshot
+     taken on open, Ok keeps them, Defaults resets to the schema defaults. */
+  const indSettingsPopup = document.getElementById('indSettingsPopup');
+  const indSettingsBody = document.getElementById('indSettingsBody');
+  const indSettingsTitle = document.getElementById('indSettingsTitle');
+  const indSettingsTabs = document.getElementById('indSettingsTabs');
+  const indColorMenu = document.getElementById('indColorMenu');
+  const IND_COLOR_NAMES = {
+    'var(--info)': 'Blue', 'var(--purple)': 'Purple', 'var(--intel)': 'Teal', 'var(--accent)': 'Gold',
+    'var(--long)': 'Green', 'var(--short)': 'Red', '#f472b6': 'Pink', '#94a3b8': 'Gray',
+  };
+  /* Shared option sets + generic sections appended to every indicator (standard across indicators,
+     so they live here rather than bloating each schema). */
+  const opts = arr => arr.map(v => Array.isArray(v) ? { value: v[0], label: v[1] } : { value: v, label: v });
+  const SMOOTH_TYPE_OPTS = opts(['None', 'SMA', 'EMA', 'WMA', 'RMA']);
+  const CALC_TF_OPTS = opts([['chart', 'Chart'], ['1', '1 minute'], ['5', '5 minutes'], ['15', '15 minutes'], ['60', '1 hour'], ['240', '4 hours'], ['D', '1 day'], ['W', '1 week']]);
+  const PRECISION_OPTS = opts(['Default', '0', '1', '2', '3', '4']);
+  const LINE_STYLE_OPTS = opts(['Solid', 'Dashed', 'Dotted']);
+  const VIS_TIMEFRAMES = [['ticks', 'Ticks'], ['seconds', 'Seconds'], ['minutes', 'Minutes'], ['hours', 'Hours'], ['days', 'Days'], ['weeks', 'Weeks'], ['months', 'Months'], ['ranges', 'Ranges']];
+  const sec = label => ({ type: 'section', label });
+
+  let settingsInst = null;         // instance currently being edited
+  let settingsSnapshot = null;     // deep clone of settings at open time (for Cancel/revert)
+  let settingsTab = 'inputs';      // active tab: inputs | style | visibility
+  let settingsColorTrigger = null; // color field awaiting a swatch pick
+
+  /* Assemble the field list for the active tab, folding in the generic sections. */
+  function settingsFieldsForTab(inst) {
+    const schema = getIndSchema(inst.name);
+    if (settingsTab === 'inputs') {
+      return [...schema.inputs,
+        sec('Smoothing'), selF('_smoothType', 'Type', SMOOTH_TYPE_OPTS, 'None'), numF('_smoothLength', 'Length', 14),
+        sec('Calculation'), selF('_calcTf', 'Timeframe', CALC_TF_OPTS, 'chart'), tglF('_waitClose', 'Wait for timeframe closes', '', true)];
+    }
+    if (settingsTab === 'style') {
+      return [...schema.style,
+        sec('Line'), numF('_lineWidth', 'Line Width', 1, { min: 1 }), selF('_lineStyle', 'Line Style', LINE_STYLE_OPTS, 'Solid'), selF('_precision', 'Precision', PRECISION_OPTS, 'Default')];
+    }
+    return [sec('Show On'), ...VIS_TIMEFRAMES.map(([k, label]) => tglF('_vis_' + k, label, '', true))];
+  }
+  function settingValue(f) {
+    const v = settingsInst.settings[f.key];
+    return v == null ? f.default : v;
+  }
+  /* --- field builders: compact label-left rows, no card wrappers --- */
+  function fieldRow(label, controlHtml) {
+    return `<div class="ind-set-row"><label class="ind-set-label">${label}</label><div class="ind-set-control">${controlHtml}</div></div>`;
+  }
+  function buildSettingsNumberField(f) {
+    const id = 'is_' + f.key;
+    const stepper =
+      `<div class="price-stepper ind-set-stepper"><input type="text" id="${id}" data-key="${f.key}" value="${settingValue(f)}" data-step="${f.step}" data-decimals="${f.decimals}" data-min="${f.min}">` +
+      `<div class="price-stepper-arrows">` +
+      `<button type="button" class="ps-up" data-target="${id}"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>` +
+      `<button type="button" class="ps-down" data-target="${id}"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>` +
+      `</div></div>`;
+    return fieldRow(f.label, stepper);
+  }
+  function buildSettingsSelectField(f) {
+    const selId = 'is_sel_' + f.key;
+    const value = settingValue(f);
+    const options = f.options.map(o => `<option value="${o.value}"${o.value === value ? ' selected' : ''}>${o.label}</option>`).join('');
+    const control =
+      `<div class="select-input pop-trigger cs-dd-trigger" data-target="${selId}"><span class="cs-select-label"></span><span class="material-symbols-outlined">expand_more</span></div>` +
+      `<select id="${selId}" data-key="${f.key}" style="display:none;">${options}</select>`;
+    return fieldRow(f.label, control);
+  }
+  function buildSettingsColorField(f) {
+    const value = settingValue(f);
+    const name = IND_COLOR_NAMES[value] || 'Custom';
+    const control =
+      `<div class="select-input pop-trigger ind-color-trigger" data-key="${f.key}"><span class="cs-color-swatch" style="background:${value};"></span><span class="cs-color-name">${name}</span><span class="material-symbols-outlined">expand_more</span></div>`;
+    return fieldRow(f.label, control);
+  }
+  /* booleans render as TradingView-style checkbox rows (full width, no label column) */
+  function buildSettingsCheckRow(f) {
+    const on = settingValue(f);
+    return `<label class="ind-set-check-row" data-key="${f.key}"><span class="ind-set-check${on ? ' checked' : ''}"><span class="material-symbols-outlined">check</span></span><span class="ind-set-check-label">${f.label}</span></label>`;
+  }
+  function buildSettingsField(f) {
+    if (f.type === 'section') return `<div class="ind-set-section">${f.label}</div>`;
+    if (f.type === 'number') return buildSettingsNumberField(f);
+    if (f.type === 'select') return buildSettingsSelectField(f);
+    if (f.type === 'color') return buildSettingsColorField(f);
+    if (f.type === 'toggle') return buildSettingsCheckRow(f);
+    return '';
+  }
+  function renderSettingsBody() {
+    if (!settingsInst) return;
+    indSettingsBody.innerHTML = settingsFieldsForTab(settingsInst).map(buildSettingsField).join('');
+    refreshAllCsDropdownLabels(indSettingsBody);
+  }
+  function updateSettingsTabs() {
+    indSettingsTabs.querySelectorAll('.ind-settings-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === settingsTab));
+  }
+  function openIndicatorSettings(id) {
+    const inst = instanceById(id);
+    if (!inst) return;
+    settingsInst = inst;
+    settingsSnapshot = JSON.parse(JSON.stringify(inst.settings));
+    settingsTab = 'inputs';
+    indSettingsTitle.textContent = inst.name;
+    updateSettingsTabs();
+    renderSettingsBody();
+    openCentered(indSettingsPopup);
+  }
+  function revertSettings() {
+    if (settingsInst && settingsSnapshot) {
+      settingsInst.settings = JSON.parse(JSON.stringify(settingsSnapshot));
+      renderLegendIndicators();
+      updateLegendValues();
+    }
+  }
+  /* commit a numeric field's typed/stepped value back to the instance and refresh the legend */
+  function commitSettingsNumber(input) {
+    if (!settingsInst) return;
+    const decimals = parseInt(input.dataset.decimals, 10) || 0;
+    const min = parseFloat(input.dataset.min) || 0;
+    let v = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
+    v = Math.max(min, v);
+    v = decimals > 0 ? parseFloat(v.toFixed(decimals)) : Math.round(v);
+    input.value = decimals > 0 ? v.toFixed(decimals) : String(v);
+    settingsInst.settings[input.dataset.key] = v;
+    renderLegendIndicators();
+    updateLegendValues();
+  }
+
+  indSettingsTabs.addEventListener('click', (e) => {
+    const tab = e.target.closest('.ind-settings-tab');
+    if (!tab) return;
+    settingsTab = tab.dataset.tab;
+    updateSettingsTabs();
+    renderSettingsBody();
+  });
+  indSettingsBody.addEventListener('click', (e) => {
+    const arrow = e.target.closest('.ps-up, .ps-down');
+    if (arrow) {
+      const input = document.getElementById(arrow.dataset.target);
+      if (!input) return;
+      const step = parseFloat(input.dataset.step) || 1;
+      const cur = parseFloat((input.value || '0').replace(/,/g, '')) || 0;
+      input.value = arrow.classList.contains('ps-up') ? cur + step : cur - step;
+      commitSettingsNumber(input);
+      return;
+    }
+    const colorTrigger = e.target.closest('.ind-color-trigger');
+    if (colorTrigger) {
+      e.stopPropagation();
+      settingsColorTrigger = colorTrigger;
+      openNear(indColorMenu, colorTrigger.getBoundingClientRect(), 'left', colorTrigger);
+      return;
+    }
+    const checkRow = e.target.closest('.ind-set-check-row[data-key]');
+    if (checkRow) {
+      const chk = checkRow.querySelector('.ind-set-check');
+      const on = !chk.classList.contains('checked');
+      chk.classList.toggle('checked', on);
+      if (settingsInst) settingsInst.settings[checkRow.dataset.key] = on;
+      renderLegendIndicators();
+    }
+  });
+  indSettingsBody.addEventListener('change', (e) => {
+    const sel = e.target.closest('select[data-key]');
+    if (sel) {
+      if (settingsInst) settingsInst.settings[sel.dataset.key] = sel.value;
+      renderLegendIndicators();
+      updateLegendValues();
+      return;
+    }
+    const input = e.target.closest('input[data-key]');
+    if (input) commitSettingsNumber(input);
+  });
+  indColorMenu.querySelectorAll('.pop-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!settingsColorTrigger || !settingsInst) return;
+      const color = item.dataset.color;
+      settingsColorTrigger.querySelector('.cs-color-swatch').style.background = color;
+      settingsColorTrigger.querySelector('.cs-color-name').textContent = item.querySelector('.pt-title').textContent;
+      settingsInst.settings[settingsColorTrigger.dataset.key] = color;
+      renderLegendIndicators();
+      updateLegendValues();
+      closeAllPopoversExcept(indSettingsPopup);
+    });
+  });
+  /* ✕ and Cancel revert; Ok keeps; Defaults resets to schema defaults. */
+  document.getElementById('indSettingsClose').addEventListener('click', (e) => { e.stopPropagation(); revertSettings(); closeAllPopovers(); });
+  document.getElementById('indSettingsCancel').addEventListener('click', (e) => { e.stopPropagation(); revertSettings(); closeAllPopovers(); });
+  document.getElementById('indSettingsOk').addEventListener('click', (e) => { e.stopPropagation(); closeAllPopovers(); });
+  document.getElementById('indSettingsDefaults').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!settingsInst) return;
+    settingsInst.settings = defaultSettingsFor(settingsInst.name);
+    renderLegendIndicators();
+    updateLegendValues();
+    renderSettingsBody();
+  });
+  makeFloatPanelDraggable(indSettingsPopup);
 
   /* ---------- live price simulation: primary symbol (ETH) ---------- */
   (function () {
@@ -3179,6 +3686,7 @@
       lastBar.high = Math.max(lastBar.high, last);
       lastBar.low = Math.min(lastBar.low, last);
       scheduleDrawPriceChart();
+      updateLegendValues();
       checkTpFills(prevLast, last);
       if (order && order.filled) checkSlHit(last);
       if (order && !order.filled && order.pendingConfirm && order.orderType === 'Market') {
@@ -3944,6 +4452,7 @@
     ACCOUNT_BALANCE = acct.balance;
     document.getElementById('accountSelectName').textContent = acct.id;
     document.getElementById('accountSelectBalance').textContent = fmtMoney(acct.balance);
+    if (window.updateChartLegend) window.updateChartLegend();
     accountSelectList.innerHTML = ACCOUNTS.map(a =>
       '<button class="pop-item account-item' + (a.id === selectedAccountId ? ' selected' : '') + '" data-account="' + a.id + '">' +
       '<span class="pop-text"><span class="pt-title">' + a.id + '</span></span>' +
@@ -5150,6 +5659,7 @@
         const btn = tfGroup.querySelector('.tf-btn[data-tf="' + tf + '"]');
         if (btn) btn.classList.add('active');
       }
+      if (window.updateChartLegend) window.updateChartLegend();
     }
     tfGroup.querySelectorAll('.tf-btn[data-tf]').forEach(btn => {
       btn.addEventListener('click', () => selectTimeframe(btn.dataset.tf, null));
@@ -5710,9 +6220,6 @@
   const indEmpty = document.getElementById('indEmpty');
   const indEmptyIcon = document.getElementById('indEmptyIcon');
   const indEmptyText = document.getElementById('indEmptyText');
-  const indActiveLabel = document.getElementById('indActiveLabel');
-  const indActiveOnlyToggle = document.getElementById('indActiveOnlyToggle');
-  const indActiveOnlyCheck = document.getElementById('indActiveOnlyCheck');
   const indPremiumList = document.getElementById('indPremiumList');
   const indPremiumEmpty = document.getElementById('indPremiumEmpty');
   const indPremiumEmptyIcon = document.getElementById('indPremiumEmptyIcon');
@@ -5768,29 +6275,52 @@
 
   const CAT_LABELS = { classic: 'Classic Indicators', l1: 'Trade Flow Intelligence (L1)', l2: 'Order Book Intelligence (L2)', chartprime: 'ChartPrime' };
   const FLAGSHIP_CATS = ['l1', 'l2'];
-  const indState = new Map(IND_DATA.map(d => [d.name, false]));
+  /* Deterministic "users" count per indicator (social proof) — stable within a session, tiered
+     by category so mainstream classics read as most popular and niche PRO tools least. */
+  function computeIndUsers(d) {
+    let h = 0;
+    for (let i = 0; i < d.name.length; i++) h = (h * 31 + d.name.charCodeAt(i)) >>> 0;
+    const frac = (h % 1000) / 1000;
+    const RANGES = { classic: [180000, 2400000], chartprime: [60000, 520000], l1: [12000, 140000], l2: [6000, 90000] };
+    const [lo, hi] = RANGES[d.cat] || [10000, 200000];
+    return Math.round(lo + frac * (hi - lo));
+  }
+  IND_DATA.forEach(d => { d.users = computeIndUsers(d); });
+  function fmtUsers(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+    return String(n);
+  }
 
-  let indShowActiveOnly = false;
   let indProUnlocked = false;
 
+  /* A panel row no longer toggles on/off — clicking it adds a fresh instance to the chart.
+     The star favorites/unfavorites without adding. */
   function buildIndRow(d, isFlagship) {
     const row = document.createElement('div');
-    row.className = 'ind-row' + (indState.get(d.name) ? ' active' : '') + (isFlagship ? ' flagship' : '');
+    row.className = 'ind-row' + (isFlagship ? ' flagship' : '');
     row.dataset.name = d.name;
     const flagshipBadge = isFlagship ? '<span class="ind-pro-badge">PRO</span>' : '';
-    row.innerHTML = `<div class="ind-row-info"><span class="ind-row-name">${d.name}${flagshipBadge}</span><span class="ind-row-desc">${d.desc}</span></div><button class="ui-toggle" aria-label="Toggle ${d.name}"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>`;
+    const fav = indFavorites.has(d.name);
+    row.innerHTML =
+      `<div class="ind-row-info"><span class="ind-row-name">${d.name}${flagshipBadge}</span><span class="ind-row-desc">${d.desc}</span></div>` +
+      `<div class="ind-row-meta">` +
+      `<span class="ind-users" title="${d.users.toLocaleString()} users"><span class="material-symbols-outlined">group</span>${fmtUsers(d.users)}</span>` +
+      `<button class="ind-fav-btn${fav ? ' on' : ''}" data-fav aria-label="${fav ? 'Remove from favorites' : 'Add to favorites'}"><span class="material-symbols-outlined">star</span></button>` +
+      `</div>`;
     row.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (isFlagship && !indProUnlocked) { showIndLockOverlay(); return; }
-      const on = !indState.get(d.name);
-      indState.set(d.name, on);
-      updateIndicatorsCount();
-      showToast(d.name + (on ? ' enabled' : ' disabled'), 'function');
-      if (indShowActiveOnly) {
-        renderIndList(getIndSearch(), indActiveCat);
-      } else {
-        row.classList.toggle('active', on);
+      const favBtn = e.target.closest('[data-fav]');
+      if (favBtn) {
+        const isFav = indFavorites.has(d.name);
+        if (isFav) indFavorites.delete(d.name); else indFavorites.add(d.name);
+        favBtn.classList.toggle('on', !isFav);
+        favBtn.setAttribute('aria-label', !isFav ? 'Remove from favorites' : 'Add to favorites');
+        if (indActiveCat === 'favorites') renderIndList(getIndSearch(), indActiveCat);
+        return;
       }
+      if (isFlagship && !indProUnlocked) { showIndLockOverlay(); return; }
+      addIndicatorInstance(d.name);
     });
     return row;
   }
@@ -5804,7 +6334,6 @@
     groups.forEach(g => {
       const rows = IND_DATA.filter(d => {
         if (d.cat !== g) return false;
-        if (indShowActiveOnly && !indState.get(d.name)) return false;
         if (q && !d.name.toLowerCase().includes(q) && !d.desc.toLowerCase().includes(q)) return false;
         return true;
       });
@@ -5818,10 +6347,26 @@
       }
       rows.forEach(d => indicatorList.appendChild(buildIndRow(d, false)));
     });
-    const noActiveYet = indShowActiveOnly && !q && !anyVisible;
-    indEmptyIcon.textContent = noActiveYet ? 'toggle_off' : 'search_off';
-    indEmptyText.textContent = noActiveYet ? 'No active indicators yet' : 'No indicators match your search';
+    indEmptyIcon.textContent = 'search_off';
+    indEmptyText.textContent = 'No indicators match your search';
     indEmpty.style.display = anyVisible ? 'none' : 'flex';
+  }
+
+  /* Favorites view — flat list of favorited indicators across every category (honouring search),
+     shown full-width in the left pane. Flagship favorites keep their PRO badge + lock behaviour. */
+  function renderIndFavoritesPane(query) {
+    indicatorList.innerHTML = '';
+    const q = (query || '').toLowerCase().trim();
+    const rows = IND_DATA.filter(d => {
+      if (!indFavorites.has(d.name)) return false;
+      if (q && !d.name.toLowerCase().includes(q) && !d.desc.toLowerCase().includes(q)) return false;
+      return true;
+    });
+    rows.forEach(d => indicatorList.appendChild(buildIndRow(d, FLAGSHIP_CATS.includes(d.cat))));
+    const noFavYet = !q && !rows.length;
+    indEmptyIcon.textContent = noFavYet ? 'star' : 'search_off';
+    indEmptyText.textContent = noFavYet ? 'No favorite indicators yet' : 'No favorites match your search';
+    indEmpty.style.display = rows.length ? 'none' : 'flex';
   }
 
   function renderIndRightPane(query, cats) {
@@ -5831,7 +6376,6 @@
     cats.forEach(g => {
       const rows = IND_DATA.filter(d => {
         if (d.cat !== g) return false;
-        if (indShowActiveOnly && !indState.get(d.name)) return false;
         if (q && !d.name.toLowerCase().includes(q) && !d.desc.toLowerCase().includes(q)) return false;
         return true;
       });
@@ -5843,15 +6387,21 @@
       indPremiumList.appendChild(lbl);
       rows.forEach(d => indPremiumList.appendChild(buildIndRow(d, true)));
     });
-    const noActiveYet = indShowActiveOnly && !q && !anyVisible;
-    indPremiumEmptyIcon.textContent = noActiveYet ? 'toggle_off' : 'search_off';
-    indPremiumEmptyText.textContent = noActiveYet ? 'No active indicators yet' : 'No indicators match your search';
+    indPremiumEmptyIcon.textContent = 'search_off';
+    indPremiumEmptyText.textContent = 'No indicators match your search';
     indPremiumEmpty.style.display = anyVisible ? 'none' : 'flex';
   }
 
   const indPanes = document.querySelector('.ind-panes');
   function renderIndList(query, cat) {
     hideIndLockOverlay();
+    /* Favorites is a left-only view spanning all categories. */
+    if (cat === 'favorites') {
+      indPanes.classList.add('show-left-only');
+      indPanes.classList.remove('show-right-only');
+      renderIndFavoritesPane(query);
+      return;
+    }
     const isAll = cat === 'all';
     const isFlagshipCat = FLAGSHIP_CATS.includes(cat);
     indPanes.classList.toggle('show-left-only', !isAll && !isFlagshipCat);
@@ -5883,22 +6433,13 @@
   });
 
   function updateIndicatorsCount() {
-    const n = [...indState.values()].filter(Boolean).length;
+    const n = chartIndicators.length;
     indicatorsCount.style.display = n > 0 ? 'inline-flex' : 'none';
     indicatorsCount.textContent = n;
-    indActiveLabel.textContent = n + ' active';
   }
 
   let indActiveCat = 'all';
   function getIndSearch() { return indicatorSearch.value; }
-
-  indActiveOnlyToggle.addEventListener('click', (e) => {
-    e.stopPropagation();
-    indShowActiveOnly = !indShowActiveOnly;
-    indActiveOnlyCheck.classList.toggle('checked', indShowActiveOnly);
-    indActiveOnlyToggle.classList.toggle('on', indShowActiveOnly);
-    renderIndList(getIndSearch(), indActiveCat);
-  });
 
   indicatorsTrigger.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -5906,9 +6447,10 @@
       closeAllPopovers(); return;
     }
     renderIndList(getIndSearch(), indActiveCat);
-    openNear(indicatorsMenu, indicatorsTrigger.getBoundingClientRect(), 'left', indicatorsTrigger);
+    openCentered(indicatorsMenu, indicatorsTrigger);
     indicatorSearch.focus();
   });
+  makeFloatPanelDraggable(indicatorsMenu);
 
   document.getElementById('indicatorsModalClose').addEventListener('click', (e) => {
     e.stopPropagation();

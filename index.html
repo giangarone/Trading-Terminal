@@ -17,14 +17,14 @@
   <link rel="stylesheet" href="css/tokens.css?v=15">
   <link rel="stylesheet" href="css/topbar.css?v=14">
   <link rel="stylesheet" href="css/left-panel.css?v=14">
-  <link rel="stylesheet" href="css/center-panel.css?v=17">
+  <link rel="stylesheet" href="css/center-panel.css?v=18">
   <link rel="stylesheet" href="css/workspace.css?v=37">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=22">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=44">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
-  <link rel="stylesheet" href="css/indicators.css?v=14">
+  <link rel="stylesheet" href="css/indicators.css?v=17">
   <link rel="stylesheet" href="css/chart-settings.css?v=42">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
@@ -3150,6 +3150,18 @@
             <div class="chart-pane-area" id="chartPaneArea">
               <div class="chart-placeholder chart-pane primary" id="chartPlaceholder">
                 <canvas id="priceChartCanvas"></canvas>
+                <div class="chart-legend" id="chartLegend">
+                  <div class="cl-header">
+                    <span class="cl-symbol" id="clSymbol">ETH / USD</span>
+                    <span class="cl-sep">·</span>
+                    <span class="cl-timeframe" id="clTimeframe">15m</span>
+                    <span class="cl-sep">·</span>
+                    <span class="cl-exchange" id="clExchange">BloFin</span>
+                    <span class="cl-live" id="clLive" title="Live"></span>
+                  </div>
+                  <div class="cl-ohlc" id="clOhlc"></div>
+                  <div class="cl-indicators" id="clIndicators"></div>
+                </div>
                 <div id="orderLineLayer"></div>
                 <div id="newsMarkerLayer"></div>
                 <div id="eventLineLayer"></div>
@@ -4449,6 +4461,7 @@
     </div>
     <div class="ind-cats" id="indCatTabs">
       <button class="ind-cat active" data-cat="all">All</button>
+      <button class="ind-cat" data-cat="favorites"><span class="material-symbols-outlined">star</span>Favorites</button>
       <button class="ind-cat" data-cat="classic">Classic Indicators</button>
       <button class="ind-cat" data-cat="chartprime">ChartPrime</button>
       <button class="ind-cat" data-cat="l1">Trade Flow Intelligence (L1)<span class="ind-pro-badge">PRO</span></button>
@@ -4487,13 +4500,43 @@
         </div>
       </div>
     </div>
-    <div class="float-panel-footer">
-      <button class="ind-active-toggle" id="indActiveOnlyToggle">
-        <span class="chk-box" id="indActiveOnlyCheck"><span class="material-symbols-outlined">check</span></span>
-        <span>Active only</span>
-      </button>
-      <span class="ind-active-label" id="indActiveLabel">0 active</span>
+  </div>
+
+  <!-- ===================== INDICATOR SETTINGS MODAL ===================== -->
+  <!-- Per-instance settings editor (TradingView-style: centered, tabbed, compact label-left rows).
+       One shared shell, repopulated per open with schema-driven fields. -->
+  <div class="pop-menu float-panel ind-settings-popup" id="indSettingsPopup">
+    <div class="float-panel-header ind-settings-header">
+      <span class="ind-settings-title" id="indSettingsTitle">Settings</span>
+      <button class="float-panel-close" id="indSettingsClose"><span
+          class="material-symbols-outlined">close</span></button>
     </div>
+    <div class="ind-settings-tabs" id="indSettingsTabs">
+      <button class="ind-settings-tab active" data-tab="inputs">Inputs</button>
+      <button class="ind-settings-tab" data-tab="style">Style</button>
+      <button class="ind-settings-tab" data-tab="visibility">Visibility</button>
+    </div>
+    <div class="ind-settings-body" id="indSettingsBody"></div>
+    <div class="ind-settings-footer">
+      <button class="ind-settings-defaults" id="indSettingsDefaults">Defaults<span
+          class="material-symbols-outlined">expand_more</span></button>
+      <div class="ind-settings-actions">
+        <button class="ind-settings-btn" id="indSettingsCancel">Cancel</button>
+        <button class="ind-settings-btn primary" id="indSettingsOk">Ok</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared color swatch menu for indicator settings color fields (delegated open/select). -->
+  <div class="pop-menu ind-color-menu" id="indColorMenu" style="width:auto;">
+    <button class="pop-item" data-color="var(--info)"><span class="cs-color-swatch" style="background:var(--info);"></span><span class="pop-text"><span class="pt-title">Blue</span></span></button>
+    <button class="pop-item" data-color="var(--purple)"><span class="cs-color-swatch" style="background:var(--purple);"></span><span class="pop-text"><span class="pt-title">Purple</span></span></button>
+    <button class="pop-item" data-color="var(--intel)"><span class="cs-color-swatch" style="background:var(--intel);"></span><span class="pop-text"><span class="pt-title">Teal</span></span></button>
+    <button class="pop-item" data-color="var(--accent)"><span class="cs-color-swatch" style="background:var(--accent);"></span><span class="pop-text"><span class="pt-title">Gold</span></span></button>
+    <button class="pop-item" data-color="var(--long)"><span class="cs-color-swatch" style="background:var(--long);"></span><span class="pop-text"><span class="pt-title">Green</span></span></button>
+    <button class="pop-item" data-color="var(--short)"><span class="cs-color-swatch" style="background:var(--short);"></span><span class="pop-text"><span class="pt-title">Red</span></span></button>
+    <button class="pop-item" data-color="#f472b6"><span class="cs-color-swatch" style="background:#f472b6;"></span><span class="pop-text"><span class="pt-title">Pink</span></span></button>
+    <button class="pop-item" data-color="#94a3b8"><span class="cs-color-swatch" style="background:#94a3b8;"></span><span class="pop-text"><span class="pt-title">Gray</span></span></button>
   </div>
 
   <!-- ===================== MARKET SCANNER MODAL ===================== -->
@@ -5604,7 +5647,7 @@
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=15"></script>
-  <script src="js/app.js?v=253"></script>
+  <script src="js/app.js?v=259"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=20"></script>
   <script src="js/market-scanner.js?v=14"></script>
