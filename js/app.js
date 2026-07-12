@@ -3736,6 +3736,15 @@
     indSettingsDefaultsMenu.classList.remove('show');
     showToast('Saved as default', 'bookmark_add');
   });
+  /* Close the Defaults menu on any click outside it. The global outside-click handler can't do
+     this: it early-returns for clicks inside the indicator settings popup (itself a .pop-menu),
+     so clicking elsewhere in the settings window would otherwise leave this dropdown open. The
+     trigger and menu items stopPropagation, so this only fires for genuine outside clicks. */
+  document.addEventListener('click', (e) => {
+    if (!indSettingsDefaultsMenu.classList.contains('show')) return;
+    if (e.target.closest('#indSettingsDefaultsMenu')) return;
+    indSettingsDefaultsMenu.classList.remove('show');
+  });
   makeFloatPanelDraggable(indSettingsPopup);
 
   /* ---------- live price simulation: primary symbol (ETH) ---------- */
