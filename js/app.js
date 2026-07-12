@@ -168,13 +168,43 @@
   function yToPrice(y, h) { const ih = h - AXIS_BOTTOM_H; return BASE_PRICE + panY - (y - ih / 2) / PX_PER_POINT; }
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  /* Toast notifications. De-dups against the most recent toast (a rapid repeat just refreshes
+     its timer instead of stacking a copy) and caps the stack at 3 so a burst of actions can't
+     pile up off-screen. Dismiss timers are stored on the node and cleared if it's removed early. */
+  const TOAST_MAX = 3;
+  function clearToastTimers(t) {
+    clearTimeout(t._showTimer);
+    clearTimeout(t._hideTimer);
+    clearTimeout(t._removeTimer);
+  }
+  function scheduleToastDismiss(t) {
+    clearTimeout(t._hideTimer);
+    t._hideTimer = setTimeout(() => {
+      t.classList.remove('show');
+      t._removeTimer = setTimeout(() => t.remove(), 300);
+    }, 2600);
+  }
   function showToast(msg, icon) {
+    icon = icon || 'info';
+    const key = icon + '|' + msg;
+    const last = toastStack.lastElementChild;
+    if (last && last.dataset.toastKey === key) {
+      last.classList.add('show'); // in case it had started fading out
+      scheduleToastDismiss(last);
+      return;
+    }
     const t = document.createElement('div');
     t.className = 'toast';
-    t.innerHTML = '<span class="material-symbols-outlined">' + (icon || 'info') + '</span><span>' + msg + '</span>';
+    t.dataset.toastKey = key;
+    t.innerHTML = '<span class="material-symbols-outlined">' + icon + '</span><span>' + msg + '</span>';
     toastStack.appendChild(t);
-    setTimeout(() => t.classList.add('show'), 10);
-    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2600);
+    while (toastStack.children.length > TOAST_MAX) {
+      const oldest = toastStack.firstElementChild;
+      clearToastTimers(oldest);
+      oldest.remove();
+    }
+    t._showTimer = setTimeout(() => t.classList.add('show'), 10);
+    scheduleToastDismiss(t);
   }
 
   /* ---------- popover positioning ---------- */
@@ -290,8 +320,38 @@
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     const csEl = document.getElementById('chartSettingsBackdrop');
-    if (csEl && csEl.classList.contains('show')) { closeChartSettings(false); }
-    else { closeAllPopovers(); }
+    if (csEl && csEl.classList.contains('show')) { closeChartSettings(false); return; }
+    /* Dialog-style modals are .show backdrops, not .pop-menu/.ctx-menu, so closeAllPopovers()
+       doesn't reach them. Dismiss the open one via its own close fn (which resets pending
+       state), matching how Escape already closes Chart Settings / Journal / Scanner. */
+    const oc = document.getElementById('ocBackdrop');
+    if (oc && oc.classList.contains('show')) { closeOrderConfirm(); return; }
+    const rc = document.getElementById('rcBackdrop');
+    if (rc && rc.classList.contains('show')) { closeReverseConfirm(); return; }
+    const bc = document.getElementById('bcConnectBackdrop');
+    if (bc && bc.classList.contains('show')) { closeBcConnectModal(); return; }
+    closeAllPopovers();
+  });
+
+  /* ---------- keyboard operability for custom (non-native) controls ----------
+     The dropdown/menu triggers are <div>/<span> elements with click handlers but no native
+     button semantics, so they can't be Tab-focused or activated by keyboard. Make them
+     focusable and announce them as buttons, then translate Enter/Space into a click so each
+     control's existing click handler runs — no per-control wiring. Native <button>/<a>/<input>
+     controls already handle this and are left untouched. (cs-dd dropdowns are also stamped in
+     refreshCsDropdownTriggerLabel, which covers ones created dynamically.) */
+  document.querySelectorAll('.pop-trigger').forEach(el => {
+    if (el.tagName === 'BUTTON' || el.tagName === 'A') return;
+    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (e.target.matches('button, a, input, select, textarea')) return; // native elements handle this
+    const control = e.target.closest('[role="button"]');
+    if (!control) return;
+    e.preventDefault(); // Space must not scroll the page
+    control.click();
   });
 
   /* ---------- generic custom dropdown engine (used by Chart Settings / SL override selects) ----------
@@ -304,6 +364,12 @@
     return opt ? opt.textContent : '';
   }
   function refreshCsDropdownTriggerLabel(trigger) {
+    /* These custom <div> dropdowns need button semantics to be keyboard-reachable/operable.
+       Stamping here (rather than only in a one-time pass) also covers dropdowns built
+       dynamically — broker rules, chart-settings targets, SL draft — since every render
+       routes through refreshAllCsDropdownLabels. */
+    if (!trigger.hasAttribute('tabindex')) trigger.setAttribute('tabindex', '0');
+    if (!trigger.hasAttribute('role')) trigger.setAttribute('role', 'button');
     const select = document.getElementById(trigger.dataset.target);
     const label = trigger.querySelector('.cs-select-label');
     if (select && label) label.textContent = csDropdownLabelFor(select);
@@ -811,6 +877,28 @@
       input.value = Number.isInteger(step) ? String(Math.max(0, Math.round(snapped))) : Math.max(0, snapped).toFixed(2);
     });
   });
+
+  /* ---------- press-and-hold auto-repeat for every stepper arrow ----------
+     One delegated handler covers all stepper variants (Quick Trade, positions panel, chart
+     settings, order-line edit) without touching their per-button step logic: while a .ps-up /
+     .ps-down is held past 400ms, re-fire its click every 90ms. A single tap still steps once
+     via the native click; keyboard (Enter/Space) is unaffected. */
+  (function () {
+    let holdTimer, repeatTimer;
+    const stopRepeat = () => { clearTimeout(holdTimer); clearInterval(repeatTimer); };
+    document.addEventListener('pointerdown', (e) => {
+      if (e.button != null && e.button !== 0) return; // left button / touch only
+      const btn = e.target.closest('.ps-up, .ps-down');
+      if (!btn) return;
+      holdTimer = setTimeout(() => {
+        repeatTimer = setInterval(() => {
+          if (!document.contains(btn)) { stopRepeat(); return; } // row/menu closed mid-hold
+          btn.click();
+        }, 90);
+      }, 400);
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => document.addEventListener(ev, stopRepeat));
+  })();
 
   /* ---------- Margin mode + leverage controls ----------
      Two full-width buttons above the order tabs: the Cross/Isolated button flips

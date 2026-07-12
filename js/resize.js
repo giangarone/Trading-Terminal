@@ -192,11 +192,8 @@ setupVerticalResize(document.getElementById('bottomResizeHandle'), document.quer
     const row = e.target.closest('.wl-row');
     if (row) selectRow(row);
   });
-  wlRows.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    const row = e.target.closest('.wl-row');
-    if (row) { e.preventDefault(); selectRow(row); }
-  });
+  /* Enter/Space activation is handled globally in app.js (the rows carry role="button"),
+     so no per-list keydown is needed here. */
 })();
 
 /* ---------- watchlist category tabs + search ---------- */

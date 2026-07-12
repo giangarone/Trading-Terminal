@@ -4,7 +4,13 @@ All notable changes to the Trading Terminal are documented here.
 
 ## 2026-07-12
 
+### Added
+- **Keyboard-operable dropdowns & menus** — The custom `<div>`/`<span>` dropdown and menu triggers (templates, account, symbol, amount-type, chart-settings and broker-rule selects, etc.) are now focusable and can be opened with Enter/Space, matching the watchlist rows. A single global activator translates Enter/Space into the trigger's existing click, and the accent focus ring shows in both themes. (Menus that are already native `<button>`s — timeframe, candles, tabs, layout options — were already reachable.) Full arrow-key navigation *inside* an open menu is a separate follow-up.
+- **Press-and-hold on stepper arrows** — Holding a stepper up/down arrow (Quick Trade prices, positions close amount, chart-settings distances, order-line price edit) now auto-repeats after a short delay instead of requiring one click per step. A single click still steps once.
+
 ### Fixed
+- **Escape now closes the trade confirmation dialogs** — Pressing Escape dismisses the Order Confirmation, Reverse/Flip Confirmation, and Connect Broker modals (via each dialog's own close path, so pending state resets), consistent with how Escape already closes Chart Settings, the Journal, and the Scanner. These `.show` backdrops aren't `.pop-menu`/`.ctx-menu`, so the generic popover-closer had been skipping them.
+- **Toasts no longer pile up** — `showToast` now de-dups against the most recent toast (a rapid repeat refreshes its timer instead of stacking a copy) and caps the stack at 3, so bursts of actions can't flood the screen. Dismiss timers are cleared when a toast is removed early. Applied to both the main and Market Scanner toast paths, which share one stack.
 - **Reopening a dropdown no longer closes its parent window** — Clicking an open dropdown's trigger a second time (e.g. the Line Color dropdown in the indicator settings window) now toggles just that dropdown closed instead of dismissing the whole settings window. The generic `openNear` toggle path stopped calling `closeAllPopovers()`, which had been sweeping away the parent float panel the dropdown lived in.
 
 ## 2026-07-11
