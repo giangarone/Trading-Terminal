@@ -65,6 +65,31 @@
   color: var(--accent);
 }
 
+/* Custom tooltip for the two Watchlist header buttons (Add symbol / Customize
+   columns) — right-anchored so it can't clip off the panel's right edge. */
+.card-head-actions .material-symbols-outlined[data-tooltip] {
+  position: relative;
+}
+
+.card-head-actions .material-symbols-outlined[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sans);
+  white-space: nowrap;
+  box-shadow: 0 8px 20px var(--shadow-color);
+  z-index: 50;
+  pointer-events: none;
+}
+
 .wl-cols {
   display: flex;
   align-items: center;
@@ -86,6 +111,7 @@
   cursor: pointer;
   min-width: 0;
   border-left: 2px solid transparent;
+  position: relative;
 }
 
 #wlRows {
@@ -103,6 +129,39 @@
 
 .wl-row.selected .wl-sym {
   color: var(--text-primary);
+}
+
+/* Per-row remove (×) — hidden until the row is hovered, then sits at the right edge
+   over the value columns. Its background + left fade mask whatever sits beneath it,
+   matching the row's current background (input on hover, hover on the selected row). */
+.wl-remove {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  padding: 3px;
+  border-radius: 5px;
+  background: var(--bg-input);
+  box-shadow: -8px 0 8px 3px var(--bg-input);
+  transition: opacity var(--t-ui), color var(--t-ui), background var(--t-ui);
+}
+
+.wl-row:hover .wl-remove {
+  opacity: 1;
+}
+
+.wl-remove:hover {
+  color: var(--short);
+  background: var(--bg-hover);
+}
+
+.wl-row.selected .wl-remove {
+  background: var(--bg-hover);
+  box-shadow: -8px 0 8px 3px var(--bg-hover);
 }
 
 .wl-row:focus-visible {

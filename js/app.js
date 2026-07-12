@@ -206,6 +206,8 @@
     t._showTimer = setTimeout(() => t.classList.add('show'), 10);
     scheduleToastDismiss(t);
   }
+  /* exposed so other modules (e.g. the watchlist row × in js/resize.js) can toast */
+  window.showToast = showToast;
 
   /* ---------- popover positioning ---------- */
   function closeAllPopovers() {
@@ -6209,9 +6211,15 @@
   const symSelectMenu = document.getElementById('symSelectMenu');
   const symSelectSearch = document.getElementById('symSelectSearch');
   const symSelectList = document.getElementById('symSelectList');
+  const symSelectEmpty = document.getElementById('symSelectEmpty');
+  const symSelectClose = document.getElementById('symSelectClose');
   const symSelectLabel = document.getElementById('symSelectLabel');
-  const symSelectTabs = document.querySelectorAll('#symSelectTabs .wl-tab');
+  const symSelectTabs = document.querySelectorAll('#symSelectTabs .ss-cat');
+  const wlAddBtn = document.getElementById('wlAddBtn');
   let symSelectCat = 'all';
+  /* column sort — key is null (natural list order) until a header is clicked;
+     dir is 1 for ascending, -1 for descending. */
+  let symSelectSort = { key: null, dir: 1 };
   /* cosmetic symbol switch — relabels the topbar/watchlist without loading new chart data */
   function switchSymbol(sym) {
     symSelectLabel.textContent = sym;
@@ -6225,40 +6233,124 @@
   }
   // Exposed so the left-panel watchlist (js/resize.js) can switch symbols too.
   window.switchSymbol = switchSymbol;
+
+  /* add/remove the symbol from the watchlist; the watchlist:changed listener below
+     keeps every open toggle (and the panel) in sync, so we only fire the action here */
+  function toggleWatchlistSymbol(sym, cat) {
+    if (window.watchlistHasSymbol && window.watchlistHasSymbol(sym)) {
+      if (window.removeWatchlistSymbol) window.removeWatchlistSymbol(sym);
+      showToast('Removed ' + sym + ' from watchlist', 'remove');
+    } else {
+      if (window.addWatchlistSymbol) window.addWatchlistSymbol(sym, cat);
+      showToast('Added ' + sym + ' to watchlist', 'add');
+    }
+  }
+
+  /* one row of the Symbol Selector modal: symbol + name, live last / 24h% / 24h vol,
+     and a watchlist toggle (plus → check when the symbol is watchlisted). */
+  function buildSymRow(s) {
+    const d = window.getMarketData ? window.getMarketData(s.sym, s.cat) : null;
+    const inWl = !!(window.watchlistHasSymbol && window.watchlistHasSymbol(s.sym));
+    const name = d ? d.name : s.sym;
+    const chgDir = d && !d.up ? 'down' : 'up';
+    return '<div class="ss-row" data-sym="' + s.sym + '" data-cat="' + s.cat + '" tabindex="0" role="button">' +
+      '<div class="ss-sym"><span class="ss-sym-ticker">' + s.sym + '</span>' +
+        '<span class="ss-sym-name">' + name + '</span></div>' +
+      '<span class="ss-last">' + (d ? d.lastText : '') + '</span>' +
+      '<span class="ss-chg ' + chgDir + '">' + (d ? d.chgPctText : '') + '</span>' +
+      '<span class="ss-vol">' + (d ? d.volText : '') + '</span>' +
+      '<button class="ss-wl-toggle' + (inWl ? ' on' : '') + '" data-sym="' + s.sym + '" data-cat="' + s.cat + '" ' +
+        'data-tooltip="' + (inWl ? 'Remove from watchlist' : 'Add to watchlist') + '">' +
+        '<span class="material-symbols-outlined">' + (inWl ? 'check' : 'add') + '</span></button>' +
+    '</div>';
+  }
+
+  /* comparable value for the active sort column (numeric for the value columns,
+     the ticker string for the symbol column) */
+  function sortValue(s, key) {
+    if (key === 'sym') return s.sym;
+    const d = window.getMarketData ? window.getMarketData(s.sym, s.cat) : null;
+    if (!d) return 0;
+    if (key === 'last') return d.last;
+    if (key === 'chg') return d.chgPct;
+    if (key === 'vol') return d.vol;
+    return 0;
+  }
+
+  /* reflect the active sort column + direction on the header cells */
+  function updateSortHeaders() {
+    symSelectMenu.querySelectorAll('.ss-cols .ss-col[data-sort]').forEach(col => {
+      const active = col.dataset.sort === symSelectSort.key;
+      col.classList.toggle('sorted', active);
+      const arrow = col.querySelector('.ss-sort');
+      if (arrow) arrow.textContent = (active && symSelectSort.dir === 1) ? 'arrow_upward' : 'arrow_downward';
+    });
+  }
+
   function renderSymSelectList(filter) {
     const q = (filter || '').trim().toUpperCase();
     const items = SYMBOL_LIST.filter(s => (symSelectCat === 'all' || s.cat === symSelectCat) && (!q || s.sym.includes(q)));
-    symSelectList.innerHTML = items.length
-      ? items.map(s => '<button class="sym-select-item" data-sym="' + s.sym + '">' + s.sym + '</button>').join('')
-      : '<div class="sym-select-empty">No symbols found</div>';
-    symSelectList.querySelectorAll('.sym-select-item').forEach(it => {
-      it.addEventListener('click', (e) => {
-        e.stopPropagation();
-        switchSymbol(it.dataset.sym);
+    if (symSelectSort.key) {
+      const key = symSelectSort.key, dir = symSelectSort.dir;
+      items.sort((a, b) => {
+        const av = sortValue(a, key), bv = sortValue(b, key);
+        if (av < bv) return -dir;
+        if (av > bv) return dir;
+        return 0;
+      });
+    }
+    symSelectList.innerHTML = items.map(buildSymRow).join('');
+    updateSortHeaders();
+    if (symSelectEmpty) symSelectEmpty.style.display = items.length ? 'none' : 'block';
+    symSelectList.querySelectorAll('.ss-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        /* the toggle handles its own click; a row-body click switches the chart symbol */
+        if (e.target.closest('.ss-wl-toggle')) return;
+        switchSymbol(row.dataset.sym);
         closeAllPopovers();
+      });
+      const tog = row.querySelector('.ss-wl-toggle');
+      if (tog) tog.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleWatchlistSymbol(tog.dataset.sym, tog.dataset.cat);
       });
     });
   }
-  if (symSelectTrigger) symSelectTrigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (symSelectMenu.classList.contains('show') && symSelectMenu._openTrigger === symSelectTrigger) {
+
+  /* open the centered, draggable modal from any of its triggers (topbar ticker,
+     chart-legend double-click, or the watchlist + button) */
+  function openSymSelect(triggerEl) {
+    if (symSelectMenu.classList.contains('show') && symSelectMenu._openTrigger === triggerEl) {
       closeAllPopovers();
       return;
     }
-    openNear(symSelectMenu, symSelectTrigger.getBoundingClientRect(), 'left', symSelectTrigger);
     symSelectSearch.value = '';
+    symSelectCat = 'all';
+    symSelectTabs.forEach(t => t.classList.toggle('active', t.dataset.cat === 'all'));
     renderSymSelectList('');
+    openCentered(symSelectMenu, triggerEl);
     symSelectSearch.focus();
+  }
+  if (symSelectMenu) makeFloatPanelDraggable(symSelectMenu);
+
+  if (symSelectTrigger) symSelectTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openSymSelect(symSelectTrigger);
+  });
+  if (wlAddBtn) wlAddBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openSymSelect(wlAddBtn);
+  });
+  if (symSelectClose) symSelectClose.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeAllPopovers();
   });
   /* Double-clicking the chart legend header opens the same symbol selector. */
   const clHeaderEl = document.querySelector('.cl-header');
   if (clHeaderEl && symSelectMenu) {
     clHeaderEl.addEventListener('dblclick', (e) => {
       e.stopPropagation();
-      openNear(symSelectMenu, clHeaderEl.getBoundingClientRect(), 'left', clHeaderEl);
-      symSelectSearch.value = '';
-      renderSymSelectList('');
-      symSelectSearch.focus();
+      openSymSelect(clHeaderEl);
     });
     /* Hovering the legend header suppresses the chart crosshair so the header reads as an
        interactive element, not chart space (same mechanism as the indicator legend rows). */
@@ -6280,58 +6372,48 @@
       renderSymSelectList(symSelectSearch.value);
     });
   });
-
-  /* ---------- watchlist: add-symbol menu (+ button) ---------- */
-  const wlAddBtn = document.getElementById('wlAddBtn');
-  const wlAddMenu = document.getElementById('wlAddMenu');
-  const wlAddSearch = document.getElementById('wlAddSearch');
-  const wlAddList = document.getElementById('wlAddList');
-  const wlAddTabs = document.querySelectorAll('#wlAddTabs .wl-tab');
-  let wlAddCat = 'all';
-  function renderWlAddList(filter) {
-    const q = (filter || '').trim().toUpperCase();
-    /* the universe is SYMBOL_LIST minus whatever is already in the watchlist */
-    const items = SYMBOL_LIST.filter(s =>
-      (wlAddCat === 'all' || s.cat === wlAddCat) &&
-      (!q || s.sym.includes(q)) &&
-      !(window.watchlistHasSymbol && window.watchlistHasSymbol(s.sym)));
-    wlAddList.innerHTML = items.length
-      ? items.map(s => '<button class="sym-select-item sym-select-item--add" data-sym="' + s.sym + '" data-cat="' + s.cat + '">' +
-          '<span class="sym-select-item-label">' + s.sym + '</span>' +
-          '<span class="material-symbols-outlined sym-select-add-icon">add</span>' +
-          '</button>').join('')
-      : '<div class="sym-select-empty">No symbols to add</div>';
-    wlAddList.querySelectorAll('.sym-select-item').forEach(it => {
-      it.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (window.addWatchlistSymbol) window.addWatchlistSymbol(it.dataset.sym, it.dataset.cat);
-        showToast('Added ' + it.dataset.sym + ' to watchlist', 'add');
-        renderWlAddList(wlAddSearch.value);
-      });
-    });
-  }
-  if (wlAddBtn) wlAddBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (wlAddMenu.classList.contains('show') && wlAddMenu._openTrigger === wlAddBtn) {
-      closeAllPopovers();
-      return;
-    }
-    openNear(wlAddMenu, wlAddBtn.getBoundingClientRect(), 'right', wlAddBtn);
-    wlAddSearch.value = '';
-    renderWlAddList('');
-    wlAddSearch.focus();
-  });
-  if (wlAddSearch) {
-    wlAddSearch.addEventListener('input', () => renderWlAddList(wlAddSearch.value));
-    wlAddSearch.addEventListener('click', (e) => e.stopPropagation());
-  }
-  wlAddTabs.forEach(tab => {
-    tab.addEventListener('click', (e) => {
+  /* click a column header to sort by it; click the active header again to flip the
+     direction. Symbol sorts A→Z first; the numeric columns sort high→low first. */
+  symSelectMenu.querySelectorAll('.ss-cols .ss-col[data-sort]').forEach(col => {
+    col.addEventListener('click', (e) => {
       e.stopPropagation();
-      wlAddTabs.forEach(t => t.classList.toggle('active', t === tab));
-      wlAddCat = tab.dataset.cat;
-      renderWlAddList(wlAddSearch.value);
+      const key = col.dataset.sort;
+      if (symSelectSort.key === key) {
+        symSelectSort.dir = -symSelectSort.dir;
+      } else {
+        symSelectSort.key = key;
+        symSelectSort.dir = key === 'sym' ? 1 : -1;
+      }
+      renderSymSelectList(symSelectSearch.value);
     });
+  });
+  /* live-refresh the visible rows' price/change/volume while the modal is open */
+  document.addEventListener('market:tick', () => {
+    if (!symSelectMenu.classList.contains('show')) return;
+    symSelectList.querySelectorAll('.ss-row').forEach(row => {
+      const d = window.getMarketData(row.dataset.sym, row.dataset.cat);
+      if (!d) return;
+      const last = row.querySelector('.ss-last');
+      const chg = row.querySelector('.ss-chg');
+      const vol = row.querySelector('.ss-vol');
+      if (last) last.textContent = d.lastText;
+      if (chg) { chg.textContent = d.chgPctText; chg.classList.toggle('up', d.up); chg.classList.toggle('down', !d.up); }
+      if (vol) vol.textContent = d.volText;
+    });
+  });
+  /* keep the modal's toggle in sync when the watchlist changes from anywhere
+     (the modal itself, or the panel's row × ) */
+  document.addEventListener('watchlist:changed', (e) => {
+    if (!symSelectMenu.classList.contains('show')) return;
+    const sym = e.detail && e.detail.sym;
+    if (!sym) return;
+    const tog = symSelectList.querySelector('.ss-wl-toggle[data-sym="' + sym + '"]');
+    if (!tog) return;
+    const inWl = !!(e.detail && e.detail.inWatchlist);
+    tog.classList.toggle('on', inWl);
+    tog.setAttribute('data-tooltip', inWl ? 'Remove from watchlist' : 'Add to watchlist');
+    const icon = tog.querySelector('.material-symbols-outlined');
+    if (icon) icon.textContent = inWl ? 'check' : 'add';
   });
 
   /* ---------- watchlist: customize-columns menu (⋯ button) ---------- */

@@ -190,7 +190,14 @@ setupVerticalResize(document.getElementById('bottomResizeHandle'), document.quer
   }
   wlRows.addEventListener('click', (e) => {
     const row = e.target.closest('.wl-row');
-    if (row) selectRow(row);
+    if (!row) return;
+    /* the per-row × removes the symbol instead of selecting it */
+    if (e.target.closest('.wl-remove')) {
+      if (window.removeWatchlistSymbol) window.removeWatchlistSymbol(row.dataset.sym);
+      if (window.showToast) window.showToast('Removed ' + row.dataset.sym + ' from watchlist', 'remove');
+      return;
+    }
+    selectRow(row);
   });
   /* Enter/Space activation is handled globally in app.js (the rows carry role="button"),
      so no per-list keydown is needed here. */

@@ -104,6 +104,13 @@
       vol.id = 'wlVol-' + sym;
       row.appendChild(vol);
     }
+    if (!row.querySelector('.wl-remove')) {
+      const rm = document.createElement('span');
+      rm.className = 'wl-remove material-symbols-outlined';
+      rm.title = 'Remove from watchlist';
+      rm.textContent = 'close';
+      row.appendChild(rm);
+    }
   }
 
   /* build a complete row for a newly added symbol using its seed meta */
@@ -123,7 +130,8 @@
       '<span class="wl-last" id="wlLast-' + sym + '">' + fmt(meta.last, meta.dec) + '</span>' +
       '<span class="wl-chgabs ' + dir + '" id="wlChgAbs-' + sym + '">' + (up ? '+' : '') + fmt(abs, meta.dec) + '</span>' +
       '<span class="wl-chg ' + dir + '" id="wlChg-' + sym + '">' + (up ? '+' : '') + fmt(meta.chgPct) + '%</span>' +
-      '<span class="wl-vol" id="wlVol-' + sym + '">' + fmtVol(meta.vol) + '</span>';
+      '<span class="wl-vol" id="wlVol-' + sym + '">' + fmtVol(meta.vol) + '</span>' +
+      '<span class="wl-remove material-symbols-outlined" title="Remove from watchlist">close</span>';
     return row;
   }
 
@@ -156,20 +164,59 @@
   /* normalize every static row first so the Change/Volume cells + name spans exist */
   document.querySelectorAll('#wlRows .wl-row').forEach(normalizeWatchlistRow);
 
+  /* ---------- unified market-data map (single source of truth) ----------
+     Every price the app shows — the left-panel watchlist rows AND the Symbol
+     Selector modal — reads from this one map. Watchlisted symbols bind their DOM
+     cells so tick() paints them live; any other symbol is seeded on first request
+     (by the modal, via getMarketData) and still random-walks so the modal feels live. */
+  const market = new Map();
+
+  function makeEntry(sym, cat, seed) {
+    const e = {
+      sym: sym, cat: cat || null,
+      last: seed.last, chgPct: seed.chgPct, step: seed.step, dec: seed.dec,
+      vol: seed.vol !== undefined ? seed.vol : baseVolFor(sym),
+    };
+    e.prevClose = e.last / (1 + e.chgPct / 100);
+    e.anchor = e.last;
+    e.elLast = e.elChg = e.elChgAbs = e.elVol = null;
+    return e;
+  }
+  /* point an entry at its rendered watchlist row so tick() updates those cells */
+  function bindEntryToRow(sym) {
+    const e = market.get(sym);
+    if (!e) return;
+    e.elLast = document.getElementById('wlLast-' + sym);
+    e.elChg = document.getElementById('wlChg-' + sym);
+    e.elChgAbs = document.getElementById('wlChgAbs-' + sym);
+    e.elVol = document.getElementById('wlVol-' + sym);
+  }
+  /* drop the DOM refs (row removed) but keep the data so the modal still shows it */
+  function unbindEntry(sym) {
+    const e = market.get(sym);
+    if (!e) return;
+    e.elLast = e.elChg = e.elChgAbs = e.elVol = null;
+  }
+
+  /* seed the map from the curated watchlist symbols (keeps their hand-picked
+     starting values), then bind each to its already-rendered row. */
   watchSyms.forEach(s => {
-    s.prevClose = s.last / (1 + s.chgPct / 100);
-    s.anchor = s.last;
-    s.vol = baseVolFor(s.sym);
-    s.elLast = document.getElementById('wlLast-' + s.sym);
-    s.elChg = document.getElementById('wlChg-' + s.sym);
-    s.elChgAbs = document.getElementById('wlChgAbs-' + s.sym);
-    s.elVol = document.getElementById('wlVol-' + s.sym);
+    const e = makeEntry(s.sym, null, { last: s.last, chgPct: s.chgPct, step: s.step, dec: s.dec });
+    market.set(s.sym, e);
+    bindEntryToRow(s.sym);
     /* seed initial Change/Volume text so the columns aren't blank before first tick */
-    const abs0 = s.last - s.prevClose;
+    const abs0 = e.last - e.prevClose;
     const up0 = abs0 >= 0;
-    if (s.elChgAbs) { s.elChgAbs.textContent = (up0 ? '+' : '') + fmt(abs0, s.dec); setUpDown(s.elChgAbs, up0); }
-    if (s.elVol) s.elVol.textContent = fmtVol(s.vol);
+    if (e.elChgAbs) { e.elChgAbs.textContent = (up0 ? '+' : '') + fmt(abs0, e.dec); setUpDown(e.elChgAbs, up0); }
+    if (e.elVol) e.elVol.textContent = fmtVol(e.vol);
   });
+
+  /* ETHUSD is driven separately (alongside the chart), so it isn't bound/painted
+     here — but the modal still needs plausible data for it, seeded to match the
+     static watchlist row rather than the generic crypto seed. */
+  if (!market.has('ETHUSD')) {
+    market.set('ETHUSD', makeEntry('ETHUSD', 'crypto', { last: 4500.25, chgPct: 0.41, step: 0.05, dec: 2 }));
+  }
 
   /* positions — each carries its own mark price noise so they're independent
      of watchlist symbols and continue to animate correctly as positions close */
@@ -432,8 +479,9 @@
   };
 
   function tick() {
-    /* watchlist */
-    watchSyms.forEach(s => {
+    /* walk every symbol in the market map; paint DOM only where a watchlist row is
+       bound, but move all of them so the Symbol Selector modal stays live too */
+    market.forEach(s => {
       const prevLast = s.last;
       const reversion = (s.anchor - s.last) * 0.05;
       let next = roundStep(s.last + noise() * s.step * 0.9 + reversion, s.step);
@@ -443,14 +491,12 @@
       const chg = (s.last - s.prevClose) / s.prevClose * 100;
       const chgAbs = s.last - s.prevClose;
       const chgUp = chg >= 0;
+      s.vol += s.vol * 0.0008 + (rand() - 0.5) * s.vol * 0.004;
+      if (s.vol < 1000) s.vol = 1000;
       if (s.elLast) s.elLast.textContent = fmt(s.last, s.dec);
       if (s.elChg) { s.elChg.textContent = (chgUp ? '+' : '') + fmt(chg) + '%'; setUpDown(s.elChg, chgUp); }
       if (s.elChgAbs) { s.elChgAbs.textContent = (chgUp ? '+' : '') + fmt(chgAbs, s.dec); setUpDown(s.elChgAbs, chgUp); }
-      if (s.elVol) {
-        s.vol += s.vol * 0.0008 + (rand() - 0.5) * s.vol * 0.004;
-        if (s.vol < 1000) s.vol = 1000;
-        s.elVol.textContent = fmtVol(s.vol);
-      }
+      if (s.elVol) s.elVol.textContent = fmtVol(s.vol);
       if (s.elLast) flashEl(s.elLast, isUp);
     });
 
@@ -498,29 +544,61 @@
       totPctEl.textContent = (totPct >= 0 ? '+' : '') + fmt(totPct) + '%';
       setUpDown(totPctEl, totPct >= 0);
     }
+
+    /* let an open Symbol Selector modal repaint its visible rows from fresh data */
+    document.dispatchEvent(new CustomEvent('market:tick'));
   }
   setInterval(tick, 1200);
 
-  /* ---------- public API: add a symbol to the watchlist ---------- */
+  /* ---------- public API: market data + watchlist add/remove ---------- */
   window.watchlistHasSymbol = function (sym) {
     return !!document.querySelector('#wlRows .wl-row[data-sym="' + sym + '"]');
   };
+
+  /* single source of truth for the Symbol Selector modal — returns a formatted
+     snapshot, seeding + caching the symbol on first request. */
+  window.getMarketData = function (sym, cat) {
+    let e = market.get(sym);
+    if (!e) {
+      e = makeEntry(sym, cat, seedSymbol(sym, cat || 'crypto'));
+      market.set(sym, e);
+    } else if (cat && !e.cat) {
+      e.cat = cat;
+    }
+    const chgPct = (e.last - e.prevClose) / e.prevClose * 100;
+    const chgAbs = e.last - e.prevClose;
+    const up = chgAbs >= 0;
+    return {
+      sym: e.sym, name: nameFor(e.sym), cat: e.cat,
+      last: e.last, chgPct: chgPct, chgAbs: chgAbs, vol: e.vol, dec: e.dec, up: up,
+      lastText: fmt(e.last, e.dec),
+      chgPctText: (up ? '+' : '') + fmt(chgPct) + '%',
+      chgAbsText: (up ? '+' : '') + fmt(chgAbs, e.dec),
+      volText: fmtVol(e.vol),
+    };
+  };
+
   window.addWatchlistSymbol = function (sym, cat) {
     if (window.watchlistHasSymbol(sym)) return;
     const rowsWrap = document.getElementById('wlRows');
     if (!rowsWrap) return;
-    const meta = seedSymbol(sym, cat);
-    rowsWrap.appendChild(buildWatchlistRow(sym, cat, meta));
-    /* register into the live simulation so the new row ticks like the rest */
-    const s = { sym, last: meta.last, chgPct: meta.chgPct, step: meta.step, dec: meta.dec, vol: meta.vol };
-    s.prevClose = s.last / (1 + s.chgPct / 100);
-    s.anchor = s.last;
-    s.elLast = document.getElementById('wlLast-' + sym);
-    s.elChg = document.getElementById('wlChg-' + sym);
-    s.elChgAbs = document.getElementById('wlChgAbs-' + sym);
-    s.elVol = document.getElementById('wlVol-' + sym);
-    watchSyms.push(s);
+    /* ensure the symbol exists in the market map, then render the row from that
+       shared entry so the watchlist and the modal always agree on the price */
+    window.getMarketData(sym, cat);
+    const e = market.get(sym);
+    const chgPct = (e.last - e.prevClose) / e.prevClose * 100;
+    rowsWrap.appendChild(buildWatchlistRow(sym, cat, { last: e.last, chgPct: chgPct, dec: e.dec, vol: e.vol }));
+    bindEntryToRow(sym);
     /* apply the active category tab + search so the new row respects the filter */
     if (window.applyWatchlistFilter) window.applyWatchlistFilter();
+    document.dispatchEvent(new CustomEvent('watchlist:changed', { detail: { sym: sym, inWatchlist: true } }));
+  };
+
+  window.removeWatchlistSymbol = function (sym) {
+    const row = document.querySelector('#wlRows .wl-row[data-sym="' + sym + '"]');
+    if (row) row.remove();
+    unbindEntry(sym);   /* keep the data entry so the modal still shows it */
+    if (window.applyWatchlistFilter) window.applyWatchlistFilter();
+    document.dispatchEvent(new CustomEvent('watchlist:changed', { detail: { sym: sym, inWatchlist: false } }));
   };
 })();

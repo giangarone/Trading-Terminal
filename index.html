@@ -16,13 +16,13 @@
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
   <link rel="stylesheet" href="css/tokens.css?v=16">
   <link rel="stylesheet" href="css/topbar.css?v=14">
-  <link rel="stylesheet" href="css/left-panel.css?v=14">
+  <link rel="stylesheet" href="css/left-panel.css?v=15">
   <link rel="stylesheet" href="css/center-panel.css?v=28">
   <link rel="stylesheet" href="css/workspace.css?v=37">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=22">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=45">
+  <link rel="stylesheet" href="css/order-lines.css?v=48">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
   <link rel="stylesheet" href="css/indicators.css?v=24">
   <link rel="stylesheet" href="css/chart-settings.css?v=42">
@@ -2843,9 +2843,9 @@
           <div class="card-head">
             <span class="card-title">Watchlist</span>
             <div class="card-head-actions">
-              <span class="material-symbols-outlined pop-trigger" id="wlAddBtn" title="Add symbol">add</span>
+              <span class="material-symbols-outlined pop-trigger" id="wlAddBtn" data-tooltip="Add symbol">add</span>
               <span class="material-symbols-outlined pop-trigger" id="wlColsBtn"
-                title="Customize columns">more_horiz</span>
+                data-tooltip="Customize columns">more_horiz</span>
             </div>
           </div>
           <div class="wl-tabs" id="wlTabs">
@@ -4359,36 +4359,44 @@
     </div>
   </div>
 
-  <!-- ===================== SYMBOL SELECTOR DROPDOWN ===================== -->
-  <div class="pop-menu sym-select-menu" id="symSelectMenu" style="width:280px;">
-    <div class="wl-tabs" id="symSelectTabs">
-      <button class="wl-tab active" data-cat="all">All</button>
-      <button class="wl-tab" data-cat="crypto">Crypto</button>
-      <button class="wl-tab" data-cat="stocks">Stocks</button>
-      <button class="wl-tab" data-cat="futures">Futures</button>
-      <button class="wl-tab" data-cat="forex">Forex</button>
+  <!-- ===================== SYMBOL SELECTOR MODAL ===================== -->
+  <!-- Centered, draggable floating window (shares the Indicators .float-panel shell).
+       Opened from the topbar ticker, a chart-legend double-click, and the watchlist +
+       button. Rows are injected by renderSymSelectList() in js/app.js. -->
+  <div class="pop-menu float-panel" id="symSelectMenu">
+    <div class="float-panel-header">
+      <span class="float-panel-title"><span class="material-symbols-outlined"
+          style="font-size:14px;vertical-align:-2px;">candlestick_chart</span> Symbols</span>
+      <div class="ind-search-wrap">
+        <span class="material-symbols-outlined ind-search-icon">search</span>
+        <input type="text" class="ind-search" id="symSelectSearch" placeholder="Search symbol…" autocomplete="off"
+          spellcheck="false">
+      </div>
+      <button class="float-panel-close" id="symSelectClose"><span
+          class="material-symbols-outlined">close</span></button>
     </div>
-    <div class="sym-select-search">
-      <span class="material-symbols-outlined">search</span>
-      <input type="text" id="symSelectSearch" placeholder="Search symbol…">
+    <div class="ss-cats" id="symSelectTabs">
+      <button class="ss-cat active" data-cat="all">All</button>
+      <button class="ss-cat" data-cat="crypto">Crypto</button>
+      <button class="ss-cat" data-cat="stocks">Stocks</button>
+      <button class="ss-cat" data-cat="futures">Futures</button>
+      <button class="ss-cat" data-cat="forex">Forex</button>
     </div>
-    <div class="sym-select-list" id="symSelectList"></div>
-  </div>
-
-  <!-- ===================== WATCHLIST: ADD SYMBOL DROPDOWN ===================== -->
-  <div class="pop-menu sym-select-menu" id="wlAddMenu" style="width:260px;">
-    <div class="wl-tabs" id="wlAddTabs">
-      <button class="wl-tab active" data-cat="all">All</button>
-      <button class="wl-tab" data-cat="crypto">Crypto</button>
-      <button class="wl-tab" data-cat="stocks">Stocks</button>
-      <button class="wl-tab" data-cat="futures">Futures</button>
-      <button class="wl-tab" data-cat="forex">Forex</button>
+    <div class="ss-cols">
+      <span class="ss-col ss-col-sym" data-sort="sym">Symbol<span
+          class="ss-sort material-symbols-outlined">arrow_downward</span></span>
+      <span class="ss-col ss-col-last" data-sort="last">Last<span
+          class="ss-sort material-symbols-outlined">arrow_downward</span></span>
+      <span class="ss-col ss-col-chg" data-sort="chg">24h Chg<span
+          class="ss-sort material-symbols-outlined">arrow_downward</span></span>
+      <span class="ss-col ss-col-vol" data-sort="vol">24h Vol<span
+          class="ss-sort material-symbols-outlined">arrow_downward</span></span>
+      <span class="ss-col-act"></span>
     </div>
-    <div class="sym-select-search">
-      <span class="material-symbols-outlined">search</span>
-      <input type="text" id="wlAddSearch" placeholder="Add symbol…">
+    <div class="ss-list-wrap">
+      <div class="ss-list" id="symSelectList"></div>
+      <div class="ss-empty" id="symSelectEmpty" style="display:none;">No symbols found</div>
     </div>
-    <div class="sym-select-list" id="wlAddList"></div>
   </div>
 
   <!-- ===================== WATCHLIST: CUSTOMIZE COLUMNS MENU ===================== -->
@@ -5688,10 +5696,10 @@
   <script src="js/utils.js"></script>
   <script src="js/workspace.js?v=12"></script>
   <script src="js/overlays.js?v=7"></script>
-  <script src="js/resize.js?v=16"></script>
-  <script src="js/app.js?v=282"></script>
+  <script src="js/resize.js?v=17"></script>
+  <script src="js/app.js?v=285"></script>
   <script src="js/theme.js?v=3"></script>
-  <script src="js/right-panel.js?v=20"></script>
+  <script src="js/right-panel.js?v=21"></script>
   <script src="js/market-scanner.js?v=15"></script>
   <script src="js/market-sessions.js?v=4"></script>
 

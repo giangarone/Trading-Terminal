@@ -1163,89 +1163,273 @@
   background: var(--bg-hover);
 }
 
-.sym-select-menu.show {
-  display: flex;
-  flex-direction: column;
+/* ===================== SYMBOL SELECTOR MODAL ===================== */
+/* Centered, draggable floating window that shares the Indicators .float-panel shell
+   (header / search / close come from css/indicators.css). Sized between the shared
+   default and the wide Indicators panel; scoped to its id like #indicatorsMenu. */
+#symSelectMenu {
+  width: 600px;
+  height: 620px;
+  max-height: 620px;
 }
 
-.sym-select-search {
+/* The header doubles as the drag handle; inner controls keep their own cursors. */
+#symSelectMenu .float-panel-header {
+  cursor: grab;
+  user-select: none;
+}
+
+#symSelectMenu .float-panel-header.dragging {
+  cursor: grabbing;
+}
+
+#symSelectMenu .float-panel-header input {
+  cursor: auto;
+}
+
+#symSelectMenu .float-panel-header button {
+  cursor: pointer;
+}
+
+/* Category pills — mirror the Indicators .ind-cats/.ind-cat treatment. */
+.ss-cats {
+  display: flex;
+  gap: 4px;
+  padding: 9px 14px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ss-cats::-webkit-scrollbar {
+  display: none;
+}
+
+.ss-cat {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--r-xs);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--t-ui), background var(--t-ui), border-color var(--t-ui);
+}
+
+.ss-cat:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.ss-cat.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+}
+
+/* Column header + data rows share one grid so their columns stay aligned. */
+.ss-cols,
+.ss-row {
+  display: grid;
+  grid-template-columns: 1fr 96px 78px 88px 34px;
+  align-items: center;
+  gap: 10px;
+}
+
+.ss-cols {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Sortable header cells — click to sort, click again to flip direction. The cell
+   fills its grid column (grid items stretch by default) so the value columns can
+   push their label + arrow to the right edge to line up with the row cells. */
+.ss-col[data-sort] {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-default);
-  border-radius: 7px;
-  padding: 6px 9px;
-  margin-bottom: 6px;
-  flex-shrink: 0;
+  gap: 3px;
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--t-ui);
 }
 
-.sym-select-search .material-symbols-outlined {
-  font-size: 15px;
-  color: var(--text-muted);
+.ss-cols .ss-col-last,
+.ss-cols .ss-col-chg,
+.ss-cols .ss-col-vol {
+  justify-content: flex-end;
 }
 
-.sym-select-search input {
+.ss-col[data-sort]:hover {
+  color: var(--text-secondary);
+}
+
+.ss-col.sorted,
+.ss-col.sorted:hover {
+  color: var(--accent);
+}
+
+/* Sort arrow — hidden until its column is the active sort. */
+.ss-sort {
+  font-size: 13px;
+  opacity: 0;
+}
+
+.ss-col.sorted .ss-sort {
+  opacity: 1;
+}
+
+.ss-list-wrap {
   flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-size: 12px;
-  color: var(--text-primary);
-  min-width: 0;
-}
-
-.sym-select-search input::placeholder {
-  color: var(--text-muted);
-}
-
-.sym-select-list {
   overflow-y: auto;
-  max-height: 440px;
+  min-height: 0;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+.ss-list-wrap::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ss-list-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ss-list-wrap::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 4px;
+}
+
+.ss-row {
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: background var(--t-ui);
+}
+
+.ss-row:hover {
+  background: var(--bg-input);
+}
+
+.ss-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Symbol ticker over its full name. */
+.ss-sym {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 1px;
 }
 
-.sym-select-item {
-  padding: 7px 9px;
-  border-radius: 7px;
+.ss-sym-ticker {
   font-size: 12.5px;
   font-weight: 500;
   color: var(--text-primary);
-  text-align: left;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background var(--t-ui), color var(--t-ui);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sym-select-item:hover {
-  background: var(--bg-input);
-  color: var(--accent);
+.ss-sym-name {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Watchlist add-symbol menu only: reveal a + on hover so it's clear the row adds to the watchlist */
-.sym-select-item--add {
+.ss-last,
+.ss-chg,
+.ss-vol {
+  font-size: 12px;
+  font-weight: 500;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ss-last {
+  color: var(--text-primary);
+}
+
+.ss-chg.up {
+  color: var(--long);
+}
+
+.ss-chg.down {
+  color: var(--short);
+}
+
+.ss-vol {
+  color: var(--text-muted);
+}
+
+/* Watchlist toggle: appears muted on row hover, accent check when watchlisted. */
+.ss-wl-toggle {
+  position: relative;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.sym-select-add-icon {
-  font-size: 16px;
+  justify-content: center;
+  border-radius: var(--r-xs);
+  background: none;
+  border: none;
+  cursor: pointer;
   color: var(--text-muted);
   opacity: 0;
+  transition: opacity var(--t-ui), color var(--t-ui), background var(--t-ui);
 }
 
-.sym-select-item--add:hover .sym-select-add-icon {
+.ss-row:hover .ss-wl-toggle {
+  opacity: 1;
+}
+
+.ss-wl-toggle:hover {
+  color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.ss-wl-toggle.on {
   opacity: 1;
   color: var(--accent);
 }
 
-.sym-select-empty {
-  padding: 12px 9px;
+.ss-wl-toggle .material-symbols-outlined {
+  font-size: 17px;
+}
+
+/* Tooltip below the toggle, right-anchored so it can't clip off the modal's right edge. */
+.ss-wl-toggle[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sans);
+  white-space: nowrap;
+  box-shadow: 0 8px 20px var(--shadow-color);
+  z-index: 60;
+  pointer-events: none;
+}
+
+.ss-empty {
+  padding: 40px 20px;
   font-size: 12px;
   color: var(--text-muted);
   text-align: center;
