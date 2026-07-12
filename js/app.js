@@ -152,6 +152,7 @@
   let isDraggingOrderLine = false; // true for the duration of any order-line drag — blocks the price-tick auto-render from wiping live drag visuals
   let isHoveringBarControls = false; // true when pointer is over a non-drag interactive element inside an entry/TP/SL bar — suppresses the chart crosshair
   let isHoveringIndLegend = false; // true when pointer is over an indicator row in the chart legend — suppresses the chart crosshair
+  let isHoveringClHeader = false; // true when pointer is over the chart legend header (.cl-header) — suppresses the chart crosshair
   layer.addEventListener('mouseover', (e) => {
     if (e.target.closest('.ol-pill-seg, .ol-gear, .ol-amt, .ol-tp-meta, .ol-entry-pnl')) {
       isHoveringBarControls = true;
@@ -212,7 +213,9 @@
   }
   function openNear(el, anchorRect, align, trigger) {
     if (trigger && el.classList.contains('show') && el._openTrigger === trigger) {
-      closeAllPopovers();
+      /* Toggle just this popover closed. Don't call closeAllPopovers() here — it would also
+         close any parent float panel (e.g. the indicator settings window) the trigger lives in. */
+      if (!el.dataset.persistent) el.classList.remove('show');
       return;
     }
     /* if this popover was triggered from inside another already-open popover (e.g. a dropdown */
@@ -3138,7 +3141,7 @@
     const rect = chart.getBoundingClientRect();
     const x = e.clientX - rect.left, y = e.clientY - rect.top;
     const plotW = rect.width - AXIS_RIGHT_W, ih = rect.height - AXIS_BOTTOM_H;
-    if (isPanning || hoveringNewsMarker || hoveredHandle || isHoveringBarControls || isHoveringIndLegend || x < 0 || x > plotW || y < 0 || y > ih) {
+    if (isPanning || hoveringNewsMarker || hoveredHandle || isHoveringBarControls || isHoveringIndLegend || isHoveringClHeader || x < 0 || x > plotW || y < 0 || y > ih) {
       if (crosshair) { crosshair = null; scheduleDrawPriceChart(); updateLegendValues(); }
       return;
     }
@@ -6159,6 +6162,15 @@
       symSelectSearch.value = '';
       renderSymSelectList('');
       symSelectSearch.focus();
+    });
+    /* Hovering the legend header suppresses the chart crosshair so the header reads as an
+       interactive element, not chart space (same mechanism as the indicator legend rows). */
+    clHeaderEl.addEventListener('mouseenter', () => {
+      isHoveringClHeader = true;
+      if (crosshair) { crosshair = null; scheduleDrawPriceChart(); updateLegendValues(); }
+    });
+    clHeaderEl.addEventListener('mouseleave', () => {
+      isHoveringClHeader = false;
     });
   }
   symSelectSearch.addEventListener('input', () => renderSymSelectList(symSelectSearch.value));

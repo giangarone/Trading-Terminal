@@ -2,7 +2,15 @@
 
 All notable changes to the Trading Terminal are documented here.
 
+## 2026-07-12
+
+### Fixed
+- **Reopening a dropdown no longer closes its parent window** — Clicking an open dropdown's trigger a second time (e.g. the Line Color dropdown in the indicator settings window) now toggles just that dropdown closed instead of dismissing the whole settings window. The generic `openNear` toggle path stopped calling `closeAllPopovers()`, which had been sweeping away the parent float panel the dropdown lived in.
+
 ## 2026-07-11
+
+### Fixed
+- **Chart crosshair over legend header** — hovering the chart legend header (`.cl-header`) now suppresses the chart crosshair, so the header reads as an interactive element rather than chart space.
 
 ### Added
 - **Chart legend (top-left overlay)** — The chart now shows a legend in its top-left corner: the asset (`ETHUSD`), timeframe, and exchange on the first line with a live indicator dot, and the O/H/L/C values plus the candle's change (absolute and %) on the second line, color-coded by candle direction. The OHLC tracks the candle under the crosshair while hovering and falls back to the latest candle otherwise; it also reflects timeframe, symbol, and account changes.
