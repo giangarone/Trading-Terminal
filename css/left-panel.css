@@ -146,7 +146,6 @@
   padding: 3px;
   border-radius: 5px;
   background: var(--bg-input);
-  box-shadow: -8px 0 8px 3px var(--bg-input);
   transition: opacity var(--t-ui), color var(--t-ui), background var(--t-ui);
 }
 
@@ -161,7 +160,6 @@
 
 .wl-row.selected .wl-remove {
   background: var(--bg-hover);
-  box-shadow: -8px 0 8px 3px var(--bg-hover);
 }
 
 .wl-row:focus-visible {
