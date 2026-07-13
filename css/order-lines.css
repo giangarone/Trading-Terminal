@@ -1404,6 +1404,10 @@
   color: var(--accent);
 }
 
+.ss-wl-toggle.on .material-symbols-outlined {
+  font-variation-settings: 'FILL' 1;
+}
+
 .ss-wl-toggle .material-symbols-outlined {
   font-size: 17px;
 }

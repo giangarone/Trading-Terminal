@@ -6268,7 +6268,7 @@
   }
 
   /* one row of the Symbol Selector modal: symbol + name, live last / 24h% / 24h vol,
-     and a watchlist toggle (plus → check when the symbol is watchlisted). */
+     and a watchlist toggle (star, gold-filled when the symbol is watchlisted). */
   function buildSymRow(s) {
     const d = window.getMarketData ? window.getMarketData(s.sym, s.cat) : null;
     const inWl = !!(window.watchlistHasSymbol && window.watchlistHasSymbol(s.sym));
@@ -6282,7 +6282,7 @@
       '<span class="ss-vol">' + (d ? d.volText : '') + '</span>' +
       '<button class="ss-wl-toggle' + (inWl ? ' on' : '') + '" data-sym="' + s.sym + '" data-cat="' + s.cat + '" ' +
         'data-tooltip="' + (inWl ? 'Remove from watchlist' : 'Add to watchlist') + '">' +
-        '<span class="material-symbols-outlined">' + (inWl ? 'check' : 'add') + '</span></button>' +
+        '<span class="material-symbols-outlined">star</span></button>' +
     '</div>';
   }
 
@@ -6433,8 +6433,6 @@
     const inWl = !!(e.detail && e.detail.inWatchlist);
     tog.classList.toggle('on', inWl);
     tog.setAttribute('data-tooltip', inWl ? 'Remove from watchlist' : 'Add to watchlist');
-    const icon = tog.querySelector('.material-symbols-outlined');
-    if (icon) icon.textContent = inWl ? 'check' : 'add';
   });
 
   /* ---------- watchlist: customize-columns menu (⋯ button) ---------- */
