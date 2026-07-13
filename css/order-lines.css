@@ -1269,6 +1269,16 @@
   justify-content: flex-end;
 }
 
+/* On the right-aligned value columns the sort arrow sits to the LEFT of the
+   label, so the label's right edge always lines up with the right-aligned
+   numbers below it — the arrow can't push the label off that edge, sorted or
+   not. (The Symbol column stays label-then-arrow, left-aligned.) */
+.ss-cols .ss-col-last .ss-sort,
+.ss-cols .ss-col-chg .ss-sort,
+.ss-cols .ss-col-vol .ss-sort {
+  order: -1;
+}
+
 .ss-col[data-sort]:hover {
   color: var(--text-secondary);
 }
