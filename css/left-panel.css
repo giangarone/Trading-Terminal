@@ -121,6 +121,10 @@
 
 .wl-row:hover {
   background: var(--bg-input);
+  /* Lift the hovered row above later rows so its × tooltip isn't painted behind
+     the next row's text. The × has a transform (its own stacking context), which
+     otherwise traps the tooltip's z-index inside the row. */
+  z-index: 2;
 }
 
 .wl-row.selected {
@@ -160,6 +164,27 @@
 
 .wl-row.selected .wl-remove {
   background: var(--bg-hover);
+}
+
+/* Custom tooltip for the row remove button — right-anchored below the × so it
+   can't clip off the panel's right edge, matching the header-button tooltips. */
+.wl-remove[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sans);
+  white-space: nowrap;
+  box-shadow: 0 8px 20px var(--shadow-color);
+  z-index: 50;
+  pointer-events: none;
 }
 
 .wl-row:focus-visible {

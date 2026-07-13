@@ -107,7 +107,7 @@
     if (!row.querySelector('.wl-remove')) {
       const rm = document.createElement('span');
       rm.className = 'wl-remove material-symbols-outlined';
-      rm.title = 'Remove from watchlist';
+      rm.setAttribute('data-tooltip', 'Remove from watchlist');
       rm.textContent = 'close';
       row.appendChild(rm);
     }
@@ -131,7 +131,7 @@
       '<span class="wl-chgabs ' + dir + '" id="wlChgAbs-' + sym + '">' + (up ? '+' : '') + fmt(abs, meta.dec) + '</span>' +
       '<span class="wl-chg ' + dir + '" id="wlChg-' + sym + '">' + (up ? '+' : '') + fmt(meta.chgPct) + '%</span>' +
       '<span class="wl-vol" id="wlVol-' + sym + '">' + fmtVol(meta.vol) + '</span>' +
-      '<span class="wl-remove material-symbols-outlined" title="Remove from watchlist">close</span>';
+      '<span class="wl-remove material-symbols-outlined" data-tooltip="Remove from watchlist">close</span>';
     return row;
   }
 
