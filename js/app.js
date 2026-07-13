@@ -3498,7 +3498,7 @@
     const row = e.target.closest('.cl-ind-row');
     if (!row) return;
     e.stopPropagation();
-    openIndicatorSettings(+row.dataset.id);
+    openIndicatorSettings(+row.dataset.id, row);
   });
 
   clIndicators.addEventListener('click', (e) => {
@@ -3520,7 +3520,7 @@
       btn.setAttribute('data-tooltip', inst.hidden ? 'Show' : 'Hide');
       updateLegendValues();
     } else if (act === 'settings') {
-      openIndicatorSettings(id);
+      openIndicatorSettings(id, row);
     } else if (act === 'remove') {
       chartIndicators = chartIndicators.filter(i => i.id !== id);
       if (settingsInst && settingsInst.id === id) closeAllPopovers();
@@ -3626,7 +3626,7 @@
   function updateSettingsTabs() {
     indSettingsTabs.querySelectorAll('.ind-settings-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === settingsTab));
   }
-  function openIndicatorSettings(id) {
+  function openIndicatorSettings(id, row) {
     const inst = instanceById(id);
     if (!inst) return;
     settingsInst = inst;
@@ -3635,7 +3635,28 @@
     indSettingsTitle.textContent = inst.name;
     updateSettingsTabs();
     renderSettingsBody();
-    openCentered(indSettingsPopup);
+    openIndSettingsAtChartLeft(row);
+  }
+  /* Opens the settings window pinned to the chart's leftmost edge, just below the legend row
+     that opened it (falls back to centered if no anchor row is available). */
+  function openIndSettingsAtChartLeft(row) {
+    const el = indSettingsPopup;
+    const chartArea = document.getElementById('chartPaneArea');
+    if (!row || !chartArea) { openCentered(el); return; }
+    closeAllPopoversExcept(el);
+    el.classList.add('show');
+    el._openTrigger = null;
+    const chartRect = chartArea.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+    const w = el.offsetWidth, h = el.offsetHeight;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let x = chartRect.left + 8;
+    let y = rowRect.bottom + 6;
+    if (x + w > vw - 12) x = vw - w - 12;
+    if (x < 8) x = 8;
+    if (y + h > vh - 12) y = Math.max(8, vh - h - 12);
+    el.style.left = Math.round(x) + 'px';
+    el.style.top = Math.round(y) + 'px';
   }
   function revertSettings() {
     if (settingsInst && settingsSnapshot) {

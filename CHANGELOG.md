@@ -12,6 +12,7 @@ All notable changes to the Trading Terminal are documented here.
 - **Watchlist header tooltips** — The Add symbol (**+**) and Customize columns (**⋯**) buttons at the top of the Watchlist card now show the app's custom tooltips on hover.
 
 ### Changed
+- **Indicator settings window opens beside its legend row** — The indicator settings window (`.ind-settings-popup`) now appears pinned to the chart's leftmost edge, just below the legend row that opened it, instead of centered in the viewport. Opened from a legend row double-click or its settings gear.
 - **Sortable Symbol Selector columns** — Clicking a column header (Symbol, Last, 24h Chg, 24h Vol) sorts the list by that column; clicking the active header again flips the direction. Symbol sorts A→Z first, the numeric columns high→low first. An accent arrow marks the active column.
 - **Symbol Selector redesigned as a centered modal** — The symbol picker is now a larger, centered, draggable window (matching the Indicators window) instead of a small dropdown. Each row shows the symbol and name, live last price, 24h change %, and 24h volume, with data that ticks live while the window is open. Clicking a row still switches the chart symbol; the per-row toggle manages the watchlist. The separate watchlist "add symbol" dropdown has been folded into this one window, so the Watchlist **+** button, the topbar ticker, and a chart-legend double-click all open the same modal.
 

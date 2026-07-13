@@ -767,6 +767,7 @@
 .ind-settings-header {
   padding: 15px 16px 13px;
   border: none;
+  cursor: grab;
 }
 
 .ind-settings-title {
