@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/topbar.css?v=14">
   <link rel="stylesheet" href="css/left-panel.css?v=19">
   <link rel="stylesheet" href="css/center-panel.css?v=28">
-  <link rel="stylesheet" href="css/workspace.css?v=37">
+  <link rel="stylesheet" href="css/workspace.css?v=39">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=22">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
@@ -2985,8 +2985,8 @@
           <div class="card-head">
             <span class="card-title">Trading Journal</span>
             <div class="card-head-actions">
-              <div class="tj-day-select pop-trigger" id="tjDaySelect">
-                <span id="tjDayLabel">Today</span>
+              <div class="tj-day-select pop-trigger" id="tjPeriodSelect">
+                <span id="tjPeriodLabel">Today</span>
                 <span class="material-symbols-outlined">expand_more</span>
               </div>
             </div>
@@ -3015,7 +3015,7 @@
             <div class="tj-mini-strip">
               <div class="tj-mini-cell">
                 <span class="tj-mini-lbl">Winrate</span>
-                <span class="tj-mini-val" id="tjWinRate">71%</span>
+                <span class="tj-mini-val" id="tjWinRate">71.00%</span>
               </div>
               <div class="tj-mini-cell">
                 <span class="tj-mini-lbl">Best</span>
@@ -3072,12 +3072,10 @@
           </div>
         </div>
 
-        <div class="pop-menu" id="tjDayMenu" style="width:130px;">
-          <button class="pop-item selected" data-day="0">Today</button>
-          <button class="pop-item" data-day="1">Jun 24</button>
-          <button class="pop-item" data-day="2">Jun 23</button>
-          <button class="pop-item" data-day="3">Jun 20</button>
-          <button class="pop-item" data-day="4">Jun 19</button>
+        <div class="pop-menu" id="tjPeriodMenu" style="width:130px;">
+          <button class="pop-item selected" data-period="today">Today</button>
+          <button class="pop-item" data-period="month">This Month</button>
+          <button class="pop-item" data-period="year">This Year</button>
         </div>
 
 
@@ -5730,10 +5728,10 @@
 
   <!-- ====== Scripts (order matters: utils → workspace → overlays → resize → app → right-panel) ====== -->
   <script src="js/utils.js?v=1"></script>
-  <script src="js/workspace.js?v=13"></script>
+  <script src="js/workspace.js?v=16"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=17"></script>
-  <script src="js/app.js?v=315"></script>
+  <script src="js/app.js?v=316"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=24"></script>
   <script src="js/market-scanner.js?v=16"></script>

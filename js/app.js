@@ -136,6 +136,8 @@
     { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4562.25, pnl: 3787.50, role: 'close', type: 'Limit (TP)', time: '10:03:18 AM', fee: 1.25 },
     { symbol: 'NQU5', side: 'sell', qty: 1, price: 18560.00, pnl: 4000.00, role: 'close', type: 'Limit (TP)', time: '10:41:55 AM', fee: 1.25 },
     { symbol: 'ETHUSD', side: 'sell', qty: 1, price: 4495.00, pnl: 425.00, role: 'close', type: 'Market', time: '11:12:40 AM', fee: 1.25 },
+    { symbol: 'SOLUSD', side: 'buy', qty: 5, price: 182.40, pnl: null, role: 'open', type: 'Market', time: '11:35:10 AM', fee: 1.25 },
+    { symbol: 'SOLUSD', side: 'sell', qty: 5, price: 179.80, pnl: -910.00, role: 'close', type: 'Stop (SL)', time: '12:04:22 PM', fee: 1.25 },
   ];
   window.tradeHistory = tradeHistory; // read by the Trading Journal (workspace.js) to build real journal entries
 
