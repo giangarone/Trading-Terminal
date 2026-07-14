@@ -779,12 +779,32 @@
   // recorded order.orderType still read the full "Trigger Market" everywhere else.
   const QT_ADVANCED_TAB_LABELS = { stopLimit: 'Stop Limit', mit: 'Trigger' };
   let qtAdvancedType = 'stopLimit';
+  // Price fields that snap back to the live market price each time their panel is shown, so a
+  // revisited tab never offers a price the market has since walked away from. Fields left out are
+  // not prices (qtMitSlippage) or have no input at all (the Market panel is a static label).
+  // Stop Limit seeds both legs to the raw market price: the panel has no side yet — Buy/Sell is
+  // chosen at placement — so there is no direction to offset the stop and limit around.
+  const QT_SEEDED_PRICE_IDS = {
+    limit: ['qtLimitPrice'],
+    stopLimit: ['qtStopLimitTrigger', 'qtStopLimitPrice'],
+    mit: ['qtMitTrigger'],
+  };
+  function qtSeedPanelPrices(panelName) {
+    const mkt = qtCurrentPrice();
+    if (isNaN(mkt)) return; // no live price to read yet — leave the field alone rather than write "NaN"
+    const price = fmt(roundTick(mkt));
+    (QT_SEEDED_PRICE_IDS[panelName] || []).forEach(id => {
+      const input = document.getElementById(id);
+      if (input) input.value = price;
+    });
+  }
   function qtSetActiveTab(tabName) {
     const panelName = tabName === 'advanced' ? qtAdvancedType : tabName;
     qtOrderTabs.querySelectorAll('.qt-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
     document.querySelectorAll('.qt-tab-panel').forEach(p => {
       p.classList.toggle('active', p.dataset.tabPanel === panelName);
     });
+    qtSeedPanelPrices(panelName);
     const lbl = QT_TAB_LABELS[tabName] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market';
     qtBuyBtn.querySelector('.bs-lbl').textContent = 'Buy ' + lbl;
     qtSellBtn.querySelector('.bs-lbl').textContent = 'Sell ' + lbl;
@@ -1082,7 +1102,10 @@
   const QT_ADVANCED_ENTRY_IDS = { stopLimit: 'qtStopLimitPrice', mit: 'qtMitTrigger' };
   function qtActivePrice() {
     const tab = qtActiveTab();
-    if (tab === 'limit') return parseFloat(document.getElementById('qtLimitPrice').value.replace(/,/g, ''));
+    if (tab === 'limit') {
+      const val = parseFloat(document.getElementById('qtLimitPrice').value.replace(/,/g, ''));
+      return isNaN(val) ? qtCurrentPrice() : val;
+    }
     if (tab === 'advanced') {
       const inputId = QT_ADVANCED_ENTRY_IDS[qtAdvancedType];
       const input = document.getElementById(inputId);
