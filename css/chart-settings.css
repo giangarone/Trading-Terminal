@@ -409,7 +409,19 @@
   pointer-events: none;
 }
 
-.cs-field label {
+/* Explanatory caption under a field's control. Values match .cs-switch-desc, the
+   equivalent sub-text on switch rows. */
+.cs-field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* A field's caption. Excludes .cs-checkbox-row, which is also a <label> — it wraps its checkbox to make
+   the whole row clickable, and must keep its own flex-row styling rather than take the caption's. */
+.cs-field label:not(.cs-checkbox-row) {
   display: block;
   font-size: var(--fs-label);
   letter-spacing: var(--ls-label);

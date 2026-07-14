@@ -63,6 +63,7 @@
     // Default Size card). quickMarketSize is separate — it only sizes the right-click "Buy/Sell Market" actions.
     positionDefaults: { orderType: 'limit', quickMarketSize: '1', sizingMethod: 'quantity', defaultSize: '1' },
     news: {
+      catalystScope: 'both',
       position: 'by-sentiment',
       sentimentFilter: 'all',
       timeRange: 'all',
@@ -102,6 +103,8 @@
           // "Show markers at bottom" toggle was folded into Marker Position as a 4th option
           if (merged.news.showMarkersAtBottom) merged.news.position = 'bottom';
           delete merged.news.showMarkersAtBottom;
+          // Catalyst Scope was added after this pane shipped — saves without it default to showing both.
+          if (!merged.news.catalystScope) merged.news.catalystScope = CS_DEFAULTS.news.catalystScope;
         }
         return merged;
       }
@@ -983,15 +986,6 @@
     });
   });
 
-  /* One-way / Hedge toggle (Quick Trade) — mirrors the settings Hedge Mode row via the shared setter */
-  const qtHedgeToggle = document.getElementById('qtHedgeToggle');
-  if (qtHedgeToggle) {
-    qtHedgeToggle.querySelectorAll('.qt-mode-btn').forEach(b => {
-      b.addEventListener('click', () => setHedgeModeEnabled(b.dataset.hedge === 'on'));
-    });
-    syncQtHedgeToggle(hedgeModeEnabled()); // reflect the persisted value on load
-  }
-
   /* Leverage opens the popup */
   qtLeverageBtn.addEventListener('click', () => {
     openNear(qtMarginMenu, qtLeverageBtn.getBoundingClientRect(), 'right', qtLeverageBtn);
@@ -1309,8 +1303,6 @@
     const anyMargin = cfg.marginMode || cfg.leverage;
     qtMarginBar.hidden = !anyMargin;
     qtModeToggle.hidden = !cfg.marginMode;
-    const qtHedgeToggleEl = document.getElementById('qtHedgeToggle');
-    if (qtHedgeToggleEl) qtHedgeToggleEl.hidden = cat !== 'crypto'; // Hedge Mode is a crypto-only concept
     // Note: qtCryptoMode (Spot/Perp) persists across symbol switches — changing symbol
     // keeps the user's chosen mode rather than resetting it. It defaults to spot on launch.
     qtApplyMarginMode(cfg);
@@ -1610,23 +1602,22 @@
   /* ---------- Hedge Mode (crypto) ---------- */
   // Off = one-way: a symbol can only be long OR short at once, so an opposing order/position is blocked
   // (see the guardedPlace flow). On = hedge: a long and a short coexist as separate orders/positions.
-  // Default off. Exposed on two surfaces (settings row + Quick Trade toggle), kept in sync by the setter.
+  // Default off. Set from the General settings pane's Position Mode card, or from the one-way block
+  // popup's "Enable Hedge Mode" button — both route through setHedgeModeEnabled.
   const HEDGE_MODE_KEY = 'tt_hedgeMode';
   function hedgeModeEnabled() {
     try { return localStorage.getItem(HEDGE_MODE_KEY) === '1'; } catch (e) { return false; }
   }
-  function syncQtHedgeToggle(on) {
-    const tog = document.getElementById('qtHedgeToggle');
-    if (!tog) return;
-    tog.querySelectorAll('.qt-mode-btn').forEach(b => {
+  function syncHedgeModeGroup(on) {
+    const group = document.getElementById('csHedgeModeGroup');
+    if (!group) return;
+    group.querySelectorAll('.cs-seg-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.hedge === (on ? 'on' : 'off'));
     });
   }
   function setHedgeModeEnabled(on) {
     try { localStorage.setItem(HEDGE_MODE_KEY, on ? '1' : '0'); } catch (e) { /* storage unavailable */ }
-    const row = document.getElementById('csHedgeMode');
-    if (row) row.classList.toggle('active', on);
-    syncQtHedgeToggle(on);
+    syncHedgeModeGroup(on);
   }
   /* True when an opposing order (pending or filled) or position already exists on the same crypto symbol
      — the strict one-way rule: any live long blocks a new short, and vice versa. */
@@ -5433,14 +5424,9 @@
       setReverseConfirmEnabled(csConfirmReverseRow.classList.contains('active'));
     });
   }
-  const csHedgeModeRow = document.getElementById('csHedgeMode');
-  if (csHedgeModeRow) {
-    csHedgeModeRow.classList.toggle('active', hedgeModeEnabled());
-    csHedgeModeRow.querySelector('.ui-toggle').addEventListener('click', () => {
-      // The generic cs-switch-row handler has already flipped .active by the time this runs.
-      setHedgeModeEnabled(csHedgeModeRow.classList.contains('active'));
-    });
-  }
+  /* Position Mode persists separately (it gates the one-way block popup), so it seeds from the
+     stored value and writes back on select rather than being visual-only. */
+  syncHedgeModeGroup(hedgeModeEnabled());
   /* Dynamic Fee Offset row re-syncs the offset input's locked state after the generic toggle flips it */
   const csBeDynamicFeeRow = document.getElementById('csBeDynamicFee');
   if (csBeDynamicFeeRow) {
@@ -5455,13 +5441,16 @@
       });
     });
   });
-  function bindSimpleSegmented(groupId) {
+  /* Moves .active to the clicked button. `onSelect` receives the clicked button for groups that
+     also need to persist the choice; omit it for groups that are visual-only. */
+  function bindSimpleSegmented(groupId, onSelect) {
     const group = document.getElementById(groupId);
     if (!group) return;
     group.querySelectorAll('.cs-seg-btn').forEach(b => {
       b.addEventListener('click', () => {
         group.querySelectorAll('.cs-seg-btn').forEach(x => x.classList.remove('active'));
         b.classList.add('active');
+        if (onSelect) onSelect(b);
       });
     });
   }
@@ -5471,6 +5460,7 @@
   bindSimpleSegmented('ctCrossIsolatedGroup');
   bindSimpleSegmented('ctDisplayModeGroup');
   bindSimpleSegmented('pdCrossIsolatedGroup');
+  bindSimpleSegmented('csHedgeModeGroup', (btn) => setHedgeModeEnabled(btn.dataset.hedge === 'on'));
 
   /* ---------- Alert email update button ---------- */
   const alertEmailSave = document.getElementById('alertEmailSave');
@@ -5852,13 +5842,14 @@
     pdApplyModeConfig(pdMethod, s.positionDefaults.defaultSize);
 
     const sn = s.news || CS_DEFAULTS.news;
+    document.querySelectorAll('#csNewsScopeGroup .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.mode === sn.catalystScope));
     document.querySelectorAll('#csNewsPositionGroup .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.mode === sn.position));
     document.querySelectorAll('#csNewsSentimentGroup .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.mode === sn.sentimentFilter));
     document.getElementById('csNewsTimeRange').value = sn.timeRange;
     document.getElementById('csNewsMaxEvents').value = sn.maxEvents;
-    document.getElementById('csNewsImpHigh').classList.toggle('active', sn.importance.high);
-    document.getElementById('csNewsImpMedium').classList.toggle('active', sn.importance.medium);
-    document.getElementById('csNewsImpLow').classList.toggle('active', sn.importance.low);
+    document.getElementById('csNewsImpHigh').classList.toggle('checked', sn.importance.high);
+    document.getElementById('csNewsImpMedium').classList.toggle('checked', sn.importance.medium);
+    document.getElementById('csNewsImpLow').classList.toggle('checked', sn.importance.low);
     document.getElementById('csNewsTypeNews').classList.toggle('checked', sn.types.news);
     document.getElementById('csNewsTypeSocial').classList.toggle('checked', sn.types.social);
     document.getElementById('csNewsTypeGeo').classList.toggle('checked', sn.types.geopolitical);
@@ -5916,6 +5907,7 @@
           : (PD_SIZE_MODES[pdActiveSizingMethod()] || PD_SIZE_MODES.quantity).default),
       },
       news: {
+        catalystScope: document.querySelector('#csNewsScopeGroup .cs-radio-row.active')?.dataset.mode || 'both',
         position: document.querySelector('#csNewsPositionGroup .cs-radio-row.active')?.dataset.mode || 'by-sentiment',
         sentimentFilter: document.querySelector('#csNewsSentimentGroup .cs-radio-row.active')?.dataset.mode || 'all',
         timeRange: document.getElementById('csNewsTimeRange').value,
@@ -5923,9 +5915,9 @@
         showPast: document.getElementById('csNewsShowPast').classList.contains('active'),
         showUpcoming: document.getElementById('csNewsShowUpcoming').classList.contains('active'),
         importance: {
-          high: document.getElementById('csNewsImpHigh').classList.contains('active'),
-          medium: document.getElementById('csNewsImpMedium').classList.contains('active'),
-          low: document.getElementById('csNewsImpLow').classList.contains('active'),
+          high: document.getElementById('csNewsImpHigh').classList.contains('checked'),
+          medium: document.getElementById('csNewsImpMedium').classList.contains('checked'),
+          low: document.getElementById('csNewsImpLow').classList.contains('checked'),
         },
         types: {
           news: document.getElementById('csNewsTypeNews').classList.contains('checked'),
