@@ -2,6 +2,24 @@
 
 All notable changes to the Trading Terminal are documented here.
 
+## 2026-07-14
+
+### Added
+- **Symbol Selector exchange column** — Every row in the Symbol Selector now shows the broker/exchange the asset trades on — one of the five supported venues (BloFin, TradeStation, Tradovate, Bitget, Bybit) — in a new **Exchange** column between Symbol and Last. The column is sortable like the others.
+- **"Order modified" toast** — Manually dragging an open order's line on the chart now shows an "Order modified" toast, but only once the drag is released. This covers the Entry, TP, and SL lines as well as the trailing-TP offset, Stop-Limit limit-price, and breakeven-trigger lines. Automatic moves (trailing stop, trailing take profit, breakeven firing) don't toast.
+
+### Changed
+- **Order-line drags commit on release** — Dragging a TP, SL, or Entry line no longer evaluates fills mid-gesture, so sweeping a line across the current market price while dragging can't fire an unintended fill/trigger. The final price is evaluated on the first price tick after the drag is released. The Stop-Limit limit line is covered by the same guard, and dragging the breakeven-trigger line no longer arms breakeven mid-drag — it's evaluated only after release.
+- **Trailing offset label is draggable** — The "TRL OFFSET" label on the trailing-TP offset line can now be dragged to reposition the offset, matching its line and the breakeven/limit labels. It's drag-only; the trailing settings menu stays on the TP chip's TRL badge.
+- **Shared JS helpers consolidated into `utils.js`** — The identical `mulberry32`, `fmt`, `setUpDown`, and `flashEl` helpers that had been copy-pasted across `app.js`, `right-panel.js`, and `workspace.js` now live once in `js/utils.js` (which loads first) and are used everywhere. The two HTML-escape variants (`escHtml`/`escapeHtml`) were unified into a single `escapeHtml`. Behavior is unchanged; the intentionally different `fmtVol` and `noise` variants were left alone.
+- **Market Scanner reuses the shared toast** — `market-scanner.js` no longer carries its own copy of `showToast`; it now delegates to the `window.showToast` already exported by `app.js`, so both toast paths share one implementation (and its dedup + cap-at-3 behavior) from a single source.
+
+### Fixed
+- **`utils.js` cache-busting** — The `js/utils.js` script tag was the one asset with no `?v=` version query, so edits could be silently served stale. It is now versioned like every other asset.
+
+### Removed
+- **Dead CSS** — Removed the unused `.badge--info` badge modifier and simplified a dead `var(--paper-400, …)` fallback (the raw token no longer exists) to `var(--text-muted)`.
+
 ## 2026-07-12
 
 ### Added

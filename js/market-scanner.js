@@ -380,40 +380,9 @@
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
   }
 
-  // Local toast — app.js's showToast lives in its own IIFE and isn't shared,
-  // so we mirror it here reusing the same #toastStack element and .toast styles.
-  function showToast(msg, icon) {
-    const stack = document.getElementById('toastStack');
-    if (!stack) return;
-    icon = icon || 'info';
-    const key = icon + '|' + msg;
-    // De-dup + cap, mirroring app.js so both sources share the same #toastStack behavior.
-    const last = stack.lastElementChild;
-    if (last && last.dataset.toastKey === key) {
-      last.classList.add('show');
-      clearTimeout(last._hideTimer);
-      last._hideTimer = setTimeout(function () {
-        last.classList.remove('show');
-        last._removeTimer = setTimeout(function () { last.remove(); }, 300);
-      }, 2600);
-      return;
-    }
-    const t = document.createElement('div');
-    t.className = 'toast';
-    t.dataset.toastKey = key;
-    t.innerHTML = '<span class="material-symbols-outlined">' + icon + '</span><span>' + msg + '</span>';
-    stack.appendChild(t);
-    while (stack.children.length > 3) {
-      const oldest = stack.firstElementChild;
-      clearTimeout(oldest._showTimer); clearTimeout(oldest._hideTimer); clearTimeout(oldest._removeTimer);
-      oldest.remove();
-    }
-    t._showTimer = setTimeout(function () { t.classList.add('show'); }, 10);
-    t._hideTimer = setTimeout(function () {
-      t.classList.remove('show');
-      t._removeTimer = setTimeout(function () { t.remove(); }, 300);
-    }, 2600);
-  }
+  // Toasts use the shared window.showToast exported by app.js (same #toastStack,
+  // dedup, and cap-at-3 behavior) — no local copy needed.
+  function showToast(msg, icon) { window.showToast(msg, icon); }
 
   function changeStr(n) {
     const cls = n > 0 ? 'msx-up' : n < 0 ? 'msx-down' : 'msx-muted';

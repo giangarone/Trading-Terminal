@@ -150,7 +150,8 @@
 
 /* Tag on the left edge of the trailing TP's offset line. Only one TP can ever trail at a
    time, so the label just names the concept ("Trailing Offset") rather than which TP it's for.
-   Clickable (opens the TP's trailing settings), same as clicking the TRL badge on the chip. */
+   Drag-only: repositions the offset, same as dragging the offset line. The trailing settings
+   menu is opened from the TRL badge on the TP chip, not from this label. */
 .ol-offset-label {
   position: absolute;
   right: 80px;
@@ -165,7 +166,11 @@
   color: var(--intel);
   white-space: nowrap;
   pointer-events: auto;
-  cursor: pointer;
+  cursor: grab;
+}
+
+.ol-offset-label:active {
+  cursor: grabbing;
 }
 
 .ol-line.ghost {
@@ -1235,7 +1240,7 @@
 .ss-cols,
 .ss-row {
   display: grid;
-  grid-template-columns: 1fr 96px 78px 88px 34px;
+  grid-template-columns: 1fr 104px 96px 78px 88px 34px;
   align-items: center;
   gap: 10px;
 }
@@ -1358,6 +1363,17 @@
   text-overflow: ellipsis;
 }
 
+/* Broker / exchange the symbol trades on — plain left-aligned text, like the Type
+   cells in the broker-connections table. */
+.ss-broker {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .ss-last,
 .ss-chg,
 .ss-vol {
@@ -1386,8 +1402,8 @@
 /* Watchlist toggle: appears muted on row hover, accent check when watchlisted. */
 .ss-wl-toggle {
   position: relative;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1419,7 +1435,7 @@
 }
 
 .ss-wl-toggle .material-symbols-outlined {
-  font-size: 17px;
+  font-size: 16px;
 }
 
 /* Tooltip below the toggle, right-anchored so it can't clip off the modal's right edge. */

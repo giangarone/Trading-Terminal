@@ -135,13 +135,7 @@
   window.tradeHistory = tradeHistory; // read by the Trading Journal (workspace.js) to build real journal entries
 
   /* ---------- helpers ---------- */
-  function fmt(n, dec) {
-    dec = dec === undefined ? 2 : dec;
-    const neg = n < 0; n = Math.abs(n);
-    const parts = n.toFixed(dec).split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return (neg ? '-' : '') + parts.join('.');
-  }
+  // fmt, escapeHtml, setUpDown, flashEl, mulberry32 are shared globals from js/utils.js
   function fmtMoney(n) { return (n < 0 ? '-$' : '$') + fmt(Math.abs(n)); }
   function roundTick(p) { return Math.round(p / TICK) * TICK; }
   function rectH() { return chart.getBoundingClientRect().height; }
@@ -167,7 +161,6 @@
   function priceToY(price, h) { const ih = h - AXIS_BOTTOM_H; return ih / 2 - (price - BASE_PRICE - panY) * PX_PER_POINT; }
   function yToPrice(y, h) { const ih = h - AXIS_BOTTOM_H; return BASE_PRICE + panY - (y - ih / 2) / PX_PER_POINT; }
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
   /* Toast notifications. De-dups against the most recent toast (a rapid repeat just refreshes
      its timer instead of stacking a copy) and caps the stack at 3 so a burst of actions can't
      pile up off-screen. Dismiss timers are stored on the node and cleared if it's removed early. */
@@ -2632,14 +2625,7 @@
   }
 
   /* ---------- price chart (candlesticks) ---------- */
-  function mulberry32(seed) {
-    return function () {
-      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
-      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-      return ((t ^ t >>> 14) >>> 0) / 4294967296;
-    };
-  }
+  // mulberry32 is a shared global from js/utils.js
   const candleBars = (function () {
     const rand = mulberry32(42);
     const n = 300;
@@ -3774,8 +3760,7 @@
   (function () {
     const simRand = mulberry32(7777);
     function noise() { let s = 0; for (let i = 0; i < 3; i++) s += simRand(); return (s - 1.5); }
-    function setUpDown(el, isUp) { el.classList.remove('up', 'down'); el.classList.add(isUp ? 'up' : 'down'); }
-    function flashEl(el, isUp) { el.classList.remove('flash-up', 'flash-down'); void el.offsetWidth; el.classList.add(isUp ? 'flash-up' : 'flash-down'); }
+    // setUpDown, flashEl are shared globals from js/utils.js
     function fmtVol(v) { return v >= 1000 ? (v / 1000).toFixed(1) + 'K' : String(Math.round(v)); }
 
     const prevClose = BASE_PRICE - 18.25; // matches the +18.25 day change shown at load
@@ -3848,8 +3833,14 @@
       lastBar.low = Math.min(lastBar.low, last);
       scheduleDrawPriceChart();
       updateLegendValues();
-      checkTpFills(prevLast, last);
-      if (order && order.filled) checkSlHit(last);
+      // While the user is dragging a TP/SL/Entry line, its price is being updated live but
+      // is not yet committed — skip fill/trigger evaluation so dragging a line across the
+      // current market price can't fire an unintended fill mid-gesture. The tick right after
+      // release (isDraggingOrderLine is cleared before onDrop) evaluates the final price.
+      if (!isDraggingOrderLine) {
+        checkTpFills(prevLast, last);
+        if (order && order.filled) checkSlHit(last);
+      }
       if (order && !order.filled && order.pendingConfirm && order.orderType === 'Market') {
         setOrderEntryPrice(last);
         if (slTrailActive()) applyTrailingStopPreview();
@@ -3857,7 +3848,7 @@
         if (!isDraggingOrderLine) render();
         else { updateEntryLinePositionLive(); updateAllTpSlLinePositionsLive(); }
       }
-      if (order && !order.filled && !order.pendingConfirm && !order.filling) {
+      if (order && !order.filled && !order.pendingConfirm && !order.filling && !isDraggingOrderLine) {
         if (order.orderType === 'Stop Limit') {
           // Two-stage: cross the stop to arm a resting limit, then fill only at the limit or better.
           if (!order.stopTriggered) {
@@ -3877,7 +3868,10 @@
       simTickCounter++;
       applyTrailingStop(last);
       applyTrailingTp(last);
-      applyBreakeven(last);
+      // Skip breakeven arming mid-drag: dragging the BE trigger line updates its price live,
+      // so evaluating it here would fire breakeven the instant the line sweeps across market.
+      // The tick after release (isDraggingOrderLine cleared before onDrop) arms it normally.
+      if (!isDraggingOrderLine) applyBreakeven(last);
       if (order && order.filled && !isDraggingOrderLine) render();
 
       let alertsChanged = false;
@@ -4018,10 +4012,8 @@
           offsetLabelEl.innerHTML = '<span class="ol-offset-label-text">TRL OFFSET · ' + tpOffsetLabel(tp) + '</span>';
           offsetLabelEl.style.top = oy + 'px';
           layer.appendChild(offsetLabelEl);
-          offsetLabelEl.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openTpTrailMenu(tp.id, offsetLabelEl.getBoundingClientRect(), offsetLabelEl);
-          });
+          // Drag wiring is registered below (once onDragOffset/onDropOffset exist) so the
+          // label repositions the offset; it's drag-only (the trail menu lives on the TP chip).
         }
         function repositionOffsetLine(h) {
           if (!offsetLineEl) return;
@@ -4059,6 +4051,7 @@
             // Moving the activation trigger resets trailing state so it re-evaluates from scratch.
             if (tp.trailing) { tp.activated = false; tp.exitPrice = null; tp.autoTrailing = false; }
           }
+          if (order) showToast('Order modified', 'edit');
           render();
         }
         makeDraggable(tpChipEl, onDragTp, onDropTp, '.ol-badge');
@@ -4084,9 +4077,12 @@
           }
           function onDropOffset(cy, h) {
             onDragOffset(cy, h);
+            if (order) showToast('Order modified', 'edit');
             render();
           }
           makeDraggable(offsetLineEl, onDragOffset, onDropOffset, undefined, undefined, 'offset:' + tp.id);
+          // The label is a grab target too — drag-only; the trail menu stays on the TP chip's TRL badge.
+          makeDraggable(offsetLabelEl, onDragOffset, onDropOffset, undefined, undefined, 'offset:' + tp.id);
         }
 
         row.querySelector('[data-edit-tp]').addEventListener('click', (e) => {
@@ -4235,6 +4231,7 @@
           order.sl.price = roundTick(yToPrice(cy, h));
           syncSlOnDrag();
           syncQtyFromRisk();
+          if (order) showToast('Order modified', 'edit');
           render();
         }
         makeDraggable(slChipEl, onDragSl, onDropSl, '.ol-badge');
@@ -4313,7 +4310,7 @@
             refreshSlBadgeOnChart();
             drawPriceChart();
           }
-          function onDropBe(cy, h) { onDragBe(cy, h); render(); }
+          function onDropBe(cy, h) { onDragBe(cy, h); if (order) showToast('Order modified', 'edit'); render(); }
           // Both the thin line and the visible label pill are draggable; a click (no drag) on the
           // label opens the SL settings, so the pill is a proper grab target and adjusts the value live.
           const openBeMenu = () => openSlGearMenu(beLabel.getBoundingClientRect(), beLabel);
@@ -4357,6 +4354,7 @@
       function onDropEntry(cy, h) {
         setOrderEntryPrice(roundTick(yToPrice(cy, h)));
         syncQtyFromRisk();
+        if (order) showToast('Order modified', 'edit');
         render();
       }
 
@@ -4553,7 +4551,7 @@
         repositionLimit(h);
         drawPriceChart();
       }
-      function onDropLimit(cy, h) { onDragLimit(cy, h); render(); }
+      function onDropLimit(cy, h) { onDragLimit(cy, h); if (order) showToast('Order modified', 'edit'); render(); }
       makeDraggable(limitLine, onDragLimit, onDropLimit, undefined, undefined, 'limit');
       makeDraggable(limitLabel, onDragLimit, onDropLimit, undefined,
         () => openOlPriceEdit('limit', limitLabel.getBoundingClientRect(), limitLabel), 'limit');
@@ -6228,6 +6226,19 @@
     const found = SYMBOL_LIST.find(s => s.sym === sym);
     return found ? found.cat : 'crypto';
   }
+  /* Broker / exchange each symbol trades on — the five venues the terminal supports.
+     Most symbols fall back to their asset class's default venue; the override map
+     spreads a realistic mix across the crypto exchanges (and a few futures venues). */
+  const SYMBOL_BROKERS = {
+    ETHUSD: 'BloFin', SOLUSD: 'Bybit', XRPUSD: 'BloFin', BNBUSD: 'Bybit',
+    DOGEUSD: 'BloFin', AVAXUSD: 'Bybit', LINKUSD: 'BloFin', DOTUSD: 'Bybit',
+    NEARUSD: 'BloFin', APTUSD: 'Bybit', ARBUSD: 'BloFin', SUIUSD: 'Bybit',
+    ESU5: 'TradeStation', RTYU5: 'TradeStation', GCQ5: 'TradeStation',
+  };
+  const CAT_BROKER_DEFAULT = { crypto: 'Bitget', futures: 'Tradovate', stocks: 'TradeStation', forex: 'TradeStation' };
+  function brokerFor(sym, cat) {
+    return SYMBOL_BROKERS[sym] || CAT_BROKER_DEFAULT[cat] || 'TradeStation';
+  }
   const symSelectTrigger = document.getElementById('symSelectTrigger');
   const symSelectMenu = document.getElementById('symSelectMenu');
   const symSelectSearch = document.getElementById('symSelectSearch');
@@ -6277,6 +6288,7 @@
     return '<div class="ss-row" data-sym="' + s.sym + '" data-cat="' + s.cat + '" tabindex="0" role="button">' +
       '<div class="ss-sym"><span class="ss-sym-ticker">' + s.sym + '</span>' +
         '<span class="ss-sym-name">' + name + '</span></div>' +
+      '<span class="ss-broker">' + brokerFor(s.sym, s.cat) + '</span>' +
       '<span class="ss-last">' + (d ? d.lastText : '') + '</span>' +
       '<span class="ss-chg ' + chgDir + '">' + (d ? d.chgPctText : '') + '</span>' +
       '<span class="ss-vol">' + (d ? d.volText : '') + '</span>' +
@@ -6290,6 +6302,7 @@
      the ticker string for the symbol column) */
   function sortValue(s, key) {
     if (key === 'sym') return s.sym;
+    if (key === 'broker') return brokerFor(s.sym, s.cat);
     const d = window.getMarketData ? window.getMarketData(s.sym, s.cat) : null;
     if (!d) return 0;
     if (key === 'last') return d.last;
@@ -6394,7 +6407,8 @@
     });
   });
   /* click a column header to sort by it; click the active header again to flip the
-     direction. Symbol sorts A→Z first; the numeric columns sort high→low first. */
+     direction. The text columns (Symbol, Exchange) sort A→Z first; the numeric
+     columns sort high→low first. */
   symSelectMenu.querySelectorAll('.ss-cols .ss-col[data-sort]').forEach(col => {
     col.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -6403,7 +6417,7 @@
         symSelectSort.dir = -symSelectSort.dir;
       } else {
         symSelectSort.key = key;
-        symSelectSort.dir = key === 'sym' ? 1 : -1;
+        symSelectSort.dir = (key === 'sym' || key === 'broker') ? 1 : -1;
       }
       renderSymSelectList(symSelectSearch.value);
     });
@@ -7164,20 +7178,16 @@
     indDocFavLabel.textContent = label;
   }
 
-  function escHtml(s) {
-    return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  }
-
   /* Builds the doc body from an IND_DOCS entry, emitting only the sections that exist so the
      content adapts per indicator. Falls back to the row's short description when no doc exists. */
   function renderIndDoc(d) {
     const doc = IND_DOCS[d.name];
-    if (!doc) return `<p class="ind-doc-p">${escHtml(d.desc)}</p>`;
+    if (!doc) return `<p class="ind-doc-p">${escapeHtml(d.desc)}</p>`;
     let html = '';
     const section = (title, inner) => `<div class="ind-doc-section"><h4 class="ind-doc-h">${title}</h4>${inner}</div>`;
-    const para = (title, text) => text ? section(title, `<p class="ind-doc-p">${escHtml(text)}</p>`) : '';
+    const para = (title, text) => text ? section(title, `<p class="ind-doc-p">${escapeHtml(text)}</p>`) : '';
     const list = (title, items) => (items && items.length)
-      ? section(title, `<ul class="ind-doc-list">${items.map(i => `<li>${escHtml(i)}</li>`).join('')}</ul>`) : '';
+      ? section(title, `<ul class="ind-doc-list">${items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`) : '';
     html += para('Overview', doc.overview);
     html += para('How it works', doc.howItWorks);
     html += list('Key features', doc.features);

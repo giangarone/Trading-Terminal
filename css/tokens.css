@@ -303,12 +303,6 @@ input {
   border-color: var(--short-border);
 }
 
-.badge--info {
-  color: var(--info);
-  background: var(--info-dim);
-  border-color: var(--info-border);
-}
-
 .badge--purple {
   color: var(--purple);
   background: var(--purple-dim);
