@@ -45,7 +45,7 @@
 .ol-line.sl,
 .ol-line.offset,
 .ol-line.be-trigger,
-.ol-line.stop-limit-limit,
+.ol-line.stop-limit-trigger,
 .ol-line.entry.draggable {
   pointer-events: auto;
   cursor: ns-resize;
@@ -55,7 +55,7 @@
 .ol-line.sl::before,
 .ol-line.offset::before,
 .ol-line.be-trigger::before,
-.ol-line.stop-limit-limit::before,
+.ol-line.stop-limit-trigger::before,
 .ol-line.entry.draggable::before {
   content: '';
   position: absolute;
@@ -118,20 +118,20 @@
   pointer-events: none;
 }
 
-/* Stop Limit — the subordinate LIMIT line, dashed in the side color (mirrors the be-trigger style) */
-.ol-line.stop-limit-limit {
+/* Stop Limit — the subordinate TRIGGER line, dashed in the side color (mirrors the be-trigger style) */
+.ol-line.stop-limit-trigger {
   opacity: .55;
 }
 
-.ol-line.stop-limit-limit.buy {
+.ol-line.stop-limit-trigger.buy {
   border-color: var(--long-border);
 }
 
-.ol-line.stop-limit-limit.sell {
+.ol-line.stop-limit-trigger.sell {
   border-color: var(--short-border);
 }
 
-/* STOP + LIMIT value tags — side-colored, draggable, styled like the reference offset labels */
+/* TRIGGER value tag — side-colored, draggable, styled like the reference offset labels */
 .ol-offset-label.stop-limit {
   cursor: pointer;
 }
@@ -146,6 +146,15 @@
 
 .ol-offset-label.stop-limit.sell {
   color: var(--short);
+}
+
+/* Warning glyph inside the STOP label — shown when the stop sits on the already-crossed side of
+   the market (a buy stop below price / sell stop above it). Accent-colored to stand out from the
+   side-colored label text. */
+.ol-offset-label-warn {
+  font-size: 12px;
+  color: var(--accent);
+  cursor: help;
 }
 
 /* Tag on the left edge of the trailing TP's offset line. Only one TP can ever trail at a

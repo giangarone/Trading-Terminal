@@ -1052,12 +1052,13 @@
         const slipEl = document.getElementById(slipId);
         order.slippageTol = slipEl ? (parseFloat((slipEl.value || '').replace(/,/g, '')) || 0) : 0; // percent, e.g. 0.10
       }
-      // Stop Limit carries a second price (the limit): capture it so the order can rest at the
-      // limit once the stop is crossed, and reset the two-stage trigger flag.
+      // Stop Limit: the entry is the limit/fill price (the Price field, already used as the entry
+      // via qtActivePrice); capture the Stop field as the trigger and arm it from the current side.
       if (qtAdvancedType === 'stopLimit') {
-        const limEl = document.getElementById('qtStopLimitPrice');
-        const lim = limEl ? parseFloat((limEl.value || '').replace(/,/g, '')) : NaN;
-        order.limitPrice = roundTick(isNaN(lim) ? order.entry : lim);
+        const trigEl = document.getElementById('qtStopLimitTrigger');
+        const trig = trigEl ? parseFloat((trigEl.value || '').replace(/,/g, '')) : NaN;
+        order.triggerPrice = roundTick(isNaN(trig) ? order.entry : trig);
+        order.fillAbove = order.triggerPrice > qtCurrentPrice();
         order.stopTriggered = false;
       }
     }
@@ -1071,12 +1072,14 @@
     const active = qtOrderTabs.querySelector('.qt-tab.active');
     return active ? active.dataset.tab : 'market';
   }
-  const QT_ADVANCED_TRIGGER_IDS = { stopLimit: 'qtStopLimitTrigger', mit: 'qtMitTrigger' };
+  // The price createOrder uses as the entry line: for Stop Limit that's the limit/fill (Price field);
+  // for Trigger Market it's the trigger; for a plain Limit it's the limit price.
+  const QT_ADVANCED_ENTRY_IDS = { stopLimit: 'qtStopLimitPrice', mit: 'qtMitTrigger' };
   function qtActivePrice() {
     const tab = qtActiveTab();
     if (tab === 'limit') return parseFloat(document.getElementById('qtLimitPrice').value.replace(/,/g, ''));
     if (tab === 'advanced') {
-      const inputId = QT_ADVANCED_TRIGGER_IDS[qtAdvancedType];
+      const inputId = QT_ADVANCED_ENTRY_IDS[qtAdvancedType];
       const input = document.getElementById(inputId);
       const val = input && !input.disabled ? parseFloat((input.value || '').replace(/,/g, '')) : NaN;
       return isNaN(val) ? qtCurrentPrice() : val;
@@ -1346,22 +1349,14 @@
   function confirmOrderFill() {
     if (!order || order.filled) return;
     order.filled = true;
-    // Limit fills at the current market price (or the limit — whichever is better), so the entry
-    // snaps onto the market level: a marketable buy at 4600 with market 4500 fills at 4500.
-    if (order.orderType === 'Limit') {
+    // Limit and Stop Limit both fill at the entry (limit) line or better: the entry snaps onto the
+    // market when the market offers a better price. A marketable buy at 4600 with market 4500 fills
+    // at 4500; a Stop Limit, once its trigger is touched, fills at its entry/limit line the same way.
+    if (order.orderType === 'Limit' || order.orderType === 'Stop Limit') {
       const mkt = qtCurrentPrice();
       order.entry = order.side === 'buy'
         ? roundTick(Math.min(order.entry, mkt))
         : roundTick(Math.max(order.entry, mkt));
-      if (order.sl) order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
-    }
-    // Stop Limit fills at its limit price or better (protected, no slippage): a buy never pays above
-    // the limit, a sell never sells below it, but both take any price improvement the market offers.
-    if (order.orderType === 'Stop Limit' && order.limitPrice != null) {
-      const mkt = qtCurrentPrice();
-      order.entry = order.side === 'buy'
-        ? roundTick(Math.min(order.limitPrice, mkt))
-        : roundTick(Math.max(order.limitPrice, mkt));
       if (order.sl) order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
     }
     // Trigger Market fills as market once the trigger is touched, slipping past it up to the
@@ -1393,7 +1388,10 @@
     const e = order.entry;
     order.side = order.side === 'buy' ? 'sell' : 'buy';
     order.tps.forEach(tp => { tp.price = roundTick(2 * e - tp.price); });
-    if (order.limitPrice != null) order.limitPrice = roundTick(2 * e - order.limitPrice); // keep the limit mirrored across the stop
+    if (order.triggerPrice != null) {
+      order.triggerPrice = roundTick(2 * e - order.triggerPrice); // mirror the trigger across the entry (limit)
+      order.fillAbove = order.triggerPrice > qtCurrentPrice();    // re-arm from the flipped trigger's side
+    }
     if (order.sl) {
       order.sl.price = roundTick(2 * e - order.sl.price);
       order.initialRisk = Math.abs(e - order.sl.price) * POINT_VALUE;
@@ -2310,6 +2308,22 @@
     return kind === 'tp'
       ? 'Take profit is on the wrong side of price. Move it ' + (isLong ? 'above' : 'below') + ' price to lock in a profit.'
       : 'Stop loss is on the wrong side of price. Move it ' + (isLong ? 'below' : 'above') + ' price — otherwise it would trigger immediately.';
+  }
+
+  /* A Stop Limit's STOP is flagged when it sits on the side of the market it has already crossed:
+     a buy stop must be ABOVE the market (to wait for a breakout up), a sell stop BELOW it. On the
+     wrong side it can't wait for anything and just behaves like a plain limit. Suppressed once the
+     stop has armed (stopTriggered), since a crossed stop below the market is then the valid state. */
+  function stopLimitStopWrongSide() {
+    if (!order || order.filled || order.stopTriggered || order.orderType !== 'Stop Limit') return false;
+    if (order.triggerPrice == null) return false;
+    const mkt = qtCurrentPrice();
+    return order.side === 'buy' ? order.triggerPrice <= mkt : order.triggerPrice >= mkt;
+  }
+  function stopWrongSideTip() {
+    return order.side === 'buy'
+      ? 'Stop is at or below the market, so it will not wait for a breakout. Use a Buy Limit for a lower entry.'
+      : 'Stop is at or above the market, so it will not wait for a breakdown. Use a Sell Limit for a higher entry.';
   }
 
   /* Builds the attribute string that turns a chip's warning icon into a wrapped hover tooltip.
@@ -3871,15 +3885,15 @@
           const triggerHit = order.fillAbove ? last >= order.entry : last <= order.entry;
           if (triggerHit) startFillSweep();
         } else if (order.orderType === 'Stop Limit') {
-          // Two-stage: price must touch the stop (same touch rule as Trigger Market) to arm the
-          // resting limit, then fill only at the limit or better.
+          // Two-stage: price must touch the TRIGGER line (same touch rule as Trigger Market) to arm
+          // the order, then it fills at the entry (limit) line or better — just like a Limit order.
           if (!order.stopTriggered) {
-            const stopHit = order.fillAbove ? last >= order.entry : last <= order.entry;
-            if (stopHit) order.stopTriggered = true;
+            const trigger = order.triggerPrice != null ? order.triggerPrice : order.entry;
+            const triggerHit = order.fillAbove ? last >= trigger : last <= trigger;
+            if (triggerHit) order.stopTriggered = true;
           }
           if (order.stopTriggered) {
-            const limit = order.limitPrice != null ? order.limitPrice : order.entry;
-            const limitHit = order.side === 'buy' ? last <= limit : last >= limit;
+            const limitHit = order.side === 'buy' ? last <= order.entry : last >= order.entry;
             if (limitHit) startFillSweep();
           }
         } else {
@@ -4376,12 +4390,13 @@
 
       function onDropEntry(cy, h) {
         setOrderEntryPrice(roundTick(yToPrice(cy, h)));
-        // Re-arm a pending trigger/stop around its new position: recompute which side of the market
-        // its level now sits on so it waits for a fresh touch of the new price, instead of firing
-        // just because the drag carried it across the current price. (Limit ignores this flag.)
-        if (order && !order.filled) {
+        // Re-arm a pending Trigger Market around its new position: recompute which side of the market
+        // the trigger (its entry line) now sits on so it waits for a fresh touch of the new price,
+        // instead of firing just because the drag carried it across the current price. Stop Limit's
+        // trigger is a separate line (re-armed in its own drop handler); its entry line is the fill,
+        // so moving it must not re-arm. (Limit ignores this flag.)
+        if (order && !order.filled && order.orderType !== 'Stop Limit') {
           order.fillAbove = order.entry > qtCurrentPrice();
-          if (order.orderType === 'Stop Limit') order.stopTriggered = false;
         }
         syncQtyFromRisk();
         if (order) showToast('Order modified', 'edit');
@@ -4548,43 +4563,62 @@
       });
     }
 
-    // ---- Stop Limit: subordinate LIMIT line (styled like BE TRIGGER / TRL OFFSET) ----
-    // The entry line above already represents the STOP (order.entry), so we only add the second
-    // LIMIT line here at order.limitPrice. Drag the line or its label to adjust; clicking the
-    // label opens a small price popup for exact entry.
+    // ---- Stop Limit: subordinate TRIGGER line (styled like BE TRIGGER / TRL OFFSET) ----
+    // The entry line above is the limit/fill (order.entry); this second line is the TRIGGER
+    // (order.triggerPrice) that arms the order when price touches it. Drag the line or its label
+    // to adjust; clicking the label opens a small price popup for exact entry.
     if (!order.filled && order.orderType === 'Stop Limit') {
-      if (order.limitPrice == null) order.limitPrice = order.entry;
+      if (order.triggerPrice == null) order.triggerPrice = order.entry;
 
-      // LIMIT line + value tag at the limit price
-      const limitY = clamp(priceToY(order.limitPrice, H), 10, H - 10);
-      const limitLine = document.createElement('div');
-      limitLine.className = 'ol-line stop-limit-limit ' + order.side;
-      limitLine.style.top = limitY + 'px';
-      layer.appendChild(limitLine);
+      // TRIGGER line + value tag at the trigger price
+      const triggerY = clamp(priceToY(order.triggerPrice, H), 10, H - 10);
+      const triggerLine = document.createElement('div');
+      triggerLine.className = 'ol-line stop-limit-trigger ' + order.side;
+      triggerLine.style.top = triggerY + 'px';
+      layer.appendChild(triggerLine);
+
+      // Builds the label content: a warning glyph (only when the stop is on the already-crossed side
+      // of the market) followed by the STOP price. Rebuilt on drag so the warning toggles live.
+      function stopLabelInner() {
+        const warn = stopLimitStopWrongSide()
+          ? '<span class="material-symbols-outlined ol-offset-label-warn"' + warnTipAttr(stopWrongSideTip()) + '>error</span>'
+          : '';
+        return warn + '<span class="ol-offset-label-text">STOP · ' + fmt(order.triggerPrice) + '</span>';
+      }
 
       // pop-trigger keeps the global outside-click handler from closing the popup this label opens
-      const limitLabel = document.createElement('span');
-      limitLabel.className = 'ol-offset-label stop-limit pop-trigger ' + order.side;
-      limitLabel.innerHTML = '<span class="ol-offset-label-text">LIMIT · ' + fmt(order.limitPrice) + '</span>';
-      limitLabel.style.top = limitY + 'px';
-      layer.appendChild(limitLabel);
+      const triggerLabel = document.createElement('span');
+      triggerLabel.className = 'ol-offset-label stop-limit pop-trigger ' + order.side;
+      triggerLabel.innerHTML = stopLabelInner();
+      triggerLabel.style.top = triggerY + 'px';
+      layer.appendChild(triggerLabel);
 
-      function repositionLimit(h) {
-        const yy = clamp(priceToY(order.limitPrice, h), 10, h - 10) + 'px';
-        limitLine.style.top = yy;
-        limitLabel.style.top = yy;
-        const txt = limitLabel.querySelector('.ol-offset-label-text');
-        if (txt) txt.textContent = 'LIMIT · ' + fmt(order.limitPrice);
+      function repositionTrigger(h) {
+        const yy = clamp(priceToY(order.triggerPrice, h), 10, h - 10) + 'px';
+        triggerLine.style.top = yy;
+        triggerLabel.style.top = yy;
+        triggerLabel.innerHTML = stopLabelInner();
       }
-      function onDragLimit(cy, h) {
-        order.limitPrice = roundTick(yToPrice(cy, h));
-        repositionLimit(h);
+      function onDragTrigger(cy, h) {
+        order.triggerPrice = roundTick(yToPrice(cy, h));
+        repositionTrigger(h);
         drawPriceChart();
       }
-      function onDropLimit(cy, h) { onDragLimit(cy, h); if (order) showToast('Order modified', 'edit'); render(); }
-      makeDraggable(limitLine, onDragLimit, onDropLimit, undefined, undefined, 'limit');
-      makeDraggable(limitLabel, onDragLimit, onDropLimit, undefined,
-        () => openOlPriceEdit('limit', limitLabel.getBoundingClientRect(), limitLabel), 'limit');
+      // On release, re-arm the trigger around its new spot: recompute which side of the market it
+      // sits on and clear the arm flag, so dragging it across the price waits for a fresh touch
+      // instead of firing from the drag.
+      function onDropTrigger(cy, h) {
+        onDragTrigger(cy, h);
+        if (order && !order.filled) {
+          order.fillAbove = order.triggerPrice > qtCurrentPrice();
+          order.stopTriggered = false;
+        }
+        if (order) showToast('Order modified', 'edit');
+        render();
+      }
+      makeDraggable(triggerLine, onDragTrigger, onDropTrigger, undefined, undefined, 'trigger');
+      makeDraggable(triggerLabel, onDragTrigger, onDropTrigger, undefined,
+        () => openOlPriceEdit('trigger', triggerLabel.getBoundingClientRect(), triggerLabel), 'trigger');
     }
 
     // ---- Breakeven Price line (Chart settings overlay, styled like TRL OFFSET / BE TRIGGER) ----
@@ -7293,12 +7327,20 @@
   orderTypeMenu.querySelectorAll('.pop-item').forEach(it => {
     it.addEventListener('click', () => {
       order.orderType = it.dataset.type;
-      // Switching to Stop Limit from the chart (no panel) needs a limit price: seed it a couple points
-      // past the stop in the trade direction so the two lines are visibly separated and the user can drag.
+      // Switching to Stop Limit seeds a valid breakout/breakdown off the market so the order is never
+      // born in the degenerate "stop already crossed" state: the STOP goes just past the current
+      // price and the LIMIT (entry line) just past the STOP. Buy → market < stop < limit; sell →
+      // limit < stop < market. This repositions the entry line (the cost of guaranteeing validity);
+      // the user drags both to real levels from there.
       if (order.orderType === 'Stop Limit' && !order.filled) {
         const dir = order.side === 'buy' ? 1 : -1;
-        if (order.limitPrice == null) order.limitPrice = roundTick(order.entry + dir * 2);
+        const mkt = qtCurrentPrice();
+        order.triggerPrice = roundTick(mkt + dir * 2);
+        setOrderEntryPrice(roundTick(mkt + dir * 4));
+        order.fillAbove = order.triggerPrice > mkt;
         order.stopTriggered = false;
+        if (slTrailActive()) applyTrailingStopPreview();
+        else if (slAtrActive()) placeAtrStop();
       }
       // Switching to Market snaps the entry to the live price at once (rather than waiting for the
       // next chart tick to move it), mirroring the per-tick market-entry sync in the price loop.
@@ -7316,22 +7358,26 @@
   const olPriceEditMenu = document.getElementById('olPriceEditMenu');
   const olPriceEditInput = document.getElementById('olPriceEditInput');
   const olPriceEditLabel = document.getElementById('olPriceEditLabel');
-  let olPriceEditTarget = null; // 'stop' | 'limit'
+  let olPriceEditTarget = null; // 'entry' (limit/fill) | 'trigger'
   function olPriceEditCurrent() {
-    return olPriceEditTarget === 'limit' ? order.limitPrice : order.entry;
+    return olPriceEditTarget === 'trigger' ? order.triggerPrice : order.entry;
   }
   function applyOlPriceEdit(price) {
     const p = roundTick(price);
     if (!order || isNaN(p)) return;
-    if (olPriceEditTarget === 'limit') order.limitPrice = p;
-    else setOrderEntryPrice(p);
+    if (olPriceEditTarget === 'trigger') {
+      order.triggerPrice = p;
+      if (!order.filled) order.fillAbove = order.triggerPrice > qtCurrentPrice(); // re-arm from the new side
+    } else {
+      setOrderEntryPrice(p);
+    }
     render();
     olPriceEditInput.value = fmt(olPriceEditCurrent());
   }
   function openOlPriceEdit(target, anchorRect, trigger) {
     if (!order) return;
     olPriceEditTarget = target;
-    olPriceEditLabel.textContent = target === 'limit' ? 'Limit Price' : 'Stop Price';
+    olPriceEditLabel.textContent = target === 'trigger' ? 'Stop Price' : 'Limit Price';
     olPriceEditInput.value = fmt(olPriceEditCurrent());
     openNear(olPriceEditMenu, anchorRect, 'left', trigger);
     olPriceEditInput.focus();
