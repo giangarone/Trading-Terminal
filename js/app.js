@@ -33,7 +33,9 @@
   const toastStack = document.getElementById('toastStack');
   const priceCanvas = document.getElementById('priceChartCanvas');
 
-  let order = null;
+  let orders = [];          // every chart order, pending + filled (the chart trades ETHUSD only)
+  let orderCounter = 0;     // id source for orders: 'ord' + orderCounter++
+  let order = null;         // focus pointer: the one order the current interaction/render concerns
   let tpCounter = 1;
   // Static mockup: a partially-filled AAPL limit order that demonstrates the fill pill
   // in the Open Orders tab. Dismissable via its cancel (✕); does not affect real trading.
@@ -323,6 +325,8 @@
     if (oc && oc.classList.contains('show')) { closeOrderConfirm(); return; }
     const rc = document.getElementById('rcBackdrop');
     if (rc && rc.classList.contains('show')) { closeReverseConfirm(); return; }
+    const hb = document.getElementById('hedgeBlockBackdrop');
+    if (hb && hb.classList.contains('show')) { closeHedgeBlock(); return; }
     const bc = document.getElementById('bcConnectBackdrop');
     if (bc && bc.classList.contains('show')) { closeBcConnectModal(); return; }
     closeAllPopovers();
@@ -411,32 +415,24 @@
     e.preventDefault();
     const rect = chart.getBoundingClientRect();
     pendingClickPrice = roundTick(yToPrice(e.clientY - rect.top, rect.height));
-    const qty = resolveChartTradeQty();
-    const lastEl = document.getElementById('hdrLast');
-    const currentPrice = lastEl ? parseFloat(lastEl.textContent.replace(/,/g, '')) : BASE_PRICE;
-    const below = pendingClickPrice < currentPrice;
     const priceStr = fmt(pendingClickPrice);
     const quickMarketQtyStr = quickMarketSize().toFixed(2);
-    // Risk-based sizing (Risk $ / Risk %) can't know the quantity until a stop-loss distance is set,
-    // so the label omits it — showing a placeholder qty here would be misleading. Fixed-size methods
-    // (Quantity / Dollar / % Account) resolve to a real number, so those keep the quantity.
-    const PD_RISK_SIZING_METHODS = ['risk_pct', 'risk_dollar'];
-    const isRiskSizing = PD_RISK_SIZING_METHODS.includes(chartSettings.positionDefaults.sizingMethod);
-    const qtyStr = qty.toFixed(2);
-    ctxLongLbl.textContent = isRiskSizing ? 'Buy ETHUSD @ ' + priceStr : 'Buy ' + qtyStr + ' ETHUSD @ ' + priceStr;
-    ctxShortLbl.textContent = isRiskSizing ? 'Sell ETHUSD @ ' + priceStr : 'Sell ' + qtyStr + ' ETHUSD @ ' + priceStr;
-    ctxQuickMarketLongLbl.textContent = 'Buy Market ' + quickMarketQtyStr + ' ETHUSD';
-    ctxQuickMarketShortLbl.textContent = 'Sell Market ' + quickMarketQtyStr + ' ETHUSD';
+    ctxLongLbl.textContent = 'Plan Buy ETHUSD @ ' + priceStr;
+    ctxShortLbl.textContent = 'Plan Sell ETHUSD @ ' + priceStr;
+    ctxQuickMarketLongLbl.textContent = 'Market Buy ' + quickMarketQtyStr + ' ETHUSD';
+    ctxQuickMarketShortLbl.textContent = 'Market Sell ' + quickMarketQtyStr + ' ETHUSD';
     openAt(ctxMenu, e.clientX, e.clientY);
   });
   // Chart right-click "Buy/Sell @ price" trades size themselves from the Position Sizing default (Default
   // Size card in Trade Defaults). createOrder reads the shared qtyInput, so bridge the resolved quantity
   // through it and restore the panel value afterward (same pattern as the quick-market fills).
   function placeChartLimitTrade(side) {
-    const prevVal = qtyInput.value;
-    qtyInput.value = resolveChartTradeQty();
-    createOrder(side, pendingClickPrice);
-    qtyInput.value = prevVal;
+    guardedPlace(side, () => {
+      const prevVal = qtyInput.value;
+      qtyInput.value = resolveChartTradeQty();
+      createOrder(side, pendingClickPrice);
+      qtyInput.value = prevVal;
+    });
   }
   document.getElementById('ctxLong').addEventListener('click', () => { placeChartLimitTrade('buy'); closeAllPopovers(); });
   document.getElementById('ctxShort').addEventListener('click', () => { placeChartLimitTrade('sell'); closeAllPopovers(); });
@@ -507,12 +503,13 @@
     const closeBtn = e.target.closest('[data-pos-close-pct]');
     if (closeBtn) {
       const row = closeBtn.closest('.pos-row');
-      const sym = row.dataset.posId;
+      const sym = row.dataset.posSym || row.dataset.posId;
+      const side = row.dataset.posSide;
       const pct = parseInt(closeBtn.dataset.posClosePct, 10);
-      // Fully closing the chart's own (ETHUSD) position must also remove its entry/TP/SL lines
-      // from the chart — route through cancelOrder(), which closes it, logs it and re-renders.
-      if (pct >= 100 && sym === 'ETHUSD' && order && order.filled) { cancelOrder(); return; }
-      if (!window.closePositionPct(sym, pct)) return;
+      // Fully closing the chart's own (ETHUSD) position must also remove that side's entry/TP/SL lines
+      // from the chart — close every matching chart order (which also clears the row).
+      if (pct >= 100 && sym === 'ETHUSD' && closeFilledChartOrdersBySide(side)) return;
+      if (!window.closePositionPct(sym, pct, side)) return;
       showToast(sym + ' position ' + (pct >= 100 ? 'closed' : 'reduced by ' + pct + '%'), 'check_circle');
       return;
     }
@@ -520,21 +517,25 @@
     const marketBtn = e.target.closest('[data-pos-close-market]');
     if (marketBtn) {
       const row = marketBtn.closest('.pos-row');
-      const sym = row.dataset.posId;
-      const slider = document.getElementById('posCloseSlider-' + sym);
+      const posId = row.dataset.posId;
+      const sym = row.dataset.posSym || posId;
+      const side = row.dataset.posSide;
+      const slider = document.getElementById('posCloseSlider-' + posId);
       const pct = slider ? parseInt(slider.value, 10) : 0;
       if (pct <= 0) { showToast('Select an amount to close', 'error'); return; }
-      // A full close of the chart's own (ETHUSD) position also clears its lines from the chart.
-      if (pct >= 100 && sym === 'ETHUSD' && order && order.filled) { cancelOrder(); return; }
-      if (!window.closePositionPct(sym, pct)) return;
+      // A full close of the chart's own (ETHUSD) position also clears that side's lines from the chart.
+      if (pct >= 100 && sym === 'ETHUSD' && closeFilledChartOrdersBySide(side)) return;
+      if (!window.closePositionPct(sym, pct, side)) return;
       showToast(sym + ' position ' + (pct >= 100 ? 'closed' : 'reduced by ' + pct + '%'), 'check_circle');
       return;
     }
     /* Limit tab — place a pending close order (position stays open) */
     const limitBtn = e.target.closest('[data-pos-close-limit]');
     if (limitBtn) {
-      const sym = limitBtn.closest('.pos-row').dataset.posId;
-      const limitSlider = document.getElementById('posCloseSliderLimit-' + sym);
+      const row = limitBtn.closest('.pos-row');
+      const posId = row.dataset.posId;
+      const sym = row.dataset.posSym || posId;
+      const limitSlider = document.getElementById('posCloseSliderLimit-' + posId);
       const pct = limitSlider ? parseInt(limitSlider.value, 10) : 100;
       const pctStr = pct < 100 ? ' (' + pct + '%)' : '';
       showToast(sym + ' limit close order placed' + pctStr, 'pending_actions');
@@ -542,13 +543,15 @@
     }
     const reverseBtn = e.target.closest('[data-pos-reverse]');
     if (reverseBtn) {
-      const sym = reverseBtn.closest('.pos-row').dataset.posId;
+      const revRow = reverseBtn.closest('.pos-row');
+      const sym = revRow.dataset.posSym || revRow.dataset.posId;
+      const side = revRow.dataset.posSide;
       /* Gate the reverse behind the same confirmation popup as the entry bar's Reverse control,
          so both entry points behave consistently. Panel rows are always live positions. */
       requestReverseConfirmation(true, () => {
-        /* ETHUSD's row is driven by the chart's order object — route through the same
-           market-close-then-reopen logic as the entry bar's Reverse control so both stay in sync. */
-        if (sym === 'ETHUSD' && order && order.filled) {
+        /* ETHUSD's row is driven by the chart's order object — focus that side's order and route through
+           the same market-close-then-reopen logic as the entry bar's Reverse control so both stay in sync. */
+        if (sym === 'ETHUSD' && focusFilledChartOrderBySide(side)) {
           reverseFilledPosition();
           return;
         }
@@ -671,6 +674,7 @@
     const useRiskSizing = isRiskMode(sizeMode);
     const pdVal = parseFloat(String(pd.defaultSize).replace(/[$,%\s]/g, '')) || 0;
     order = {
+      id: 'ord' + (orderCounter++),
       side, entry, qty: parseFloat(qtyInput.value) || 1, orderType, fillAbove,
       sizeMode, filled: false, filledQty: 0,
       pendingConfirm: isChartTrade,
@@ -683,6 +687,10 @@
       tps, sl, tpsHitCount: 0,
       initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null
     };
+    // Add to the chart's order list instead of replacing — multiple orders coexist. The opposite-side
+    // guard (hedge mode) runs before this in the placement paths, so conflicting orders never get here
+    // in one-way mode.
+    orders.push(order);
     if (useRiskSizing) syncQtyFromRisk(); // compute qty now if Expanded auto-attached an SL; no-op without one
     render();
   }
@@ -695,28 +703,25 @@
     return (v && v > 0) ? v : 1;
   }
   function fillQuickMarketOrder(side) {
-    const currentPrice = (() => {
-      const el = document.getElementById('hdrLast');
-      return el ? parseFloat(el.textContent.replace(/,/g, '')) : BASE_PRICE;
-    })();
-    const details = {
-      side,
-      orderType: 'Market',
-      amount: quickMarketSize() + ' ' + qtInstrumentUnit,
-      leverage: qtLeverageForOrder(),
-      price: '$' + fmt(currentPrice)
-    };
-    requestOrderConfirmation(details, () => fillQuickMarketOrderExecute(side, currentPrice));
+    guardedPlace(side, () => {
+      const currentPrice = (() => {
+        const el = document.getElementById('hdrLast');
+        return el ? parseFloat(el.textContent.replace(/,/g, '')) : BASE_PRICE;
+      })();
+      const details = {
+        side,
+        orderType: 'Market',
+        amount: quickMarketSize() + ' ' + qtInstrumentUnit,
+        leverage: qtLeverageForOrder(),
+        price: '$' + fmt(currentPrice)
+      };
+      requestOrderConfirmation(details, () => fillQuickMarketOrderExecute(side, currentPrice));
+    });
   }
   // createOrder reads the shared qtyInput, so apply the quick-market default for the fill and
   // restore the panel's amount afterward (same bridge pattern as placeQuickMarketOrder below).
   function fillQuickMarketOrderExecute(side, currentPrice) {
-    const prevVal = qtyInput.value;
-    qtyInput.value = quickMarketSize();
-    createOrder(side, currentPrice, 'quick');
-    order.orderType = 'Market';
-    confirmOrderFill();
-    qtyInput.value = prevVal;
+    addOrCreateMarketFill(side, currentPrice, quickMarketSize());
   }
 
   // Bridge for the floating Quick Market Order bar (wired in js/overlays.js). Places a market
@@ -724,22 +729,17 @@
   // fill path as the Quick Trade panel. createOrder reads the shared qtyInput, so set it inside
   // the confirm callback (the fill runs after the user confirms) and restore it afterward.
   window.placeQuickMarketOrder = function (side, amount) {
-    const currentPrice = qtCurrentPrice();
-    const amt = (amount != null && String(amount).trim() !== '') ? String(amount).trim() : '1';
-    const details = {
-      side,
-      orderType: 'Market',
-      amount: amt + ' ' + qtInstrumentUnit,
-      leverage: qtLeverageForOrder(),
-      price: '$' + fmt(currentPrice)
-    };
-    requestOrderConfirmation(details, () => {
-      const prevVal = qtyInput.value;
-      qtyInput.value = amt;
-      createOrder(side, currentPrice, 'quick');
-      order.orderType = 'Market';
-      confirmOrderFill();
-      qtyInput.value = prevVal;
+    guardedPlace(side, () => {
+      const currentPrice = qtCurrentPrice();
+      const amt = (amount != null && String(amount).trim() !== '') ? String(amount).trim() : '1';
+      const details = {
+        side,
+        orderType: 'Market',
+        amount: amt + ' ' + qtInstrumentUnit,
+        leverage: qtLeverageForOrder(),
+        price: '$' + fmt(currentPrice)
+      };
+      requestOrderConfirmation(details, () => addOrCreateMarketFill(side, currentPrice, amt));
     });
   };
 
@@ -983,6 +983,15 @@
     });
   });
 
+  /* One-way / Hedge toggle (Quick Trade) — mirrors the settings Hedge Mode row via the shared setter */
+  const qtHedgeToggle = document.getElementById('qtHedgeToggle');
+  if (qtHedgeToggle) {
+    qtHedgeToggle.querySelectorAll('.qt-mode-btn').forEach(b => {
+      b.addEventListener('click', () => setHedgeModeEnabled(b.dataset.hedge === 'on'));
+    });
+    syncQtHedgeToggle(hedgeModeEnabled()); // reflect the persisted value on load
+  }
+
   /* Leverage opens the popup */
   qtLeverageBtn.addEventListener('click', () => {
     openNear(qtMarginMenu, qtLeverageBtn.getBoundingClientRect(), 'right', qtLeverageBtn);
@@ -1025,24 +1034,27 @@
   qtSyncLeverageUI();
 
   function qtPlaceOrder(side, price) {
-    const { qty } = qtComputeAmount();
-    const amount = Math.max(1, Math.round(qty));
-    const tab = qtActiveTab();
-    const details = {
-      side,
-      orderType: QT_TAB_LABELS[tab] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market',
-      amount: amount + ' ' + qtInstrumentUnit,
-      leverage: qtLeverageForOrder(),
-      price: '$' + fmt(price)
-    };
-    requestOrderConfirmation(details, () => qtPlaceOrderExecute(side, price, amount, tab));
+    guardedPlace(side, () => {
+      const { qty } = qtComputeAmount();
+      const amount = Math.max(1, Math.round(qty));
+      const tab = qtActiveTab();
+      const details = {
+        side,
+        orderType: QT_TAB_LABELS[tab] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market',
+        amount: amount + ' ' + qtInstrumentUnit,
+        leverage: qtLeverageForOrder(),
+        price: '$' + fmt(price)
+      };
+      requestOrderConfirmation(details, () => qtPlaceOrderExecute(side, price, amount, tab));
+    });
   }
   function qtPlaceOrderExecute(side, price, amount, tab) {
+    // Market tab: add to an existing same-side position (or open a fresh one) — never a duplicate.
+    if (tab === 'market') { addOrCreateMarketFill(side, price, amount); return; }
     const prevVal = qtyInput.value;
     qtyInput.value = amount;
     createOrder(side, price, 'quick');
     if (order && tab === 'limit') order.orderType = 'Limit';
-    if (order && tab === 'market') order.orderType = 'Market';
     if (order && tab === 'advanced') {
       // Honor the explicit advanced selection instead of the direction-inferred type from createOrder
       order.orderType = QT_ADVANCED_LABELS[qtAdvancedType]; // 'Stop Limit' | 'Trigger Market'
@@ -1063,9 +1075,8 @@
       }
     }
     // createOrder already rendered with its direction-inferred type; re-render so the corrected
-    // type shows on the working-order pill (the market branch renders via confirmOrderFill instead).
+    // type shows on the working-order pill (the market tab returned early via addOrCreateMarketFill).
     if (order && !order.filled && (tab === 'limit' || tab === 'advanced')) render();
-    if (tab === 'market') confirmOrderFill();
     qtyInput.value = prevVal;
   }
   function qtActiveTab() {
@@ -1096,20 +1107,19 @@
   document.getElementById('qtFlatten').addEventListener('click', () => {
     const sym = currentSymbol();
     let closedRow = false;
-    // The chart position is hardcoded to ETHUSD; close it (cancelOrder shows its own toast) only when filled.
-    if (order && order.filled && sym === 'ETHUSD') cancelOrder();
-    // Close any positions-tab rows for this symbol (static or graduated from a fill).
-    while (document.querySelector('.pos-row[data-pos-id="' + sym + '"]')) {
-      if (!window.closePositionPct(sym, 100)) break;
-      closedRow = true;
-    }
+    // Close every filled chart order for ETHUSD (each cancelOrder logs it, closes its row + toasts).
+    const closedChart = sym === 'ETHUSD' && allOrders().some(o => o.filled);
+    if (sym === 'ETHUSD') allOrders().filter(o => o.filled).forEach(o => { order = o; cancelOrder(); });
+    // Close any positions-tab rows for this symbol (static or graduated; both long and short sides).
+    while (window.closePositionPct(sym, 100)) closedRow = true;
     if (closedRow) showToast(sym + ' position closed', 'check_circle');
-    else if (!(order && order.filled && sym === 'ETHUSD')) showToast('No open ' + sym + ' positions to close', 'info');
+    else if (!closedChart) showToast('No open ' + sym + ' positions to close', 'info');
   });
   document.getElementById('qtCancelAll').addEventListener('click', () => {
     const sym = currentSymbol();
-    // Pending orders only ever exist for the ETHUSD chart order in this mockup.
-    if (order && !order.filled && sym === 'ETHUSD') cancelOrder();
+    // Cancel every pending (unfilled) chart order for ETHUSD; each shows its own "cancelled" toast.
+    const pending = sym === 'ETHUSD' ? allOrders().filter(o => !o.filled) : [];
+    if (pending.length) pending.forEach(o => { order = o; cancelOrder(); });
     else showToast('No pending ' + sym + ' orders to cancel', 'info');
   });
   /* ---------- amount type (Units / USD / % of Balance) ---------- */
@@ -1299,6 +1309,8 @@
     const anyMargin = cfg.marginMode || cfg.leverage;
     qtMarginBar.hidden = !anyMargin;
     qtModeToggle.hidden = !cfg.marginMode;
+    const qtHedgeToggleEl = document.getElementById('qtHedgeToggle');
+    if (qtHedgeToggleEl) qtHedgeToggleEl.hidden = cat !== 'crypto'; // Hedge Mode is a crypto-only concept
     // Note: qtCryptoMode (Spot/Perp) persists across symbol switches — changing symbol
     // keeps the user's chosen mode rather than resetting it. It defaults to spot on launch.
     qtApplyMarginMode(cfg);
@@ -1324,29 +1336,39 @@
         orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
         tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: order.qty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
         window.refreshTodayJournalCard();
-        window.closePositionPct('ETHUSD', 100);
+        window.closePositionPct('ETHUSD', 100, order.side);
         showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position closed at ' + fmt(closePrice), 'check_circle');
       } else {
         orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'cancelled', type: order.orderType, time: nowTimeStr(), pnl: null });
         showToast('Pending order cancelled', 'cancel');
       }
     }
-    order = null; render(); closeAllPopovers();
+    // Remove just this order from the chart; focus falls back to another live order (or none).
+    const idx = orders.indexOf(order);
+    if (idx !== -1) orders.splice(idx, 1);
+    order = orders.length ? orders[orders.length - 1] : null;
+    render(); closeAllPopovers();
   }
   /* quick visual sweep of the entry chip's progress fill before the (instant) fill completes */
   const FILL_SWEEP_MS = 450;
-  function startFillSweep() {
-    if (!order || order.filled || order.filling) return;
-    order.filling = true;
-    const chip = document.getElementById('entryPriceHandle');
+  function startFillSweep(o) {
+    o = o || order;
+    if (!o || o.filled || o.filling) return;
+    o.filling = true;
+    // Scope the entry-chip lookup to this order's own DOM so the right chip animates when
+    // several orders are on the chart (falls back to the layer when there's no per-order box).
+    const chip = (o._el || layer).querySelector('.ol-chip.entry');
     if (chip) chip.classList.add('filling');   // CSS transitions the fill width 0 -> 100%
     setTimeout(() => {
-      if (!order) return;
-      order.filling = false;
-      confirmOrderFill();                       // existing instant fill: history, position, locked render
+      if (!o) return;
+      o.filling = false;
+      confirmOrderFill(o);                       // existing instant fill: history, position, locked render
     }, FILL_SWEEP_MS);
   }
-  function confirmOrderFill() {
+  // Re-point the focus to `o` before filling: the fill sweep runs on a timer, by which point the
+  // global `order` may have moved to another order, so every caller passes the order that filled.
+  function confirmOrderFill(o) {
+    order = o || order;
     if (!order || order.filled) return;
     order.filled = true;
     // Limit and Stop Limit both fill at the entry (limit) line or better: the entry snaps onto the
@@ -1381,6 +1403,35 @@
     showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
   }
 
+  /* A market order on a side that already has an open position adds to it (average entry, sum qty)
+     instead of opening a duplicate — matching the Positions panel's merge. In hedge mode a buy adds to
+     the long and a sell to a separate short (each matches only its own side); in one-way mode the guard
+     has already blocked the opposing case, so only same-side adds reach here. No same-side position →
+     a fresh filled market order is created. */
+  function addOrCreateMarketFill(side, price, qty) {
+    qty = parseFloat(qty) || 1;
+    const sameDir = allOrders().find(o => o.filled && o.side === side);
+    if (sameDir) {
+      const newQty = sameDir.qty + qty;
+      sameDir.entry = roundTick((sameDir.entry * sameDir.qty + price * qty) / newQty);
+      sameDir.qty = newQty;
+      if (sameDir.sl) sameDir.initialRisk = Math.abs(sameDir.entry - sameDir.sl.price) * POINT_VALUE;
+      orderHistory.unshift({ symbol: 'ETHUSD', side, qty, price, status: 'filled', type: 'Market', time: nowTimeStr(), pnl: null });
+      tradeHistory.unshift({ symbol: 'ETHUSD', side, qty, price, pnl: null, role: 'open', type: 'Market', time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT });
+      window.upsertPositionFromFill('ETHUSD', side, qty, price, { tps: sameDir.tps, sl: sameDir.sl });
+      order = sameDir;
+      render();
+      showToast('Added to ' + (side === 'buy' ? 'long' : 'short') + ' at ' + fmt(price), 'add');
+      return;
+    }
+    const prevVal = qtyInput.value;
+    qtyInput.value = qty;
+    createOrder(side, price, 'quick');
+    order.orderType = 'Market';
+    confirmOrderFill(order);
+    qtyInput.value = prevVal;
+  }
+
   /* Reverse a working (unfilled) order in place: flip the side and mirror any TP/SL across the entry
      so they stay on the valid side (a buy's TP above / SL below becomes a sell's TP below / SL above). */
   function flipWorkingOrderSide() {
@@ -1411,14 +1462,19 @@
     const closePnl = (price - order.entry) * qty * dir * POINT_VALUE;
     orderHistory.unshift({ symbol: 'ETHUSD', side: oldSide, qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
     tradeHistory.unshift({ symbol: 'ETHUSD', side: newSide, qty, price, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT });
-    window.closePositionPct('ETHUSD', 100);
+    window.closePositionPct('ETHUSD', 100, oldSide);
     const entry = roundTick(price);
+    const oldOrder = order;
     order = {
+      id: 'ord' + (orderCounter++),
       side: newSide, entry, qty, orderType: 'Market', fillAbove: false,
       sizeMode: 'contracts', filled: true, pendingConfirm: false,
       sizeValues: { dollar: 5000, percent: 25, risk: 500, riskPct: 1 },
       tps: [], sl: null, tpsHitCount: 0, initialRisk: null
     };
+    // Replace the reversed position in place (same slot) rather than appending a second one.
+    const ri = orders.indexOf(oldOrder);
+    if (ri !== -1) orders.splice(ri, 1, order); else orders.push(order);
     orderHistory.unshift({ symbol: 'ETHUSD', side: newSide, qty, price: entry, status: 'filled', type: 'Market', time: nowTimeStr(), pnl: null });
     tradeHistory.unshift({ symbol: 'ETHUSD', side: newSide, qty, price: entry, pnl: null, role: 'open', type: 'Market', time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT });
     window.upsertPositionFromFill('ETHUSD', newSide, qty, entry, { tps: order.tps, sl: order.sl });
@@ -1462,9 +1518,9 @@
       orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
       tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: order.qty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
       window.refreshTodayJournalCard();
-      window.closePositionPct('ETHUSD', 100);
+      window.closePositionPct('ETHUSD', 100, order.side);
       showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position closed at ' + fmt(closePrice), 'check_circle');
-      order = null; render(); closeAllPopovers();
+      removeOrder(order); render(); closeAllPopovers();
       return;
     }
     const closeQty = Math.max(1, Math.round(order.qty * pct / 100));
@@ -1472,7 +1528,7 @@
     orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: closeQty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
     tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: closeQty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: closeQty * QT_FEE_PER_CONTRACT });
     window.refreshTodayJournalCard();
-    window.closePositionPct('ETHUSD', pct);
+    window.closePositionPct('ETHUSD', pct, order.side);
     order.qty = Math.max(1, order.qty - closeQty);
     render(); closeAllPopovers();
     showToast('Position reduced by ' + pct + '%', 'check_circle');
@@ -1549,6 +1605,64 @@
     try { localStorage.setItem(REVERSE_CONFIRM_KEY, on ? '1' : '0'); } catch (e) { /* storage unavailable */ }
     const row = document.getElementById('csConfirmReverse');
     if (row) row.classList.toggle('active', on);
+  }
+
+  /* ---------- Hedge Mode (crypto) ---------- */
+  // Off = one-way: a symbol can only be long OR short at once, so an opposing order/position is blocked
+  // (see the guardedPlace flow). On = hedge: a long and a short coexist as separate orders/positions.
+  // Default off. Exposed on two surfaces (settings row + Quick Trade toggle), kept in sync by the setter.
+  const HEDGE_MODE_KEY = 'tt_hedgeMode';
+  function hedgeModeEnabled() {
+    try { return localStorage.getItem(HEDGE_MODE_KEY) === '1'; } catch (e) { return false; }
+  }
+  function syncQtHedgeToggle(on) {
+    const tog = document.getElementById('qtHedgeToggle');
+    if (!tog) return;
+    tog.querySelectorAll('.qt-mode-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.hedge === (on ? 'on' : 'off'));
+    });
+  }
+  function setHedgeModeEnabled(on) {
+    try { localStorage.setItem(HEDGE_MODE_KEY, on ? '1' : '0'); } catch (e) { /* storage unavailable */ }
+    const row = document.getElementById('csHedgeMode');
+    if (row) row.classList.toggle('active', on);
+    syncQtHedgeToggle(on);
+  }
+  /* True when an opposing order (pending or filled) or position already exists on the same crypto symbol
+     — the strict one-way rule: any live long blocks a new short, and vice versa. */
+  function opposingExistsOnChart(newSide) {
+    return allOrders().some(o => o.side !== newSide)
+      || (window.hasOpposingPosition && window.hasOpposingPosition('ETHUSD', newSide));
+  }
+
+  /* One-way-mode block popup. `guardedPlace` is the single funnel every placement path runs through:
+     in one-way mode with an opposing order/position it opens the popup instead of placing, and the
+     popup's "Enable Hedge Mode" button flips the mode then resumes the exact same placement. */
+  const hedgeBlockBackdrop = document.getElementById('hedgeBlockBackdrop');
+  let hbPendingProceed = null;
+  function openHedgeBlock(proceed) {
+    hbPendingProceed = proceed;
+    if (hedgeBlockBackdrop) hedgeBlockBackdrop.classList.add('show');
+  }
+  function closeHedgeBlock() {
+    if (hedgeBlockBackdrop) hedgeBlockBackdrop.classList.remove('show');
+    hbPendingProceed = null;
+  }
+  function guardedPlace(side, proceed) {
+    if (!hedgeModeEnabled() && opposingExistsOnChart(side)) { openHedgeBlock(proceed); return; }
+    proceed();
+  }
+  if (hedgeBlockBackdrop) {
+    document.getElementById('hbEnable').addEventListener('click', () => {
+      setHedgeModeEnabled(true);
+      const proceed = hbPendingProceed;
+      closeHedgeBlock();
+      showToast('Hedge mode enabled', 'swap_vert');
+      if (proceed) proceed();   // resume the blocked placement, now allowed
+    });
+    document.getElementById('hbCancel').addEventListener('click', closeHedgeBlock);
+    document.getElementById('hbClose').addEventListener('click', closeHedgeBlock);
+    hedgeBlockBackdrop.addEventListener('click', (e) => { if (e.target === hedgeBlockBackdrop) closeHedgeBlock(); });
   }
 
   const rcBackdrop = document.getElementById('rcBackdrop');
@@ -1629,9 +1743,9 @@
     orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, status: 'filled', type: 'Stop (SL)', time: nowTimeStr(), pnl: slPnl });
     tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, pnl: slPnl, role: 'close', type: 'Stop (SL)', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
     window.refreshTodayJournalCard();
-    window.closePositionPct('ETHUSD', 100);
+    window.closePositionPct('ETHUSD', 100, order.side);
     showToast('Stop loss hit at ' + fmt(order.sl.price) + ' — position closed', 'stop_circle');
-    order = null;
+    removeOrder(order);
     render();
     return true;
   }
@@ -1668,7 +1782,7 @@
       orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: exitPrice, status: 'filled', type: tradeType, time: nowTimeStr(), pnl: tpPnl });
       tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: exitPrice, pnl: tpPnl, role: 'close', type: tradeType, time: nowTimeStr(), fee: tpQty * QT_FEE_PER_CONTRACT });
       window.refreshTodayJournalCard();
-      window.closePositionPct('ETHUSD', tp.pct);
+      window.closePositionPct('ETHUSD', tp.pct, order.side);
       showToast(toastMsg, 'check_circle');
       if (order.sl && order.sl.beTpId === tp.id && !order.sl.beActive) {
         moveSlToBreakevenLevel(currentPrice);
@@ -1678,7 +1792,7 @@
     order.tps = order.tps.filter(tp => !hitTps.includes(tp));
     if (order.tps.length === 0) {
       showToast('All targets hit — position fully closed', 'check_circle');
-      order = null;
+      removeOrder(order);
     }
     render();
   }
@@ -1823,7 +1937,7 @@
   function tpBadgeText(tp) { return (tp && tp.activated && tp.exitPrice != null) ? 'TRL' : 'TRL TRIGGER'; }
   /* live-patch a trailing-TP badge label + its Offset line during a drag (no full re-render) */
   function refreshTpBadgeOnChart(tpId) {
-    const labelEl = layer.querySelector('[data-tp-badge-edit="' + tpId + '"]');
+    const labelEl = orderScope().querySelector('[data-tp-badge-edit="' + tpId + '"]');
     const tp = order && order.tps.find(t => t.id === tpId);
     if (labelEl && tp) labelEl.textContent = tpBadgeText(tp);
   }
@@ -1901,11 +2015,11 @@
      If a drag detaches a special mode (e.g. manually dragging an ATR stop), the badge is removed outright
      instead of relabeled, since a plain SL never shows a badge. */
   function refreshSlBadgeOnChart() {
-    const shellEl = document.getElementById('slBadgeShell');
+    const shellEl = orderScope().querySelector('#slBadgeShell');
     const info = slBadgeInfo();
     if (!info) { if (shellEl) shellEl.remove(); return; }
     if (!shellEl) return;
-    document.getElementById('slBadgeTrigger').textContent = info.text;
+    orderScope().querySelector('#slBadgeTrigger').textContent = info.text;
     shellEl.className = 'ol-badge sl-badge ' + info.cls;
   }
   let simTickCounter = 0;
@@ -2136,21 +2250,23 @@
       rows.push(openOrderEntryRow(mockAaplOrder, 'data-cancel-mock="1"'));
     }
 
-    if (order) {
-      const closeSideCls = order.side === 'buy' ? 'short' : 'long';
-      const closeSideLabel = order.side === 'buy' ? 'Sell' : 'Buy';
+    /* One group per chart order: an entry row while unfilled, or its TP/SL working rows once filled.
+       Each cancel control carries the owning order's id so the handler can focus it before acting. */
+    allOrders().forEach(o => {
+      const closeSideCls = o.side === 'buy' ? 'short' : 'long';
+      const closeSideLabel = o.side === 'buy' ? 'Sell' : 'Buy';
 
       /* Entry row — only while still unfilled; once filled, it's a position, not an order */
-      if (!order.filled) {
+      if (!o.filled) {
         rows.push(openOrderEntryRow(
-          { sym: 'ETHUSD', side: order.side, qty: order.qty, filledQty: order.filledQty, price: order.entry, orderType: order.orderType },
-          'data-cancel-entry="1"'
+          { sym: 'ETHUSD', side: o.side, qty: o.qty, filledQty: o.filledQty, price: o.entry, orderType: o.orderType },
+          'data-cancel-entry="' + o.id + '"'
         ));
       }
 
-      if (order.filled) {
-        order.tps.forEach((tp, i) => {
-          const tpQty = Math.max(1, Math.round(order.qty * tp.pct / 100));
+      if (o.filled) {
+        o.tps.forEach((tp, i) => {
+          const tpQty = Math.max(1, Math.round(o.qty * tp.pct / 100));
           rows.push(
             '<tr' + (i === 0 ? ' class="ord-group-sep"' : '') + '>' +
             '<td>' + symCell('ETHUSD', closeSideCls, closeSideLabel, 'TP ' + (i + 1) + ' · Limit') + '</td>' +
@@ -2162,25 +2278,25 @@
           );
         });
 
-        if (order.sl) {
+        if (o.sl) {
           rows.push(
-            '<tr' + (order.tps.length === 0 ? ' class="ord-group-sep"' : '') + '>' +
+            '<tr' + (o.tps.length === 0 ? ' class="ord-group-sep"' : '') + '>' +
             '<td>' + symCell('ETHUSD', closeSideCls, closeSideLabel, 'Stop Loss · Stop') + '</td>' +
-            '<td><span class="ord-val-primary">' + order.qty + '</span></td>' +
-            '<td>' + fmt(order.sl.price) + '</td>' +
+            '<td><span class="ord-val-primary">' + o.qty + '</span></td>' +
+            '<td>' + fmt(o.sl.price) + '</td>' +
             '<td><span class="bp-status working">Working</span></td>' +
-            '<td><span class="bp-action-icon" data-cancel-sl="1"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
+            '<td><span class="bp-action-icon" data-cancel-sl="' + o.id + '"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
             '</tr>'
           );
         }
       }
-    }
+    });
 
     body.innerHTML = rows.length ? rows.join('') : '<tr class="bp-empty-row"><td colspan="5">No open orders — right-click the chart to trade.</td></tr>';
-    body.querySelectorAll('[data-cancel-entry]').forEach(el => el.addEventListener('click', cancelOrder));
+    body.querySelectorAll('[data-cancel-entry]').forEach(el => el.addEventListener('click', () => { focusOrderById(el.dataset.cancelEntry); cancelOrder(); }));
     body.querySelectorAll('[data-cancel-mock]').forEach(el => el.addEventListener('click', () => { mockAaplOrder = null; renderOpenOrders(); }));
-    body.querySelectorAll('[data-cancel-tp]').forEach(el => el.addEventListener('click', () => removeTp(el.dataset.cancelTp)));
-    body.querySelectorAll('[data-cancel-sl]').forEach(el => el.addEventListener('click', removeSl));
+    body.querySelectorAll('[data-cancel-tp]').forEach(el => el.addEventListener('click', () => { focusOrderByTpId(el.dataset.cancelTp); removeTp(el.dataset.cancelTp); }));
+    body.querySelectorAll('[data-cancel-sl]').forEach(el => el.addEventListener('click', () => { focusOrderById(el.dataset.cancelSl); removeSl(); }));
     const countEl = document.getElementById('bpCountOrders');
     if (countEl) countEl.textContent = rows.length > 0 ? '(' + rows.length + ')' : '';
   }
@@ -2394,19 +2510,19 @@
   /* toggle the entry chip's disabled state without a full render(), so it reacts live while dragging */
   function updateEntryPlaceableState() {
     if (!order) return;
-    const handle = document.getElementById('entryPriceHandle');
+    const handle = orderScope().querySelector('#entryPriceHandle');
     if (!handle) return;
     handle.classList.toggle('disabled', order.pendingConfirm && !order.filled && orderPlaceBlocked());
   }
   /* re-check every TP/SL chip's invalid state without a full render() — used while dragging Entry/TP/SL */
   function updateAllTpSlValidityLive() {
     if (!order) return;
-    layer.querySelectorAll('.ol-side-row[data-tp-id]').forEach(row => {
+    orderScope().querySelectorAll('.ol-side-row[data-tp-id]').forEach(row => {
       const tp = order.tps.find(t => t.id === row.dataset.tpId);
       if (tp) row.querySelector('.ol-chip').classList.toggle('invalid', !tpSlSideOk('tp', tpDisplayPrice(tp)) && !tpSideWarningSuppressed(tp));
     });
     if (order.sl) {
-      const slChip = layer.querySelector('.ol-chip.sl');
+      const slChip = orderScope().querySelector('.ol-chip.sl');
       if (slChip) {
         slChip.classList.toggle('invalid', !tpSlSideOk('sl', order.sl.price) && !slSideWarningSuppressed());
         slChip.classList.toggle('risk-exceeded', riskLimitExceeded());
@@ -2421,7 +2537,7 @@
     if (!order) return;
     const dir = order.side === 'buy' ? 1 : -1;
     const riskPerContractTotal = order.sl ? Math.abs(order.entry - order.sl.price) * POINT_VALUE : null;
-    layer.querySelectorAll('.ol-side-row[data-tp-id]').forEach(row => {
+    orderScope().querySelectorAll('.ol-side-row[data-tp-id]').forEach(row => {
       const tp = order.tps.find(t => t.id === row.dataset.tpId);
       if (!tp) return;
       const displayPrice = tpDisplayPrice(tp);
@@ -2444,7 +2560,7 @@
       }
     });
     if (order.sl) {
-      const slAmtEl = layer.querySelector('.ol-chip.sl .ol-amt');
+      const slAmtEl = orderScope().querySelector('.ol-chip.sl .ol-amt');
       if (slAmtEl) {
         const { gross, fee, net } = slFeeCalc();
         const valEl = slAmtEl.querySelector('.ol-amt-val');
@@ -2461,8 +2577,8 @@
      to avoid wiping the drag's own DOM (see isDraggingOrderLine) */
   function updateEntryLinePositionLive() {
     if (!order) return;
-    const line = layer.querySelector('.ol-line.entry');
-    const bar = layer.querySelector('.ol-entry-bar');
+    const line = orderScope().querySelector('.ol-line.entry');
+    const bar = orderScope().querySelector('.ol-entry-bar');
     if (!line || !bar) return;
     const H = rectH();
     const y = clamp(priceToY(order.entry, H), 10, H - 10);
@@ -2492,7 +2608,7 @@
     if (!order) return;
     const H = rectH();
     order.tps.forEach(tp => {
-      const row = layer.querySelector('.ol-side-row[data-tp-id="' + tp.id + '"]');
+      const row = orderScope().querySelector('.ol-side-row[data-tp-id="' + tp.id + '"]');
       const line = row && row.previousElementSibling;
       if (!row || !line) return;
       const y = clamp(priceToY(tp.price, H), 10, H - 10);
@@ -2500,7 +2616,7 @@
       line.style.top = y + 'px';
     });
     if (order.sl) {
-      const slChip = layer.querySelector('.ol-chip.sl');
+      const slChip = orderScope().querySelector('.ol-chip.sl');
       const row = slChip && slChip.closest('.ol-side-row');
       const line = row && row.previousElementSibling;
       if (!row || !line) return;
@@ -2513,8 +2629,8 @@
      line and label track the entry live instead of only snapping back into place on drop. */
   function updateBreakevenLineLive() {
     if (!order || !chartSettings.breakevenLine.enabled) return;
-    const line = layer.querySelector('.ol-line.breakeven-price');
-    const label = layer.querySelector('.ol-offset-label.breakeven-price');
+    const line = orderScope().querySelector('.ol-line.breakeven-price');
+    const label = orderScope().querySelector('.ol-offset-label.breakeven-price');
     if (!line || !label) return;
     const bePrice = breakevenLinePrice();
     if (bePrice === null) return;
@@ -3861,55 +3977,70 @@
       // is not yet committed — skip fill/trigger evaluation so dragging a line across the
       // current market price can't fire an unintended fill mid-gesture. The tick right after
       // release (isDraggingOrderLine is cleared before onDrop) evaluates the final price.
-      if (!isDraggingOrderLine) {
-        checkTpFills(prevLast, last);
-        if (order && order.filled) checkSlHit(last);
-      }
-      if (order && !order.filled && order.pendingConfirm && order.orderType === 'Market') {
-        setOrderEntryPrice(last);
-        if (slTrailActive()) applyTrailingStopPreview();
-        else if (slAtrActive()) placeAtrStop();
-        if (!isDraggingOrderLine) render();
-        else { updateEntryLinePositionLive(); updateAllTpSlLinePositionsLive(); }
-      }
-      if (order && !order.filled && !order.pendingConfirm && !order.filling && !isDraggingOrderLine) {
-        if (order.orderType === 'Limit') {
-          // Limit fills at its price or better, so it's marketable: a buy fills at/under the limit,
-          // a sell at/over it. Placed on the far side it rests; placed through the market it fills at once.
-          const limitHit = order.side === 'buy' ? last <= order.entry : last >= order.entry;
-          if (limitHit) startFillSweep();
-        } else if (order.orderType === 'Trigger Market') {
-          // Market-if-touched: stays pending and fires only when the market price actually reaches
-          // (touches) the trigger, approaching from whichever side price was on at placement.
-          // It never fires while price is still away from the trigger, so it can't execute early.
-          const triggerHit = order.fillAbove ? last >= order.entry : last <= order.entry;
-          if (triggerHit) startFillSweep();
-        } else if (order.orderType === 'Stop Limit') {
-          // Two-stage: price must touch the TRIGGER line (same touch rule as Trigger Market) to arm
-          // the order, then it fills at the entry (limit) line or better — just like a Limit order.
-          if (!order.stopTriggered) {
-            const trigger = order.triggerPrice != null ? order.triggerPrice : order.entry;
-            const triggerHit = order.fillAbove ? last >= trigger : last <= trigger;
-            if (triggerHit) order.stopTriggered = true;
-          }
-          if (order.stopTriggered) {
-            const limitHit = order.side === 'buy' ? last <= order.entry : last >= order.entry;
-            if (limitHit) startFillSweep();
-          }
-        } else {
-          // Market / any other fallback: reach the level from its placement side.
-          const hitEntry = order.fillAbove ? last >= order.entry : last <= order.entry;
-          if (hitEntry) startFillSweep();
+      // Evaluate fills, trailing, and breakeven for every chart order this tick. `order` is re-pointed
+      // to each order in turn so the shared helpers (checkTpFills, startFillSweep, applyTrailingStop, …)
+      // act on it; the fill sweep is passed the order explicitly since it completes on a later timer.
+      // Full re-renders are collapsed into a single render() after the loop.
+      let orderNeedsRender = false;
+      const focusedBefore = order;   // preserve the user's focus across the loop's re-pointing
+      // Iterate a snapshot: a fill (checkTpFills/checkSlHit) can remove its order mid-loop, and
+      // splicing the live array during forEach would skip the next order.
+      allOrders().slice().forEach(o => {
+        order = o;
+        if (!isDraggingOrderLine) {
+          checkTpFills(prevLast, last);
+          if (order.filled) checkSlHit(last);
         }
-      }
+        if (!order.filled && order.pendingConfirm && order.orderType === 'Market') {
+          setOrderEntryPrice(last);
+          if (slTrailActive()) applyTrailingStopPreview();
+          else if (slAtrActive()) placeAtrStop();
+          if (!isDraggingOrderLine) orderNeedsRender = true;
+          else { updateEntryLinePositionLive(); updateAllTpSlLinePositionsLive(); }
+        }
+        if (!order.filled && !order.pendingConfirm && !order.filling && !isDraggingOrderLine) {
+          if (order.orderType === 'Limit') {
+            // Limit fills at its price or better, so it's marketable: a buy fills at/under the limit,
+            // a sell at/over it. Placed on the far side it rests; placed through the market it fills at once.
+            const limitHit = order.side === 'buy' ? last <= order.entry : last >= order.entry;
+            if (limitHit) startFillSweep(o);
+          } else if (order.orderType === 'Trigger Market') {
+            // Market-if-touched: stays pending and fires only when the market price actually reaches
+            // (touches) the trigger, approaching from whichever side price was on at placement.
+            // It never fires while price is still away from the trigger, so it can't execute early.
+            const triggerHit = order.fillAbove ? last >= order.entry : last <= order.entry;
+            if (triggerHit) startFillSweep(o);
+          } else if (order.orderType === 'Stop Limit') {
+            // Two-stage: price must touch the TRIGGER line (same touch rule as Trigger Market) to arm
+            // the order, then it fills at the entry (limit) line or better — just like a Limit order.
+            if (!order.stopTriggered) {
+              const trigger = order.triggerPrice != null ? order.triggerPrice : order.entry;
+              const triggerHit = order.fillAbove ? last >= trigger : last <= trigger;
+              if (triggerHit) order.stopTriggered = true;
+            }
+            if (order.stopTriggered) {
+              const limitHit = order.side === 'buy' ? last <= order.entry : last >= order.entry;
+              if (limitHit) startFillSweep(o);
+            }
+          } else {
+            // Market / any other fallback: reach the level from its placement side.
+            const hitEntry = order.fillAbove ? last >= order.entry : last <= order.entry;
+            if (hitEntry) startFillSweep(o);
+          }
+        }
+        applyTrailingStop(last);
+        applyTrailingTp(last);
+        // Skip breakeven arming mid-drag: dragging the BE trigger line updates its price live,
+        // so evaluating it here would fire breakeven the instant the line sweeps across market.
+        // The tick after release (isDraggingOrderLine cleared before onDrop) arms it normally.
+        if (!isDraggingOrderLine) applyBreakeven(last);
+        if (order.filled && !isDraggingOrderLine) orderNeedsRender = true;
+      });
       simTickCounter++;
-      applyTrailingStop(last);
-      applyTrailingTp(last);
-      // Skip breakeven arming mid-drag: dragging the BE trigger line updates its price live,
-      // so evaluating it here would fire breakeven the instant the line sweeps across market.
-      // The tick after release (isDraggingOrderLine cleared before onDrop) arms it normally.
-      if (!isDraggingOrderLine) applyBreakeven(last);
-      if (order && order.filled && !isDraggingOrderLine) render();
+      if (orderNeedsRender && !isDraggingOrderLine) render();
+      // Restore the user's focus after the loop's per-order re-pointing, so an in-progress drag or an
+      // open per-order menu keeps acting on the order it started on — unless that order was just closed.
+      order = orders.includes(focusedBefore) ? focusedBefore : (orders.length ? orders[orders.length - 1] : null);
 
       let alertsChanged = false;
       alerts.forEach(a => {
@@ -3926,8 +4057,54 @@
     setInterval(tick, 1200 + Math.random() * 400);
   })();
 
+  /* Every live chart order. Once createOrder starts pushing (multi-order), `orders` is the source of
+     truth; until then it falls back to the legacy singleton so the transition stays behavior-neutral. */
+  function allOrders() { return orders.length ? orders : (order ? [order] : []); }
+  /* Re-point the focus `order` to a specific order before an id-scoped action (panel cancels, etc.). */
+  function focusOrderById(id) { const o = allOrders().find(x => x.id === id); if (o) order = o; }
+  /* Focus the filled chart order matching a side (long/short), so a Positions-tab close/reverse on that
+     side acts on the right chart order. Returns true when one exists. */
+  function focusFilledChartOrderBySide(side) {
+    const o = allOrders().find(x => x.filled && x.side === side);
+    if (o) { order = o; return true; }
+    return false;
+  }
+  /* Close every filled chart order on a side (a merged position row can back several same-side orders),
+     so a full Positions-tab close clears all of that side's chart lines. Returns true if any existed. */
+  function closeFilledChartOrdersBySide(side) {
+    const matches = allOrders().filter(o => o.filled && o.side === side);
+    if (!matches.length) return false;
+    matches.forEach(o => { order = o; cancelOrder(); });
+    return true;
+  }
+  function focusOrderByTpId(tpId) { const o = allOrders().find(x => x.tps.some(t => t.id === tpId)); if (o) order = o; }
+  /* DOM query root for the focused order — its own container when rendered, else the whole layer.
+     The live-drag helpers query through this so they touch only the order being edited, not every
+     order's chips/rows on the chart. */
+  function orderScope() { return (order && order._el) ? order._el : layer; }
+  /* Remove one order from the chart (fully closed / cancelled); focus falls back to another, or none. */
+  function removeOrder(o) {
+    const idx = orders.indexOf(o);
+    if (idx !== -1) orders.splice(idx, 1);
+    if (order === o) order = orders.length ? orders[orders.length - 1] : null;
+  }
+  /* One capture-phase listener focuses whichever order the user is about to touch, before that order's
+     own drag/click handlers run — so every interaction (and any drag that follows) acts on the right
+     order even with several on the chart. Registered once; harmless clicks outside an order box no-op. */
+  function focusOrderFromEvent(e) {
+    const boxEl = e.target && e.target.closest && e.target.closest('.ol-order');
+    if (!boxEl) return;
+    const o = allOrders().find(x => x.id === boxEl.dataset.orderId);
+    if (o) order = o;
+  }
+  layer.addEventListener('mousedown', focusOrderFromEvent, true);
+  layer.addEventListener('click', focusOrderFromEvent, true);
+
   /* ---------- main render ---------- */
   function render() {
+    // renderOrder re-points `order` to each order it draws; save the caller's focus and restore it at
+    // the end so `order = X; render();` (fills, menu edits) leaves X focused, not the last-drawn order.
+    const keepFocus = order;
     renderOpenOrders();
     renderOrderHistory();
     renderTradeHistory();
@@ -3965,7 +4142,28 @@
       }
       makeDraggable(hit, onDragAlert, onDropAlert, '.ol-alert-del');
     });
-    if (!order) { return; }
+    // Draw every chart order (each with full drag + TP/SL parity). One drawPriceChart() after the loop.
+    const renderList = allOrders();
+    renderList.forEach(o => renderOrder(o));
+    if (renderList.length) drawPriceChart();
+    // Restore focus to the order the caller was working on (renderOrder left it on the last one drawn).
+    order = renderList.includes(keepFocus) ? keepFocus : (renderList.length ? renderList[renderList.length - 1] : null);
+  }
+
+  /* Render a single order `o` — its entry line + control bar, TP/SL brackets, and any Stop-Limit
+     trigger / breakeven overlays. `order` is re-pointed to `o` up front so every helper and drag
+     closure below (which all read the module-level `order`) operates on this order. */
+  function renderOrder(o) {
+    order = o;
+    // Per-order DOM container: every line/chip/row for this order lives inside its own box so the
+    // live-update helpers and fill sweep can scope their queries to one order (o._el) instead of the
+    // whole layer, which now holds several orders. The box uses display:contents, so it adds no box of
+    // its own and the absolutely-positioned children lay out against the layer exactly as before.
+    const box = document.createElement('div');
+    box.className = 'ol-order';
+    box.dataset.orderId = o.id;
+    layer.appendChild(box);
+    o._el = box;
     const H = rectH();
 
     // ---- TP lines (sorted nearest-to-entry first, so labels renumber TP1, TP2, TP3... by proximity) ----
@@ -3996,7 +4194,7 @@
         const line = document.createElement('div');
         line.className = 'ol-line tp';
         line.style.top = y + 'px';
-        layer.appendChild(line);
+        box.appendChild(line);
 
         const pts = dir * (displayPrice - order.entry);
         const contracts = Math.max(1, Math.round(order.qty * tp.pct / 100));
@@ -4030,7 +4228,7 @@
           '<span class="ol-tp-meta-r">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
           '</span>' +
           '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" data-tooltip="Remove TP"><span class="material-symbols-outlined">close</span></span>';
-        layer.appendChild(row);
+        box.appendChild(row);
 
         // Offset line: a second draggable line sitting at the trailing offset distance toward entry.
         // Only one TP can ever trail at a time, so the label doesn't need to name which TP it's for.
@@ -4042,13 +4240,13 @@
           offsetLineEl = document.createElement('div');
           offsetLineEl.className = 'ol-line offset';
           offsetLineEl.style.top = oy + 'px';
-          layer.appendChild(offsetLineEl);
+          box.appendChild(offsetLineEl);
 
           offsetLabelEl = document.createElement('span');
           offsetLabelEl.className = 'ol-offset-label';
           offsetLabelEl.innerHTML = '<span class="ol-offset-label-text">TRL OFFSET · ' + tpOffsetLabel(tp) + '</span>';
           offsetLabelEl.style.top = oy + 'px';
-          layer.appendChild(offsetLabelEl);
+          box.appendChild(offsetLabelEl);
           // Drag wiring is registered below (once onDragOffset/onDropOffset exist) so the
           // label repositions the offset; it's drag-only (the trail menu lives on the TP chip).
         }
@@ -4139,10 +4337,10 @@
             if (!dragLine) {
               dragLine = document.createElement('div');
               dragLine.className = 'ol-line offset';
-              layer.appendChild(dragLine);
+              box.appendChild(dragLine);
               dragLabel = document.createElement('span');
               dragLabel.className = 'ol-offset-label';
-              layer.appendChild(dragLabel);
+              box.appendChild(dragLabel);
             }
             dragLine.style.top = cy + 'px';
             dragLabel.style.top = cy + 'px';
@@ -4195,7 +4393,7 @@
         const line = document.createElement('div');
         line.className = 'ol-line sl';
         line.style.top = y + 'px';
-        layer.appendChild(line);
+        box.appendChild(line);
 
         const slInvalid = !tpSlSideOk('sl', order.sl.price) && !slSideWarningSuppressed();
 
@@ -4238,7 +4436,7 @@
           '</span>' +
           modeBtns +
           '<span class="ol-gear ol-danger" id="slDeleteTrigger" data-tooltip="Remove SL"><span class="material-symbols-outlined">close</span></span>';
-        layer.appendChild(row);
+        box.appendChild(row);
 
         const slChipEl = row.querySelector('.ol-chip');
         bindHandleHover(slChipEl, 'sl');
@@ -4260,7 +4458,7 @@
           syncQtyFromRisk();                 // live qty in Risk $ mode (no-op in other modes)
           updateAllTpSlValidityLive();
           updateAllTpSlReadoutsLive();
-          const sizePill = document.getElementById('sizePillTrigger');
+          const sizePill = orderScope().querySelector('#sizePillTrigger');
           if (sizePill) sizePill.textContent = sizePillLabel();
           drawPriceChart();
         }
@@ -4309,13 +4507,13 @@
           const beLine = document.createElement('div');
           beLine.className = 'ol-line be-trigger';
           beLine.style.top = trigY + 'px';
-          layer.appendChild(beLine);
+          box.appendChild(beLine);
 
           const beLabel = document.createElement('span');
           beLabel.className = 'ol-offset-label be-trigger';
           beLabel.innerHTML = '<span class="ol-offset-label-text">BE TRIGGER · ' + breakevenTriggerLabel(beCfg) + '</span>';
           beLabel.style.top = trigY + 'px';
-          layer.appendChild(beLabel);
+          box.appendChild(beLabel);
 
           function repositionBeLine(h) {
             const ov = ensureBeOverride();
@@ -4367,7 +4565,7 @@
       const line = document.createElement('div');
       line.className = 'ol-line entry ' + order.side + (canDragEntry ? ' draggable' : '');
       line.style.top = y + 'px';
-      layer.appendChild(line);
+      box.appendChild(line);
 
       function onDragEntry(cy, h) {
         bar.style.top = cy + 'px';
@@ -4497,7 +4695,7 @@
           '</span>';
       }
 
-      layer.appendChild(bar);
+      box.appendChild(bar);
 
       const tpAddHandle = bar.querySelector('#tpAddHandle');
       if (tpAddHandle) {
@@ -4575,7 +4773,7 @@
       const triggerLine = document.createElement('div');
       triggerLine.className = 'ol-line stop-limit-trigger ' + order.side;
       triggerLine.style.top = triggerY + 'px';
-      layer.appendChild(triggerLine);
+      box.appendChild(triggerLine);
 
       // Builds the label content: a warning glyph (only when the stop is on the already-crossed side
       // of the market) followed by the STOP price. Rebuilt on drag so the warning toggles live.
@@ -4591,7 +4789,7 @@
       triggerLabel.className = 'ol-offset-label stop-limit pop-trigger ' + order.side;
       triggerLabel.innerHTML = stopLabelInner();
       triggerLabel.style.top = triggerY + 'px';
-      layer.appendChild(triggerLabel);
+      box.appendChild(triggerLabel);
 
       function repositionTrigger(h) {
         const yy = clamp(priceToY(order.triggerPrice, h), 10, h - 10) + 'px';
@@ -4630,17 +4828,15 @@
         const beLine = document.createElement('div');
         beLine.className = 'ol-line breakeven-price';
         beLine.style.top = beY + 'px';
-        layer.appendChild(beLine);
+        box.appendChild(beLine);
 
         const beLabel = document.createElement('span');
         beLabel.className = 'ol-offset-label breakeven-price';
         beLabel.innerHTML = '<span class="ol-offset-label-text">BREAKEVEN · ' + fmt(bePrice) + '</span>';
         beLabel.style.top = beY + 'px';
-        layer.appendChild(beLabel);
+        box.appendChild(beLabel);
       }
     }
-
-    drawPriceChart();
   }
 
   /* ---------- topbar alerts menu ---------- */
@@ -5235,6 +5431,14 @@
     csConfirmReverseRow.classList.toggle('active', reverseConfirmEnabled());
     csConfirmReverseRow.querySelector('.ui-toggle').addEventListener('click', () => {
       setReverseConfirmEnabled(csConfirmReverseRow.classList.contains('active'));
+    });
+  }
+  const csHedgeModeRow = document.getElementById('csHedgeMode');
+  if (csHedgeModeRow) {
+    csHedgeModeRow.classList.toggle('active', hedgeModeEnabled());
+    csHedgeModeRow.querySelector('.ui-toggle').addEventListener('click', () => {
+      // The generic cs-switch-row handler has already flipped .active by the time this runs.
+      setHedgeModeEnabled(csHedgeModeRow.classList.contains('active'));
     });
   }
   /* Dynamic Fee Offset row re-syncs the offset input's locked state after the generic toggle flips it */

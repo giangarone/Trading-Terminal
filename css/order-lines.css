@@ -17,6 +17,13 @@
   pointer-events: none;
 }
 
+/* Per-order wrapper (one per chart order). display:contents means it generates no box of its own,
+   so its absolutely-positioned children still lay out against #orderLineLayer exactly as before;
+   it exists purely to scope each order's elements for the live-drag update helpers. */
+.ol-order {
+  display: contents;
+}
+
 #newsMarkerLayer,
 #eventLineLayer {
   position: absolute;

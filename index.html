@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=22">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=54">
+  <link rel="stylesheet" href="css/order-lines.css?v=55">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
   <link rel="stylesheet" href="css/indicators.css?v=24">
   <link rel="stylesheet" href="css/chart-settings.css?v=43">
@@ -480,6 +480,20 @@
                           reversing a position.</span>
                       </span>
                       <button type="button" class="ui-toggle" aria-label="Toggle Confirm Flip / Reverse"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                  </div>
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Position Mode</span>
+                    </div>
+                    <div class="cs-switch-row" id="csHedgeMode">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Hedge Mode (crypto)</span>
+                        <span class="cs-switch-desc">Allow a long and a short position on the same crypto symbol at
+                          the same time. When off (one-way), opening an opposing trade is blocked.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Hedge Mode"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
@@ -3968,6 +3982,12 @@
                 aria-label="Leverage" hidden>
                 <span class="qt-lev-btn-val" id="qtLeverageBtnVal">1×</span>
               </button>
+              <!-- Position mode (crypto): One-way blocks holding both directions at once; Hedge lets a
+                   long and a short on the same symbol coexist. Kept in sync with the settings Hedge Mode row. -->
+              <div class="qt-mode-toggle" id="qtHedgeToggle">
+                <button type="button" class="qt-mode-btn active" data-hedge="off">One-way</button>
+                <button type="button" class="qt-mode-btn" data-hedge="on">Hedge</button>
+              </div>
             </div>
 
             <div class="qt-order-tabs" id="qtOrderTabs">
@@ -4010,7 +4030,7 @@
                       class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
-              <label class="label-sm" style="margin-top:12px;">Price</label>
+              <label class="label-sm" style="margin-top:12px;">Limit</label>
               <div class="price-stepper">
                 <input type="text" id="qtStopLimitPrice" placeholder="Limit price" value="4,500.25">
                 <span class="qty-unit qt-quote-unit">USDT</span>
@@ -5636,6 +5656,26 @@
     </div>
   </div>
 
+  <!-- One-way-mode block: shown when a trade would open an opposing position while Hedge Mode is off. -->
+  <div class="oc-backdrop" id="hedgeBlockBackdrop">
+    <div class="oc-dialog">
+      <div class="oc-dialog-head">
+        <div>
+          <div class="oc-dialog-title">Opposing position open</div>
+        </div>
+        <button class="oc-close" id="hbClose"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="oc-dialog-desc">
+        You already have an opposing ETHUSD order or position. In one-way mode you can hold only one
+        direction at a time — close it first, or switch to Hedge Mode to hold a long and a short together.
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="hbCancel">Cancel</button>
+        <button class="btn-save" id="hbEnable">Enable Hedge Mode</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== MARKET SCANNER — SAVE / EDIT SCAN DIALOG ===================== -->
   <div class="oc-backdrop" id="msxSaveBackdrop">
     <div class="oc-dialog msx-save-dialog">
@@ -5699,9 +5739,9 @@
   <script src="js/workspace.js?v=13"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=17"></script>
-  <script src="js/app.js?v=305"></script>
+  <script src="js/app.js?v=310"></script>
   <script src="js/theme.js?v=3"></script>
-  <script src="js/right-panel.js?v=23"></script>
+  <script src="js/right-panel.js?v=24"></script>
   <script src="js/market-scanner.js?v=16"></script>
   <script src="js/market-sessions.js?v=4"></script>
 
