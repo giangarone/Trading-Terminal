@@ -1346,6 +1346,15 @@
   function confirmOrderFill() {
     if (!order || order.filled) return;
     order.filled = true;
+    // Limit fills at the current market price (or the limit — whichever is better), so the entry
+    // snaps onto the market level: a marketable buy at 4600 with market 4500 fills at 4500.
+    if (order.orderType === 'Limit') {
+      const mkt = qtCurrentPrice();
+      order.entry = order.side === 'buy'
+        ? roundTick(Math.min(order.entry, mkt))
+        : roundTick(Math.max(order.entry, mkt));
+      if (order.sl) order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
+    }
     // Stop Limit fills at its limit price or better (protected, no slippage): a buy never pays above
     // the limit, a sell never sells below it, but both take any price improvement the market offers.
     if (order.orderType === 'Stop Limit' && order.limitPrice != null) {
@@ -1355,7 +1364,8 @@
         : roundTick(Math.max(order.limitPrice, mkt));
       if (order.sl) order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
     }
-    // Trigger Market fills slip past the trigger — realize a fill up to the tolerance
+    // Trigger Market fills as market once the trigger is touched, slipping past it up to the
+    // tolerance (the touch means price is already at the trigger, so this is the realized fill).
     if (order.slippageTol > 0) {
       const dir = order.side === 'buy' ? 1 : -1;                  // buys slip up (worse), sells slip down (worse)
       const slipFrac = Math.random() * (order.slippageTol / 100); // realized slip in [0, tolerance], like a real stop
@@ -3849,8 +3859,20 @@
         else { updateEntryLinePositionLive(); updateAllTpSlLinePositionsLive(); }
       }
       if (order && !order.filled && !order.pendingConfirm && !order.filling && !isDraggingOrderLine) {
-        if (order.orderType === 'Stop Limit') {
-          // Two-stage: cross the stop to arm a resting limit, then fill only at the limit or better.
+        if (order.orderType === 'Limit') {
+          // Limit fills at its price or better, so it's marketable: a buy fills at/under the limit,
+          // a sell at/over it. Placed on the far side it rests; placed through the market it fills at once.
+          const limitHit = order.side === 'buy' ? last <= order.entry : last >= order.entry;
+          if (limitHit) startFillSweep();
+        } else if (order.orderType === 'Trigger Market') {
+          // Market-if-touched: stays pending and fires only when the market price actually reaches
+          // (touches) the trigger, approaching from whichever side price was on at placement.
+          // It never fires while price is still away from the trigger, so it can't execute early.
+          const triggerHit = order.fillAbove ? last >= order.entry : last <= order.entry;
+          if (triggerHit) startFillSweep();
+        } else if (order.orderType === 'Stop Limit') {
+          // Two-stage: price must touch the stop (same touch rule as Trigger Market) to arm the
+          // resting limit, then fill only at the limit or better.
           if (!order.stopTriggered) {
             const stopHit = order.fillAbove ? last >= order.entry : last <= order.entry;
             if (stopHit) order.stopTriggered = true;
@@ -3861,6 +3883,7 @@
             if (limitHit) startFillSweep();
           }
         } else {
+          // Market / any other fallback: reach the level from its placement side.
           const hitEntry = order.fillAbove ? last >= order.entry : last <= order.entry;
           if (hitEntry) startFillSweep();
         }
@@ -4353,6 +4376,13 @@
 
       function onDropEntry(cy, h) {
         setOrderEntryPrice(roundTick(yToPrice(cy, h)));
+        // Re-arm a pending trigger/stop around its new position: recompute which side of the market
+        // its level now sits on so it waits for a fresh touch of the new price, instead of firing
+        // just because the drag carried it across the current price. (Limit ignores this flag.)
+        if (order && !order.filled) {
+          order.fillAbove = order.entry > qtCurrentPrice();
+          if (order.orderType === 'Stop Limit') order.stopTriggered = false;
+        }
         syncQtyFromRisk();
         if (order) showToast('Order modified', 'edit');
         render();
