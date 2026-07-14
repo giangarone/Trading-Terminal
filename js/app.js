@@ -2574,7 +2574,10 @@
     const H = rectH();
     const y = clamp(priceToY(order.entry, H), 10, H - 10);
     line.style.top = y + 'px';
-    bar.style.top = y + 'px';
+    // Don't park the bar on the line directly — dodgeEntryBars owns the bar's `top` and may be holding
+    // it off the line to clear a neighbouring order.
+    bar.dataset.trueY = y;
+    dodgeEntryBars();
     updateAllTpSlValidityLive();
     updateAllTpSlReadoutsLive();
   }
@@ -4073,6 +4076,68 @@
      The live-drag helpers query through this so they touch only the order being edited, not every
      order's chips/rows on the chart. */
   function orderScope() { return (order && order._el) ? order._el : layer; }
+
+  /* ---------- Entry-bar dodge ----------
+     Every .ol-entry-bar is pinned to the same right edge, so `top` is the only thing separating two
+     orders' control bars: any two entries within a bar-height of each other draw on top of one
+     another. A hedged long + short at nearby prices does this every time.
+
+     Each bar's entry LINE stays at its true price — the line is what carries the meaning, so it must
+     never lie. Only the bar is nudged into a free vertical slot, with a tether drawn back to the line
+     when the two come apart. Same idea as the event-marker lane packing in renderEventLines(). */
+  const OL_BAR_H = 24;               // .ol-entry-bar height
+  const OL_BAR_GAP = 6;              // breathing room between two stacked bars
+  const OL_BAR_PITCH = OL_BAR_H + OL_BAR_GAP;
+
+  /* Bars whose true prices are closer than one pitch get spread apart around the centre of the group
+     they form, so a cluster stays visually anchored to where its orders actually are (rather than
+     drifting off in whichever direction we happened to sweep). */
+  function dodgeEntryBars() {
+    const bars = [...layer.querySelectorAll('.ol-entry-bar')].map(el => ({
+      el,
+      trueY: parseFloat(el.dataset.trueY),
+      side: el.dataset.side,
+    }));
+    // A lone bar always sits exactly on its line — nothing to clear, so skip the slotting entirely.
+    if (bars.length < 2) {
+      bars.forEach(b => layoutEntryBar(b, b.trueY));
+      return;
+    }
+    // Slots follow price order, so the labels never read out of sequence. A hedged long and short at
+    // the same price tie on trueY; the long takes the upper slot.
+    bars.sort((a, b) => a.trueY - b.trueY || (a.side === 'buy' ? -1 : 1));
+
+    // Chain neighbours that are too close into one cluster, then centre each cluster on its own mean.
+    const clusters = [];
+    bars.forEach(bar => {
+      const current = clusters[clusters.length - 1];
+      const previous = current && current[current.length - 1];
+      if (previous && bar.trueY - previous.trueY < OL_BAR_PITCH) current.push(bar);
+      else clusters.push([bar]);
+    });
+
+    const H = rectH();
+    clusters.forEach(cluster => {
+      const mean = cluster.reduce((sum, b) => sum + b.trueY, 0) / cluster.length;
+      const top = mean - ((cluster.length - 1) * OL_BAR_PITCH) / 2;
+      cluster.forEach((bar, i) => {
+        const slot = clamp(top + i * OL_BAR_PITCH, OL_BAR_H / 2, H - OL_BAR_H / 2);
+        layoutEntryBar(bar, slot);
+      });
+    });
+  }
+
+  /* Park one bar at `slot`, and show its tether only while the bar is off its line. */
+  function layoutEntryBar(bar, slot) {
+    bar.el.style.top = slot + 'px';
+    const tether = bar.el.parentElement.querySelector('.ol-entry-tether');
+    if (!tether) return;
+    const drop = Math.abs(slot - bar.trueY);
+    tether.hidden = drop < 1;
+    tether.style.top = Math.min(slot, bar.trueY) + 'px';
+    tether.style.height = drop + 'px';
+  }
+
   /* Remove one order from the chart (fully closed / cancelled); focus falls back to another, or none. */
   function removeOrder(o) {
     const idx = orders.indexOf(o);
@@ -4136,6 +4201,7 @@
     // Draw every chart order (each with full drag + TP/SL parity). One drawPriceChart() after the loop.
     const renderList = allOrders();
     renderList.forEach(o => renderOrder(o));
+    dodgeEntryBars(); // runs once every bar exists, since it spreads them relative to each other
     if (renderList.length) drawPriceChart();
     // Restore focus to the order the caller was working on (renderOrder left it on the last one drawn).
     order = renderList.includes(keepFocus) ? keepFocus : (renderList.length ? renderList[renderList.length - 1] : null);
@@ -4559,8 +4625,11 @@
       box.appendChild(line);
 
       function onDragEntry(cy, h) {
-        bar.style.top = cy + 'px';
+        // The line tracks the cursor exactly; the bar re-dodges around it, so dragging one order
+        // into another pushes their bars apart live rather than stacking until release.
+        bar.dataset.trueY = cy;
         line.style.top = cy + 'px';
+        dodgeEntryBars();
 
         setOrderEntryPrice(roundTick(yToPrice(cy, h)));
 
@@ -4599,6 +4668,15 @@
       const bar = document.createElement('div');
       bar.className = 'ol-entry-bar';
       bar.style.top = y + 'px';
+      // dodgeEntryBars() may park the bar off its line; trueY is where the line (and the price) is.
+      bar.dataset.trueY = y;
+      bar.dataset.side = order.side;
+
+      // Drawn only while the dodge has pulled the bar off its line — see layoutEntryBar().
+      const tether = document.createElement('div');
+      tether.className = 'ol-entry-tether ' + order.side;
+      tether.hidden = true;
+      box.appendChild(tether);
 
       const side = order.side;
       const sideLabel = side === 'buy' ? 'BUY' : 'SELL';

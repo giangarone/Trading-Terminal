@@ -272,6 +272,24 @@
   z-index: 6;
 }
 
+/* Ties a control bar back to its entry line when two nearby orders force the bar off its own price
+   (see dodgeEntryBars). Shares the bar's right edge, so it reads as dropping out of the bar itself. */
+.ol-entry-tether {
+  position: absolute;
+  right: 360px;
+  width: 1px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.ol-entry-tether.buy {
+  background: var(--long-border);
+}
+
+.ol-entry-tether.sell {
+  background: var(--short-border);
+}
+
 .ol-pill {
   display: flex;
   align-items: center;
