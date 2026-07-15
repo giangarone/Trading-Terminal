@@ -35,7 +35,7 @@
 
 .live-pill {
   font-size: 9.5px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   color: var(--long);
   background: var(--long-dim);
   padding: 1px 6px;

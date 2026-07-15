@@ -14,21 +14,21 @@
     rel="stylesheet">
 
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
-  <link rel="stylesheet" href="css/tokens.css?v=22">
+  <link rel="stylesheet" href="css/tokens.css?v=23">
   <link rel="stylesheet" href="css/topbar.css?v=14">
   <link rel="stylesheet" href="css/left-panel.css?v=19">
   <link rel="stylesheet" href="css/center-panel.css?v=28">
-  <link rel="stylesheet" href="css/workspace.css?v=40">
-  <link rel="stylesheet" href="css/right-panel.css?v=5">
-  <link rel="stylesheet" href="css/quick-trade.css?v=22">
-  <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=67">
+  <link rel="stylesheet" href="css/workspace.css?v=41">
+  <link rel="stylesheet" href="css/right-panel.css?v=6">
+  <link rel="stylesheet" href="css/quick-trade.css?v=23">
+  <link rel="stylesheet" href="css/status-bar.css?v=4">
+  <link rel="stylesheet" href="css/order-lines.css?v=68">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
-  <link rel="stylesheet" href="css/indicators.css?v=24">
-  <link rel="stylesheet" href="css/chart-settings.css?v=51">
+  <link rel="stylesheet" href="css/indicators.css?v=25">
+  <link rel="stylesheet" href="css/chart-settings.css?v=52">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
-  <link rel="stylesheet" href="css/quick-order.css?v=5">
+  <link rel="stylesheet" href="css/quick-order.css?v=6">
 </head>
 
 <body>
@@ -80,9 +80,9 @@
         <button class="ct-icon" id="themeToggleBtn" aria-label="Switch to light theme"
           data-tooltip="Switch to light theme"><span class="material-symbols-outlined"
             id="themeToggleIcon">dark_mode</span></button>
-        <button class="ct-icon pop-trigger" id="alertsTrigger" data-tooltip="Alerts"><span
+        <button class="ct-icon pop-trigger" id="alertsTrigger" aria-label="Alerts" data-tooltip="Alerts"><span
             class="material-symbols-outlined">notifications</span></button>
-        <button class="ct-icon pop-trigger" id="settingsTrigger" data-tooltip="Settings"><span
+        <button class="ct-icon pop-trigger" id="settingsTrigger" aria-label="Settings" data-tooltip="Settings"><span
             class="material-symbols-outlined">settings</span></button>
       </div>
     </header>
@@ -370,7 +370,7 @@
                         <span class="cs-switch-title">Reconnect Broker Automatically</span>
                         <span class="cs-switch-desc">Automatically reconnect to your broker on startup.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Reconnect Broker Automatically"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Reconnect Broker Automatically"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row" id="csReconnectMarketData">
@@ -379,7 +379,7 @@
                         <span class="cs-switch-desc">Automatically reconnect to your market data services on
                           startup.</span>
                       </span>
-                      <button type="button" class="ui-toggle"
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false"
                         aria-label="Toggle Reconnect Market Data Automatically"><span class="ui-toggle-track"><span
                             class="ui-toggle-thumb"></span></span></button>
                     </div>
@@ -398,7 +398,7 @@
                         <span class="cs-switch-title">Auto Save Templates</span>
                         <span class="cs-switch-desc">Automatically save your template changes.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Auto Save Templates"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Auto Save Templates"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csSyncTemplates">
@@ -406,7 +406,7 @@
                         <span class="cs-switch-title">Sync Templates Across Devices</span>
                         <span class="cs-switch-desc">Keep your templates in sync across all your devices.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Sync Templates Across Devices"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Sync Templates Across Devices"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csRememberPresets">
@@ -414,7 +414,7 @@
                         <span class="cs-switch-title">Remember Indicator Presets</span>
                         <span class="cs-switch-desc">Restore your custom indicator presets on startup.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Remember Indicator Presets"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Remember Indicator Presets"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
@@ -428,7 +428,7 @@
                         <span class="cs-switch-title">Confirm Orders</span>
                         <span class="cs-switch-desc">Show a confirmation popup before placing any order.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Confirm Orders"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Confirm Orders"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csConfirmFlatten">
@@ -436,7 +436,7 @@
                         <span class="cs-switch-title">Confirm Close All</span>
                         <span class="cs-switch-desc">Show confirmation before closing all orders.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Confirm Flatten All Positions"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Confirm Flatten All Positions"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csConfirmCancelAll">
@@ -444,7 +444,7 @@
                         <span class="cs-switch-title">Confirm Cancel All Orders</span>
                         <span class="cs-switch-desc">Show confirmation before canceling all orders.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Confirm Cancel All Orders"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Confirm Cancel All Orders"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csConfirmReverse">
@@ -453,7 +453,7 @@
                         <span class="cs-switch-desc">Show confirmation before flipping an order's direction or
                           reversing a position.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Confirm Flip / Reverse"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Confirm Flip / Reverse"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
@@ -544,7 +544,7 @@
                         <span class="cs-switch-title">Session Breaks</span>
                         <span class="cs-switch-desc">Show session breaks on intraday charts.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Session Breaks"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Session Breaks"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row" id="csExtendedHours">
@@ -552,7 +552,7 @@
                         <span class="cs-switch-title">Extended Hours</span>
                         <span class="cs-switch-desc">Show pre-market and after-hours data.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Extended Hours"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Extended Hours"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
@@ -570,7 +570,7 @@
                         <span class="cs-switch-title">Grid Lines</span>
                         <span class="cs-switch-desc">Show grid lines on the chart.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Grid Lines"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Grid Lines"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowCrosshair">
@@ -578,7 +578,7 @@
                         <span class="cs-switch-title">Crosshair</span>
                         <span class="cs-switch-desc">Show crosshair on chart.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Crosshair"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Crosshair"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowPriceLine">
@@ -586,7 +586,7 @@
                         <span class="cs-switch-title">Price Line</span>
                         <span class="cs-switch-desc">Show last price line.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Price Line"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Price Line"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowLastPriceLabel">
@@ -594,7 +594,7 @@
                         <span class="cs-switch-title">Last Price Label</span>
                         <span class="cs-switch-desc">Show price label on the right axis.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Last Price Label"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Last Price Label"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csAutoScale">
@@ -602,7 +602,7 @@
                         <span class="cs-switch-title">Auto Scale</span>
                         <span class="cs-switch-desc">Automatically fit data to the screen.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Auto Scale"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Auto Scale"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-field" style="margin-top:4px;margin-bottom:0;">
@@ -623,7 +623,7 @@
                         <span class="cs-switch-title">Show Open Positions</span>
                         <span class="cs-switch-desc">Display your open positions on chart.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Show Open Positions"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Show Open Positions"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowWorkingOrders">
@@ -631,7 +631,7 @@
                         <span class="cs-switch-title">Show Working Orders</span>
                         <span class="cs-switch-desc">Display working orders on chart.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Show Working Orders"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Show Working Orders"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowTpSlLevels">
@@ -639,7 +639,7 @@
                         <span class="cs-switch-title">Show TP/SL Levels</span>
                         <span class="cs-switch-desc">Display take profit and stop loss levels.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Show TP/SL Levels"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Show TP/SL Levels"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowRiskBox">
@@ -647,7 +647,7 @@
                         <span class="cs-switch-title">Show Risk Box</span>
                         <span class="cs-switch-desc">Display risk/reward box on new orders.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Show Risk Box"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Show Risk Box"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowEntryLabels">
@@ -655,7 +655,7 @@
                         <span class="cs-switch-title">Show Entry Labels</span>
                         <span class="cs-switch-desc">Display entry price labels on filled orders.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Show Entry Labels"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Show Entry Labels"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csShowPositionLabels">
@@ -663,7 +663,7 @@
                         <span class="cs-switch-title">Show Position Labels</span>
                         <span class="cs-switch-desc">Display position labels with P&amp;L.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Show Position Labels"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Show Position Labels"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row" id="csShowBreakevenLine">
@@ -672,7 +672,7 @@
                         <span class="cs-switch-desc">Displays a line on the chart marking the price where your position
                           breaks even. It adjusts dynamically based on the exchange's trading fee.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Breakeven Price"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Breakeven Price"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
@@ -698,7 +698,7 @@
                         <span class="material-symbols-outlined cs-notif-icon">notifications</span>
                         <span class="cs-switch-title">Desktop Notifications</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Desktop Notifications"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Desktop Notifications"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="alertSoundToggle">
@@ -706,7 +706,7 @@
                         <span class="material-symbols-outlined cs-notif-icon">volume_up</span>
                         <span class="cs-switch-title">Sound</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Sound"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Sound"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row" id="alertEmailToggle">
@@ -714,7 +714,7 @@
                         <span class="material-symbols-outlined cs-notif-icon">mail</span>
                         <span class="cs-switch-title">Email Notifications</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Email Notifications"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Email Notifications"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row" id="alertMobilePush">
@@ -722,7 +722,7 @@
                         <span class="material-symbols-outlined cs-notif-icon">smartphone</span>
                         <span class="cs-switch-title">Mobile Push <span class="cs-coming-soon">Coming Soon</span></span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Mobile Push" disabled><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Mobile Push" disabled><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
@@ -928,7 +928,7 @@
                         <span class="cs-switch-title">Show Past Events</span>
                         <span class="cs-switch-desc">Display historical news markers on past candles.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Show Past Events"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Show Past Events"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row active" id="csNewsShowUpcoming">
@@ -936,7 +936,7 @@
                         <span class="cs-switch-title">Show Upcoming Events</span>
                         <span class="cs-switch-desc">Display scheduled future events such as FOMC.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Show Upcoming Events"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Show Upcoming Events"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
@@ -1196,7 +1196,7 @@
                         <span class="cs-switch-desc">Automatically detect exchange fees and offset breakeven to truly
                           net zero.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Dynamic Fee Offset"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Dynamic Fee Offset"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
@@ -1269,7 +1269,7 @@
                         <span class="cs-switch-desc">New stop losses start with trailing enabled. They trail at the
                           distance you place them from entry.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Enable by Default"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Enable by Default"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
@@ -1336,7 +1336,7 @@
                         <span class="cs-switch-desc">Orders can only reduce an existing position, never open a new
                           one.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Reduce Only"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Reduce Only"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                     <div class="cs-switch-row">
@@ -1345,7 +1345,7 @@
                         <span class="cs-switch-desc">Limit orders are placed as maker orders only — rejected if they'd
                           fill immediately.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Post Only"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Post Only"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
@@ -1424,7 +1424,7 @@
                         <span class="cs-switch-desc">New take profits placed on the chart start with trailing enabled,
                           using the offset above. Only the target furthest from entry can trail.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Enable by Default"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Enable by Default"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
@@ -1578,7 +1578,7 @@
                       <span class="cs-switch-title">Auto-Reconnect</span>
                       <span class="cs-switch-desc">Automatically reconnect if a connection drops.</span>
                     </span>
-                    <button type="button" class="ui-toggle" aria-label="Toggle Auto-Reconnect">
+                    <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Auto-Reconnect">
                       <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
                     </button>
                   </div>
@@ -1587,7 +1587,7 @@
                       <span class="cs-switch-title">Show Status in Status Bar</span>
                       <span class="cs-switch-desc">Display connection status at the bottom of the terminal.</span>
                     </span>
-                    <button type="button" class="ui-toggle" aria-label="Toggle Show Status in Status Bar">
+                    <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Show Status in Status Bar">
                       <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
                     </button>
                   </div>
@@ -2529,7 +2529,7 @@
                         <span class="acct-action-title">Email Login Alerts</span>
                         <span class="acct-action-desc">Get an email when a new device signs in to your account.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Email Login Alerts"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Email Login Alerts"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
 
@@ -2542,7 +2542,7 @@
                         <span class="acct-action-desc">Require email confirmation for all withdrawal or payout
                           requests.</span>
                       </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Withdrawal Confirmation"><span
+                      <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Withdrawal Confirmation"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
 
@@ -2869,9 +2869,9 @@
           <div class="card-head">
             <span class="card-title">Watchlist</span>
             <div class="card-head-actions">
-              <span class="material-symbols-outlined pop-trigger" id="wlAddBtn" data-tooltip="Add symbol">add</span>
+              <span class="material-symbols-outlined pop-trigger" id="wlAddBtn" aria-label="Add symbol" data-tooltip="Add symbol">add</span>
               <span class="material-symbols-outlined pop-trigger" id="wlColsBtn"
-                data-tooltip="Customize columns">more_horiz</span>
+                aria-label="Customize columns" data-tooltip="Customize columns">more_horiz</span>
             </div>
           </div>
           <div class="wl-tabs" id="wlTabs">
@@ -3119,55 +3119,55 @@
               <button class="tf-btn tf-more pop-trigger" id="tfMoreTrigger"><span id="tfMoreLabel"></span><span
                   class="material-symbols-outlined" style="font-size:14px;">expand_more</span></button>
             </div>
-            <button class="ct-action-btn pop-trigger" id="candleTypeTrigger" data-tooltip="Candles"><span
+            <button class="ct-action-btn pop-trigger" id="candleTypeTrigger" aria-label="Candles" data-tooltip="Candles"><span
                 class="material-symbols-outlined" style="font-size:15px;">candlestick_chart</span><span class="ct-label"
                 id="candleTypeLabel">Candles</span><span class="material-symbols-outlined ct-caret"
                 style="font-size:15px;">expand_more</span></button>
-            <button class="ct-action-btn pop-trigger" id="indicatorsTrigger" data-tooltip="Indicators"><span
+            <button class="ct-action-btn pop-trigger" id="indicatorsTrigger" aria-label="Indicators" data-tooltip="Indicators"><span
                 class="material-symbols-outlined" style="font-size:15px;">function</span><span
                 class="ct-label">Indicators</span></button>
-            <button class="ct-action-btn" id="replayToggle" data-tooltip="Replay"><span
+            <button class="ct-action-btn" id="replayToggle" aria-label="Replay" data-tooltip="Replay"><span
                 class="material-symbols-outlined" style="font-size:15px;">fast_rewind</span><span
                 class="ct-label">Replay</span></button>
-            <button class="ct-action-btn pop-trigger" id="marketScannerTrigger" data-tooltip="Market Scanner"><span
+            <button class="ct-action-btn pop-trigger" id="marketScannerTrigger" aria-label="Market Scanner" data-tooltip="Market Scanner"><span
                 class="material-symbols-outlined" style="font-size:15px;">radar</span><span class="ct-label">Market
                 Scanner</span></button>
-            <button class="ct-action-btn pop-trigger" id="marketSessionsTrigger" data-tooltip="Market Sessions"><span
+            <button class="ct-action-btn pop-trigger" id="marketSessionsTrigger" aria-label="Market Sessions" data-tooltip="Market Sessions"><span
                 class="material-symbols-outlined" style="font-size:15px;">schedule</span><span class="ct-label">Market
                 Sessions</span></button>
-            <button class="ct-action-btn" id="newsToggle" data-tooltip="News"><span class="material-symbols-outlined"
+            <button class="ct-action-btn" id="newsToggle" aria-label="News" data-tooltip="News"><span class="material-symbols-outlined"
                 style="font-size:15px;">article</span><span class="ct-label">News</span></button>
-            <button class="ct-action-btn" id="quickOrderToggle" data-tooltip="Quick Market Order"><span
+            <button class="ct-action-btn" id="quickOrderToggle" aria-label="Quick Market Order" data-tooltip="Quick Market Order"><span
                 class="material-symbols-outlined" style="font-size:15px;">bolt</span><span class="ct-label">Quick
                 Order</span></button>
-            <button class="ct-action-btn pop-trigger" id="layoutPickerTrigger" data-tooltip="Chart Layout"><span
+            <button class="ct-action-btn pop-trigger" id="layoutPickerTrigger" aria-label="Chart Layout" data-tooltip="Chart Layout"><span
                 class="material-symbols-outlined" style="font-size:15px;">space_dashboard</span><span
                 class="ct-label">Layout</span></button>
           </div>
 
           <div class="chart-body">
             <div class="chart-draw-toolbar" id="chartDrawToolbar">
-              <button class="cdt-btn active" data-tooltip="Cursor"><span
+              <button class="cdt-btn active" aria-label="Cursor" data-tooltip="Cursor"><span
                   class="material-symbols-outlined">crop_free</span></button>
-              <button class="cdt-btn" data-tooltip="Trend Line"><span
+              <button class="cdt-btn" aria-label="Trend Line" data-tooltip="Trend Line"><span
                   class="material-symbols-outlined">timeline</span></button>
-              <button class="cdt-btn" data-tooltip="Horizontal Line"><span
+              <button class="cdt-btn" aria-label="Horizontal Line" data-tooltip="Horizontal Line"><span
                   class="material-symbols-outlined">horizontal_split</span></button>
-              <button class="cdt-btn" data-tooltip="Brush"><span
+              <button class="cdt-btn" aria-label="Brush" data-tooltip="Brush"><span
                   class="material-symbols-outlined">gesture</span></button>
-              <button class="cdt-btn" data-tooltip="Text"><span
+              <button class="cdt-btn" aria-label="Text" data-tooltip="Text"><span
                   class="material-symbols-outlined">text_fields</span></button>
               <div class="cdt-sep"></div>
-              <button class="cdt-btn" data-tooltip="Measure"><span
+              <button class="cdt-btn" aria-label="Measure" data-tooltip="Measure"><span
                   class="material-symbols-outlined">straighten</span></button>
-              <button class="cdt-btn" data-tooltip="Zoom In"><span
+              <button class="cdt-btn" aria-label="Zoom In" data-tooltip="Zoom In"><span
                   class="material-symbols-outlined">zoom_in</span></button>
-              <button class="cdt-btn" data-tooltip="Lock All"><span
+              <button class="cdt-btn" aria-label="Lock All" data-tooltip="Lock All"><span
                   class="material-symbols-outlined">lock</span></button>
-              <button class="cdt-btn" data-tooltip="Hide Drawings"><span
+              <button class="cdt-btn" aria-label="Hide Drawings" data-tooltip="Hide Drawings"><span
                   class="material-symbols-outlined">visibility</span></button>
               <div class="cdt-sep"></div>
-              <button class="cdt-btn" data-tooltip="Remove Drawings"><span
+              <button class="cdt-btn" aria-label="Remove Drawings" data-tooltip="Remove Drawings"><span
                   class="material-symbols-outlined">delete_outline</span></button>
             </div>
             <div class="chart-pane-area" id="chartPaneArea">
@@ -4768,7 +4768,7 @@
         <section class="sess-section sess-section--orb active" id="sessOrbCard">
           <div class="sess-section-head sess-section-head--switch">
             <span class="sess-section-title">Opening Range (ORB)</span>
-            <button type="button" class="ui-toggle sess-section-toggle" id="sessOrbMasterToggle"
+            <button type="button" class="ui-toggle sess-section-toggle" role="switch" aria-checked="false" id="sessOrbMasterToggle"
               aria-label="Toggle Opening Range">
               <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
             </button>
@@ -4831,7 +4831,7 @@
               <span class="cs-switch-title">ORB Delta Score</span>
               <span class="cs-switch-desc">Net buying/selling during ORB formation</span>
             </span>
-            <button type="button" class="ui-toggle" aria-label="Toggle ORB Delta Score">
+            <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle ORB Delta Score">
               <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
             </button>
           </div>
@@ -4840,7 +4840,7 @@
               <span class="cs-switch-title">Smart Breakout</span>
               <span class="cs-switch-desc">L2 validation, alerts &amp; failure detection</span>
             </span>
-            <button type="button" class="ui-toggle" aria-label="Toggle Smart Breakout">
+            <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Smart Breakout">
               <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
             </button>
           </div>
@@ -4849,7 +4849,7 @@
               <span class="cs-switch-title">Smart Targets</span>
               <span class="cs-switch-desc">L2-based TP levels from liquidity &amp; order flow</span>
             </span>
-            <button type="button" class="ui-toggle" aria-label="Toggle Smart Targets">
+            <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Smart Targets">
               <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
             </button>
           </div>
@@ -4866,7 +4866,7 @@
               <span class="cs-switch-title">ORB Analysis Dashboard</span>
               <span class="cs-switch-desc">Quality score, stats, bias &amp; intel panel</span>
             </span>
-            <button type="button" class="ui-toggle" id="sessDashboardToggle" aria-label="Toggle ORB Analysis Dashboard">
+            <button type="button" class="ui-toggle" role="switch" aria-checked="false" id="sessDashboardToggle" aria-label="Toggle ORB Analysis Dashboard">
               <span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span>
             </button>
           </div>
@@ -5308,7 +5308,7 @@
           <span class="cs-switch-title">Dynamic Fee Offset</span>
           <span class="cs-switch-desc">Automatically detect exchange fees and offset breakeven to truly net zero.</span>
         </span>
-        <button type="button" class="ui-toggle" aria-label="Toggle Dynamic Fee Offset"><span
+        <button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle Dynamic Fee Offset"><span
             class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
       </div>
     </div>
@@ -5744,7 +5744,7 @@
   <script src="js/workspace.js?v=17"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=17"></script>
-  <script src="js/app.js?v=337"></script>
+  <script src="js/app.js?v=338"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=24"></script>
   <script src="js/market-scanner.js?v=16"></script>

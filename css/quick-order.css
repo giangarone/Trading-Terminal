@@ -66,7 +66,6 @@
   border: none;
   border-radius: 0;
   cursor: pointer;
-  color: #fff;
 }
 
 .qop-side:hover {
@@ -87,10 +86,12 @@
 
 .qop-buy {
   background: var(--long);
+  color: var(--on-long);
 }
 
 .qop-sell {
   background: var(--short);
+  color: var(--on-short);
 }
 
 /* Amount field — a text input (never type=number) to avoid native spinners */

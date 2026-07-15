@@ -1133,7 +1133,7 @@
   border: none;
   outline: none;
   font-family: var(--sans);
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   font-size: 13px;
   color: var(--text-primary);
 }
@@ -1225,7 +1225,7 @@
 .sm-pct-display {
   text-align: center;
   font-size: 24px;
-  font-weight: 800;
+  font-weight: var(--fw-semi);
   font-family: var(--sans);
   color: var(--accent);
   margin: 0 0 8px;

@@ -16,6 +16,9 @@
   --on-signal: #0b0f10;
   --on-long: #fff;
   --on-short: #fff;
+  /* Text/icon color that sits on a saturated brand fill (gradient logo tiles, colored badges).
+     White in both themes because the fill is always dark/saturated regardless of theme. */
+  --on-solid: #fff;
   --long-border: rgba(46, 191, 133, .5);
   --short-border: rgba(242, 73, 92, .5);
   --long-chip: #091b13;
@@ -144,6 +147,7 @@
   --purple-dim: #e1d8fd;
   --purple-guide: rgba(124, 92, 214, .6);
   --on-accent: #fff;
+  --on-solid: #fff;
   --info: #2563eb;
   --info-dim: #ccdefd;
   --info-border: rgba(37, 99, 235, .5);

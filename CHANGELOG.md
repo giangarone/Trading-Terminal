@@ -12,10 +12,15 @@
 * **Draft order lines** — Draft orders now use dashed entry lines, which become solid once placed.
 * **Position size on entry chips** — Filled position chips now show the position size instead of BUY or SELL.
 * **Improved Settings search** — Search now finds individual settings, cards and options, not only section names. Results can be navigated with the keyboard.
+* **Toggle switch accessibility** — Toggle switches now expose `role="switch"` and keep `aria-checked` in sync with their on/off state, so assistive tech announces the correct state.
+* **Icon button accessibility** — Icon-only buttons that previously relied on a visual tooltip now also carry an `aria-label`, giving them accessible names.
+* **Reduced heavy font weights** — Text set at weights above 600 (`700`/`800`) across the settings, workspace, order-line, quick-trade and other panels now uses the `--fw-semi` (600) token, matching the design mandate.
 
 ### Fixed
 
 * **Settings search no longer triggers unsaved changes** — Typing in search no longer activates the Save button.
+* **Undefined font-weight token** — Four rules referenced a non-existent `--fw-ui` token and silently lost their intended weight; they now use `--fw-semi`.
+* **Hardcoded white text colors** — Replaced hardcoded `#fff` on the quick-order buy/sell buttons and two logo tiles with themed tokens (`--on-long`/`--on-short` and the new `--on-solid`) so they adapt correctly in both themes.
 
 ## 2026-07-15
 

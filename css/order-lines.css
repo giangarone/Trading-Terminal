@@ -506,12 +506,12 @@
 }
 
 .ol-drag-float-label {
-  font-weight: 700;
+  font-weight: var(--fw-semi);
 }
 
 .ol-drag-float-amt {
   font-family: var(--sans);
-  font-weight: 700;
+  font-weight: var(--fw-semi);
 }
 
 .ol-chip.entry {
@@ -1541,7 +1541,7 @@
   background: var(--accent);
   color: var(--on-accent);
   font-size: 9.5px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
 }
 
 .pop-sep {

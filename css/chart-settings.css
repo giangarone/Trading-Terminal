@@ -38,7 +38,7 @@
 .cs-title {
   font-family: var(--sans);
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   letter-spacing: .06em;
   color: var(--text-primary);
   text-transform: uppercase;
@@ -834,7 +834,7 @@
   padding: 0 9px;
   border-radius: 6px;
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   letter-spacing: .02em;
 }
 
@@ -1155,7 +1155,7 @@
 
 .bc-account-badge {
   font-size: 9px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   letter-spacing: .06em;
   padding: 2px 6px;
   border-radius: var(--r-pill);
@@ -1234,7 +1234,7 @@
 
 .bc-active-badge {
   font-size: var(--fs-sm);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   color: var(--accent);
   background: var(--accent-dim);
   border-radius: var(--r-pill);
@@ -1430,10 +1430,10 @@
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: var(--fw-semi);
   letter-spacing: -.3px;
   flex-shrink: 0;
-  color: #fff;
+  color: var(--on-solid);
 }
 
 .bc-exchange-info {
@@ -1710,7 +1710,7 @@
   display: inline-flex;
   align-items: center;
   font-size: var(--fs-sm);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   padding: 3px 9px;
   border-radius: var(--r-pill);
   width: fit-content;
@@ -1751,7 +1751,7 @@
   border: 1px solid var(--border-default);
   color: var(--text-secondary);
   font-size: var(--fs-sm);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
   cursor: pointer;
   transition: color var(--t-ui), border-color var(--t-ui);
 }
@@ -1851,7 +1851,7 @@
 .qt-preset-btn.active {
   color: var(--text-primary);
   background: var(--bg-surface);
-  font-weight: var(--fw-ui);
+  font-weight: var(--fw-semi);
 }
 
 /* ====== Alert Settings ====== */
@@ -2742,7 +2742,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: #fff;
+  color: var(--on-solid);
 }
 
 .bc-asset-icon .material-symbols-outlined {

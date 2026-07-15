@@ -795,7 +795,7 @@
   align-items: center;
   gap: 6px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: .03em;
@@ -881,7 +881,7 @@
 
 .gauge-caption .verdict {
   font-size: 18px;
-  font-weight: 800;
+  font-weight: var(--fw-semi);
   letter-spacing: .02em;
   margin-top: 1px;
 }

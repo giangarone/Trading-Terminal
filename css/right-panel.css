@@ -47,7 +47,7 @@
 }
 
 .search-input span.symv {
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   font-size: 13px;
 }
 
@@ -186,7 +186,7 @@
 
 .bs-btn .bs-price {
   font-size: 17px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   font-family: var(--sans);
 }
 

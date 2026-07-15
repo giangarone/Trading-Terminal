@@ -5500,7 +5500,7 @@
     templateSettingsOptions.innerHTML = TEMPLATE_SAVE_OPTIONS.map(o =>
       '<div class="tpl-opt-row' + (saved[o.key] ? ' active' : '') + '" data-opt-key="' + o.key + '">' +
       '<span class="tpl-opt-label">' + o.label + '</span>' +
-      '<button type="button" class="ui-toggle" aria-label="Toggle ' + o.label + '"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>' +
+      '<button type="button" class="ui-toggle" role="switch" aria-checked="false" aria-label="Toggle ' + o.label + '"><span class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>' +
       '</div>'
     ).join('');
     templateSettingsOptions.querySelectorAll('.tpl-opt-row').forEach(row => {
@@ -8992,5 +8992,34 @@
   renderTradeHistory();
   renderAlerts();
   window.refreshTodayJournalCard(); // sync the Trading Journal with the seeded trade history on load
+
+  /* Accessibility: keep each .ui-toggle switch's aria-checked in sync with its on/off state.
+     The visual on-state is an .active class on the toggle's row (.cs-switch-row / .tpl-opt-row /
+     .sess-section--orb), flipped by many separate click handlers. Rather than touch every handler,
+     one MutationObserver watches those rows for class changes and mirrors the result onto the
+     button's aria-checked, so screen readers always announce the correct on/off state. */
+  (function initToggleA11y() {
+    const ROW_SELECTOR = '.cs-switch-row, .tpl-opt-row, .sess-section--orb';
+    function syncToggle(btn) {
+      const row = btn.closest(ROW_SELECTOR);
+      const isOn = !!(row && row.classList.contains('active'));
+      btn.setAttribute('aria-checked', isOn ? 'true' : 'false');
+    }
+    function syncAll(root) {
+      (root || document).querySelectorAll('.ui-toggle[role="switch"]').forEach(syncToggle);
+    }
+    syncAll();
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((m) => {
+        if (m.type === 'attributes' && m.target.matches && m.target.matches(ROW_SELECTOR)) {
+          const btn = m.target.querySelector('.ui-toggle[role="switch"]');
+          if (btn) syncToggle(btn);
+        } else if (m.type === 'childList') {
+          m.addedNodes.forEach((n) => { if (n.nodeType === 1) syncAll(n); });
+        }
+      });
+    });
+    observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+  })();
 
 })();

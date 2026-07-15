@@ -71,7 +71,7 @@
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--text-secondary);
@@ -105,7 +105,7 @@
 }
 
 .opp-sym {
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   font-size: 13px;
 }
 
@@ -181,7 +181,7 @@
 
 .jc-month-lbl {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   min-width: 140px;
   text-align: center;
 }
@@ -269,7 +269,7 @@
 
 .d-today-tag {
   font-size: 8px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   letter-spacing: .04em;
   text-transform: uppercase;
   color: var(--on-accent);
@@ -323,7 +323,7 @@
 
 .jc-mini-month-lbl {
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   color: var(--text-primary);
 }
 
@@ -378,7 +378,7 @@
 
 .jc-tt-title {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   color: var(--text-primary);
   margin-bottom: 6px;
   padding-bottom: 6px;
@@ -435,7 +435,7 @@
 
 .signal-badge {
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   padding: 3px 9px;
   border-radius: 5px;
   letter-spacing: .02em;
@@ -648,7 +648,7 @@ table.bp-table tbody tr:hover {
 }
 
 table.bp-table tr.total-row td {
-  font-weight: 700;
+  font-weight: var(--fw-semi);
   border-top: 1px solid var(--border-strong);
   border-bottom: none;
   background: var(--bg-surface);
