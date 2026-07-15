@@ -117,6 +117,105 @@
   flex-shrink: 0;
 }
 
+/* ---- Settings search results ----
+   While a query is active the sidebar swaps its nav groups for the results list. One
+   .searching class on .cs-sidebar drives the swap, so neither list needs inline styles. */
+.cs-results {
+  display: none;
+}
+
+.cs-sidebar.searching .cs-nav-group {
+  display: none;
+}
+
+.cs-sidebar.searching .cs-results {
+  display: block;
+}
+
+/* Metrics match .cs-nav-item so results sit in the same rhythm as the nav they replace,
+   but stacked to fit the title over its breadcrumb. */
+.cs-result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  font-family: var(--sans);
+  cursor: pointer;
+  text-align: left;
+}
+
+.cs-result:hover {
+  background: var(--bg-input);
+}
+
+.cs-result.selected {
+  background: var(--accent-dim);
+}
+
+.cs-result-title {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.cs-result:hover .cs-result-title {
+  color: var(--text-primary);
+}
+
+.cs-result.selected .cs-result-title {
+  color: var(--accent);
+}
+
+/* Sentence case, unlike the uppercase .cs-nav-label above: that treatment is for short, fixed
+   structural headers, whereas a breadcrumb is variable-length content that has to be skimmed —
+   "Trade Defaults › Move SL To Breakeven" is unreadable in caps at this size. Size and color
+   already separate it from the title, so case isn't needed to do that. */
+.cs-result-path {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.cs-result-empty {
+  padding: 14px 10px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Marks where a search result landed. This goes on the whole .cs-card rather than the individual
+   row: a card is a real box (border, radius, padding) so lighting it up follows an edge the design
+   already has, whereas a row like .cs-field has no box of its own and would get a rectangle drawn
+   inside the card's padding, matching nothing. Cards hold ~2 rows on average and 7 at most, so the
+   card is a precise enough answer to "where do I look".
+   Both shadows are inset: the tint because the accent tokens are translucent and a real background
+   would paint over — then snap back off — the card's own, and the ring so it lands on top of the
+   card's 1px border instead of doubling it.
+   The tint's spread has to exceed the card's own size in both axes: an inset shadow fills a band
+   that thick in from each edge, so anything smaller leaves the middle of the card untinted. */
+@keyframes csSearchHitFade {
+  from {
+    box-shadow: inset 0 0 0 1px var(--accent-border), inset 0 0 0 9999px var(--accent-dim);
+  }
+
+  to {
+    box-shadow: inset 0 0 0 1px transparent, inset 0 0 0 9999px transparent;
+  }
+}
+
+.cs-search-hit {
+  animation: csSearchHitFade 1.6s ease-out;
+}
+
+/* Fallbacks — a pane header, or the few rows that sit outside any card — have no radius to borrow. */
+.cs-search-hit:not(.cs-card) {
+  border-radius: var(--r-sm);
+}
+
 .cs-nav-group {
   margin-bottom: 6px;
 }

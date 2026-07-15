@@ -324,7 +324,12 @@
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     const csEl = document.getElementById('chartSettingsBackdrop');
-    if (csEl && csEl.classList.contains('show')) { closeChartSettings(false); return; }
+    if (csEl && csEl.classList.contains('show')) {
+      /* An active search query is backed out of first, so Escape doesn't discard the draft. */
+      if (csSearchEscape()) return;
+      closeChartSettings(false);
+      return;
+    }
     /* Dialog-style modals are .show backdrops, not .pop-menu/.ctx-menu, so closeAllPopovers()
        doesn't reach them. Dismiss the open one via its own close fn (which resets pending
        state), matching how Escape already closes Chart Settings / Journal / Scanner. */
@@ -5602,11 +5607,241 @@
   document.querySelectorAll('.md-upgrade-btn, .md-compare-btn').forEach(btn => {
     btn.addEventListener('click', () => setCsTab('plans'));
   });
-  document.getElementById('csSearchInput').addEventListener('input', (e) => {
-    const q = e.target.value.trim().toLowerCase();
-    document.querySelectorAll('.cs-nav-item').forEach(b => {
-      b.style.display = (!q || b.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  /* ---------- Settings search ----------
+     Searches every setting in every pane, not just the sidebar nav labels. All panes live in the
+     DOM at all times (.cs-pane is hidden by class, not by being absent), so the index is built by
+     crawling the modal once — there's no separate list to keep in sync as settings are added. */
+  const csSearchInput = document.getElementById('csSearchInput');
+  const csSearchResults = document.getElementById('csSearchResults');
+  const csSidebar = document.querySelector('.cs-sidebar');
+  /* Where each kind of settings row keeps its name and its sub-text. The settings-form panes are
+     built from the cs-* components; the account-flavored panes (Security, Cloud & Sync) have their
+     own row components, and some reuse a cs-* base class while relocating the label — .sec-row is
+     a .cs-switch-row whose title is .acct-action-title, not .cs-switch-title. First match wins, so
+     those variants are listed before the base shapes they build on.
+     Rows that are read-only content rather than settings — the Security activity log, broker and
+     exchange lists — deliberately match nothing here and stay out of the index. */
+  const CS_ROW_SHAPES = [
+    { match: '.acct-action-row, .sec-row', title: '.acct-action-title', desc: '.acct-action-desc' },
+    { match: '.sync-item-row', title: '.sync-item-title', desc: '.sync-item-desc' },
+    { match: '.cs-switch-row', title: '.cs-switch-title', desc: '.cs-switch-desc' },
+    { match: '.cs-radio-row', title: '.cs-radio-title', desc: '.cs-radio-desc' },
+    /* A checkbox row's label is a bare text node beside its .chk-box, so there's nothing to select. */
+    { match: '.cs-checkbox-row', title: '', desc: '' },
+    { match: '.cs-field', title: ':scope > label:not(.cs-checkbox-row)', desc: '.cs-field-hint' },
+  ];
+  const CS_ROW_SELECTOR = CS_ROW_SHAPES.map(shape => shape.match).join(', ');
+  const CS_MAX_RESULTS = 30;
+  let csSearchIndex = null;
+  let csSearchHits = [];
+  let csSearchCursor = -1;
+
+  /* The text a row owns directly, ignoring its controls. Checkbox rows keep their label in a bare
+     text node next to the .chk-box span, so there's no element to query for. */
+  function csOwnText(el) {
+    return [...el.childNodes]
+      .filter(n => n.nodeType === Node.TEXT_NODE)
+      .map(n => n.textContent.trim())
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  function csRowShape(row) {
+    return CS_ROW_SHAPES.find(shape => row.matches(shape.match));
+  }
+
+  /* Falls back rather than giving up, so a row shape that turns up with its label somewhere
+     unanticipated still lands in the index under some usable name instead of vanishing from it. */
+  function csRowTitle(row) {
+    const shape = csRowShape(row);
+    const titled = shape && shape.title ? csTextOf(row, shape.title) : '';
+    if (titled) return titled;
+    const own = csOwnText(row);
+    if (own) return own;
+    /* A row with no name of its own (a .cs-field that only wraps checkbox rows, say) — name it
+       after the rows inside it. */
+    return [...row.querySelectorAll(CS_ROW_SELECTOR)].map(csRowTitle).filter(Boolean).join(' · ');
+  }
+
+  /* An element's text as a reader sees it. Material Symbols icons render from their ligature name,
+     so their textContent ("show_chart") would otherwise end up glued to every label it sits next to. */
+  function csVisibleText(el) {
+    if (!el) return '';
+    const clone = el.cloneNode(true);
+    clone.querySelectorAll('.material-symbols-outlined').forEach(icon => icon.remove());
+    return clone.textContent.trim().replace(/\s+/g, ' ');
+  }
+
+  function csTextOf(root, selector) {
+    return root ? csVisibleText(root.querySelector(selector)) : '';
+  }
+
+  function csRowDesc(row) {
+    const shape = csRowShape(row);
+    return shape && shape.desc ? csTextOf(row, shape.desc) : '';
+  }
+
+  function csBuildSearchIndex() {
+    const entries = [];
+    document.querySelectorAll('.cs-nav-item').forEach(navItem => {
+      const pane = document.querySelector('.cs-pane[data-cs-pane="' + navItem.dataset.csTab + '"]');
+      if (!pane) return;
+      const paneLabel = csVisibleText(navItem);
+      const groupLabel = csTextOf(navItem.closest('.cs-nav-group'), '.cs-nav-label');
+
+      /* The pane itself, so a query like "webhooks" still surfaces the section. */
+      const paneHead = pane.querySelector('.cs-pane-head');
+      if (paneHead) {
+        entries.push(csMakeEntry(paneHead, navItem.dataset.csTab, paneLabel, groupLabel,
+          [paneLabel, csTextOf(paneHead, 'p')]));
+      }
+
+      pane.querySelectorAll(CS_ROW_SELECTOR).forEach(row => {
+        /* Index only the outermost row: a .cs-checkbox-row can sit inside a .cs-field, and both
+           match the selector. The outer one carries the inner's text via csRowTitle anyway. */
+        if (row.parentElement.closest(CS_ROW_SELECTOR)) return;
+        /* Popover and context menus are transient overlays, not part of the pane's settings. */
+        if (row.closest('.pop-menu, .ctx-menu')) return;
+        const title = csRowTitle(row);
+        if (!title) return;
+        const cardTitle = csTextOf(row.closest('.cs-card') || pane, '.cs-card-title');
+        const path = cardTitle ? paneLabel + ' › ' + cardTitle : paneLabel;
+        /* Rows folded in by the dedup above still contribute their text. Radio rows always sit
+           inside a .cs-field, so without this a query for an option's name ("Custom R") would
+           match nothing. Their titles/descs only — deliberately not <select> option values. */
+        const nested = [...row.querySelectorAll(CS_ROW_SELECTOR)]
+          .flatMap(inner => [csRowTitle(inner), csRowDesc(inner)]);
+        entries.push(csMakeEntry(row, navItem.dataset.csTab, title, path,
+          [title, csRowDesc(row), cardTitle, paneLabel, ...nested]));
+      });
     });
+    return entries;
+  }
+
+  function csMakeEntry(el, pane, title, path, haystackParts) {
+    return { el, pane, title, path, haystack: haystackParts.filter(Boolean).join(' ').toLowerCase() };
+  }
+
+  /* Conditional rows (csBeCustomRWrap and friends) are shown/hidden inline by
+     csUpdateConditionalFields, so this is checked per query rather than baked into the index.
+     Walking up to the pane is safe: the pane's own hiding is a class, not an inline style. */
+  function csRowHidden(row) {
+    for (let el = row; el && !el.classList.contains('cs-pane'); el = el.parentElement) {
+      if (el.style.display === 'none') return true;
+    }
+    return false;
+  }
+
+  /* Every term must match somewhere, but matches in a setting's own name outrank ones that only
+     hit its description or card title. */
+  function csScoreEntry(entry, terms) {
+    const title = entry.title.toLowerCase();
+    let score = 0;
+    for (const term of terms) {
+      if (!entry.haystack.includes(term)) return -1;
+      if (title.startsWith(term)) score += 3;
+      else if (title.includes(term)) score += 2;
+      else score += 1;
+    }
+    return score;
+  }
+
+  function csSearchQuery(query) {
+    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!terms.length) return [];
+    if (!csSearchIndex) csSearchIndex = csBuildSearchIndex();
+    return csSearchIndex
+      .filter(entry => !csRowHidden(entry.el))
+      .map(entry => ({ entry, score: csScoreEntry(entry, terms) }))
+      .filter(hit => hit.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, CS_MAX_RESULTS)
+      .map(hit => hit.entry);
+  }
+
+  function csRenderSearch() {
+    const query = csSearchInput.value.trim();
+    csSidebar.classList.toggle('searching', !!query);
+    csSearchCursor = -1;
+    if (!query) {
+      csSearchHits = [];
+      csSearchResults.innerHTML = '';
+      return;
+    }
+    csSearchHits = csSearchQuery(query);
+    if (!csSearchHits.length) {
+      csSearchResults.innerHTML = '<div class="cs-result-empty">No settings match “'
+        + escapeHtml(query) + '”</div>';
+      return;
+    }
+    csSearchResults.innerHTML = csSearchHits.map((entry, i) =>
+      '<button type="button" class="cs-result" data-cs-hit="' + i + '">'
+      + '<span class="cs-result-title">' + escapeHtml(entry.title) + '</span>'
+      + '<span class="cs-result-path">' + escapeHtml(entry.path) + '</span>'
+      + '</button>').join('');
+  }
+
+  function csClearSearch() {
+    csSearchInput.value = '';
+    csRenderSearch();
+  }
+
+  /* Escape clears the query before it closes the modal, so backing out of a search doesn't
+     discard the settings draft. Returns whether it consumed the keypress. */
+  function csSearchEscape() {
+    if (!csSearchInput.value) return false;
+    csClearSearch();
+    return true;
+  }
+
+  function csGoToResult(entry) {
+    setCsTab(entry.pane);
+    csClearSearch();
+    /* The card is what gets marked and scrolled to, not the row itself — see .cs-search-hit in
+       chart-settings.css. Pane headers and the handful of rows outside any card mark themselves. */
+    const target = entry.el.closest('.cs-card') || entry.el;
+    /* Deferred because setCsTab resets .cs-content scrollTop and the pane has no layout until it's
+       the active one — scrolling now would measure a hidden element and then be undone. */
+    requestAnimationFrame(() => {
+      target.scrollIntoView({ block: 'center' });
+      target.classList.remove('cs-search-hit');
+      void target.offsetWidth;
+      target.classList.add('cs-search-hit');
+      /* animationend won't fire under prefers-reduced-motion, so drop the class on a timer too. */
+      setTimeout(() => target.classList.remove('cs-search-hit'), 2000);
+    });
+  }
+
+  function csMoveSearchCursor(delta) {
+    if (!csSearchHits.length) return;
+    csSearchCursor = (csSearchCursor + delta + csSearchHits.length) % csSearchHits.length;
+    csSearchResults.querySelectorAll('.cs-result').forEach((btn, i) => {
+      btn.classList.toggle('selected', i === csSearchCursor);
+      if (i === csSearchCursor) btn.scrollIntoView({ block: 'nearest' });
+    });
+  }
+
+  csSearchInput.addEventListener('input', csRenderSearch);
+  csSearchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); csMoveSearchCursor(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); csMoveSearchCursor(-1); }
+    else if (e.key === 'Enter' && csSearchHits.length) {
+      e.preventDefault();
+      csGoToResult(csSearchHits[Math.max(csSearchCursor, 0)]);
+    }
+  });
+  csSearchResults.addEventListener('click', (e) => {
+    const btn = e.target.closest('.cs-result');
+    if (btn) csGoToResult(csSearchHits[+btn.dataset.csHit]);
+  });
+  /* The ⌘K badge next to the input has always advertised this; now it does something. */
+  document.addEventListener('keydown', (e) => {
+    if (!csBackdrop.classList.contains('show')) return;
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      csSearchInput.focus();
+      csSearchInput.select();
+    }
   });
   document.getElementById('getPlanProBtn').addEventListener('click', () => {
     showToast('Terminal Pro activated', 'workspace_premium');
@@ -6280,6 +6515,7 @@
   function openChartSettings(initialTab) {
     csDraftSnapshot = JSON.stringify(chartSettings);
     populateChartSettingsForm();
+    csClearSearch();
     setCsTab(initialTab || 'general');
     closeAllPopovers();
     csMarkUnsaved();
@@ -6303,7 +6539,12 @@
     if (e.target.closest('#csSaveBtn, #csCancelBtn, #csCloseBtn, .cs-nav-item, .cs-search')) return;
     csMarkUnsaved();
   });
-  csBackdrop.addEventListener('input', csMarkUnsaved);
+  /* The search box is exempt for the same reason it's exempt from the click handler above —
+     typing a query isn't a settings change and shouldn't flip Save out of its saved state. */
+  csBackdrop.addEventListener('input', (e) => {
+    if (e.target.closest('.cs-search')) return;
+    csMarkUnsaved();
+  });
   document.getElementById('csResetBtn').addEventListener('click', () => {
     chartSettings = cloneCsDefaults();
     populateChartSettingsForm();
