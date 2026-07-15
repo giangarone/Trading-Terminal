@@ -514,14 +514,6 @@
   pointer-events: none;
 }
 
-/* Marks an entry order that merges into its direction's open position on fill. It sits in the slot the
-   TP/SL ghost handles occupy on an owning order, so it matches their height to keep the bar's geometry
-   (and dodgeEntryBars' slotting) unchanged. Colour comes entirely from the global .badge--info. */
-.ol-addon-badge {
-  height: 24px;
-  padding: 0 8px;
-}
-
 .ol-drag-float {
   position: absolute;
   transform: translate(-50%, -50%);

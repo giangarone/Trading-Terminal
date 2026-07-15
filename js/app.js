@@ -2561,13 +2561,21 @@
      has no stop handle of its own, so its message points at whichever order's stop would size it —
      telling it to "add a stop loss" would name a control it doesn't have. */
   const RISK_NO_SL_MSG = 'Add a stop loss to size this order by your risk amount.';
-  function riskNoStopMsg() {
+  /* Names the order whose stop sizes the focused one, for messages shown when that stop is missing.
+     Null when the order sizes off a stop of its own — it just needs one dragged onto the chart. An
+     add-on has no stop handle, so telling it to drag one would name a control it doesn't have. */
+  function sizingStopOwnerLabel() {
     const owner = (order && isAddOn(order)) ? tpSlOwner(order.side) : null;
-    if (!owner) return RISK_NO_SL_MSG;
-    const target = owner.filled
+    if (!owner) return null;
+    return owner.filled
       ? 'your open ' + (order.side === 'buy' ? 'long' : 'short')
       : 'your first ' + (order.side === 'buy' ? 'buy' : 'sell') + ' order';
-    return 'Add a stop loss to ' + target + ' to size this order by your risk amount.';
+  }
+  function riskNoStopMsg() {
+    const target = sizingStopOwnerLabel();
+    return target
+      ? 'Add a stop loss to ' + target + ' to size this order by your risk amount.'
+      : RISK_NO_SL_MSG;
   }
   function riskNeedsStop() {
     return !!order && isRiskMode(order.sizeMode) && !sizingStopFor(order);
@@ -4850,16 +4858,13 @@
       const side = order.side;
       const sideLabel = side === 'buy' ? 'BUY' : 'SELL';
 
-      // An add-on merges into its direction's position on fill, so it never carries TP/SL: it shows
-      // neither ghost handle, and a badge in their place says where its management lives instead.
+      // An add-on merges into its direction's position on fill, so it never carries TP/SL of its own:
+      // it shows neither ghost handle, and its levels are managed on the position instead.
       const addOn = isAddOn(order);
       const tpAddHandleHtml = addOn ? '' : '<span class="ol-chip ghost tp-add" id="tpAddHandle">TP</span>';
       const slAddHandleHtml = (!addOn && !order.sl)
         ? '<span class="ol-chip ghost sl-add" id="slAddHandle">SL</span>'
         : '';
-      const addOnBadgeHtml = !addOn ? '' :
-        '<span class="badge badge--info badge--uppercase ol-addon-badge" data-tooltip-wrap data-tooltip="Adds to your '
-        + (order.side === 'buy' ? 'long' : 'short') + ' — take profit and stop loss are managed on the position">Add-on</span>';
 
       // Risk $ with no stop loss can't be sized: show the same amber warning icon used for invalid TP/SL chips
       // in the Quantity segment (with a hover tooltip) instead of a misleading number.
@@ -4895,7 +4900,6 @@
 
           tpAddHandleHtml +
           slAddHandleHtml +
-          addOnBadgeHtml +
 
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" data-tooltip="Cancel Order">' +
           '<span class="material-symbols-outlined">close</span>' +
@@ -8258,10 +8262,12 @@
      discards it. Mirrors the Edit Exit Amount popup's exitModal pattern. */
   let sizeDraft = null;
   /* Draft copy of syncQtyFromRisk() — derives the staged qty from the draft's risk amount and the
-     live entry / stop-loss on the chart (those aren't edited here). */
+     live entry / stop-loss on the chart (those aren't edited here). Resolves the stop the same way
+     syncQtyFromRisk does, so an add-on sizes off its direction's owner rather than reading as unsized. */
   function syncDraftQtyFromRisk() {
-    if (!sizeDraft || !isRiskMode(sizeDraft.sizeMode) || !order.sl) return;
-    const riskPerContract = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
+    const stop = sizingStopFor(order);
+    if (!sizeDraft || !isRiskMode(sizeDraft.sizeMode) || !stop) return;
+    const riskPerContract = Math.abs(order.entry - stop.price) * POINT_VALUE;
     const riskDollars = effectiveRiskDollars(sizeDraft.sizeValues, sizeDraft.sizeMode);
     if (riskPerContract > 0) { sizeDraft.qty = Math.max(0, Math.floor(riskDollars / riskPerContract * 100) / 100); }
   }
@@ -8378,15 +8384,23 @@
      is expressed. Element ids are prefixed per mode so both bodies can coexist in the DOM. */
   function renderRiskBody(body, mode) {
     if (!body) return;
-    if (!order.sl) {
+    // The sizing stop isn't always this order's own: an add-on has none and sizes against the stop on
+    // its direction's owner, so ask for that one rather than reading as unsized whenever it's set there.
+    const stop = sizingStopFor(order);
+    if (!stop) {
+      const stopOwner = sizingStopOwnerLabel();
       body.innerHTML =
         '<div class="sm-state-banner warn"><span class="material-symbols-outlined">hourglass_empty</span>Waiting for Stop Loss</div>' +
-        '<div class="sm-empty"><span class="material-symbols-outlined">south</span><br>Drag the stop loss line on the chart<br>to calculate position size.</div>';
+        '<div class="sm-empty"><span class="material-symbols-outlined">south</span><br>' +
+        (stopOwner
+          ? 'Add a stop loss to ' + stopOwner + '<br>to calculate position size.'
+          : 'Drag the stop loss line on the chart<br>to calculate position size.') +
+        '</div>';
       return;
     }
     const isPct = mode === 'risk_pct';
     const p = isPct ? 'smRiskPct' : 'smRisk';
-    const stopDist = Math.abs(order.entry - order.sl.price);
+    const stopDist = Math.abs(order.entry - stop.price);
     const riskPerContract = stopDist * POINT_VALUE;
     const riskDollars = effectiveRiskDollars(sizeDraft.sizeValues, mode);
 
