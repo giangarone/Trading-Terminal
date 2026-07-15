@@ -7154,7 +7154,7 @@
       '<span class="ss-vol">' + (d ? d.volText : '') + '</span>' +
       '<button class="ss-wl-toggle' + (inWl ? ' on' : '') + '" data-sym="' + s.sym + '" data-cat="' + s.cat + '" ' +
       'data-tooltip="' + (inWl ? 'Remove from watchlist' : 'Add to watchlist') + '">' +
-      '<span class="material-symbols-outlined">star</span></button>' +
+      '<span class="material-symbols-outlined">bookmark</span></button>' +
       '</div>';
   }
 
