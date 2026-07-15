@@ -2,6 +2,17 @@
 
 All notable changes to the Trading Terminal are documented here.
 
+## 2026-07-15
+
+### Fixed
+- **Chart trades net into one position per direction** — Filled orders no longer stand as separate positions on the chart. The first order to fill in a direction becomes that direction's **main position** and owns all of its management (take profits, stop loss, and their modes); every other entry order on that side is an **add-on**, which merges into the main on fill — size summed, entry re-derived as the size-weighted average — instead of opening a second block. Previously only market orders merged; a pending Limit, Stop Limit, or Trigger Market order that filled stacked a duplicate position. The chart now carries at most one filled Long and one filled Short, and two filled blocks only ever coexist as a Long/Short pair in Hedge Mode.
+- **Reversing respects Position Mode** — The Reverse Position control (on the chart entry bar and on a Positions row) and the pending order's flip control now run through the same one-way guard as placing an order. Reversing into a direction that opposes another live order opens the *"Opposing position open"* popup rather than silently creating a long and a short in One-way mode. Reversing a position in Hedge Mode while one already exists on the other side now merges into it instead of opening a second same-side block.
+
+### Changed
+- **Pending orders fill instantly** — The 450ms sweep animation across the entry chip when a resting order reached its fill price is gone; Limit, Stop Limit, and Trigger Market orders now fill the moment price touches their level, matching how market orders already behaved.
+- **Add-ons carry no TP/SL** — An entry order placed onto a side that already has one is an add-on, and shows an **Add-on** badge in place of the TP/SL handles: its levels live on the main position. A direction's TP/SL always sit on exactly one order — the filled position if there is one, otherwise the first order placed on that side — so a lone pending order, or one left alone after the position closes, keeps (or regains) its own controls. If a different order fills first and takes the main role, the pending order's TP/SL move onto the new position rather than being discarded; any level the fill price has already passed is cleared instead, since it would otherwise close the position immediately.
+- **Risk-sized add-ons size off the main's stop** — An add-on has no stop of its own, so Risk $ / Risk % sizing measures against the stop that will actually protect it once merged, and its quantity follows that stop as it is dragged, trails, or moves to breakeven. When neither the add-on nor its main has a stop, placement is blocked with a message naming the order to add one to.
+
 ## 2026-07-14
 
 ### Added

@@ -309,6 +309,12 @@ input {
   border-color: var(--purple-guide);
 }
 
+.badge--info {
+  color: var(--info);
+  background: var(--info-dim);
+  border-color: var(--info-border);
+}
+
 .badge--solid {
   border-color: transparent;
 }

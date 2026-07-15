@@ -551,12 +551,16 @@
       const revRow = reverseBtn.closest('.pos-row');
       const sym = revRow.dataset.posSym || revRow.dataset.posId;
       const side = revRow.dataset.posSide;
+      /* ETHUSD's row is driven by the chart's order object — route it through the same
+         market-close-then-reopen logic as the entry bar's Reverse control so the two stay in sync,
+         which means it clears the same one-way guard too. Other symbols have no chart order, and the
+         guard is ETHUSD-scoped, so they reverse through the panel's own path unguarded. */
+      const chartOrder = sym === 'ETHUSD' ? findMainPosition(side) : null;
       /* Gate the reverse behind the same confirmation popup as the entry bar's Reverse control,
          so both entry points behave consistently. Panel rows are always live positions. */
-      requestReverseConfirmation(true, () => {
-        /* ETHUSD's row is driven by the chart's order object — focus that side's order and route through
-           the same market-close-then-reopen logic as the entry bar's Reverse control so both stay in sync. */
-        if (sym === 'ETHUSD' && focusFilledChartOrderBySide(side)) {
+      const confirmThenReverse = () => requestReverseConfirmation(true, () => {
+        if (chartOrder) {
+          order = chartOrder;
           reverseFilledPosition();
           return;
         }
@@ -564,6 +568,12 @@
         if (!result) return;
         showToast(sym + ' reversed to ' + (result.newSide === 'buy' ? 'Long' : 'Short') + ' at ' + fmt(result.price, result.dec), 'swap_vert');
       });
+      if (chartOrder) {
+        const newSide = chartOrder.side === 'buy' ? 'sell' : 'buy';
+        guardedPlace(newSide, confirmThenReverse, chartOrder);
+      } else {
+        confirmThenReverse();
+      }
     }
   });
   /* wrap a raw .range-slider with its track (idempotent) — for sliders inserted at runtime;
@@ -650,7 +660,11 @@
     const orderType = isChartTrade ? (PD_ORDER_TYPE_MAP[chartSettings.positionDefaults.orderType] || 'Market') : autoOrderType;
     // Market chart trades snap to live price immediately so TPs/SL are calculated correctly
     const entry = roundTick((isChartTrade && orderType === 'Market') ? currentPrice : entryPrice);
-    const expanded = chartSettings.tpSlDisplayMode === 'expanded';
+    // An order placed onto a side that already has one is an add-on: it will merge into that
+    // direction's position on fill, so it never gets TP/SL of its own. Asked before the push below,
+    // so tpSlOwner can't match the order being created.
+    const mergesIntoOpenPosition = !!tpSlOwner(side);
+    const expanded = chartSettings.tpSlDisplayMode === 'expanded' && !mergesIntoOpenPosition;
     let tps = [];
     let sl = null;
     if (expanded) {
@@ -1366,28 +1380,12 @@
     order = orders.length ? orders[orders.length - 1] : null;
     render(); closeAllPopovers();
   }
-  /* quick visual sweep of the entry chip's progress fill before the (instant) fill completes */
-  const FILL_SWEEP_MS = 450;
-  function startFillSweep(o) {
-    o = o || order;
-    if (!o || o.filled || o.filling) return;
-    o.filling = true;
-    // Scope the entry-chip lookup to this order's own DOM so the right chip animates when
-    // several orders are on the chart (falls back to the layer when there's no per-order box).
-    const chip = (o._el || layer).querySelector('.ol-chip.entry');
-    if (chip) chip.classList.add('filling');   // CSS transitions the fill width 0 -> 100%
-    setTimeout(() => {
-      if (!o) return;
-      o.filling = false;
-      confirmOrderFill(o);                       // existing instant fill: history, position, locked render
-    }, FILL_SWEEP_MS);
-  }
-  // Re-point the focus to `o` before filling: the fill sweep runs on a timer, by which point the
-  // global `order` may have moved to another order, so every caller passes the order that filled.
-  function confirmOrderFill(o) {
-    order = o || order;
-    if (!order || order.filled) return;
-    order.filled = true;
+  // Re-point the focus to `o` before filling: the global `order` may be pointing at a different
+  // order than the one that reached its fill condition, so every caller passes the order that filled.
+  /* Resolve the realized fill price for the focused order. Runs before any merge, since the merge
+     needs the final price to weight the average entry with. Reads the module-level `order` because
+     the helpers it calls (syncQtyFromRisk, netRiskPerContract) do the same. */
+  function applyFillPriceAdjustments() {
     // Limit and Stop Limit both fill at the entry (limit) line or better: the entry snaps onto the
     // market when the market offers a better price. A marketable buy at 4600 with market 4500 fills
     // at 4500; a Stop Limit, once its trigger is touched, fills at its entry/limit line the same way.
@@ -1406,41 +1404,134 @@
       order.entry = roundTick(order.entry * (1 + dir * slipFrac));
       if (order.sl) order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE; // risk reflects real entry
     }
-    // Anchor trailing stop to actual fill price so it starts trailing from there
+  }
+
+  /* This order just became its direction's main position. If a different pending order on the same side
+     was holding the direction's TP/SL — it was the owner until this fill took that role from it — hand
+     the lines over rather than discarding them and leaving the new position unprotected. The main is
+     always empty here (a filled main would itself have been the owner, so every other same-side order
+     would already be a TP/SL-less add-on), so nothing is ever overwritten.
+     Only levels still live at THIS fill come across: they were placed against the prior owner's entry,
+     and a different fill price can leave one the wrong side of the market — a TP under a long's fill, a
+     stop above it — where it would close the position on the next tick. For a filled order tpSlSideOk
+     measures against live market, which is exactly that test.
+     Returns what happened, so the caller can report it after the fill's own toast. */
+  function takeTpSlFromPriorOwner() {
+    const priorOwner = allOrders().find(x =>
+      !x.filled && x.side === order.side && x !== order && (x.tps.length || x.sl));
+    if (!priorOwner) return null;
+    const main = order;
+    main.tps = priorOwner.tps.filter(tp => tpSlSideOk('tp', tp.price));
+    main.sl = (priorOwner.sl && tpSlSideOk('sl', priorOwner.sl.price)) ? priorOwner.sl : null;
+    priorOwner.tps = [];
+    priorOwner.sl = null;
+    main.initialRisk = main.sl ? Math.abs(main.entry - main.sl.price) * POINT_VALUE : null;
+    reconcileTrailStart();   // a dropped target can strand a 'start trailing at TPn'
+    // The demoted owner is a risk-sized add-on now if it sizes that way; render's resyncRiskSizedAddOns
+    // re-derives its quantity off the stop that just moved, so there's nothing to do for it here.
+    return (main.tps.length || main.sl) ? 'moved' : 'cleared';
+  }
+
+  function confirmOrderFill(o) {
+    order = o || order;
+    if (!order || order.filled) return;
+    // Set before anything else. The tick loop calls this synchronously while iterating a snapshot of
+    // the orders, so an order that fills — including one merged away and removed below — is still
+    // visited again in that same pass; this flag is what makes the re-entry a no-op.
+    order.filled = true;
+    applyFillPriceAdjustments();
+
+    // An open position on this side already owns the direction: merge into it rather than opening a
+    // second block. The add-on is dropped from `orders` first so the merge's `order = main` lands last
+    // and survives render()'s focus restore.
+    const main = findMainPosition(order.side, order);
+    if (main) {
+      const addOn = order;
+      removeOrder(addOn);
+      mergeFillIntoMain(main, addOn.side, addOn.qty, addOn.entry, addOn.orderType);
+      return;
+    }
+
+    // Anchor trailing stop to actual fill price so it starts trailing from there. Runs before the
+    // handoff so it only ever re-anchors a stop this order already owned — lines inherited from a
+    // demoted owner keep the prices they were placed at.
     if (slTrailActive()) {
       const dir = order.side === 'buy' ? 1 : -1;
       const cfg = getEffectiveTrailConfig();
       order.sl.price = roundTick(order.entry - dir * computeTrailDist(cfg, order.entry));
       syncQtyFromRisk();
     }
+    // Runs before the panel upsert below, so a brand-new Positions row is built with the inherited levels.
+    const handoff = takeTpSlFromPriorOwner();
     orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'filled', type: order.orderType, time: nowTimeStr(), pnl: null });
     tradeHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, pnl: null, role: 'open', type: order.orderType, time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
     window.upsertPositionFromFill('ETHUSD', order.side, order.qty, order.entry, { tps: order.tps, sl: order.sl });
     render();
     showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
+    if (handoff === 'moved') {
+      showToast('TP/SL moved onto the position — your other order now adds to it', 'swap_vert');
+    } else if (handoff === 'cleared') {
+      showToast('Your other order\'s TP/SL were already past this fill and were cleared', 'error');
+    }
   }
 
-  /* A market order on a side that already has an open position adds to it (average entry, sum qty)
-     instead of opening a duplicate — matching the Positions panel's merge. In hedge mode a buy adds to
-     the long and a sell to a separate short (each matches only its own side); in one-way mode the guard
-     has already blocked the opposing case, so only same-side adds reach here. No same-side position →
-     a fresh filled market order is created. */
+  /* ---------- one net position per direction ----------
+     The chart carries at most one FILLED long and one FILLED short (two only ever coexist as a
+     long/short pair in hedge mode). The first order to fill in a direction is that direction's MAIN
+     position and owns all of its management — take profits, stop loss, and their modes. Every other
+     same-side entry order is an ADD-ON: it carries no TP/SL of its own and, when it fills, merges into
+     the main at a size-weighted average entry instead of opening a second block. */
+
+  /* The filled position on `side`, if any. `exclude` skips one order — the caller passes the order
+     that is filling (or reversing), which is still in `orders` under its old state. */
+  function findMainPosition(side, exclude) {
+    return allOrders().find(o => o.filled && o.side === side && o !== exclude) || null;
+  }
+  /* The one order on `side` that owns TP/SL: the filled main if there is one, otherwise the
+     first-added pending order (`orders` is push-ordered, so the first match is the earliest).
+     Ownership is derived rather than stored, so it re-settles on its own when orders fill, cancel,
+     or close — a pending order left alone on its side becomes the owner and regains its controls. */
+  function tpSlOwner(side) {
+    return allOrders().find(o => o.filled && o.side === side)
+      || allOrders().find(o => !o.filled && o.side === side)
+      || null;
+  }
+  /* Every same-side order that isn't the owner — no TP/SL, and it merges into the main on fill. */
+  function isAddOn(o) {
+    return !!o && tpSlOwner(o.side) !== o;
+  }
+
+  /* Merge a fill into an existing same-side position: average the entry by size, sum the quantity.
+     The main's TP/SL keep their absolute prices — they were placed at price levels the user meant —
+     so only initialRisk is re-derived from the new average entry. History and the Positions panel
+     both receive the ADD's qty/price, not the merged total: the panel runs its own weighted average
+     (upsertPositionFromFill), and passing the total would double-count it.
+     `toast` overrides the default message for callers where "added to" undersells what happened
+     (reversing into an existing opposite position closes one side as well as growing the other). */
+  function mergeFillIntoMain(main, side, qty, price, orderType, toast) {
+    const newQty = main.qty + qty;
+    main.entry = roundTick((main.entry * main.qty + price * qty) / newQty);
+    main.qty = newQty;
+    if (main.sl) main.initialRisk = Math.abs(main.entry - main.sl.price) * POINT_VALUE;
+    orderHistory.unshift({ symbol: 'ETHUSD', side, qty, price, status: 'filled', type: orderType, time: nowTimeStr(), pnl: null });
+    tradeHistory.unshift({ symbol: 'ETHUSD', side, qty, price, pnl: null, role: 'open', type: orderType, time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT });
+    window.upsertPositionFromFill('ETHUSD', side, qty, price, { tps: main.tps, sl: main.sl });
+    order = main;
+    render();
+    showToast(
+      toast ? toast.msg : 'Added to ' + (side === 'buy' ? 'long' : 'short') + ' at ' + fmt(price),
+      toast ? toast.icon : 'add'
+    );
+  }
+
+  /* A market order on a side that already has an open position adds to it instead of opening a
+     duplicate. In hedge mode a buy adds to the long and a sell to a separate short (each matches only
+     its own side); in one-way mode the guard has already blocked the opposing case, so only same-side
+     adds reach here. No same-side position → a fresh filled market order is created. */
   function addOrCreateMarketFill(side, price, qty) {
     qty = parseFloat(qty) || 1;
-    const sameDir = allOrders().find(o => o.filled && o.side === side);
-    if (sameDir) {
-      const newQty = sameDir.qty + qty;
-      sameDir.entry = roundTick((sameDir.entry * sameDir.qty + price * qty) / newQty);
-      sameDir.qty = newQty;
-      if (sameDir.sl) sameDir.initialRisk = Math.abs(sameDir.entry - sameDir.sl.price) * POINT_VALUE;
-      orderHistory.unshift({ symbol: 'ETHUSD', side, qty, price, status: 'filled', type: 'Market', time: nowTimeStr(), pnl: null });
-      tradeHistory.unshift({ symbol: 'ETHUSD', side, qty, price, pnl: null, role: 'open', type: 'Market', time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT });
-      window.upsertPositionFromFill('ETHUSD', side, qty, price, { tps: sameDir.tps, sl: sameDir.sl });
-      order = sameDir;
-      render();
-      showToast('Added to ' + (side === 'buy' ? 'long' : 'short') + ' at ' + fmt(price), 'add');
-      return;
-    }
+    const main = findMainPosition(side);
+    if (main) { mergeFillIntoMain(main, side, qty, price, 'Market'); return; }
     const prevVal = qtyInput.value;
     qtyInput.value = qty;
     createOrder(side, price, 'quick');
@@ -1482,6 +1573,21 @@
     window.closePositionPct('ETHUSD', 100, oldSide);
     const entry = roundTick(price);
     const oldOrder = order;
+
+    // Hedge mode can already have a position on the side we're reversing into. Reversing must add to
+    // it, not open a second block beside it — the chart carries one filled position per direction.
+    const opposingMain = findMainPosition(newSide, oldOrder);
+    if (opposingMain) {
+      removeOrder(oldOrder);
+      mergeFillIntoMain(opposingMain, newSide, qty, entry, 'Market', {
+        msg: 'Reversed into your open ' + (newSide === 'buy' ? 'long' : 'short') + ' at ' + fmt(entry),
+        icon: 'swap_vert'
+      });
+      window.refreshTodayJournalCard();
+      closeAllPopovers();
+      return;
+    }
+
     order = {
       id: 'ord' + (orderCounter++),
       side: newSide, entry, qty, orderType: 'Market', fillAbove: false,
@@ -1645,9 +1751,15 @@
     syncHedgeModeGroup(on);
   }
   /* True when an opposing order (pending or filled) or position already exists on the same crypto symbol
-     — the strict one-way rule: any live long blocks a new short, and vice versa. */
-  function opposingExistsOnChart(newSide) {
-    return allOrders().some(o => o.side !== newSide)
+     — the strict one-way rule: any live long blocks a new short, and vice versa.
+     `exclude` is the order being reversed or flipped, which is a special case: it's still on the chart
+     under its OLD side, so without skipping it a lone position would count as its own opposition and
+     block its own reversal. The ETHUSD Positions row is backed by that same chart order, so the panel
+     check has to be skipped along with it — the chart scan already covers this symbol. */
+  function opposingExistsOnChart(newSide, exclude) {
+    const opposedOnChart = allOrders().some(o => o !== exclude && o.side !== newSide);
+    if (exclude) return opposedOnChart;
+    return opposedOnChart
       || (window.hasOpposingPosition && window.hasOpposingPosition('ETHUSD', newSide));
   }
 
@@ -1664,8 +1776,8 @@
     if (hedgeBlockBackdrop) hedgeBlockBackdrop.classList.remove('show');
     hbPendingProceed = null;
   }
-  function guardedPlace(side, proceed) {
-    if (!hedgeModeEnabled() && opposingExistsOnChart(side)) { openHedgeBlock(proceed); return; }
+  function guardedPlace(side, proceed, exclude) {
+    if (!hedgeModeEnabled() && opposingExistsOnChart(side, exclude)) { openHedgeBlock(proceed); return; }
     proceed();
   }
   if (hedgeBlockBackdrop) {
@@ -2386,21 +2498,46 @@
       ? ACCOUNT_BALANCE * (sizeValues.riskPct || 0) / 100
       : (sizeValues.risk || 0);
   }
+  /* The stop that sizes `o`. An add-on has no stop of its own, so it sizes against its direction's
+     owner — the stop that will actually protect it once it has merged in. Covers both shapes: an
+     add-on under a filled main, and an add-on under a pending owner. */
+  function sizingStopFor(o) {
+    if (!o) return null;
+    if (o.sl) return o.sl;
+    const owner = tpSlOwner(o.side);
+    return owner && owner !== o ? owner.sl : null;
+  }
+  /* A risk-sized add-on's quantity comes from a stop it doesn't own, so it has to follow that stop
+     wherever it goes — dragged, trailed, moved to breakeven, or replaced when ownership changes.
+     Re-derived here, from render, rather than at each of those call sites: they all end in a render,
+     and syncQtyFromRisk on the owner alone would leave the add-on holding a stale size. Orders that
+     size some other way, or own their stop, are left alone. */
+  function resyncRiskSizedAddOns() {
+    const keepFocus = order;
+    allOrders().forEach(o => {
+      if (o.filled || o.sl || !isRiskMode(o.sizeMode)) return;
+      order = o;
+      syncQtyFromRisk();
+    });
+    order = keepFocus;
+  }
   /* Per-contract risk used to size Risk $ / Risk % orders. This is the NET loss a single
      contract takes if the stop is hit — the raw stop distance PLUS the round-trip fee (entry
      fill + stop-market exit) — so the sized position's loss at the stop matches the SL chip's
      net figure (slFeeCalc) exactly. Entry fee depends on order type (maker vs taker); the SL
-     always exits as a taker/market fill. Assumes order.sl exists (callers guard for it). */
-  function netRiskPerContract() {
-    const stopDist = Math.abs(order.entry - order.sl.price);
+     always exits as a taker/market fill. Takes the stop as an argument because an add-on sizes
+     against another order's (see sizingStopFor); callers guard that it exists. */
+  function netRiskPerContract(stop) {
+    const stopDist = Math.abs(order.entry - stop.price);
     const grossRisk = stopDist * POINT_VALUE;
     const entryFeeRate = /Market/.test(order.orderType) ? FEE_RATE_MARKET : FEE_RATE_LIMIT;
-    const feePerContract = order.entry * entryFeeRate + order.sl.price * FEE_RATE_MARKET;
+    const feePerContract = order.entry * entryFeeRate + stop.price * FEE_RATE_MARKET;
     return grossRisk + feePerContract;
   }
   function syncQtyFromRisk() {
-    if (!order || !isRiskMode(order.sizeMode) || !order.sl) return;
-    const riskPerContract = netRiskPerContract();
+    const stop = sizingStopFor(order);
+    if (!order || !isRiskMode(order.sizeMode) || !stop) return;
+    const riskPerContract = netRiskPerContract(stop);
     const riskDollars = effectiveRiskDollars(order.sizeValues, order.sizeMode);
     if (riskPerContract > 0) { order.qty = Math.max(0, Math.floor(riskDollars / riskPerContract * 100) / 100); }
   }
@@ -2420,14 +2557,25 @@
      SL chip, and the live-drag toggle so the check stays in one place. */
   const RISK_LIMIT_MSG = 'The selected stop-loss exceeds your risk limit. Move the stop-loss closer or increase your risk amount.';
   /* Risk sizing derives quantity from the stop-loss distance, so with no stop the size can't be computed.
-     Block placement and surface a warning (on the size pill) instead of a misleading number. */
+     Block placement and surface a warning (on the size pill) instead of a misleading number. An add-on
+     has no stop handle of its own, so its message points at whichever order's stop would size it —
+     telling it to "add a stop loss" would name a control it doesn't have. */
   const RISK_NO_SL_MSG = 'Add a stop loss to size this order by your risk amount.';
+  function riskNoStopMsg() {
+    const owner = (order && isAddOn(order)) ? tpSlOwner(order.side) : null;
+    if (!owner) return RISK_NO_SL_MSG;
+    const target = owner.filled
+      ? 'your open ' + (order.side === 'buy' ? 'long' : 'short')
+      : 'your first ' + (order.side === 'buy' ? 'buy' : 'sell') + ' order';
+    return 'Add a stop loss to ' + target + ' to size this order by your risk amount.';
+  }
   function riskNeedsStop() {
-    return !!order && isRiskMode(order.sizeMode) && !order.sl;
+    return !!order && isRiskMode(order.sizeMode) && !sizingStopFor(order);
   }
   function riskLimitExceeded() {
-    if (!order || !isRiskMode(order.sizeMode) || !order.sl) return false;
-    const riskPerContract = netRiskPerContract();
+    const stop = sizingStopFor(order);
+    if (!order || !isRiskMode(order.sizeMode) || !stop) return false;
+    const riskPerContract = netRiskPerContract(stop);
     const riskDollars = effectiveRiskDollars(order.sizeValues, order.sizeMode);
     return riskPerContract > 0
       && Math.floor(riskDollars / riskPerContract * 100) / 100 === 0;
@@ -3997,9 +4145,10 @@
       // current market price can't fire an unintended fill mid-gesture. The tick right after
       // release (isDraggingOrderLine is cleared before onDrop) evaluates the final price.
       // Evaluate fills, trailing, and breakeven for every chart order this tick. `order` is re-pointed
-      // to each order in turn so the shared helpers (checkTpFills, startFillSweep, applyTrailingStop, …)
-      // act on it; the fill sweep is passed the order explicitly since it completes on a later timer.
-      // Full re-renders are collapsed into a single render() after the loop.
+      // to each order in turn so the shared helpers (checkTpFills, applyTrailingStop, …) act on it;
+      // confirmOrderFill takes the order explicitly because it re-points `order` itself — to the
+      // position it merged into, when the fill was an add-on. Trailing/breakeven re-renders are
+      // collapsed into a single render() after the loop; a fill renders on the spot instead.
       let orderNeedsRender = false;
       const focusedBefore = order;   // preserve the user's focus across the loop's re-pointing
       // Iterate a snapshot: a fill (checkTpFills/checkSlHit) can remove its order mid-loop, and
@@ -4017,18 +4166,18 @@
           if (!isDraggingOrderLine) orderNeedsRender = true;
           else { updateEntryLinePositionLive(); updateAllTpSlLinePositionsLive(); }
         }
-        if (!order.filled && !order.pendingConfirm && !order.filling && !isDraggingOrderLine) {
+        if (!order.filled && !order.pendingConfirm && !isDraggingOrderLine) {
           if (order.orderType === 'Limit') {
             // Limit fills at its price or better, so it's marketable: a buy fills at/under the limit,
             // a sell at/over it. Placed on the far side it rests; placed through the market it fills at once.
             const limitHit = order.side === 'buy' ? last <= order.entry : last >= order.entry;
-            if (limitHit) startFillSweep(o);
+            if (limitHit) confirmOrderFill(o);
           } else if (order.orderType === 'Trigger Market') {
             // Market-if-touched: stays pending and fires only when the market price actually reaches
             // (touches) the trigger, approaching from whichever side price was on at placement.
             // It never fires while price is still away from the trigger, so it can't execute early.
             const triggerHit = order.fillAbove ? last >= order.entry : last <= order.entry;
-            if (triggerHit) startFillSweep(o);
+            if (triggerHit) confirmOrderFill(o);
           } else if (order.orderType === 'Stop Limit') {
             // Two-stage: price must touch the TRIGGER line (same touch rule as Trigger Market) to arm
             // the order, then it fills at the entry (limit) line or better — just like a Limit order.
@@ -4039,12 +4188,12 @@
             }
             if (order.stopTriggered) {
               const limitHit = order.side === 'buy' ? last <= order.entry : last >= order.entry;
-              if (limitHit) startFillSweep(o);
+              if (limitHit) confirmOrderFill(o);
             }
           } else {
             // Market / any other fallback: reach the level from its placement side.
             const hitEntry = order.fillAbove ? last >= order.entry : last <= order.entry;
-            if (hitEntry) startFillSweep(o);
+            if (hitEntry) confirmOrderFill(o);
           }
         }
         applyTrailingStop(last);
@@ -4081,15 +4230,9 @@
   function allOrders() { return orders.length ? orders : (order ? [order] : []); }
   /* Re-point the focus `order` to a specific order before an id-scoped action (panel cancels, etc.). */
   function focusOrderById(id) { const o = allOrders().find(x => x.id === id); if (o) order = o; }
-  /* Focus the filled chart order matching a side (long/short), so a Positions-tab close/reverse on that
-     side acts on the right chart order. Returns true when one exists. */
-  function focusFilledChartOrderBySide(side) {
-    const o = allOrders().find(x => x.filled && x.side === side);
-    if (o) { order = o; return true; }
-    return false;
-  }
-  /* Close every filled chart order on a side (a merged position row can back several same-side orders),
-     so a full Positions-tab close clears all of that side's chart lines. Returns true if any existed. */
+  /* Close every filled chart order on a side, so a full Positions-tab close clears that side's chart
+     lines. The chart nets to one filled position per direction, so this is normally a single order —
+     it stays a filter so a stale duplicate could never be stranded. Returns true if any existed. */
   function closeFilledChartOrdersBySide(side) {
     const matches = allOrders().filter(o => o.filled && o.side === side);
     if (!matches.length) return false;
@@ -4186,6 +4329,7 @@
     // renderOrder re-points `order` to each order it draws; save the caller's focus and restore it at
     // the end so `order = X; render();` (fills, menu edits) leaves X focused, not the last-drawn order.
     const keepFocus = order;
+    resyncRiskSizedAddOns();
     renderOpenOrders();
     renderOrderHistory();
     renderTradeHistory();
@@ -4706,15 +4850,21 @@
       const side = order.side;
       const sideLabel = side === 'buy' ? 'BUY' : 'SELL';
 
-      const tpAddHandleHtml = '<span class="ol-chip ghost tp-add" id="tpAddHandle">TP</span>';
-      const slAddHandleHtml = !order.sl
+      // An add-on merges into its direction's position on fill, so it never carries TP/SL: it shows
+      // neither ghost handle, and a badge in their place says where its management lives instead.
+      const addOn = isAddOn(order);
+      const tpAddHandleHtml = addOn ? '' : '<span class="ol-chip ghost tp-add" id="tpAddHandle">TP</span>';
+      const slAddHandleHtml = (!addOn && !order.sl)
         ? '<span class="ol-chip ghost sl-add" id="slAddHandle">SL</span>'
         : '';
+      const addOnBadgeHtml = !addOn ? '' :
+        '<span class="badge badge--info badge--uppercase ol-addon-badge" data-tooltip-wrap data-tooltip="Adds to your '
+        + (order.side === 'buy' ? 'long' : 'short') + ' — take profit and stop loss are managed on the position">Add-on</span>';
 
       // Risk $ with no stop loss can't be sized: show the same amber warning icon used for invalid TP/SL chips
       // in the Quantity segment (with a hover tooltip) instead of a misleading number.
       const sizeSegHtml = riskNeedsStop()
-        ? '<span class="ol-pill-seg ol-pill-seg--warn" id="sizePillTrigger"' + warnTipAttr(RISK_NO_SL_MSG) + '>' +
+        ? '<span class="ol-pill-seg ol-pill-seg--warn" id="sizePillTrigger"' + warnTipAttr(riskNoStopMsg()) + '>' +
             '<span class="material-symbols-outlined ol-pill-warning">error</span></span>'
         : '<span class="ol-pill-seg" id="sizePillTrigger" data-tooltip="Quantity">' + sizePillLabel() + '</span>';
 
@@ -4726,7 +4876,6 @@
         const entryClass = 'ol-chip entry ' + side
           + (placeable ? ' placeable' : '')
           + (working ? ' working' : '')
-          + (order.filling ? ' filling' : '')
           + (blocked ? ' disabled' : '');
 
         bar.innerHTML =
@@ -4734,9 +4883,8 @@
           '<span class="material-symbols-outlined">swap_vert</span>' +
           '</span>' +
 
-          '<span class="' + entryClass + '" id="entryPriceHandle"' + (riskNeedsStop() ? warnTipAttr(RISK_NO_SL_MSG) : '') + '>' +
-          '<span class="ol-chip-fill"></span>' +
-          '<span class="ol-chip-lbl">' + sideLabel + '</span>' +
+          '<span class="' + entryClass + '" id="entryPriceHandle"' + (riskNeedsStop() ? warnTipAttr(riskNoStopMsg()) : '') + '>' +
+          sideLabel +
           '</span>' +
 
           '<span class="ol-pill neutral combo" id="orderConfigPill">' +
@@ -4747,6 +4895,7 @@
 
           tpAddHandleHtml +
           slAddHandleHtml +
+          addOnBadgeHtml +
 
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" data-tooltip="Cancel Order">' +
           '<span class="material-symbols-outlined">close</span>' +
@@ -4831,14 +4980,23 @@
 
       bar.querySelector('#reverseOrderBtn').addEventListener('click', (e) => {
         e.stopPropagation();
-
-        requestReverseConfirmation(order.filled, () => {
-          if (order.filled) {
-            reverseFilledPosition();
-          } else {
-            flipWorkingOrderSide();
-          }
-        });
+        // Reversing lands this order on the other side, so it has to clear the same one-way guard a
+        // fresh order there would — otherwise it's a back door to opposing positions. Guard first:
+        // there's no point confirming a reverse that's about to be blocked.
+        // Both popups hand back control on a later tick, by which point the focus pointer may have
+        // moved to another order — so capture this one and re-point before acting on it.
+        const revOrder = order;
+        const newSide = revOrder.side === 'buy' ? 'sell' : 'buy';
+        guardedPlace(newSide, () => {
+          requestReverseConfirmation(revOrder.filled, () => {
+            order = revOrder;
+            if (revOrder.filled) {
+              reverseFilledPosition();
+            } else {
+              flipWorkingOrderSide();
+            }
+          });
+        }, revOrder);
       });
 
       const pctCloseBtn = bar.querySelector('#pctCloseBtn');

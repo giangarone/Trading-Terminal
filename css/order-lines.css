@@ -514,6 +514,14 @@
   pointer-events: none;
 }
 
+/* Marks an entry order that merges into its direction's open position on fill. It sits in the slot the
+   TP/SL ghost handles occupy on an owning order, so it matches their height to keep the bar's geometry
+   (and dodgeEntryBars' slotting) unchanged. Colour comes entirely from the global .badge--info. */
+.ol-addon-badge {
+  height: 24px;
+  padding: 0 8px;
+}
+
 .ol-drag-float {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -586,33 +594,6 @@
 .ol-chip.entry.working.sell {
   border: 1px solid var(--short-border);
   color: var(--short);
-}
-
-/* Button-wide progress fill: empty while resting, sweeps to 100% on fill trigger */
-.ol-chip-fill {
-  position: absolute;
-  inset: 0;
-  width: 0;
-  transition: width 450ms ease-out;
-  pointer-events: none;
-}
-
-.ol-chip.entry.working.buy .ol-chip-fill {
-  background: var(--long-dim);
-}
-
-.ol-chip.entry.working.sell .ol-chip-fill {
-  background: var(--short-dim);
-}
-
-.ol-chip.entry.working.filling .ol-chip-fill {
-  width: 100%;
-}
-
-/* Label sits above the progress fill */
-.ol-chip-lbl {
-  position: relative;
-  z-index: 1;
 }
 
 .ol-chip.entry.disabled {
