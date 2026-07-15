@@ -126,7 +126,7 @@
   opacity: .5;
 }
 
-/* Breakeven '% to Target' ghost trigger line — sits between entry and TP1, in the breakeven color */
+/* Breakeven '% to TP1' ghost trigger line — sits between entry and TP1, in the breakeven color */
 .ol-line.be-trigger {
   border-color: var(--long-border);
   opacity: .5;

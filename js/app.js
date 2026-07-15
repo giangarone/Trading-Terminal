@@ -1986,9 +1986,9 @@
     if (unit === 'percent') return { min: 0, max: 50, step: 0.1 };
     return { min: 0, max: 10, step: 0.1 }; // fee percentage (of entry)
   }
-  /* the reference target for the '% to Target' breakeven trigger — TP1 (the first take-profit). */
+  /* the reference target the '% to TP1' breakeven trigger measures against — the first take-profit. */
   function breakevenRefTp() { return (order && order.tps.length) ? order.tps[0] : null; }
-  /* the two price-based BE triggers ('% to Target' and 'Custom R Multiple') draw a draggable line and
+  /* the two price-based BE triggers ('% to TP1' and 'Custom R Multiple') draw a draggable line and
      arm from applyBreakeven on price — unlike tp1/tp2/tp3, which arm from checkTpFills on a TP hit. */
   function isPriceBasedBeTrigger(trigger) { return trigger === 'pct' || trigger === 'customR'; }
   /* risk distance in points, used by the 'Custom R Multiple' trigger. Once filled the risk is locked to
@@ -1998,7 +1998,7 @@
     if (order.filled && order.initialRisk) return order.initialRisk / POINT_VALUE;
     return Math.abs(order.entry - order.sl.price);
   }
-  /* price at which a price-based breakeven trigger fires. '% to Target' sits a fraction of the way from
+  /* price at which a price-based breakeven trigger fires. '% to TP1' sits a fraction of the way from
      entry to TP1; 'Custom R Multiple' sits N times the initial risk beyond entry. Both land on the
      profit side of entry for longs and shorts alike. */
   function breakevenTriggerPrice(beCfg) {
@@ -2259,7 +2259,7 @@
     syncQtyFromRisk();
     showToast('Stop loss moved to breakeven', 'vertical_align_center');
   }
-  /* Price-based breakeven: the '% to Target' and 'Custom R Multiple' triggers fire once price reaches
+  /* Price-based breakeven: the '% to TP1' and 'Custom R Multiple' triggers fire once price reaches
      their level. The TP-hit triggers (tp1/tp2/tp3) fire from checkTpFills on the mapped TP hit instead. */
   function applyBreakeven(currentPrice) {
     if (!order || !order.filled || !slBeActiveMode() || order.sl.beActive) return;
@@ -4798,7 +4798,7 @@
         });
 
         // ---- Breakeven price-based ghost trigger line (draggable, shown pre-fire only) ----
-        // Both '% to Target' (a fraction of the way from entry to TP1) and 'Custom R Multiple' (N times
+        // Both '% to TP1' (a fraction of the way from entry to TP1) and 'Custom R Multiple' (N times
         // the initial risk beyond entry) show a line at the price that arms breakeven (applyBreakeven).
         const beCfg = getEffectiveBeConfig();
         const beShowLine = isPriceBasedBeTrigger(beCfg.trigger) && breakevenTriggerPrice(beCfg) !== null;
@@ -8292,7 +8292,7 @@
   const slBeOvTriggerToggle = document.getElementById('slBeOvTriggerToggle');
   const slBeOvOffsetUnitToggle = document.getElementById('slBeOvOffsetUnitToggle');
   const slBeOvOffsetValue = document.getElementById('slBeOvOffsetValue');
-  /* show only the value field the selected breakeven trigger needs (Custom R / % to Target) */
+  /* show only the value field the selected breakeven trigger needs (Custom R / % to TP1) */
   function syncBeOvTriggerFields(trigger) {
     document.getElementById('slBeOvCustomRWrap').style.display = trigger === 'customR' ? '' : 'none';
     document.getElementById('slBeOvPctWrap').style.display = trigger === 'pct' ? '' : 'none';
@@ -8332,7 +8332,7 @@
   function resolveBreakevenTpId() {
     if (!order || !order.tps.length) return null;
     const cfg = getEffectiveBeConfig();
-    if (isPriceBasedBeTrigger(cfg.trigger)) return null; // price-based ('% to Target' / 'Custom R') — armed by applyBreakeven, not a TP hit
+    if (isPriceBasedBeTrigger(cfg.trigger)) return null; // price-based ('% to TP1' / 'Custom R') — armed by applyBreakeven, not a TP hit
     if (cfg.trigger === 'tp1') return order.tps[0].id;
     if (cfg.trigger === 'tp2') return (order.tps[1] || order.tps[order.tps.length - 1]).id;
     if (cfg.trigger === 'tp3') return (order.tps[2] || order.tps[order.tps.length - 1]).id;
@@ -8407,8 +8407,8 @@
       order.sl.beActive = false;
       const ov = ensureBeOverride();
       // Dynamic default: with a single TP, a TP-hit trigger is pointless (the TP closes the trade),
-      // so fall back to the price-based '% to Target'. A price-based trigger the user already picked
-      // ('% to Target' or 'Custom R Multiple') is kept as-is.
+      // so fall back to the price-based '% to TP1'. A price-based trigger the user already picked
+      // ('% to TP1' or 'Custom R Multiple') is kept as-is.
       if (ov && order.tps.length < 2 && !isPriceBasedBeTrigger(ov.trigger)) ov.trigger = 'pct';
       order.sl.beTpId = (ov && isPriceBasedBeTrigger(ov.trigger)) ? null : resolveBreakevenTpId();
     }
@@ -8575,7 +8575,7 @@
     dec.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 1) - 0.1); commit(); });
     inc.addEventListener('click', (e) => { e.stopPropagation(); input.value = clampVal((parseFloat(input.value) || 1) + 0.1); commit(); });
   }
-  /* Breakeven % to Target stepper — mirrors the draggable ghost trigger line */
+  /* Breakeven % to TP1 stepper — mirrors the draggable ghost trigger line */
   {
     const input = document.getElementById('slBeOvPctValue');
     const inc = document.getElementById('slBeOvPctInc');
