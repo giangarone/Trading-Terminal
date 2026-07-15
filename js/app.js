@@ -24,7 +24,6 @@
   // reads this so they can never disagree again. Exposed on window for the overlays.js IIFE.
   let ACCOUNT_BALANCE = 52430.00;
   window.getAccountBalance = () => ACCOUNT_BALANCE;
-  const TP_TRAIL_DEFAULT = { offsetValue: 0.05, offsetUnit: 'percent' }; // seed for a TP's trailing offset
 
   const chart = document.getElementById('chartPlaceholder');
   const layer = document.getElementById('orderLineLayer');
@@ -55,9 +54,9 @@
     defaultStopLoss: { r: 1.0, type: 'stopMarket' },
     moveSlToBreakeven: { trigger: 'tp1', customR: 1, pctToTp: 50, offsetValue: BE_ROUND_TRIP_FEE_PCT, offsetUnit: 'fee', dynamicFee: true },
     breakevenLine: { enabled: false },
-    trailingStop: { distanceValue: 1.0, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
+    trailingStop: { enabledByDefault: false, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
     atrStop: { multiplier: 2.0 },
-    trailingTp: { distanceValue: 0.5, distanceUnit: 'percent' },
+    trailingTp: { enabledByDefault: false, distanceValue: 0.05, distanceUnit: 'percent' },
     globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true, lockRR: false },
     // sizingMethod + defaultSize drive the size of chart right-click "Buy/Sell @ price" trades (the
     // Default Size card). quickMarketSize is separate — it only sizes the right-click "Buy/Sell Market" actions.
@@ -87,6 +86,8 @@
         merged.moveSlToBreakeven = Object.assign({}, CS_DEFAULTS.moveSlToBreakeven, merged.moveSlToBreakeven);
         merged.breakevenLine = Object.assign({}, CS_DEFAULTS.breakevenLine, merged.breakevenLine);
         merged.positionDefaults = Object.assign({}, CS_DEFAULTS.positionDefaults, merged.positionDefaults);
+        merged.trailingTp = Object.assign({}, CS_DEFAULTS.trailingTp, merged.trailingTp);
+        merged.trailingStop = Object.assign({}, CS_DEFAULTS.trailingStop, merged.trailingStop);
         // 'Points' was removed as a trailing-distance unit — migrate any persisted value to %
         if (merged.trailingStop && merged.trailingStop.distanceUnit === 'points') merged.trailingStop.distanceUnit = 'percent';
         // Trailing TP now mirrors the tp-trail-menu (only % / Ticks) — migrate any persisted 'points' to %
@@ -674,13 +675,13 @@
         id: 'tp' + (tpCounter++),
         price: roundTick(entry + dir * t.r * baseR),
         pct: t.pct,
-        trailing: false,
-        trailOffset: { ...TP_TRAIL_DEFAULT },
+        trailing: !!chartSettings.trailingTp.enabledByDefault,
+        trailOffset: makeTpTrailOffset(),
         activated: false,
         exitPrice: null
       }));
       if (chartSettings.defaultStopLoss) {
-        sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), enabled: false, mode: 'trailing', autoTrailing: false, atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
+        sl = { price: roundTick(entry - dir * chartSettings.defaultStopLoss.r * baseR), enabled: !!chartSettings.trailingStop.enabledByDefault, mode: 'trailing', autoTrailing: false, atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
       }
     }
     // Chart trades inherit the full Position Sizing default — both the method and its value. Each saved sizing
@@ -711,6 +712,7 @@
     // guard (hedge mode) runs before this in the placement paths, so conflicting orders never get here
     // in one-way mode.
     orders.push(order);
+    if (order.sl) applySlModePlacement(); // the placement gap is the trail distance
     if (useRiskSizing) syncQtyFromRisk(); // compute qty now if Expanded auto-attached an SL; no-op without one
     render();
   }
@@ -1458,7 +1460,7 @@
     // demoted owner keep the prices they were placed at.
     if (slTrailActive()) {
       const dir = order.side === 'buy' ? 1 : -1;
-      const cfg = getEffectiveTrailConfig();
+      const cfg = ensureSlConfig();
       order.sl.price = roundTick(order.entry - dir * computeTrailDist(cfg, order.entry));
       syncQtyFromRisk();
     }
@@ -2016,13 +2018,17 @@
     if (beCfg.trigger === 'customR') return (beCfg.customR != null ? +beCfg.customR : 1).toFixed(1) + 'R';
     return Math.round(beCfg.pctToTp != null ? beCfg.pctToTp : 50) + '%'; // pct
   }
-  function getEffectiveTrailConfig() { return (order && order.sl && order.sl.trailOverride) || chartSettings.trailingStop; }
   function getEffectiveAtrConfig() { return chartSettings.atrStop; }
   /* ---- Trailing-TP model: each TP carries a simple { offsetValue, offsetUnit } config.
      The offset is the distance between the TP level and its draggable Offset line. ---- */
+  /* A new TP's trailing offset is seeded from the Trailing Take Profit card (Global Settings).
+     Once created, a TP owns its offset — later settings changes don't touch it. */
+  function makeTpTrailOffset() {
+    return { offsetValue: chartSettings.trailingTp.distanceValue, offsetUnit: chartSettings.trailingTp.distanceUnit };
+  }
   function ensureTpTrailOffset(tp) {
     if (!tp) return null;
-    if (!tp.trailOffset) tp.trailOffset = { ...TP_TRAIL_DEFAULT };
+    if (!tp.trailOffset) tp.trailOffset = makeTpTrailOffset();
     if (tp.activated === undefined) tp.activated = false;
     if (tp.exitPrice === undefined) tp.exitPrice = null;
     return tp.trailOffset;
@@ -2074,10 +2080,19 @@
   function slTrailActive() { return !!(order && order.sl && order.sl.enabled && order.sl.mode === 'trailing'); }
   function slAtrActive() { return !!(order && order.sl && order.sl.enabled && order.sl.mode === 'atr'); }
   function slBeActiveMode() { return !!(order && order.sl && order.sl.enabled && order.sl.mode === 'breakeven'); }
-  /* Each SL carries its own fixed-trailing distance config, seeded from the global default */
+  /* Each SL carries its own trailing config. The distance is the entry↔SL gap — where the stop is
+     placed is the room the trader wants trailed — so it's adopted from placement rather than
+     configured globally. Callers building a new SL attach it first, then call applySlModePlacement()
+     to fill this in, since the gap can't be measured until the SL is on the order. */
   function makeSlConfig() {
     const b = chartSettings.trailingStop;
-    return { distanceValue: b.distanceValue, distanceUnit: b.distanceUnit === 'points' ? 'percent' : b.distanceUnit, start: b.start, startCustomR: b.startCustomR };
+    const unit = b.distanceUnit === 'points' ? 'percent' : b.distanceUnit;
+    return {
+      distanceValue: +slGapDistance(unit).toFixed(slDistanceParams(unit).dp),
+      distanceUnit: unit,
+      start: b.start,
+      startCustomR: b.startCustomR
+    };
   }
   function ensureSlConfig() {
     if (!order || !order.sl) return null;
@@ -2179,7 +2194,7 @@
   /* For filled positions: move SL only in the favorable direction (ratchet) */
   function applyTrailingStop(currentPrice) {
     if (!slTrailActive() || !order.filled) return;
-    const cfg = getEffectiveTrailConfig();
+    const cfg = ensureSlConfig();
     if (cfg.start !== 'immediate' && !meetsTriggerCondition(cfg.start, cfg.startCustomR, currentPrice)) return;
     const dir = order.side === 'buy' ? 1 : -1;
     const candidate = roundTick(currentPrice - dir * computeTrailDist(cfg, currentPrice));
@@ -2195,7 +2210,7 @@
   function applyTrailingStopPreview() {
     if (!slTrailActive() || order.filled) return;
     const dir = order.side === 'buy' ? 1 : -1;
-    const cfg = getEffectiveTrailConfig();
+    const cfg = ensureSlConfig();
     const refPrice = order.orderType === 'Market' ? qtCurrentPrice() : order.entry;
     const newSl = roundTick(refPrice - dir * computeTrailDist(cfg, refPrice));
     if (newSl !== order.sl.price) {
@@ -2915,10 +2930,11 @@
         const finalPrice = last.price;
         if (kind === 'tp') {
           const newId = 'tp' + (tpCounter++);
-          order.tps.push({ id: newId, price: finalPrice, pct: 100, trailing: false, trailOffset: { ...TP_TRAIL_DEFAULT }, activated: false, exitPrice: null });
+          order.tps.push({ id: newId, price: finalPrice, pct: 100, trailing: !!chartSettings.trailingTp.enabledByDefault, trailOffset: makeTpTrailOffset(), activated: false, exitPrice: null });
           rebalanceTpAllocations(newId);
         } else {
-          order.sl = { price: finalPrice, enabled: false, mode: 'trailing', autoTrailing: false, atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
+          order.sl = { price: finalPrice, enabled: !!chartSettings.trailingStop.enabledByDefault, mode: 'trailing', autoTrailing: false, atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
+          applySlModePlacement(); // the placement gap is the trail distance
           order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
           syncQtyFromRisk();
         }
@@ -5664,13 +5680,13 @@
     dec.addEventListener('click', () => { input.value = clampStep(parseFloat(input.value || '0') - activeParams().step); });
     inc.addEventListener('click', () => { input.value = clampStep(parseFloat(input.value || '0') + activeParams().step); });
   }
-  const PERCENT_DISTANCE_STEP = { min: 0.1, max: 50, step: 0.1 };
-  const ATR_DISTANCE_STEP = { min: 0.01, max: 20, step: 0.1 };
+  // The trailing TP's percent offset mirrors tpOffsetParams, which the per-TP Offset popover on the
+  // chart uses, so both ends of the setting accept the same values.
+  const TTP_PERCENT_OFFSET_STEP = { min: 0.01, max: 50, step: 0.01 };
   const FEE_MULTIPLIER_STEP = { min: 0.1, max: 10, step: 0.1 };
   // breakeven offset allows 0 (SL exactly at entry) and decimals for percent/fee — its own params, not the shared distance ones
   bindCsStepper('csBeOffset', 0, 200, 1, { min: 0, max: 50, step: 0.1 }, undefined, { min: 0, max: 10, step: 0.1 });
-  bindCsStepper('csTsDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP, ATR_DISTANCE_STEP);
-  bindCsStepper('csTtpDistance', 1, 2000, 5, PERCENT_DISTANCE_STEP);
+  bindCsStepper('csTtpDistance', 1, 2000, 5, TTP_PERCENT_OFFSET_STEP);
   function bindPlainStepper(valueId, min, max, step, onChange) {
     const input = document.getElementById(valueId);
     const dec = document.getElementById(valueId + 'Dec');
@@ -6127,13 +6143,14 @@
 
     document.getElementById('csShowBreakevenLine').classList.toggle('active', !!s.breakevenLine.enabled);
 
-    document.getElementById('csTsDistanceValue').value = s.trailingStop.distanceValue;
+    document.getElementById('csTsEnabledByDefault').classList.toggle('active', !!s.trailingStop.enabledByDefault);
     document.querySelectorAll('#csTsDistanceUnitToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingStop.distanceUnit));
     document.querySelectorAll('#csTsStartToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingStop.start));
     document.getElementById('csTsStartCustomRValue').value = s.trailingStop.startCustomR;
 
     document.getElementById('csAtrMultiplier').value = s.atrStop.multiplier;
 
+    document.getElementById('csTtpEnabledByDefault').classList.toggle('active', !!s.trailingTp.enabledByDefault);
     document.getElementById('csTtpDistanceValue').value = s.trailingTp.distanceValue;
     document.querySelectorAll('#csTtpDistanceUnitToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingTp.distanceUnit));
 
@@ -6195,7 +6212,7 @@
         enabled: document.getElementById('csShowBreakevenLine').classList.contains('active'),
       },
       trailingStop: {
-        distanceValue: parseFloat(document.getElementById('csTsDistanceValue').value) || 1,
+        enabledByDefault: document.getElementById('csTsEnabledByDefault').classList.contains('active'),
         distanceUnit: document.querySelector('#csTsDistanceUnitToggle .cs-radio-row.active').dataset.unit,
         start: document.querySelector('#csTsStartToggle .cs-radio-row.active').dataset.unit,
         startCustomR: parseFloat(document.getElementById('csTsStartCustomRValue').value) || 1,
@@ -6204,6 +6221,7 @@
         multiplier: parseFloat(document.getElementById('csAtrMultiplier').value) || 2,
       },
       trailingTp: {
+        enabledByDefault: document.getElementById('csTtpEnabledByDefault').classList.contains('active'),
         distanceValue: parseFloat(document.getElementById('csTtpDistanceValue').value) || 1,
         distanceUnit: document.querySelector('#csTtpDistanceUnitToggle .cs-radio-row.active').dataset.unit,
       },

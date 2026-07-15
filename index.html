@@ -1232,7 +1232,7 @@
                     </div>
                     <div class="cs-fields-row">
                       <div class="cs-field" id="csTsDistanceWrap">
-                        <label>Distance</label>
+                        <label>Distance Unit</label>
                         <div class="cs-radio-group" id="csTsDistanceUnitToggle">
                           <div class="cs-radio-row active" data-unit="percent">
                             <span class="cs-radio-dot"></span>
@@ -1245,15 +1245,6 @@
                           <div class="cs-radio-row" data-unit="atr">
                             <span class="cs-radio-dot"></span>
                             <span class="cs-radio-text"><span class="cs-radio-title">ATR</span></span>
-                          </div>
-                        </div>
-                        <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="csTsDistanceValue" readonly value="1.0">
-                          <div class="price-stepper-arrows">
-                            <button type="button" id="csTsDistanceInc"><span
-                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" id="csTsDistanceDec"><span
-                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
                           </div>
                         </div>
                       </div>
@@ -1296,6 +1287,15 @@
                           </div>
                         </div>
                       </div>
+                    </div>
+                    <div class="cs-switch-row cs-switch-row--divided" id="csTsEnabledByDefault">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Enable by Default</span>
+                        <span class="cs-switch-desc">New stop losses start with trailing enabled. They trail at the
+                          distance you place them from entry.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Enable by Default"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
 
@@ -1388,7 +1388,7 @@
                           </div>
                         </div>
                         <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="csTtpDistanceValue" readonly value="0.5">
+                          <input type="text" id="csTtpDistanceValue" readonly value="0.05">
                           <div class="price-stepper-arrows">
                             <button type="button" id="csTtpDistanceInc"><span
                                 class="material-symbols-outlined">keyboard_arrow_up</span></button>
@@ -1400,6 +1400,15 @@
                     </div>
                     <div class="cs-helper">When activated, the trailing TP will manage the remaining position until
                       exit.</div>
+                    <div class="cs-switch-row cs-switch-row--divided" id="csTtpEnabledByDefault">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Enable by Default</span>
+                        <span class="cs-switch-desc">New take profits placed on the chart start with trailing enabled,
+                          using the offset above. Only the target furthest from entry can trail.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Enable by Default"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
                   </div>
 
 
@@ -5731,7 +5740,7 @@
   <script src="js/workspace.js?v=16"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=17"></script>
-  <script src="js/app.js?v=327"></script>
+  <script src="js/app.js?v=330"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=24"></script>
   <script src="js/market-scanner.js?v=16"></script>
