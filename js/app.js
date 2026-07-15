@@ -5689,12 +5689,27 @@
       const paneLabel = csVisibleText(navItem);
       const groupLabel = csTextOf(navItem.closest('.cs-nav-group'), '.cs-nav-label');
 
+      /* Each level matches on its own name and description only — a pane's name is not searchable
+         text for the cards inside it, nor a card's for its rows. Otherwise every level's name
+         drags its whole subtree into the results: "General" would return all 16 rows of the
+         General pane, each a separate result pointing at the same place. */
+
       /* The pane itself, so a query like "webhooks" still surfaces the section. */
       const paneHead = pane.querySelector('.cs-pane-head');
       if (paneHead) {
         entries.push(csMakeEntry(paneHead, navItem.dataset.csTab, paneLabel, groupLabel,
           [paneLabel, csTextOf(paneHead, 'p')]));
       }
+
+      /* Cards in their own right, not only through their rows: several (Security Score, Active
+         Sessions) hold read-only content and have no indexed rows for a title to ride in on. */
+      pane.querySelectorAll('.cs-card').forEach(card => {
+        if (card.closest('.pop-menu, .ctx-menu')) return;
+        const cardTitle = csTextOf(card, '.cs-card-title');
+        if (!cardTitle) return;
+        entries.push(csMakeEntry(card, navItem.dataset.csTab, cardTitle, paneLabel,
+          [cardTitle, csTextOf(card, ':scope > .cs-helper')]));
+      });
 
       pane.querySelectorAll(CS_ROW_SELECTOR).forEach(row => {
         /* Index only the outermost row: a .cs-checkbox-row can sit inside a .cs-field, and both
@@ -5704,7 +5719,9 @@
         if (row.closest('.pop-menu, .ctx-menu')) return;
         const title = csRowTitle(row);
         if (!title) return;
-        const cardTitle = csTextOf(row.closest('.cs-card') || pane, '.cs-card-title');
+        /* The card is only the breadcrumb here, not searchable text — see the note above. */
+        const card = row.closest('.cs-card');
+        const cardTitle = card ? csTextOf(card, '.cs-card-title') : '';
         const path = cardTitle ? paneLabel + ' › ' + cardTitle : paneLabel;
         /* Rows folded in by the dedup above still contribute their text. Radio rows always sit
            inside a .cs-field, so without this a query for an option's name ("Custom R") would
@@ -5712,7 +5729,7 @@
         const nested = [...row.querySelectorAll(CS_ROW_SELECTOR)]
           .flatMap(inner => [csRowTitle(inner), csRowDesc(inner)]);
         entries.push(csMakeEntry(row, navItem.dataset.csTab, title, path,
-          [title, csRowDesc(row), cardTitle, paneLabel, ...nested]));
+          [title, csRowDesc(row), ...nested]));
       });
     });
     return entries;

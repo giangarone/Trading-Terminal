@@ -2090,6 +2090,7 @@
   text-align: left;
   cursor: pointer;
   font-family: inherit;
+  width: 100%;
 }
 
 .acct-action-row:hover {
