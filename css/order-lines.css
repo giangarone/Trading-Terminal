@@ -106,6 +106,12 @@
   border-color: var(--short-border);
 }
 
+/* Draft order awaiting placement — dashed, since nothing exists on the exchange yet. Once placed,
+   the line goes solid, so draft-vs-live stays readable away from the entry chip. */
+.ol-line.entry.draft {
+  border-top-style: dashed;
+}
+
 .ol-line.tp {
   border-color: var(--long-border);
 }

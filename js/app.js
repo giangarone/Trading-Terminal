@@ -699,9 +699,9 @@
       sizeMode, filled: false, filledQty: 0,
       pendingConfirm: isChartTrade,
       sizeValues: {
-        dollar:  sizeMode === 'dollar'   ? pdVal : 5000,
-        percent: sizeMode === 'percent'  ? pdVal : 25,
-        risk:    sizeMode === 'risk'     ? pdVal : 500,
+        dollar: sizeMode === 'dollar' ? pdVal : 5000,
+        percent: sizeMode === 'percent' ? pdVal : 25,
+        risk: sizeMode === 'risk' ? pdVal : 500,
         riskPct: sizeMode === 'risk_pct' ? pdVal : 1
       },
       tps, sl, tpsHitCount: 0,
@@ -774,10 +774,10 @@
        - unit        → amount unit; crypto derives the coin from the symbol (see qtApplyAssetConfig)
        - quickAmounts → preset quantity pills for discrete-unit instruments (crypto uses the %/USD slider instead) */
   const QT_ASSET_CONFIG = {
-    crypto:  { marginMode: true,  leverage: true,  unit: 'ETH',       quickAmounts: null },
+    crypto: { marginMode: true, leverage: true, unit: 'ETH', quickAmounts: null },
     futures: { marginMode: false, leverage: false, unit: 'Contracts', quickAmounts: [1, 2, 5, 10, 20] },
-    stocks:  { marginMode: false, leverage: false, unit: 'Shares',    quickAmounts: [1, 10, 50, 100, 500] },
-    forex:   { marginMode: false, leverage: true,  unit: 'Lots',      quickAmounts: [0.1, 0.5, 1, 2, 5] },
+    stocks: { marginMode: false, leverage: false, unit: 'Shares', quickAmounts: [1, 10, 50, 100, 500] },
+    forex: { marginMode: false, leverage: true, unit: 'Lots', quickAmounts: [0.1, 0.5, 1, 2, 5] },
   };
   let qtAsset = QT_ASSET_CONFIG.crypto;  // current asset config — the panel defaults to ETHUSD (crypto)
   let qtCryptoMode = 'spot';             // crypto only: 'spot' (1×, no liquidation) or 'perp' (leverage + margin) — defaults to spot on launch
@@ -2316,13 +2316,13 @@
     const fillPct = Math.round(o.filledQty / o.qty * 100);
     const qtyCell = partial
       ? '<span class="ord-val-primary">' + o.qty + '</span>' +
-        '<span class="fill-progress" data-fill-status="Partially filled" data-fill-pct="' + fillPct + '"' +
-        ' data-fill-filled="' + o.filledQty + '" data-fill-total="' + o.qty + '" data-fill-unit="Shares"' +
-        ' data-fill-avg="' + fmt(o.avgFill != null ? o.avgFill : o.price) + '">' +
-        '<span class="ord-fill-frac">' + o.filledQty + ' / ' + o.qty + ' Shares</span>' +
-        '<span class="ord-fill-track">' +
-        '<span class="ord-fill-track-bar" style="width:' + fillPct + '%"></span>' +
-        '</span></span>'
+      '<span class="fill-progress" data-fill-status="Partially filled" data-fill-pct="' + fillPct + '"' +
+      ' data-fill-filled="' + o.filledQty + '" data-fill-total="' + o.qty + '" data-fill-unit="Shares"' +
+      ' data-fill-avg="' + fmt(o.avgFill != null ? o.avgFill : o.price) + '">' +
+      '<span class="ord-fill-frac">' + o.filledQty + ' / ' + o.qty + ' Shares</span>' +
+      '<span class="ord-fill-track">' +
+      '<span class="ord-fill-track-bar" style="width:' + fillPct + '%"></span>' +
+      '</span></span>'
       : '<span class="ord-val-primary">' + o.qty + '</span>';
     const statusCell = partial
       ? '<span class="bp-status partial">Partial</span>'
@@ -2548,7 +2548,7 @@
      readout, the chart-trade default, and the size-menu Apply. Returns null for modes that
      derive qty another way (Units is verbatim; Risk modes size from the stop loss). */
   function unitsForSizeValue(mode, sizeValues) {
-    if (mode === 'dollar')  return +((sizeValues.dollar || 0) / MARGIN_PER_CONTRACT).toFixed(2);
+    if (mode === 'dollar') return +((sizeValues.dollar || 0) / MARGIN_PER_CONTRACT).toFixed(2);
     if (mode === 'percent') return +((ACCOUNT_BALANCE * (sizeValues.percent || 0) / 100) / MARGIN_PER_CONTRACT).toFixed(2);
     return null;
   }
@@ -2623,9 +2623,9 @@
 
   /* Label shown in the entry-bar size pill. Shared by render() and the live SL drag handler. */
   function sizePillLabel() {
-    return order.sizeMode === 'dollar'  ? '$' + fmt(order.sizeValues.dollar, 0)
-         : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
-         : fmt(order.qty, 2);            // 'contracts', 'risk' and 'risk_pct' all show qty
+    return order.sizeMode === 'dollar' ? '$' + fmt(order.sizeValues.dollar, 0)
+      : order.sizeMode === 'percent' ? order.sizeValues.percent + '%'
+        : fmt(order.qty, 2);            // 'contracts', 'risk' and 'risk_pct' all show qty
   }
 
   /* ---------- TP/SL fee & net PnL helpers ---------- */
@@ -3831,7 +3831,7 @@
     } else if (act === 'remove') {
       chartIndicators = chartIndicators.filter(i => i.id !== id);
       if (settingsInst && settingsInst.id === id) closeAllPopovers();
-        renderLegendIndicators();
+      renderLegendIndicators();
       showToast(inst.name + ' removed', 'delete');
     }
   });
@@ -3869,12 +3869,12 @@
     const schema = getIndSchema(inst.name);
     if (settingsTab === 'inputs') {
       return [...schema.inputs,
-        sec('Smoothing'), selF('_smoothType', 'Type', SMOOTH_TYPE_OPTS, 'None'), numF('_smoothLength', 'Length', 14),
-        sec('Calculation'), selF('_calcTf', 'Timeframe', CALC_TF_OPTS, 'chart'), tglF('_waitClose', 'Wait for timeframe closes', '', true)];
+      sec('Smoothing'), selF('_smoothType', 'Type', SMOOTH_TYPE_OPTS, 'None'), numF('_smoothLength', 'Length', 14),
+      sec('Calculation'), selF('_calcTf', 'Timeframe', CALC_TF_OPTS, 'chart'), tglF('_waitClose', 'Wait for timeframe closes', '', true)];
     }
     if (settingsTab === 'style') {
       return [...schema.style,
-        sec('Line'), numF('_lineWidth', 'Line Width', 1, { min: 1 }), selF('_lineStyle', 'Line Style', LINE_STYLE_OPTS, 'Solid'), selF('_precision', 'Precision', PRECISION_OPTS, 'Default')];
+      sec('Line'), numF('_lineWidth', 'Line Width', 1, { min: 1 }), selF('_lineStyle', 'Line Style', LINE_STYLE_OPTS, 'Solid'), selF('_precision', 'Precision', PRECISION_OPTS, 'Default')];
     }
     return [sec('Show On'), ...VIS_TIMEFRAMES.map(([k, label]) => tglF('_vis_' + k, label, '', true))];
   }
@@ -4845,7 +4845,11 @@
       // An entry line that can't be dragged still has to be hoverable, or pointing at a filled
       // position's entry line — the case most likely to be paired against an opposing one — wouldn't
       // focus it. `hoverable` buys the same grab band without the drag affordance.
-      line.className = 'ol-line entry ' + order.side + (canDragEntry ? ' draggable' : ' hoverable');
+      // `draft` dashes the line while the order is still awaiting placement — nothing exists on the
+      // exchange yet. It goes solid once placed.
+      line.className = 'ol-line entry ' + order.side
+        + (canDragEntry ? ' draggable' : ' hoverable')
+        + (placeable ? ' draft' : '');
       line.style.top = y + 'px';
       box.appendChild(line);
 
@@ -4918,7 +4922,7 @@
       // in the Quantity segment (with a hover tooltip) instead of a misleading number.
       const sizeSegHtml = riskNeedsStop()
         ? '<span class="ol-pill-seg ol-pill-seg--warn" id="sizePillTrigger"' + warnTipAttr(riskNoStopMsg()) + '>' +
-            '<span class="material-symbols-outlined ol-pill-warning">error</span></span>'
+        '<span class="material-symbols-outlined ol-pill-warning">error</span></span>'
         : '<span class="ol-pill-seg" id="sizePillTrigger" data-tooltip="Quantity">' + sizePillLabel() + '</span>';
 
       if (!order.filled) {
@@ -6860,15 +6864,15 @@
     const chgDir = d && !d.up ? 'down' : 'up';
     return '<div class="ss-row" data-sym="' + s.sym + '" data-cat="' + s.cat + '" tabindex="0" role="button">' +
       '<div class="ss-sym"><span class="ss-sym-ticker">' + s.sym + '</span>' +
-        '<span class="ss-sym-name">' + name + '</span></div>' +
+      '<span class="ss-sym-name">' + name + '</span></div>' +
       '<span class="ss-broker">' + brokerFor(s.sym, s.cat) + '</span>' +
       '<span class="ss-last">' + (d ? d.lastText : '') + '</span>' +
       '<span class="ss-chg ' + chgDir + '">' + (d ? d.chgPctText : '') + '</span>' +
       '<span class="ss-vol">' + (d ? d.volText : '') + '</span>' +
       '<button class="ss-wl-toggle' + (inWl ? ' on' : '') + '" data-sym="' + s.sym + '" data-cat="' + s.cat + '" ' +
-        'data-tooltip="' + (inWl ? 'Remove from watchlist' : 'Add to watchlist') + '">' +
-        '<span class="material-symbols-outlined">star</span></button>' +
-    '</div>';
+      'data-tooltip="' + (inWl ? 'Remove from watchlist' : 'Add to watchlist') + '">' +
+      '<span class="material-symbols-outlined">star</span></button>' +
+      '</div>';
   }
 
   /* comparable value for the active sort column (numeric for the value columns,
@@ -8456,18 +8460,18 @@
     // Shared markup for the stacked-arrow price stepper; the buttons keep their per-mode ids so the existing handlers bind.
     const riskStepper = (value) =>
       '<div class="price-stepper">' +
-        '<input type="text" id="' + p + 'Input" value="' + value + '">' +
-        '<div class="price-stepper-arrows">' +
-          '<button type="button" id="' + p + 'Inc"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>' +
-          '<button type="button" id="' + p + 'Dec"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>' +
-        '</div>' +
+      '<input type="text" id="' + p + 'Input" value="' + value + '">' +
+      '<div class="price-stepper-arrows">' +
+      '<button type="button" id="' + p + 'Inc"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>' +
+      '<button type="button" id="' + p + 'Dec"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>' +
+      '</div>' +
       '</div>';
     const inputBlock = isPct
       ? '<label class="sm-amount-lbl">Risk (% of Account)</label>' +
-        riskStepper((Number.isInteger(pctVal) ? pctVal : pctVal.toFixed(2)) + '%') +
-        '<div class="sm-stat-row"><span class="l">Risk Amount</span><span class="v">' + fmtMoney(riskDollars) + '</span></div>'
+      riskStepper((Number.isInteger(pctVal) ? pctVal : pctVal.toFixed(2)) + '%') +
+      '<div class="sm-stat-row"><span class="l">Risk Amount</span><span class="v">' + fmtMoney(riskDollars) + '</span></div>'
       : '<label class="sm-amount-lbl">Risk Amount (USD)</label>' +
-        riskStepper('$' + fmt(sizeDraft.sizeValues.risk, Number.isInteger(sizeDraft.sizeValues.risk) ? 0 : 2));
+      riskStepper('$' + fmt(sizeDraft.sizeValues.risk, Number.isInteger(sizeDraft.sizeValues.risk) ? 0 : 2));
 
     body.innerHTML =
       inputBlock +
