@@ -1,150 +1,150 @@
 # Changelog
 
-All notable changes to the Trading Terminal are documented here.
-
 ## 2026-07-16
 
 ### Added
-- **This Week in the Trading Journal card** — The journal card's period dropdown now offers "This Week" alongside Today, This Month and This Year. Like the other wider periods it carries a mock baseline for the days before today, which today's real closed trades fold into, so the week stays consistent with the month and year totals around it.
-- **Hover a position to focus it** — With a long and a short on the chart at once, it was hard to tell which take profits and stop loss belonged to which. Hovering any part of a position — its entry line or bar, a TP, the SL, a trigger, offset or breakeven line, or any of their chips — now fades every element of the opposing side, so the hovered position reads as a single object. The right-axis price tags follow the hovered position too, and a filled position's entry line is now hoverable along its length (it previously responded only to a drag, which filled positions don't allow). Fading is by side rather than by order, so an add-on keeps its own position in focus alongside it. Price alerts never fade.
+
+* **This Week in Trading Journal** — Added a weekly period alongside Today, This Month and This Year.
+* **Position hover focus** — Hovering any part of a position now fades the opposite side, making its entry, TP, SL and related lines easier to identify.
 
 ### Changed
-- **Draft orders draw a dashed entry line** — A draft order awaiting placement and a placed order resting on the exchange were separated only by the fill weight of their entry chip, making them easy to confuse. A draft order's entry line is now dashed, since nothing exists on the exchange yet; the line goes solid once the order is placed. Draft-vs-live now reads from anywhere along the line rather than only at the chip.
-- **Open position chip shows size** — The locked entry chip on a filled position's order line now shows the position size in instrument units (e.g. `1.00 ETH`) instead of `BUY`/`SELL`. The direction is still carried by the chip's long/short color, so the label was redundant. Pending orders are unaffected — they keep the `BUY`/`SELL` label, having no position size to report until they fill.
-- **Settings search searches the settings** — The search box in the Settings sidebar only ever filtered the twelve nav labels, so anything more specific than a section name — "Trailing Stop", "Time Zone", "Breakeven" — matched nothing and blanked the sidebar entirely. It now searches every pane, card and setting, and while a query is active the nav groups give way to a list of matches, each showing where it lives (e.g. *Trade Defaults › Trailing Stop*). Each of the three matches on its own name and description: searching a card name like **Trailing Stop** or **Security Score** returns that card, rather than every row inside it as a separate result pointing to the same place. Picking one opens that pane and scrolls to the setting, briefly lighting up the card it lives on. Sections themselves are still matched, so searching a pane name works as it did. A setting's options are searchable too — "Restore Previous Session" finds **Startup Mode** — and settings currently collapsed behind a conditional are left out until they apply. The account-side panes are included on the same footing as the settings-form ones, so **Password**, **Two-Factor Authentication** and **Session Timeout** are all reachable; read-only content is not, so searching "password" gives you the Security setting rather than the "Password changed" line in the activity log. The results take arrow keys and Enter, Escape clears the query before it closes the modal, and the ⌘K badge beside the box now focuses it rather than being decoration.
+
+* **Draft order lines** — Draft orders now use dashed entry lines, which become solid once placed.
+* **Position size on entry chips** — Filled position chips now show the position size instead of BUY or SELL.
+* **Improved Settings search** — Search now finds individual settings, cards and options, not only section names. Results can be navigated with the keyboard.
 
 ### Fixed
-- **Typing in settings search no longer marks settings unsaved** — Every keystroke in the Settings search box flipped the Save button out of its saved state, since the modal treated any input event as a settings change. Searching is not an edit, and Save now stays put until something actually changes.
+
+* **Settings search no longer triggers unsaved changes** — Typing in search no longer activates the Save button.
 
 ## 2026-07-15
 
 ### Added
-- **Trailing stops can arm themselves** — A new **Enable by Default** toggle on the **Trailing Stop** card in Settings → Trade Management makes every stop loss start out trailing. The trail distance is the gap between entry and wherever the stop was placed, so the stop holds exactly the room you gave it and then follows price from there. It ships off, so trailing stays a deliberate per-trade choice unless you opt in.
-- **Trailing take profits can arm themselves** — A new **Enable by Default** toggle on the **Trailing Take Profit** card in Settings → Trade Management makes every take profit placed on the chart start out trailing, seeded with the offset configured on that card. It ships off, so trailing stays a deliberate per-target choice unless you opt in. The existing rule that only the target furthest from entry may trail is unchanged: a take profit added beyond the current trailing one takes trailing over, and one added closer to entry is created without it.
+
+* **Trailing Stop enabled by default** — New setting to automatically enable trailing on newly created stop losses.
+* **Trailing Take Profit enabled by default** — New setting to automatically enable trailing on newly created take profits.
 
 ### Changed
-- **Reset to Defaults moved into the settings footer** — The button now sits on the left of the settings footer, opposite Cancel and Save, instead of anchored to the bottom of the settings sidebar. It sizes to its content and shares the footer buttons' metrics so all three sit on one baseline, and stays outlined rather than filled so it still reads as the tertiary action.
-- **Trailing stop distance comes from the stop's placement** — The global **Distance** value on the **Trailing Stop** card is gone. A trailing stop now always measures its distance as the entry↔stop gap, which is how it already behaved the moment you armed trailing from the SL gear menu or dragged the stop — the global value only ever seeded a number that placement immediately overwrote. The **%/Ticks/ATR** unit selector stays as the card's remaining setting, controlling how new trailing stops express that distance, and each stop's distance is still directly editable from its gear menu.
+
+* **Reset to Defaults button moved** — The button now appears in the settings footer beside Cancel and Save.
+* **Trailing Stop distance** — Trailing distance is now calculated directly from the distance between the entry and stop loss.
+* **Pending orders fill instantly** — Removed the fill animation delay when price reaches an order.
+* **Add-on orders use the main position’s TP/SL** — Additional same-side orders no longer have separate take-profit or stop-loss controls.
+* **Risk sizing for add-ons** — Risk $ and Risk % add-ons now calculate their size using the main position’s stop loss.
 
 ### Fixed
-- **Reset to Defaults restores Position Mode** — Resetting left **Position Mode** on whatever it was, so a terminal left in Hedge Mode stayed hedged after a reset that reported success. Position Mode persists under its own key rather than with the rest of the trade settings, so the reset never reached it; it now goes back to **One-way**, the shipped default, and the card updates to match.
-- **Trailing Take Profit offset is actually applied** — The Offset value and unit on the **Trailing Take Profit** card were saved but never read: every take profit armed its trail with a hardcoded 0.05% offset regardless of the setting. A new take profit now seeds its trailing offset from the card, in either % or ticks. An existing take profit keeps its own offset, which stays editable from its TRL popover on the chart. The card's % offset also steps in hundredths down to a 0.01% minimum, matching the per-TP popover — it previously stepped in tenths and refused anything under 0.1%, so most of the usable range for a trailing TP was unreachable.
-- **Chart trades net into one position per direction** — Filled orders no longer stand as separate positions on the chart. The first order to fill in a direction becomes that direction's **main position** and owns all of its management (take profits, stop loss, and their modes); every other entry order on that side is an **add-on**, which merges into the main on fill — size summed, entry re-derived as the size-weighted average — instead of opening a second block. Previously only market orders merged; a pending Limit, Stop Limit, or Trigger Market order that filled stacked a duplicate position. The chart now carries at most one filled Long and one filled Short, and two filled blocks only ever coexist as a Long/Short pair in Hedge Mode.
-- **Reversing respects Position Mode** — The Reverse Position control (on the chart entry bar and on a Positions row) and the pending order's flip control now run through the same one-way guard as placing an order. Reversing into a direction that opposes another live order opens the *"Opposing position open"* popup rather than silently creating a long and a short in One-way mode. Reversing a position in Hedge Mode while one already exists on the other side now merges into it instead of opening a second same-side block.
 
-### Changed
-- **Pending orders fill instantly** — The 450ms sweep animation across the entry chip when a resting order reached its fill price is gone; Limit, Stop Limit, and Trigger Market orders now fill the moment price touches their level, matching how market orders already behaved.
-- **Add-ons carry no TP/SL** — An entry order placed onto a side that already has one is an add-on, and shows no TP/SL handles: its levels live on the main position. A direction's TP/SL always sit on exactly one order — the filled position if there is one, otherwise the first order placed on that side — so a lone pending order, or one left alone after the position closes, keeps (or regains) its own controls. If a different order fills first and takes the main role, the pending order's TP/SL move onto the new position rather than being discarded; any level the fill price has already passed is cleared instead, since it would otherwise close the position immediately.
-- **Risk-sized add-ons size off the main's stop** — An add-on has no stop of its own, so Risk $ / Risk % sizing measures against the stop that will actually protect it once merged, and its quantity follows that stop as it is dragged, trails, or moves to breakeven. When neither the add-on nor its main has a stop, placement is blocked with a message naming the order to add one to.
+* **Reset restores Position Mode** — Reset to Defaults now correctly restores One-way Mode.
+* **Trailing TP settings applied correctly** — New trailing take profits now use the configured offset and unit.
+* **Orders add to the existing position** — Same-side filled orders now merge into one position, combining size and recalculating the average entry.
+* **Reverse respects Position Mode** — Reversing or flipping an order now follows One-way and Hedge Mode restrictions.
 
 ## 2026-07-14
 
 ### Added
-- **News Catalyst Scope** — A new **Catalyst Scope** setting at the top of **Settings → News & Events → Chart Display** controls which catalysts the chart surfaces: **Asset-Specific & Global** (default) shows news for the selected asset alongside broader market catalysts, **Asset-Specific Only** narrows to news directly tied to the selected asset, and **Global Market Only** shows just the broader market events that may move multiple assets. The choice saves and restores with the rest of the chart settings; existing saves default to Asset-Specific & Global.
-- **Hedge Mode (crypto)** — A new position-mode setting at **Settings → General → Position Mode**, as a **One-way / Hedge** segmented control. It's an account-level accounting mode rather than a per-trade choice, so it lives in settings instead of the Quick Trade panel — the block popup below is how it surfaces during trading. **One-way** (default) allows only one direction per symbol at a time: attempting an opposing trade while a long/short order or position exists opens a block popup — *"Opposing position open"* — with **Cancel** or **Enable Hedge Mode**, and enabling it there resumes the exact blocked trade. **Hedge** lets a long and a short on the same symbol coexist as independent orders and independent Positions-panel rows.
-- **Multiple chart orders** — The chart is no longer limited to a single order. Placing a new order no longer replaces the existing one; several orders coexist, each with its own draggable entry line and its own editable TP/SL brackets, and each fills/cancels independently. Open Orders and Flatten / Cancel All act across all of them.
-- **Market orders add to a position** — Repeatedly buying or selling at market on the same side now adds to the existing position (average entry, summed size) instead of stacking duplicates, on both the chart and the Positions panel. In Hedge Mode a buy builds the long and a sell builds a separate short; the Positions panel keys rows by symbol **and** side so the two never net into one.
-- **"Order modified" toast** — Manually dragging an open order's line on the chart now shows an "Order modified" toast, but only once the drag is released. This covers the Entry, TP, and SL lines as well as the trailing-TP offset, Stop-Limit limit-price, and breakeven-trigger lines. Automatic moves (trailing stop, trailing take profit, breakeven firing) don't toast.
+
+* **News Catalyst Scope** — Choose between asset-specific news, global market news or both.
+* **Hedge Mode** — Allows long and short positions on the same symbol at the same time.
+* **Multiple chart orders** — Multiple pending orders can now exist and be managed independently.
+* **Market orders add to positions** — Repeated same-side market orders increase the existing position instead of creating duplicates.
+* **Order modified notification** — A toast now appears after manually moving an order line.
 
 ### Changed
-- **Trading Journal calendar cell layout** — Each `.jc-day` cell in the expanded journal now summarizes the day on a single line — **5W / 2L • 71% WR** — replacing the separate "66.67% win" and "8 trades" stats that sat at opposite edges of the cell. The new line adds the win/loss split, and its win rate is a whole number (the card and sidebar keep two decimals; the cell has no room for them). This also fixes a layout bug: the stats are `nowrap`, and a grid column's automatic minimum meant the cell widened to fit them and pushed the whole calendar past its container — the calendar area's content ran 807px wide inside a 586px box, scrolling sideways. Cells can now shrink and clip instead, so the grid always fits. Cell padding tightens to 8px horizontally and the line sits at 9px with tabular figures, leaving room for double-digit days (`12W / 10L • 55% WR` fits in the 89px a cell now offers).
-- **Win rate shows 2 decimals** — Every win-rate readout in the Trading Journal now renders to two decimals (e.g. **66.67%** instead of **67%**), across both the left-panel card and the expanded calendar view: the card's Winrate cell, the modal's top stats strip, the day-detail sidebar KPI, and the per-day `% win` on each calendar cell. Win rate is now carried unrounded through the stats helpers and formatted once at the point of display, so the four readouts can't drift apart again.
-- **Trading Journal card periods** — The left-panel Trading Journal card's selector now offers **Today**, **This Month**, and **This Year** instead of five individual dates (Today, Jun 24, Jun 23, Jun 20, Jun 19). The hero label follows the selection — "Today's P&L", "This Month's P&L", "This Year's P&L" — and the P&L, Winrate, Best, and Worst figures all recompute for the chosen period. Today still reads purely from real closed trades; the wider periods carry a mock baseline for the days before today that today's real trades fold into, so a new close updates whichever period is on screen and the totals stay consistent across the three.
-- **Quick Trade price fields seed from the market** — Selecting the **Limit**, **Stop Limit**, or **Trigger Market** tab in the Quick Trade panel now resets that tab's price field(s) to the current market price, and does so again on every revisit. Previously the fields held hardcoded defaults (4,500.25 / 4,505.75 / 4,498.50) that were never written to by any code, so they drifted further from the live price the longer the terminal ran — and a stale value went straight through to the placed order. Stop Limit seeds both its Stop and Limit legs to the raw market price, since the panel has no direction to offset around until Buy or Sell is clicked. Slippage Tolerance is untouched.
-- **News & Events pane regrouped** — The pane's cards now split along what the settings actually do rather than scattering filters across all four. **What to Show** collects every filter (Catalyst Scope, Event Types, Importance, Sentiment Filter), **Time Window** puts Time Range next to Show Past / Show Upcoming Events — previously split across two cards in two columns — and **Chart Display** is now only the two rendering settings (Marker Position, Max Events on Chart). The vague **Behavior** card is retired. **Importance** also changes from three toggle switches to three checkboxes, matching Event Types, which does the same job of picking a subset of categories; its per-option descriptions are folded into the labels ("High — major market-moving events").
-- **Chart right-click menu wording** — The chart's right-click order actions are now labeled "Plan Buy/Sell ETHUSD @ [price]" for the limit-style entries and "Market Buy/Sell [qty] ETHUSD" for the instant-fill entries, clarifying that the first pair places a pending order at the clicked price while the second pair fills immediately at market.
-- **Stop Limit line roles swapped** — The solid entry line is now the **`LIMIT`** (fill) price — where the position actually opens — and the dashed line is the **`STOP`** (the level that arms the order when price touches it), matching the standard Stop + Limit naming. Previously it was the reverse: the entry line was the stop and you filled at the dashed `LIMIT` line, which made Stop Limit the only order type where the entry line wasn't the fill. Now it matches Limit, Trigger Market, and Market — the entry line is always where you fill. Dragging the `STOP` across the price re-arms it (waits for a fresh touch) while dragging the entry line only moves the fill price. Switching an order to Stop Limit now seeds a valid breakout/breakdown off the current price — the STOP lands just past the market and the LIMIT (entry) just past the STOP (buy → market < stop < limit; sell → limit < stop < market) — so it's never created in the degenerate "stop already crossed" state. Breakeven/PnL readouts also read truer since they now sit on the real fill price. If the `STOP` is dragged onto the already-crossed side of the market (a buy stop at/below price, or a sell stop at/above it), the `STOP` label shows a warning glyph explaining it won't wait for a breakout and that a plain Limit is the right tool — non-blocking, and it clears once the stop is back on the valid side or has armed.
-- **Order-line drags commit on release** — Dragging a TP, SL, or Entry line no longer evaluates fills mid-gesture, so sweeping a line across the current market price while dragging can't fire an unintended fill/trigger. The final price is evaluated on the first price tick after the drag is released. The Stop-Limit limit line is covered by the same guard, and dragging the breakeven-trigger line no longer arms breakeven mid-drag — it's evaluated only after release.
-- **Trailing offset label is draggable** — The "TRL OFFSET" label on the trailing-TP offset line can now be dragged to reposition the offset, matching its line and the breakeven/limit labels. It's drag-only; the trailing settings menu stays on the TP chip's TRL badge.
-- **Shared JS helpers consolidated into `utils.js`** — The identical `mulberry32`, `fmt`, `setUpDown`, and `flashEl` helpers that had been copy-pasted across `app.js`, `right-panel.js`, and `workspace.js` now live once in `js/utils.js` (which loads first) and are used everywhere. The two HTML-escape variants (`escHtml`/`escapeHtml`) were unified into a single `escapeHtml`. Behavior is unchanged; the intentionally different `fmtVol` and `noise` variants were left alone.
-- **Market Scanner reuses the shared toast** — `market-scanner.js` no longer carries its own copy of `showToast`; it now delegates to the `window.showToast` already exported by `app.js`, so both toast paths share one implementation (and its dedup + cap-at-3 behavior) from a single source.
+
+* **Trading Journal improvements** — Added clearer win/loss summaries, improved period selection and more precise win-rate values.
+* **Quick Trade prices** — Limit, Stop Limit and Trigger Market fields now load the current market price when opened.
+* **News & Events settings reorganized** — Related settings are now grouped into clearer sections.
+* **Chart order wording improved** — Right-click actions now clearly distinguish planned orders from instant market orders.
+* **Stop Limit line roles corrected** — The solid line now represents the Limit price, while the dashed line represents the Stop trigger.
+* **Order lines apply on release** — Dragged orders, TP and SL lines are only evaluated after the user releases them.
+* **Trailing TP offset label draggable** — The offset can now be repositioned directly from its label.
 
 ### Fixed
-- **Cleared Limit Price no longer places an order at `NaN`** — Emptying the Quick Trade **Limit Price** field and hitting Buy/Sell used to hand `NaN` through as the entry price. The Limit branch now falls back to the current market price when the field can't be parsed, matching the guard the Stop Limit and Trigger Market fields already had.
-- **Overlapping order control bars** — Two orders at nearby prices drew their control bars on top of each other, which a hedged long + short did every time (both bars share the same right edge, so only their vertical position separates them). Colliding bars are now spread into their own vertical slots, centered on the group they form and ordered by price, with a long taking the upper slot when it ties with a short at the same price. Each entry **line** stays at its true price — only the bar moves — and a short tether connects a displaced bar back to its line. It applies to any cluster of orders, not just a hedged pair, and releases automatically as soon as the orders are far enough apart.
-- **Type-aware order execution** — Stop Limit and Trigger Market orders no longer share Limit's fill logic. Previously fill direction for every order type was inferred the same way, so a Trigger Market could execute early instead of waiting for its trigger. Now each type follows real-exchange behavior: a **Limit** is marketable and fills at the current market price or better (placed through the market, it fills immediately and the entry snaps onto the market level; placed on the far side, it rests until price reaches it); a **Trigger Market** is market-if-touched — it stays pending and executes only when the market price actually touches the trigger, so it never fills early; **Stop Limit** keeps its two-stage flow, where the price must touch the stop before the limit arms and fills at limit-or-better.
-- **Dragging a trigger order across the price no longer fires it** — Dragging a pending Trigger Market or Stop Limit line to the other side of the current market price used to trigger it instantly, because the order's touch-side was fixed at placement and went stale after the move. On release, a pending order now re-arms around its new position — it waits for the market price to freshly touch the new level instead of firing on the drag-cross.
-- **Type-aware order execution** — Stop Limit and Trigger Market orders no longer share Limit's fill logic. Previously fill direction for every order type was inferred the same way, so a Trigger Market could execute early instead of waiting for its trigger. Now each type follows real-exchange behavior: a **Limit** is marketable and fills at the current market price or better (placed through the market, it fills immediately and the entry snaps onto the market level; placed on the far side, it rests until price reaches it); a **Trigger Market** is market-if-touched — it stays pending and executes only when the market price actually touches the trigger, so it never fills early; **Stop Limit** keeps its two-stage flow, where the price must touch the stop before the limit arms and fills at limit-or-better.
-- **`utils.js` cache-busting** — The `js/utils.js` script tag was the one asset with no `?v=` version query, so edits could be silently served stale. It is now versioned like every other asset.
+
+* **Invalid Limit Price fallback** — Empty Limit Price fields now use the current market price instead of creating an invalid order.
+* **Overlapping order controls** — Nearby chart order bars are now separated automatically.
+* **Correct execution by order type** — Limit, Trigger Market and Stop Limit orders now follow their correct execution rules.
+* **Dragged trigger orders re-arm correctly** — Moving a trigger across the current price no longer activates it immediately.
 
 ### Removed
-- **Status card (General)** — The **Status** card in **Settings → General** — Connected Broker, Market Data, Subscription, and Version — has been removed. Its contents were static and duplicated information already surfaced elsewhere: broker and market-data connection state live in the status bar and their own settings panes, and subscription details are in **My Account**.
-- **Dead CSS** — Removed the unused `.badge--info` badge modifier and simplified a dead `var(--paper-400, …)` fallback (the raw token no longer exists) to `var(--text-muted)`.
+
+* **General Status card** — Removed duplicated broker, market data, subscription and version information.
+* **Unused styles** — Removed unused CSS and outdated style fallbacks.
 
 ## 2026-07-12
 
 ### Added
-- **Keyboard-operable dropdowns & menus** — The custom `<div>`/`<span>` dropdown and menu triggers (templates, account, symbol, amount-type, chart-settings and broker-rule selects, etc.) are now focusable and can be opened with Enter/Space, matching the watchlist rows. A single global activator translates Enter/Space into the trigger's existing click, and the accent focus ring shows in both themes. (Menus that are already native `<button>`s — timeframe, candles, tabs, layout options — were already reachable.) Full arrow-key navigation *inside* an open menu is a separate follow-up.
-- **Press-and-hold on stepper arrows** — Holding a stepper up/down arrow (Quick Trade prices, positions close amount, chart-settings distances, order-line price edit) now auto-repeats after a short delay instead of requiring one click per step. A single click still steps once.
-- **Watchlist toggle in the Symbol Selector** — Every row in the redesigned Symbol Selector has an add/remove-from-watchlist button — a **star** that fills gold when the symbol is watchlisted, matching the favorite star in the Indicators window. Adding or removing there updates the Watchlist panel instantly, and the toggle always reflects the symbol's current watchlist status.
-- **Remove from the Watchlist panel** — Watchlist rows now reveal a **×** on hover to remove the symbol directly from the panel. Removal stays in sync with the Symbol Selector's toggle in both directions.
-- **Watchlist header tooltips** — The Add symbol (**+**) and Customize columns (**⋯**) buttons at the top of the Watchlist card now show the app's custom tooltips on hover.
+
+* **Keyboard support** — Custom dropdowns and menus can now be opened using Enter or Space.
+* **Press-and-hold steppers** — Holding an increase or decrease arrow now repeats the action.
+* **Watchlist controls in Symbol Selector** — Symbols can be added to or removed from the watchlist directly from the selector.
+* **Quick removal from Watchlist** — Watchlist rows now show a remove button on hover.
+* **Watchlist tooltips** — Added tooltips to the Watchlist header controls.
 
 ### Changed
-- **Indicator settings window opens beside its legend row** — The indicator settings window (`.ind-settings-popup`) now appears pinned to the chart's leftmost edge, just below the legend row that opened it, instead of centered in the viewport. Opened from a legend row double-click or its settings gear.
-- **Sortable Symbol Selector columns** — Clicking a column header (Symbol, Last, 24h Chg, 24h Vol) sorts the list by that column; clicking the active header again flips the direction. Symbol sorts A→Z first, the numeric columns high→low first. An accent arrow marks the active column.
-- **Symbol Selector redesigned as a centered modal** — The symbol picker is now a larger, centered, draggable window (matching the Indicators window) instead of a small dropdown. Each row shows the symbol and name, live last price, 24h change %, and 24h volume, with data that ticks live while the window is open. Clicking a row still switches the chart symbol; the per-row toggle manages the watchlist. The separate watchlist "add symbol" dropdown has been folded into this one window, so the Watchlist **+** button, the topbar ticker, and a chart-legend double-click all open the same modal.
+
+* **Symbol Selector redesigned** — It is now a larger draggable modal with live price, change and volume data.
+* **Sortable Symbol Selector** — Symbol, price, change and volume columns can now be sorted.
+* **Indicator settings placement** — Indicator settings now open beside the selected chart legend row.
 
 ### Fixed
-- **Symbol Selector headers align with their columns** — The Last / 24h Chg / 24h Vol column headers now line up with the right-aligned numbers below them. The sort arrow moved to the left of the label on these columns, so it no longer pushes the header text off the column's right edge whether or not the column is the active sort.
-- **Watchlist row × uses the custom tooltip** — The remove-from-watchlist × on each Watchlist row now shows the app's own dark tooltip on hover instead of the native browser `title` popup, matching the Add symbol / Customize columns header buttons.
-- **Escape now closes the trade confirmation dialogs** — Pressing Escape dismisses the Order Confirmation, Reverse/Flip Confirmation, and Connect Broker modals (via each dialog's own close path, so pending state resets), consistent with how Escape already closes Chart Settings, the Journal, and the Scanner. These `.show` backdrops aren't `.pop-menu`/`.ctx-menu`, so the generic popover-closer had been skipping them.
-- **Toasts no longer pile up** — `showToast` now de-dups against the most recent toast (a rapid repeat refreshes its timer instead of stacking a copy) and caps the stack at 3, so bursts of actions can't flood the screen. Dismiss timers are cleared when a toast is removed early. Applied to both the main and Market Scanner toast paths, which share one stack.
-- **Reopening a dropdown no longer closes its parent window** — Clicking an open dropdown's trigger a second time (e.g. the Line Color dropdown in the indicator settings window) now toggles just that dropdown closed instead of dismissing the whole settings window. The generic `openNear` toggle path stopped calling `closeAllPopovers()`, which had been sweeping away the parent float panel the dropdown lived in.
-- **Clicking outside the indicator settings Defaults menu closes it** — With the Defaults dropdown (Reset settings / Save as default) open, clicking elsewhere in the settings window now dismisses just that dropdown. The generic outside-click closer had been skipping it because the click landed inside the settings popup (itself a `.pop-menu`), so a dedicated handler now closes the Defaults menu while leaving the settings window open.
+
+* **Symbol Selector alignment** — Headers now align correctly with their values.
+* **Escape closes confirmations** — Order, reverse and broker confirmation dialogs can now be closed with Escape.
+* **Toast stacking** — Duplicate toasts are combined and the visible stack is limited.
+* **Popup closing behavior** — Reopening or clicking outside dropdowns no longer closes unrelated windows.
 
 ## 2026-07-11
 
-### Fixed
-- **Chart crosshair over legend header** — hovering the chart legend header (`.cl-header`) now suppresses the chart crosshair, so the header reads as an interactive element rather than chart space.
-
 ### Added
-- **Chart legend (top-left overlay)** — The chart now shows a legend in its top-left corner: the asset (`ETHUSD`), timeframe, and exchange on the first line with a live indicator dot, and the O/H/L/C values plus the candle's change (absolute and %) on the second line, color-coded by candle direction. The OHLC tracks the candle under the crosshair while hovering and falls back to the latest candle otherwise; it also reflects timeframe, symbol, and account changes.
-- **Indicators in the chart legend** — Each indicator instance appears as its own legend row (e.g. `MA 60 close 0` with its live value). Hovering a row reveals **Hide**, **Settings**, and **Remove** action buttons (each with a tooltip). Overlay indicators (MA, EMA, SMA, VWAP, Bollinger Bands, etc.) show a numeric value tracking the current bar; others render as name-only rows.
-- **Indicator users count** — Each row in the Indicators panel now shows how many traders use that indicator, in a 100–8k range.
-- **Favorites tab & star** — The Indicators panel has a Favorites tab. Hovering any indicator reveals a star button to add/remove it from favorites; favorited rows show a gold filled star. Favorites start empty.
-- **Per-instance indicator settings** — Clicking a legend row's **Settings** (⚙) opens a real editor for that instance. Edits apply live to that instance's legend row only.
-- **Indicator documentation ("Read More")** — Hovering an indicator row now reveals a **Doc** button (tooltip "Read More"). Clicking it opens per-indicator documentation **inside the same panel** — the category tabs and list panes are replaced by a scrollable doc view with a Back button, the indicator name (with PRO badge for flagship indicators), and an **Add to chart** button. Each of the indicators has its own adaptive content (overview, how it works, key features, how to use it effectively, settings, signals, and tips — shown only where relevant). Back or Escape returns to the list with the category, search, and scroll position preserved.
+
+* **Chart legend** — Added symbol, timeframe, exchange, live status and OHLC information to the chart.
+* **Indicators in chart legend** — Active indicators now appear as separate legend rows with live values and controls.
+* **Indicator usage counts** — The Indicators panel now displays how many traders use each indicator.
+* **Indicator favorites** — Indicators can be saved and accessed from a Favorites tab.
+* **Multiple indicator instances** — The same indicator can be added multiple times with independent settings.
+* **Indicator documentation** — Each indicator now includes an in-app documentation view.
 
 ### Changed
-- **Indicator Settings modal redesign (TradingView-style)** — The per-instance settings editor now opens **centered** on screen with a **tabbed** layout (Inputs / Style / Visibility), compact **label-left rows** grouped under plain uppercase section headers (Smoothing, Calculation, Line, Show On) instead of bordered cards, and a footer with **Defaults / Cancel / Ok**. Cancel and ✕ revert to the settings as they were when opened; Ok keeps them. Cleaner and built to scale to indicators with many settings.
-- **Defaults menu in indicator settings** — The footer **Defaults** button now opens a small menu with **Reset settings** and **Save as default** (mockup-only — each shows a toast). The button label always reads "Defaults".
-- **Simplified Indicators toolbar button** — Removed the count badge and dropdown caret from the chart toolbar's **Indicators** button, leaving just the icon and label.
-- **Indicators panel is now a draggable window** — The Indicators dropdown opens centered in the screen instead of anchored below the Indicators button, and can be repositioned by dragging its header. The search field and buttons stay clickable; only the title/empty header area acts as the grab handle.
-- **Click an indicator to add it to the chart** — The on/off toggle has been removed from the Indicators panel. Clicking an indicator now adds it directly to the chart legend, and clicking again adds **another independent instance** (multiple instances supported, each with its own settings). Removing an instance is done from its legend row.
-- **Removed the "Active only" filter** — The Indicators panel footer and its active-only toggle were removed, since active indicators are now visible directly on the chart.
-- **Crosshair suppressed over legend indicator rows** — Hovering an indicator row in the chart legend now hides the chart crosshair, so the row reads as an interactive control rather than chart space.
+
+* **Indicator settings redesigned** — Added Inputs, Style and Visibility tabs with clearer grouped settings.
+* **Draggable indicator windows** — Indicators and settings panels can now be repositioned.
+* **Indicators added by clicking** — Clicking an indicator adds it directly to the chart.
+* **Simplified Indicators button** — Removed the count badge and dropdown arrow.
 
 ### Fixed
-- **Thin scrollbars now apply in Chrome** — Removed the `scrollbar-width: thin` declarations that, since Chrome 121, silently overrode the custom `::-webkit-scrollbar` styling and forced the wide default scrollbar. Scrollbars across the terminal now render at the intended 5px.
+
+* **Crosshair interaction** — The chart crosshair is now hidden while hovering interactive legend elements.
+* **Chrome scrollbars** — Custom thin scrollbars now display correctly in Chrome.
 
 ## 2026-07-10
 
 ### Changed
-- **Start Trailing options validated by take-profit count** — In the SL gear menu, "After TP1/TP2/TP3 Hit" options are now greyed out and unclickable when the trade doesn't have enough take profits to reach them (e.g. with 1 TP, only "Immediately" and "After TP1 Hit" are selectable). Reachability accounts for already-hit TPs, so a still-reachable trigger isn't greyed out after an earlier TP fills.
-- **Start Trailing selection clamps when a TP is removed** — If the selected trigger becomes unreachable after removing a take profit (e.g. "After TP3 Hit" with TP3 removed), it clamps down to the highest still-valid option (TP3→TP2→TP1→Immediately) while keeping trailing enabled, instead of silently never starting.
+
+* **Trailing activation options validated** — TP-based trailing options are disabled when the required TP does not exist.
+* **Trailing trigger adjusts after removing a TP** — Invalid selections automatically move to the highest available trigger.
 
 ## 2026-07-09
 
 ### Added
-- **Panel collapse/expand** — Always-visible collapse/expand buttons for the left and right panels.
-- **Chart Fullscreen Mode** — Accessible from the bottom-right button on the chart.
-- **Breakeven Line** — On/off toggle in Chart Settings. Dynamically calculates the exchange fee percentage and displays the real breakeven level on the chart.
-- **Entry Amount Settings — Apply button** — Save changes to Entry Amount Settings.
-- **Risk $ option in Trade Defaults** — Adds Risk $ as a Trade Defaults option.
-- **Account Balance in Trade Defaults** — Includes a calculated preview of the default position size based on the user's account balance.
-- **Quick Market Order Size** — New Trade Defaults input to set the default size for Quick Market Orders.
+
+* **Collapsible side panels** — Added always-visible controls to collapse or expand both side panels.
+* **Chart fullscreen mode** — Added a fullscreen button to the chart.
+* **Breakeven line** — Displays the real breakeven price after accounting for exchange fees.
+* **Entry Amount Apply button** — Entry Amount changes can now be explicitly saved.
+* **Risk $ sizing** — Added Risk $ as a Trade Defaults option.
+* **Account Balance setting** — Added position-size previews based on account balance.
+* **Quick Market Order Size** — Added a separate default size for market orders without a stop loss.
 
 ### Changed
-- **Risk $ disabled for Quick Market Orders** — Quick Market Orders do not include a stop loss by default, so Risk $ is disabled for them.
-- **Chart right-click menu labels** — Trades are now labelled `ETHUSD` (was `ETH`). When Position Sizing is Risk $ or Risk %, the quantity is omitted (e.g. "Buy ETHUSD @ 4,499.75") since the size isn't known until a stop-loss distance is set.
-- **Renamed "% Account" to "Account %"** — Across Trade Defaults (option + heading) and the chart size menu, for consistency with "Risk %" / "Risk $".
-- **Size menu styling** — Widened to 380px and added a hover background on the size tabs.
+
+* **Risk $ disabled for Quick Market Orders** — Risk-based sizing is unavailable when no stop loss exists.
+* **Chart order labels improved** — Order labels now use the full symbol and hide unknown quantities.
+* **Account % naming** — Renamed “% Account” to “Account %” for consistency.
+* **Size menu updated** — Increased width and improved tab hover states.
 
 ### Fixed
-- **Breakeven Line round-trip fee** — The breakeven line now accounts for the full round-trip fee (entry fill + exit fill), respecting maker/taker rates by order type, instead of only a single side.
-- **Dynamic Fee Offset round-trip fee** — "Move SL to Breakeven" now uses the round-trip fee (0.12%) and applies it as a percentage of entry, so the stop lands at a true net-zero exit. Previously it only covered one side and the offset was miscalculated.
 
-### Warnings
-- Stop-loss risk-limit warning: "The selected stop-loss exceeds your risk limit. Move the stop-loss closer or increase your risk amount."
-- Warning shown when Risk $ is selected but no stop loss is set.
+* **Breakeven fee calculation** — Breakeven now accounts for both entry and exit fees.
+* **Move SL to Breakeven calculation** — The stop now moves to the true net-zero price.
+* **Risk warnings** — Added warnings for missing stop losses and stops exceeding the selected risk limit.
