@@ -6307,6 +6307,9 @@
   document.getElementById('csResetBtn').addEventListener('click', () => {
     chartSettings = cloneCsDefaults();
     populateChartSettingsForm();
+    // Position Mode lives outside chartSettings under its own key, so cloneCsDefaults() can't reach
+    // it — reset it by hand, back to the one-way default.
+    setHedgeModeEnabled(false);
     showToast('Reset to defaults', 'restart_alt');
   });
 
