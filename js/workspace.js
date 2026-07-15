@@ -57,13 +57,17 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
 
 /* ---------- trading journal: period selector ---------- */
 (function () {
-  /* The card shows one of three periods. "Today" is built purely from the real
+  /* The card shows one of four periods. "Today" is built purely from the real
      closed trades in window.tradeHistory. The wider periods have no real history
      behind them, so each carries a mock baseline for the days *before* today,
      which today's real trades are then folded into — that keeps the periods
      consistent with each other (year totals include month, month includes today). */
   const periods = [
     { key: 'today', label: 'Today', heroLabel: "Today's P&L", priorStats: null },
+    {
+      key: 'week', label: 'This Week', heroLabel: "This Week's P&L",
+      priorStats: { pnl: 3140.00, trades: 12, wins: 8, best: 1180.00, worst: -540.00 }
+    },
     {
       key: 'month', label: 'This Month', heroLabel: "This Month's P&L",
       priorStats: { pnl: 8420.00, trades: 46, wins: 30, best: 2140.00, worst: -980.00 }
