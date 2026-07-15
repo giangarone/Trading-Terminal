@@ -150,6 +150,7 @@
   let panXInitialized = false; // on first draw, panX is set to push candles left, leaving more empty space on the right
   let crosshair = null; // {x,y} in CSS px relative to chart, within plot bounds, or null when not hovering
   let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | 'offset:<id>' | 'tp-add' | 'sl-add' | null — which order-line handle is currently hovered/dragged
+  let hoveredSide = null; // 'buy' | 'sell' | null — the side under the cursor; the opposing side's orders fade (see setHoveredSide)
   let isDraggingOrderLine = false; // true for the duration of any order-line drag — blocks the price-tick auto-render from wiping live drag visuals
   let isHoveringBarControls = false; // true when pointer is over a non-drag interactive element inside an entry/TP/SL bar — suppresses the chart crosshair
   let isHoveringIndLegend = false; // true when pointer is over an indicator row in the chart legend — suppresses the chart crosshair
@@ -3431,10 +3432,15 @@
       ctx.textBaseline = 'middle';
       ctx.fillText(fmt(price), plotW + 8, y + 0.5);
     }
-    if (isPrimary && order) {
-      const orderDir = order.side === 'buy' ? 1 : -1;
+    /* These tags only ever describe one order. While a side is hovered they follow it, so the axis
+       agrees with the faded chart body instead of still showing the other position's prices; with
+       nothing hovered they track the focused order as before. A side's TP/SL live on its owner, which
+       is exactly what there is to tag. */
+    const tagOrder = (hoveredSide ? tpSlOwner(hoveredSide) : null) || order;
+    if (isPrimary && tagOrder) {
+      const orderDir = tagOrder.side === 'buy' ? 1 : -1;
       const offsetColor = themeColor('--intel');
-      order.tps.forEach(tp => {
+      tagOrder.tps.forEach(tp => {
         drawOrderAxisTagOutline(tp.price, upColor, hoveredHandle === 'tp:' + tp.id);
         if (tp.trailing) {
           const offsetPrice = (tp.activated && tp.exitPrice != null)
@@ -3443,8 +3449,8 @@
           drawOrderAxisTagOutline(offsetPrice, offsetColor, hoveredHandle === 'offset:' + tp.id);
         }
       });
-      if (order.sl) drawOrderAxisTagOutline(order.sl.price, downColor, hoveredHandle === 'sl');
-      drawOrderAxisTagOutline(order.entry, order.side === 'buy' ? upColor : downColor, hoveredHandle === 'entry');
+      if (tagOrder.sl) drawOrderAxisTagOutline(tagOrder.sl.price, downColor, hoveredHandle === 'sl');
+      drawOrderAxisTagOutline(tagOrder.entry, tagOrder.side === 'buy' ? upColor : downColor, hoveredHandle === 'entry');
     }
 
     /* ---- crosshair: dotted guide lines + axis labels at cursor ---- */
@@ -4332,6 +4338,38 @@
   layer.addEventListener('mousedown', focusOrderFromEvent, true);
   layer.addEventListener('click', focusOrderFromEvent, true);
 
+  /* ---------- hover focus: fade the side you aren't pointing at ----------
+     A long and a short draw the same kinds of lines across the same chart, so hovering either one fades
+     everything on the other and the hovered position reads as a single object. This is by SIDE, not by
+     order: a side is often several orders (the filled main that owns the TP/SL plus its pending add-ons),
+     and an add-on is part of that position — fading the main while pointing at its own add-on would say
+     otherwise. Unrelated to the `order` focus pointer, which tracks what you last clicked. */
+  function orderIsDimmed(o) {
+    return !!hoveredSide && !!o && o.side !== hoveredSide;
+  }
+  function orderSideFromNode(node) {
+    const boxEl = node && node.closest && node.closest('.ol-order');
+    const o = boxEl && allOrders().find(x => x.id === boxEl.dataset.orderId);
+    return o ? o.side : null;
+  }
+  function setHoveredSide(side) {
+    if (side === hoveredSide) return;
+    hoveredSide = side;
+    layer.querySelectorAll('.ol-order').forEach(el => {
+      const o = allOrders().find(x => x.id === el.dataset.orderId);
+      el.classList.toggle('dim', orderIsDimmed(o));
+    });
+    scheduleDrawPriceChart();   // the right-axis price tags follow the hovered side
+  }
+  /* Delegated on the layer rather than bound per node, since a tick re-render replaces every order's
+     DOM (same reason as initOrderLineTooltips). #orderLineLayer is itself pointer-events:none, so these
+     only fire from children that opt in — which makes mouseleave fire the moment the cursor leaves the
+     last order element, even into empty chart space inside the layer's bounds. Between the two, every
+     exit is covered: onto another order (mouseover re-points), onto a non-order child like an alert
+     (mouseover finds no box and clears), or off the orders entirely (mouseleave clears). */
+  layer.addEventListener('mouseover', (e) => setHoveredSide(orderSideFromNode(e.target)));
+  layer.addEventListener('mouseleave', () => setHoveredSide(null));
+
   /* ---------- main render ---------- */
   function render() {
     // renderOrder re-points `order` to each order it draws; save the caller's focus and restore it at
@@ -4342,6 +4380,11 @@
     renderOrderHistory();
     renderTradeHistory();
     isHoveringBarControls = false;
+    // hoveredSide deliberately survives the wipe below — the cursor hasn't moved, so renderOrder
+    // re-applies the fade to the rebuilt boxes. Only drop it when the side it points at is gone
+    // entirely (its last order filled and merged away, or closed): a removed node fires no mouseout,
+    // so nothing else would ever clear it.
+    if (hoveredSide && !allOrders().some(o => o.side === hoveredSide)) hoveredSide = null;
     layer.innerHTML = '';
     const H0 = rectH();
     alerts.forEach(a => {
@@ -4390,11 +4433,13 @@
   function renderOrder(o) {
     order = o;
     // Per-order DOM container: every line/chip/row for this order lives inside its own box so the
-    // live-update helpers and fill sweep can scope their queries to one order (o._el) instead of the
-    // whole layer, which now holds several orders. The box uses display:contents, so it adds no box of
-    // its own and the absolutely-positioned children lay out against the layer exactly as before.
+    // live-update helpers can scope their queries to one order (o._el) instead of the whole layer,
+    // which now holds several orders. The box uses display:contents, so it adds no box of its own and
+    // the absolutely-positioned children lay out against the layer exactly as before.
+    // The hover fade is re-applied here, not just when the cursor moves: this rebuilds every order's
+    // DOM on each tick, which would otherwise drop the class mid-hover with no mouseout to restore it.
     const box = document.createElement('div');
-    box.className = 'ol-order';
+    box.className = 'ol-order' + (orderIsDimmed(o) ? ' dim' : '');
     box.dataset.orderId = o.id;
     layer.appendChild(box);
     o._el = box;
@@ -4797,7 +4842,10 @@
       const blocked = placeable && orderPlaceBlocked();
 
       const line = document.createElement('div');
-      line.className = 'ol-line entry ' + order.side + (canDragEntry ? ' draggable' : '');
+      // An entry line that can't be dragged still has to be hoverable, or pointing at a filled
+      // position's entry line — the case most likely to be paired against an opposing one — wouldn't
+      // focus it. `hoverable` buys the same grab band without the drag affordance.
+      line.className = 'ol-line entry ' + order.side + (canDragEntry ? ' draggable' : ' hoverable');
       line.style.top = y + 'px';
       box.appendChild(line);
 

@@ -2,6 +2,11 @@
 
 All notable changes to the Trading Terminal are documented here.
 
+## 2026-07-16
+
+### Added
+- **Hover a position to focus it** — With a long and a short on the chart at once, it was hard to tell which take profits and stop loss belonged to which. Hovering any part of a position — its entry line or bar, a TP, the SL, a trigger, offset or breakeven line, or any of their chips — now fades every element of the opposing side, so the hovered position reads as a single object. The right-axis price tags follow the hovered position too, and a filled position's entry line is now hoverable along its length (it previously responded only to a drag, which filled positions don't allow). Fading is by side rather than by order, so an add-on keeps its own position in focus alongside it. Price alerts never fade.
+
 ## 2026-07-15
 
 ### Fixed
