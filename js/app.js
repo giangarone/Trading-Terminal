@@ -4969,7 +4969,7 @@
           '</span>' +
 
           '<span class="ol-chip entry locked ' + side + '" id="entryPriceHandle">' +
-          sideLabel + pnlHtml +
+          fmt(order.qty, 2) + ' ' + qtInstrumentUnit + pnlHtml +
           '</span>' +
 
           '<span class="ol-pill neutral combo locked" id="orderConfigPill">' +

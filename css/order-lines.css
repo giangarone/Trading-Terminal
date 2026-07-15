@@ -31,11 +31,11 @@
    reaching an order is what un-fades it. Transition opacity alone and never `all` — dodgeEntryBars
    owns the entry bar's `top` and animating that would smear the dodge. */
 .ol-order>* {
-  transition: opacity .06s ease;
+  transition: opacity .12s ease;
 }
 
 .ol-order.dim>* {
-  opacity: .25;
+  opacity: .15;
 }
 
 #newsMarkerLayer,
@@ -544,6 +544,7 @@
 
 .ol-chip.entry.placeable {
   cursor: pointer;
+  height: 22px;
 }
 
 /* Resting/working order: placed and waiting for price to reach entry.

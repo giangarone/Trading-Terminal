@@ -7,6 +7,9 @@ All notable changes to the Trading Terminal are documented here.
 ### Added
 - **Hover a position to focus it** — With a long and a short on the chart at once, it was hard to tell which take profits and stop loss belonged to which. Hovering any part of a position — its entry line or bar, a TP, the SL, a trigger, offset or breakeven line, or any of their chips — now fades every element of the opposing side, so the hovered position reads as a single object. The right-axis price tags follow the hovered position too, and a filled position's entry line is now hoverable along its length (it previously responded only to a drag, which filled positions don't allow). Fading is by side rather than by order, so an add-on keeps its own position in focus alongside it. Price alerts never fade.
 
+### Changed
+- **Open position chip shows size** — The locked entry chip on a filled position's order line now shows the position size in instrument units (e.g. `1.00 ETH`) instead of `BUY`/`SELL`. The direction is still carried by the chip's long/short color, so the label was redundant. Pending orders are unaffected — they keep the `BUY`/`SELL` label, having no position size to report until they fill.
+
 ## 2026-07-15
 
 ### Fixed
