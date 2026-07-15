@@ -226,12 +226,12 @@
 
 .jc-day.up {
   background: var(--long-dim);
-  border-color: var(--long);
+  border-color: var(--long-border);
 }
 
 .jc-day.down {
   background: var(--short-dim);
-  border-color: var(--short);
+  border-color: var(--short-border);
 }
 
 .jc-day.future {
