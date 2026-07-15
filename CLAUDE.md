@@ -47,7 +47,7 @@ Do not push to GitHub unless explicitly asked to.
 
 ## Changelog
 
-Every time a meaningful change is made, add it to `CHANGELOG.md`. This means features, fixes, and behavioral changes — not minor tweaks like little spacing or wording adjustments. Follow the existing format: date-based headings (`## YYYY-MM-DD`) with `Added` / `Changed` / `Fixed` sections, each entry starting with a **bolded name** followed by a short description.
+Every time a meaningful change is made, add it to `CHANGELOG.md`. This means features, fixes, and behavioral changes — not minor tweaks like little spacing or wording adjustments. Follow the existing format: date-based headings (`## YYYY-MM-DD`) with `Added` / `Changed` / `Fixed` sections, each entry starting with a **bolded name** followed by a brief, direct description.
 
 
 ## Code quality
