@@ -1404,7 +1404,7 @@
   color: var(--text-muted);
   opacity: 0;
   transition: opacity var(--t-ui), color var(--t-ui), background var(--t-ui);
-  align-self: center;
+  justify-self: flex-end;
 }
 
 .ss-row:hover .ss-wl-toggle {
