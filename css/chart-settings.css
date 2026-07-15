@@ -165,37 +165,6 @@
   color: var(--accent);
 }
 
-.cs-sidebar-footer {
-  margin-top: auto;
-  padding-top: 10px;
-}
-
-.cs-reset-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 9px 0;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--border-default);
-  background: var(--bg-surface);
-  color: var(--text-secondary);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semi);
-  font-family: var(--sans);
-  cursor: pointer;
-}
-
-.cs-reset-btn .material-symbols-outlined {
-  font-size: 15px;
-}
-
-.cs-reset-btn:hover {
-  color: var(--text-primary);
-  border-color: var(--border-strong);
-}
-
 .cs-content {
   flex: 1;
   overflow-y: auto;
@@ -877,7 +846,7 @@
 
 .cs-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   gap: 10px;
   padding: 14px 22px;
@@ -928,6 +897,27 @@
 
 .cs-btn-cancel:hover {
   color: var(--text-primary);
+}
+
+/* Sits alone on the left of the footer, opposite the Cancel/Save pair. Outlined rather than filled
+   so it reads as the tertiary action; padding and type come from the .cs-footer button rules above,
+   which it must out-specify to keep its outline. */
+.cs-footer .cs-reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+.cs-footer .cs-reset-btn .material-symbols-outlined {
+  font-size: 15px;
+}
+
+.cs-footer .cs-reset-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
 /* Toasts */
