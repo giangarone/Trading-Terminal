@@ -17,6 +17,27 @@
   pointer-events: none;
 }
 
+/* Per-order wrapper (one per chart order). display:contents means it generates no box of its own,
+   so its absolutely-positioned children still lay out against #orderLineLayer exactly as before;
+   it exists purely to scope each order's elements for the live-drag update helpers. */
+.ol-order {
+  display: contents;
+}
+
+/* Hovering any part of a position fades the opposing side, so a long's TP/SL can never be read as a
+   short's. .ol-order is display:contents and generates no box of its own to fade — but everything
+   renderOrder builds is a direct child of it, so fading those covers the whole order.
+   Opacity only, deliberately: making a faded order non-interactive would strand the cursor, since
+   reaching an order is what un-fades it. Transition opacity alone and never `all` — dodgeEntryBars
+   owns the entry bar's `top` and animating that would smear the dodge. */
+.ol-order>* {
+  transition: opacity .06s ease;
+}
+
+.ol-order.dim>* {
+  opacity: .25;
+}
+
 #newsMarkerLayer,
 #eventLineLayer {
   position: absolute;
@@ -51,12 +72,20 @@
   cursor: ns-resize;
 }
 
+/* An entry line that can't be dragged — a filled position, or a Market order tracking the price — still
+   takes the grab zone so hovering it focuses its position like any other line. No ns-resize: there's
+   nothing to drag here. */
+.ol-line.entry.hoverable {
+  pointer-events: auto;
+}
+
 .ol-line.tp::before,
 .ol-line.sl::before,
 .ol-line.offset::before,
 .ol-line.be-trigger::before,
 .ol-line.stop-limit-trigger::before,
-.ol-line.entry.draggable::before {
+.ol-line.entry.draggable::before,
+.ol-line.entry.hoverable::before {
   content: '';
   position: absolute;
   left: 0;
@@ -265,6 +294,24 @@
   z-index: 6;
 }
 
+/* Ties a control bar back to its entry line when two nearby orders force the bar off its own price
+   (see dodgeEntryBars). Shares the bar's right edge, so it reads as dropping out of the bar itself. */
+.ol-entry-tether {
+  position: absolute;
+  right: 360px;
+  width: 1px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.ol-entry-tether.buy {
+  background: var(--long-border);
+}
+
+.ol-entry-tether.sell {
+  background: var(--short-border);
+}
+
 .ol-pill {
   display: flex;
   align-items: center;
@@ -338,43 +385,6 @@
   flex-shrink: 0;
 }
 
-/* Filled position: subtle entry line by default, full TP/SL/edit controls reveal on hover */
-.ol-position-group {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.ol-hover-zone {
-  position: absolute;
-  left: 0;
-  right: 0;
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.ol-position-group .reveal {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .12s ease;
-}
-
-.ol-position-group:hover .reveal,
-.ol-position-group.force-reveal .reveal {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.ol-line.entry.subtle {
-  opacity: .5;
-  transition: opacity .12s ease;
-}
-
-.ol-position-group:hover .ol-line.entry.subtle,
-.ol-position-group.force-reveal .ol-line.entry.subtle {
-  opacity: .95;
-}
-
 .ol-side-row {
   position: absolute;
   right: 84px;
@@ -384,15 +394,6 @@
   gap: 5px;
   pointer-events: auto;
   z-index: 5;
-}
-
-.ol-side-row.ghost-row {
-  cursor: pointer;
-  opacity: .7;
-}
-
-.ol-side-row.ghost-row:hover {
-  opacity: 1;
 }
 
 .ol-chip {
@@ -561,33 +562,6 @@
 .ol-chip.entry.working.sell {
   border: 1px solid var(--short-border);
   color: var(--short);
-}
-
-/* Button-wide progress fill: empty while resting, sweeps to 100% on fill trigger */
-.ol-chip-fill {
-  position: absolute;
-  inset: 0;
-  width: 0;
-  transition: width 450ms ease-out;
-  pointer-events: none;
-}
-
-.ol-chip.entry.working.buy .ol-chip-fill {
-  background: var(--long-dim);
-}
-
-.ol-chip.entry.working.sell .ol-chip-fill {
-  background: var(--short-dim);
-}
-
-.ol-chip.entry.working.filling .ol-chip-fill {
-  width: 100%;
-}
-
-/* Label sits above the progress fill */
-.ol-chip-lbl {
-  position: relative;
-  z-index: 1;
 }
 
 .ol-chip.entry.disabled {

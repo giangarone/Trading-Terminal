@@ -36,6 +36,8 @@
 function getJournalTrades() {
   return (window.tradeHistory || []).filter(t => t.role === 'close');
 }
+/* winRate is carried as an unrounded percentage everywhere so it can be formatted
+   at the point of display; use fmtWinRate() to render it. */
 function computeJournalStats(trades) {
   if (!trades.length) return { pnl: 0, trades: 0, winRate: 0, best: 0, worst: 0 };
   const pnls = trades.map(t => t.pnl);
@@ -43,28 +45,38 @@ function computeJournalStats(trades) {
   return {
     pnl: pnls.reduce((sum, p) => sum + p, 0),
     trades: trades.length,
-    winRate: Math.round((wins / trades.length) * 100),
+    winRate: (wins / trades.length) * 100,
     best: Math.max(...pnls),
     worst: Math.min(...pnls)
   };
 }
+function fmtWinRate(pct) { return pct.toFixed(2) + '%'; }
 const journalRefreshFns = [];
 function registerJournalRefresh(fn) { journalRefreshFns.push(fn); }
 window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => fn()); };
 
-/* ---------- trading journal: day selector ---------- */
+/* ---------- trading journal: period selector ---------- */
 (function () {
-  const journalDays = [
-    { label: 'Today', pnl: 0, trades: 0, winRate: 0, best: 0, worst: 0 },
-    { label: 'Jun 24', pnl: 1180.00, trades: 6, winRate: 67, best: 800.00, worst: -220.00 },
-    { label: 'Jun 23', pnl: -640.00, trades: 5, winRate: 40, best: 510.00, worst: -560.00 },
-    { label: 'Jun 20', pnl: 0.00, trades: 0, winRate: 0, best: 0.00, worst: 0.00 },
-    { label: 'Jun 19', pnl: 2110.00, trades: 9, winRate: 78, best: 990.00, worst: -180.00 },
+  /* The card shows one of three periods. "Today" is built purely from the real
+     closed trades in window.tradeHistory. The wider periods have no real history
+     behind them, so each carries a mock baseline for the days *before* today,
+     which today's real trades are then folded into — that keeps the periods
+     consistent with each other (year totals include month, month includes today). */
+  const periods = [
+    { key: 'today', label: 'Today', heroLabel: "Today's P&L", priorStats: null },
+    {
+      key: 'month', label: 'This Month', heroLabel: "This Month's P&L",
+      priorStats: { pnl: 8420.00, trades: 46, wins: 30, best: 2140.00, worst: -980.00 }
+    },
+    {
+      key: 'year', label: 'This Year', heroLabel: "This Year's P&L",
+      priorStats: { pnl: 61250.00, trades: 388, wins: 241, best: 6480.00, worst: -3120.00 }
+    },
   ];
-  let selectedDayIdx = 0;
-  const tjDaySelect = document.getElementById('tjDaySelect');
-  const tjDayMenu = document.getElementById('tjDayMenu');
-  const tjDayLabel = document.getElementById('tjDayLabel');
+  let selectedPeriodIdx = 0;
+  const tjPeriodSelect = document.getElementById('tjPeriodSelect');
+  const tjPeriodMenu = document.getElementById('tjPeriodMenu');
+  const tjPeriodLabel = document.getElementById('tjPeriodLabel');
   const tjPnl = document.getElementById('tjPnl');
   const tjSpark = document.getElementById('tjSpark');
   const tjSparkLbl = document.getElementById('tjSparkLbl');
@@ -80,17 +92,33 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
     const sign = n > 0 ? '+' : n < 0 ? '-' : '';
     return sign + '$' + Math.round(Math.abs(n)).toLocaleString('en-US');
   }
-  function showJournalDay(idx) {
-    const d = journalDays[idx];
-    tjDayLabel.textContent = d.label;
-    /* Hero label: "Today's P&L" for today, otherwise the selected day's date. */
-    tjSparkLbl.textContent = idx === 0 ? "Today's P&L" : d.label + ' P&L';
+  /* Combines a period's mock baseline with today's real closed trades. */
+  function buildPeriodStats(period) {
+    const todayPnls = getJournalTrades().map(t => t.pnl);
+    const prior = period.priorStats;
+    if (!prior) return computeJournalStats(getJournalTrades());
+    const trades = todayPnls.length + prior.trades;
+    const wins = todayPnls.filter(p => p >= 0).length + prior.wins;
+    const extremes = todayPnls.concat([prior.best, prior.worst]);
+    return {
+      pnl: todayPnls.reduce((sum, p) => sum + p, prior.pnl),
+      trades: trades,
+      winRate: (wins / trades) * 100,
+      best: Math.max(...extremes),
+      worst: Math.min(...extremes)
+    };
+  }
+  function showJournalPeriod(idx) {
+    const period = periods[idx];
+    const d = buildPeriodStats(period);
+    tjPeriodLabel.textContent = period.label;
+    tjSparkLbl.textContent = period.heroLabel;
     tjPnl.textContent = fmtSigned(d.pnl);
     tjPnl.classList.toggle('up', d.pnl >= 0);
     tjPnl.classList.toggle('down', d.pnl < 0);
     tjSpark.classList.toggle('up', d.pnl >= 0);
     tjSpark.classList.toggle('down', d.pnl < 0);
-    tjWinRate.textContent = d.winRate + '%';
+    tjWinRate.textContent = fmtWinRate(d.winRate);
     tjBest.textContent = fmtDollars(d.best);
     tjBest.classList.toggle('up', d.best >= 0);
     tjBest.classList.toggle('down', d.best < 0);
@@ -109,36 +137,35 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
   function closeAllPopoversLocal() {
     document.querySelectorAll('.pop-menu.show, .ctx-menu.show').forEach(m => m.classList.remove('show'));
   }
-  tjDaySelect.addEventListener('click', (e) => {
+  tjPeriodSelect.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (tjDayMenu.classList.contains('show')) {
+    if (tjPeriodMenu.classList.contains('show')) {
       closeAllPopoversLocal();
       return;
     }
     closeAllPopoversLocal();
-    const anchorRect = tjDaySelect.getBoundingClientRect();
-    tjDayMenu.classList.add('show');
+    const anchorRect = tjPeriodSelect.getBoundingClientRect();
+    tjPeriodMenu.classList.add('show');
     const vh = window.innerHeight;
-    const h = tjDayMenu.offsetHeight;
+    const h = tjPeriodMenu.offsetHeight;
     let y = anchorRect.bottom + 8;
     if (y + h > vh - 12) y = anchorRect.top - h - 8;
-    tjDayMenu.style.left = anchorRect.left + 'px';
-    tjDayMenu.style.top = y + 'px';
+    tjPeriodMenu.style.left = anchorRect.left + 'px';
+    tjPeriodMenu.style.top = y + 'px';
   });
-  tjDayMenu.querySelectorAll('.pop-item').forEach(item => {
+  tjPeriodMenu.querySelectorAll('.pop-item').forEach(item => {
     item.addEventListener('click', () => {
-      selectedDayIdx = parseInt(item.dataset.day);
-      tjDayMenu.querySelectorAll('.pop-item').forEach(i => i.classList.remove('selected'));
+      selectedPeriodIdx = periods.findIndex(p => p.key === item.dataset.period);
+      tjPeriodMenu.querySelectorAll('.pop-item').forEach(i => i.classList.remove('selected'));
       item.classList.add('selected');
-      showJournalDay(selectedDayIdx);
+      showJournalPeriod(selectedPeriodIdx);
       closeAllPopoversLocal();
     });
   });
 
-  registerJournalRefresh(function () {
-    journalDays[0] = Object.assign({ label: 'Today' }, computeJournalStats(getJournalTrades()));
-    if (selectedDayIdx === 0) showJournalDay(0);
-  });
+  /* Every period folds in today's real trades, so a new close re-renders whichever
+     one is on screen. */
+  registerJournalRefresh(function () { showJournalPeriod(selectedPeriodIdx); });
 })();
 
 /* ---------- trading journal: full calendar modal ---------- */
@@ -223,7 +250,7 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
     sidebarPnl.textContent = fmtSigned(data.pnl);
     sidebarPnl.className = 'tj-sidebar-kpi-val ' + (data.pnl >= 0 ? 'up' : 'down');
 
-    sidebarWinRate.textContent = data.winRate + '%';
+    sidebarWinRate.textContent = fmtWinRate(data.winRate);
     sidebarWinRate.className = 'tj-sidebar-kpi-val';
 
     sidebarTrades.textContent = data.trades;
@@ -329,7 +356,7 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
             const trades = Math.max(1, Math.round(1 + rand() * 7));
             const winRatio = pnl >= 0 ? (0.55 + rand() * 0.35) : (rand() * 0.35);
             const wins = Math.min(trades, Math.max(pnl >= 0 ? 1 : 0, Math.round(trades * winRatio)));
-            const winRate = Math.round((wins / trades) * 100);
+            const winRate = (wins / trades) * 100;
             data = { day, pnl, trades, wins, losses: trades - wins, winRate, dateLbl: MONTH_NAMES[viewMonth].slice(0, 3) + ' ' + day };
           }
         }
@@ -352,16 +379,11 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
           pnlEl.textContent = fmtSigned(data.pnl);
           statsEl.appendChild(pnlEl);
 
+          /* Win/loss split plus a whole-number win rate, e.g. "5W / 2L • 71% WR".
+             The cell is too narrow for the decimals the other journal readouts carry. */
           const metaEl = document.createElement('div');
           metaEl.className = 'd-meta';
-          const winrateEl = document.createElement('span');
-          winrateEl.className = 'd-winrate';
-          winrateEl.textContent = data.winRate + '% win';
-          const tradesEl = document.createElement('span');
-          tradesEl.className = 'd-trades';
-          tradesEl.textContent = data.trades + (data.trades === 1 ? ' trade' : ' trades');
-          metaEl.appendChild(winrateEl);
-          metaEl.appendChild(tradesEl);
+          metaEl.textContent = data.wins + 'W / ' + data.losses + 'L • ' + Math.round(data.winRate) + '% WR';
           statsEl.appendChild(metaEl);
 
           el.appendChild(statsEl);
@@ -378,10 +400,10 @@ window.refreshTodayJournalCard = function () { journalRefreshFns.forEach(fn => f
     }
 
     // Update stats strip
-    const overallWinRate = totalTrades > 0 ? Math.round((totalWins / totalTrades) * 100) : 0;
+    const overallWinRate = totalTrades > 0 ? (totalWins / totalTrades) * 100 : 0;
     statMonthPnl.textContent = fmtSigned(monthPnl);
     statMonthPnl.className = 'tj-strip-val ' + (monthPnl >= 0 ? 'up' : 'down');
-    statWinRate.textContent = overallWinRate + '%';
+    statWinRate.textContent = fmtWinRate(overallWinRate);
     statTrades.textContent = totalTrades;
     statTradingDays.textContent = tradingDays + ' days';
     statBestDay.textContent = bestPnl !== null ? fmtSigned(bestPnl) : '—';

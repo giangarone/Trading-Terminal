@@ -204,22 +204,26 @@
 
   /* positions — each carries its own mark price noise so they're independent
      of watchlist symbols and continue to animate correctly as positions close */
-  function makePosition(sym, qty, avgPrice, mark0, pnlOpen0, pct0, step, dec) {
+  // side ('buy'/'sell') and domKey let a long and a short on the same symbol be two independent rows.
+  // domKey (defaults to sym) is the id/data-pos-id suffix; static seed rows use plain sym, dynamic
+  // (chart) rows use sym-side. side defaults to the sign of the derived pv for the static seeds.
+  function makePosition(sym, qty, avgPrice, mark0, pnlOpen0, pct0, step, dec, side, domKey) {
     const pv = Math.abs(mark0 - avgPrice) > 1e-9
       ? pnlOpen0 / ((mark0 - avgPrice) * qty)
       : 1;
     const unitBase = pct0 !== 0 ? pnlOpen0 / pct0 : 1;
+    const k = domKey || sym;
     return {
-      sym, qty, avgPrice,
+      sym, side: side || (pv > 0 ? 'buy' : 'sell'), domKey: k, qty, avgPrice,
       mark: mark0, mark0, anchor: mark0, step: step || 0.01, dec: dec || 2,
       pv, pnlOpen0, unitBase,
-      elQty: document.getElementById('posQty-' + sym),
-      elAvg: document.getElementById('posAvg-' + sym),
-      elMark: document.getElementById('posMark-' + sym),
-      elPnlOpen: document.getElementById('posPnlOpen-' + sym),
-      elPct: document.getElementById('posPct-' + sym),
-      elMarkD: document.getElementById('posMarkD-' + sym),
-      elUnrealD: document.getElementById('posUnrealD-' + sym),
+      elQty: document.getElementById('posQty-' + k),
+      elAvg: document.getElementById('posAvg-' + k),
+      elMark: document.getElementById('posMark-' + k),
+      elPnlOpen: document.getElementById('posPnlOpen-' + k),
+      elPct: document.getElementById('posPct-' + k),
+      elMarkD: document.getElementById('posMarkD-' + k),
+      elUnrealD: document.getElementById('posUnrealD-' + k),
     };
   }
 
@@ -241,13 +245,24 @@
   }
 
   /* ---------- position actions: partial/full close & reverse ---------- */
-  window.closePositionPct = function (sym, pct) {
-    const p = positions.find(x => x.sym === sym);
+  // side is optional: given, it targets that specific long/short row; omitted, it closes the first
+  // position for the symbol (used by flatten, which loops until every side is gone).
+  function findPosition(sym, side) {
+    return side
+      ? positions.find(x => x.sym === sym && x.side === side)
+      : positions.find(x => x.sym === sym);
+  }
+  function removePositionRow(p, sym) {
+    const row = (p.elQty && p.elQty.closest('.pos-row')) ||
+      document.querySelector('.pos-row[data-pos-id="' + (p.domKey || sym) + '"]');
+    if (row) row.remove();
+  }
+  window.closePositionPct = function (sym, pct, side) {
+    const p = findPosition(sym, side);
     if (!p) return false;
     if (pct >= 100) {
       positions.splice(positions.indexOf(p), 1);
-      const row = document.querySelector('.pos-row[data-pos-id="' + sym + '"]');
-      if (row) row.remove();
+      removePositionRow(p, sym);
       return true;
     }
     const remainFrac = 1 - pct / 100;
@@ -259,13 +274,12 @@
   };
 
   /* close a custom amount (Market tab custom-amount field); returns 'closed' | 'reduced' | false */
-  window.closePositionAmount = function (sym, amount) {
-    const p = positions.find(x => x.sym === sym);
+  window.closePositionAmount = function (sym, amount, side) {
+    const p = findPosition(sym, side);
     if (!p || !(amount > 0)) return false;
     if (amount >= p.qty - 1e-9) {
       positions.splice(positions.indexOf(p), 1);
-      const row = document.querySelector('.pos-row[data-pos-id="' + sym + '"]');
-      if (row) row.remove();
+      removePositionRow(p, sym);
       return 'closed';
     }
     const remainFrac = 1 - amount / p.qty;
@@ -397,7 +411,12 @@
   function createPositionRow(sym, side, qty, price, dec, meta) {
     const row = document.createElement('div');
     row.className = 'pos-row';
-    row.dataset.posId = sym;
+    // Composite key so a long and a short on the same symbol get distinct element ids / rows. The real
+    // symbol and side are kept as separate data attributes for the close/reverse handlers to read.
+    const key = sym + '-' + side;
+    row.dataset.posId = key;
+    row.dataset.posSym = sym;
+    row.dataset.posSide = side;
     const sideCls = side === 'buy' ? 'long' : 'short';
     const sideLabel = side === 'buy' ? 'Long' : 'Short';
     row.innerHTML =
@@ -410,18 +429,18 @@
       '<span class="pos-type-badge">Crypto</span>' +
       '<span class="pos-lev-badge">' + currentLeverage() + '×</span></div>' +
       '<span class="pos-sym-sub">' + sym + ' (from chart)</span></div></div>' +
-      '<div class="pos-col pos-col-size"><span class="pos-size-qty" id="posQty-' + sym + '">' + fmtQty(qty) + '</span><span class="pos-size-unit">Units</span></div>' +
-      '<div class="pos-col pos-col-price"><span class="pos-entry" id="posAvg-' + sym + '">' + fmt(price, dec) + '</span><span class="pos-mark" id="posMark-' + sym + '">' + fmt(price, dec) + '</span></div>' +
-      '<div class="pos-col pos-col-pnl"><span class="pos-pnl-dollar up" id="posPnlOpen-' + sym + '">+0.00</span><span class="pos-pnl-pct up" id="posPct-' + sym + '">+0.00%</span></div>' +
-      '<div class="pos-col pos-col-margin"><span class="pos-margin faint" id="posMargin-' + sym + '">—</span></div>' +
+      '<div class="pos-col pos-col-size"><span class="pos-size-qty" id="posQty-' + key + '">' + fmtQty(qty) + '</span><span class="pos-size-unit">Units</span></div>' +
+      '<div class="pos-col pos-col-price"><span class="pos-entry" id="posAvg-' + key + '">' + fmt(price, dec) + '</span><span class="pos-mark" id="posMark-' + key + '">' + fmt(price, dec) + '</span></div>' +
+      '<div class="pos-col pos-col-pnl"><span class="pos-pnl-dollar up" id="posPnlOpen-' + key + '">+0.00</span><span class="pos-pnl-pct up" id="posPct-' + key + '">+0.00%</span></div>' +
+      '<div class="pos-col pos-col-margin"><span class="pos-margin faint" id="posMargin-' + key + '">—</span></div>' +
       '<div class="pos-col pos-col-liq"><span class="pos-liq faint">—</span></div>' +
       '<div class="pos-col pos-col-quickclose">' + quickCloseRowHtml() + '</div>' +
       '<div class="pos-col pos-col-actions"><button class="pos-expand-btn" title="Expand details"><span class="material-symbols-outlined pos-chevron">expand_more</span></button></div>' +
       '</div>' +
       '<div class="pos-row-detail">' +
-      detailSectionsHtml(sym, fmtQty(qty), 'Units', price, fmt(price, dec), dec, meta) +
+      detailSectionsHtml(key, fmtQty(qty), 'Units', price, fmt(price, dec), dec, meta) +
       '<div class="pos-detail-close">' +
-      detailCloseHtml(sym, fmtQty(qty), 'Units', fmt(price, dec), '0.001',
+      detailCloseHtml(key, fmtQty(qty), 'Units', fmt(price, dec), '0.001',
         price < 1 ? '0.0001' : price < 100 ? '0.01' : '0.5') +
       '</div></div>';
     row.querySelector('.pos-row-summary').addEventListener('click', (e) => {
@@ -440,7 +459,10 @@
   }
   window.upsertPositionFromFill = function (sym, side, qty, price, meta) {
     const dir = side === 'buy' ? 1 : -1;
-    const existing = positions.find(x => x.sym === sym);
+    // Merge only into a same-side position; a long and a short on one symbol stay separate rows
+    // (so hedge-mode opposite fills don't net into one). One-way mode never reaches here with an
+    // opposing fill — the placement guard blocks that first.
+    const existing = positions.find(x => x.sym === sym && x.side === side);
     if (existing) {
       const newQty = existing.qty + qty;
       existing.avgPrice = (existing.avgPrice * existing.qty + price * qty) / newQty;
@@ -455,11 +477,16 @@
     }
     const dec = price < 1 ? 4 : 2;
     const step = price < 1 ? 0.0001 : price < 100 ? 0.01 : 0.5;
+    const key = sym + '-' + side;
     createPositionRow(sym, side, qty, price, dec, meta);
-    const pos = makePosition(sym, qty, price, price, 0, 0, step, dec);
+    const pos = makePosition(sym, qty, price, price, 0, 0, step, dec, side, key);
     pos.pv = dir;
     pos.unitBase = (qty * price) / 100;
     positions.push(pos);
+  };
+  /* True when a position on the opposite side of `side` exists for `sym` (drives the one-way block). */
+  window.hasOpposingPosition = function (sym, side) {
+    return positions.some(p => p.sym === sym && p.side !== side);
   };
 
   function tick() {

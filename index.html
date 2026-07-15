@@ -14,18 +14,18 @@
     rel="stylesheet">
 
   <!-- ====== Styles (load order: tokens first, modals last) ====== -->
-  <link rel="stylesheet" href="css/tokens.css?v=17">
+  <link rel="stylesheet" href="css/tokens.css?v=19">
   <link rel="stylesheet" href="css/topbar.css?v=14">
   <link rel="stylesheet" href="css/left-panel.css?v=19">
   <link rel="stylesheet" href="css/center-panel.css?v=28">
-  <link rel="stylesheet" href="css/workspace.css?v=37">
+  <link rel="stylesheet" href="css/workspace.css?v=39">
   <link rel="stylesheet" href="css/right-panel.css?v=5">
   <link rel="stylesheet" href="css/quick-trade.css?v=22">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=54">
+  <link rel="stylesheet" href="css/order-lines.css?v=60">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
   <link rel="stylesheet" href="css/indicators.css?v=24">
-  <link rel="stylesheet" href="css/chart-settings.css?v=43">
+  <link rel="stylesheet" href="css/chart-settings.css?v=45">
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
   <link rel="stylesheet" href="css/quick-order.css?v=5">
@@ -385,32 +385,6 @@
                     </div>
                   </div>
 
-                  <div class="cs-card">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Status</span>
-                    </div>
-                    <div class="cs-fields-row">
-                      <div class="cs-field">
-                        <label>Connected Broker</label>
-                        <div class="cs-field-val">TradeStation</div>
-                      </div>
-                      <div class="cs-field">
-                        <label>Market Data</label>
-                        <div class="cs-field-val">Connected</div>
-                      </div>
-                    </div>
-                    <div class="cs-fields-row">
-                      <div class="cs-field">
-                        <label>Subscription</label>
-                        <div class="cs-field-val">Terminal Pro</div>
-                      </div>
-                      <div class="cs-field">
-                        <label>Version</label>
-                        <div class="cs-field-val cs-field-val--muted">v1.2.4</div>
-                      </div>
-                    </div>
-                  </div>
-
                 </div>
 
                 <div class="cs-col">
@@ -481,6 +455,23 @@
                       </span>
                       <button type="button" class="ui-toggle" aria-label="Toggle Confirm Flip / Reverse"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                  </div>
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Position Mode</span>
+                    </div>
+                    <!-- Position mode (crypto): One-way blocks holding both directions at once; Hedge lets a
+                         long and a short on the same symbol coexist. Also reachable from the one-way block
+                         popup's "Enable Hedge Mode" button, which routes through the same setter. -->
+                    <div class="cs-field">
+                      <label>Mode (Crypto)</label>
+                      <div class="cs-segmented" id="csHedgeModeGroup" style="margin-bottom:0;">
+                        <button type="button" class="cs-seg-btn active" data-hedge="off">One-way</button>
+                        <button type="button" class="cs-seg-btn" data-hedge="on">Hedge</button>
+                      </div>
+                      <span class="cs-field-hint">One-way holds a single direction per symbol — opening an opposing
+                        trade is blocked. Hedge lets a long and a short on the same symbol coexist.</span>
                     </div>
                   </div>
 
@@ -815,6 +806,143 @@
 
                   <div class="cs-card">
                     <div class="cs-card-head">
+                      <span class="cs-card-title">What to Show</span>
+                    </div>
+
+                    <div class="cs-field" style="margin-bottom:14px;">
+                      <label>Catalyst Scope</label>
+                      <div class="cs-radio-group" id="csNewsScopeGroup">
+                        <div class="cs-radio-row active" data-mode="both">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text">
+                            <span class="cs-radio-title">Asset-Specific & Global</span>
+                            <span class="cs-radio-desc">Show news for the selected asset alongside broader market
+                              catalysts.</span>
+                          </span>
+                        </div>
+                        <div class="cs-radio-row" data-mode="asset">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text">
+                            <span class="cs-radio-title">Asset-Specific Only</span>
+                            <span class="cs-radio-desc">Only news and events directly related to the selected
+                              asset.</span>
+                          </span>
+                        </div>
+                        <div class="cs-radio-row" data-mode="global">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text">
+                            <span class="cs-radio-title">Global Market Only</span>
+                            <span class="cs-radio-desc">Only broader market events and catalysts that may impact
+                              multiple assets.</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="cs-field" style="margin-bottom:14px;">
+                      <label>Event Types</label>
+                      <label class="cs-checkbox-row">
+                        <span class="chk-box checked" id="csNewsTypeNews"><span
+                            class="material-symbols-outlined">check</span></span>
+                        News
+                      </label>
+                      <label class="cs-checkbox-row">
+                        <span class="chk-box checked" id="csNewsTypeSocial"><span
+                            class="material-symbols-outlined">check</span></span>
+                        Social Media (e.g. Tweets)
+                      </label>
+                      <label class="cs-checkbox-row">
+                        <span class="chk-box checked" id="csNewsTypeGeo"><span
+                            class="material-symbols-outlined">check</span></span>
+                        Geopolitical Events
+                      </label>
+                      <label class="cs-checkbox-row">
+                        <span class="chk-box checked" id="csNewsTypeCorp"><span
+                            class="material-symbols-outlined">check</span></span>
+                        Corporate News
+                      </label>
+                    </div>
+
+                    <div class="cs-field" style="margin-bottom:14px;">
+                      <label>Importance</label>
+                      <label class="cs-checkbox-row">
+                        <span class="chk-box checked" id="csNewsImpHigh"><span
+                            class="material-symbols-outlined">check</span></span>
+                        High — major market-moving events
+                      </label>
+                      <label class="cs-checkbox-row">
+                        <span class="chk-box checked" id="csNewsImpMedium"><span
+                            class="material-symbols-outlined">check</span></span>
+                        Medium — moderate market impact
+                      </label>
+                      <label class="cs-checkbox-row">
+                        <span class="chk-box checked" id="csNewsImpLow"><span
+                            class="material-symbols-outlined">check</span></span>
+                        Low — limited market impact
+                      </label>
+                    </div>
+
+                    <div class="cs-field" style="margin-bottom:0;">
+                      <label>Sentiment Filter</label>
+                      <div class="cs-radio-group" id="csNewsSentimentGroup">
+                        <div class="cs-radio-row active" data-mode="all">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text"><span class="cs-radio-title">All</span></span>
+                        </div>
+                        <div class="cs-radio-row" data-mode="bullish">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text"><span class="cs-radio-title">Bullish Only</span></span>
+                        </div>
+                        <div class="cs-radio-row" data-mode="bearish">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text"><span class="cs-radio-title">Bearish Only</span></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+                <div class="cs-col">
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Time Window</span>
+                    </div>
+
+                    <div class="cs-field" style="margin-bottom:0;">
+                      <label>Time Range</label>
+                      <div class="select-input pop-trigger cs-dd-trigger" data-target="csNewsTimeRange"><span
+                          class="cs-select-label">All Time</span><span
+                          class="material-symbols-outlined">expand_more</span></div>
+                      <select id="csNewsTimeRange" style="display:none;">
+                        <option value="6h">Last 6 Hours</option>
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="3d">Last 3 Days</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="all" selected>All Time</option>
+                      </select>
+                    </div>
+
+                    <div class="cs-switch-row cs-switch-row--divided active" id="csNewsShowPast">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Show Past Events</span>
+                        <span class="cs-switch-desc">Display historical news markers on past candles.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Show Past Events"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-switch-row active" id="csNewsShowUpcoming">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Show Upcoming Events</span>
+                        <span class="cs-switch-desc">Display scheduled future events such as FOMC.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Show Upcoming Events"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
                       <span class="cs-card-title">Chart Display</span>
                     </div>
 
@@ -840,104 +968,7 @@
                       </div>
                     </div>
 
-                    <div class="cs-field" style="margin-bottom:14px;">
-                      <label>Sentiment Filter</label>
-                      <div class="cs-radio-group" id="csNewsSentimentGroup">
-                        <div class="cs-radio-row active" data-mode="all">
-                          <span class="cs-radio-dot"></span>
-                          <span class="cs-radio-text"><span class="cs-radio-title">All</span></span>
-                        </div>
-                        <div class="cs-radio-row" data-mode="bullish">
-                          <span class="cs-radio-dot"></span>
-                          <span class="cs-radio-text"><span class="cs-radio-title">Bullish Only</span></span>
-                        </div>
-                        <div class="cs-radio-row" data-mode="bearish">
-                          <span class="cs-radio-dot"></span>
-                          <span class="cs-radio-text"><span class="cs-radio-title">Bearish Only</span></span>
-                        </div>
-                      </div>
-                    </div>
-
                     <div class="cs-field" style="margin-bottom:0;">
-                      <label>Time Range</label>
-                      <div class="select-input pop-trigger cs-dd-trigger" data-target="csNewsTimeRange"><span
-                          class="cs-select-label">All Time</span><span
-                          class="material-symbols-outlined">expand_more</span></div>
-                      <select id="csNewsTimeRange" style="display:none;">
-                        <option value="6h">Last 6 Hours</option>
-                        <option value="24h">Last 24 Hours</option>
-                        <option value="3d">Last 3 Days</option>
-                        <option value="7d">Last 7 Days</option>
-                        <option value="all" selected>All Time</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="cs-card">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Importance</span>
-                    </div>
-                    <div class="cs-switch-row active" id="csNewsImpHigh">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">High Importance</span>
-                        <span class="cs-switch-desc">Major market-moving events and breaking news.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle High Importance"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-switch-row active" id="csNewsImpMedium">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Medium Importance</span>
-                        <span class="cs-switch-desc">Notable events with moderate market impact.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Medium Importance"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-switch-row active" id="csNewsImpLow">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Low Importance</span>
-                        <span class="cs-switch-desc">Minor events with limited market impact.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Low Importance"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                  </div>
-
-                </div>
-                <div class="cs-col">
-
-                  <div class="cs-card">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Event Types</span>
-                    </div>
-                    <label class="cs-checkbox-row">
-                      <span class="chk-box checked" id="csNewsTypeNews"><span
-                          class="material-symbols-outlined">check</span></span>
-                      News
-                    </label>
-                    <label class="cs-checkbox-row">
-                      <span class="chk-box checked" id="csNewsTypeSocial"><span
-                          class="material-symbols-outlined">check</span></span>
-                      Social Media (e.g. Tweets)
-                    </label>
-                    <label class="cs-checkbox-row">
-                      <span class="chk-box checked" id="csNewsTypeGeo"><span
-                          class="material-symbols-outlined">check</span></span>
-                      Geopolitical Events
-                    </label>
-                    <label class="cs-checkbox-row">
-                      <span class="chk-box checked" id="csNewsTypeCorp"><span
-                          class="material-symbols-outlined">check</span></span>
-                      Corporate News
-                    </label>
-                  </div>
-
-                  <div class="cs-card">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Behavior</span>
-                    </div>
-
-                    <div class="cs-field" style="margin-bottom:14px;">
                       <label>Max Events on Chart</label>
                       <div class="price-stepper cs-price-stepper">
                         <input type="text" id="csNewsMaxEvents" value="20" data-step="1">
@@ -948,23 +979,6 @@
                               class="material-symbols-outlined">keyboard_arrow_down</span></button>
                         </div>
                       </div>
-                    </div>
-
-                    <div class="cs-switch-row active" id="csNewsShowPast">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Show Past Events</span>
-                        <span class="cs-switch-desc">Display historical news markers on past candles.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Show Past Events"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-switch-row active" id="csNewsShowUpcoming">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Show Upcoming Events</span>
-                        <span class="cs-switch-desc">Display scheduled future events such as FOMC.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Show Upcoming Events"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
                     </div>
                   </div>
 
@@ -2971,8 +2985,8 @@
           <div class="card-head">
             <span class="card-title">Trading Journal</span>
             <div class="card-head-actions">
-              <div class="tj-day-select pop-trigger" id="tjDaySelect">
-                <span id="tjDayLabel">Today</span>
+              <div class="tj-day-select pop-trigger" id="tjPeriodSelect">
+                <span id="tjPeriodLabel">Today</span>
                 <span class="material-symbols-outlined">expand_more</span>
               </div>
             </div>
@@ -3001,7 +3015,7 @@
             <div class="tj-mini-strip">
               <div class="tj-mini-cell">
                 <span class="tj-mini-lbl">Winrate</span>
-                <span class="tj-mini-val" id="tjWinRate">71%</span>
+                <span class="tj-mini-val" id="tjWinRate">71.00%</span>
               </div>
               <div class="tj-mini-cell">
                 <span class="tj-mini-lbl">Best</span>
@@ -3058,12 +3072,10 @@
           </div>
         </div>
 
-        <div class="pop-menu" id="tjDayMenu" style="width:130px;">
-          <button class="pop-item selected" data-day="0">Today</button>
-          <button class="pop-item" data-day="1">Jun 24</button>
-          <button class="pop-item" data-day="2">Jun 23</button>
-          <button class="pop-item" data-day="3">Jun 20</button>
-          <button class="pop-item" data-day="4">Jun 19</button>
+        <div class="pop-menu" id="tjPeriodMenu" style="width:130px;">
+          <button class="pop-item selected" data-period="today">Today</button>
+          <button class="pop-item" data-period="month">This Month</button>
+          <button class="pop-item" data-period="year">This Year</button>
         </div>
 
 
@@ -4010,7 +4022,7 @@
                       class="material-symbols-outlined">keyboard_arrow_down</span></button>
                 </div>
               </div>
-              <label class="label-sm" style="margin-top:12px;">Price</label>
+              <label class="label-sm" style="margin-top:12px;">Limit</label>
               <div class="price-stepper">
                 <input type="text" id="qtStopLimitPrice" placeholder="Limit price" value="4,500.25">
                 <span class="qty-unit qt-quote-unit">USDT</span>
@@ -5636,6 +5648,26 @@
     </div>
   </div>
 
+  <!-- One-way-mode block: shown when a trade would open an opposing position while Hedge Mode is off. -->
+  <div class="oc-backdrop" id="hedgeBlockBackdrop">
+    <div class="oc-dialog">
+      <div class="oc-dialog-head">
+        <div>
+          <div class="oc-dialog-title">Opposing position open</div>
+        </div>
+        <button class="oc-close" id="hbClose"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="oc-dialog-desc">
+        You already have an opposing ETHUSD order or position. In one-way mode you can hold only one
+        direction at a time — close it first, or switch to Hedge Mode to hold a long and a short together.
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="hbCancel">Cancel</button>
+        <button class="btn-save" id="hbEnable">Enable Hedge Mode</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== MARKET SCANNER — SAVE / EDIT SCAN DIALOG ===================== -->
   <div class="oc-backdrop" id="msxSaveBackdrop">
     <div class="oc-dialog msx-save-dialog">
@@ -5696,12 +5728,12 @@
 
   <!-- ====== Scripts (order matters: utils → workspace → overlays → resize → app → right-panel) ====== -->
   <script src="js/utils.js?v=1"></script>
-  <script src="js/workspace.js?v=13"></script>
+  <script src="js/workspace.js?v=16"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=17"></script>
-  <script src="js/app.js?v=305"></script>
+  <script src="js/app.js?v=321"></script>
   <script src="js/theme.js?v=3"></script>
-  <script src="js/right-panel.js?v=23"></script>
+  <script src="js/right-panel.js?v=24"></script>
   <script src="js/market-scanner.js?v=16"></script>
   <script src="js/market-sessions.js?v=4"></script>
 

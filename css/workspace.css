@@ -206,11 +206,16 @@
   border-radius: 10px;
   border: 1px solid var(--border-default);
   background: var(--bg-surface);
-  padding: 9px 10px;
+  padding: 9px 8px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   cursor: default;
+  /* The stat text is nowrap, so without these a grid column (min-width: auto)
+     widens to the text's min-content and pushes the whole calendar past its
+     container. Let the cell shrink and clip instead. */
+  min-width: 0;
+  overflow: hidden;
   transition: border-color var(--t-ui), background var(--t-ui), box-shadow var(--t-ui), transform var(--t-ui);
 }
 
@@ -277,7 +282,8 @@
 .d-stats {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
+  min-width: 0;
 }
 
 .jc-day .d-pnl {
@@ -285,6 +291,7 @@
   font-weight: 600;
   font-family: var(--sans);
   letter-spacing: -.01em;
+  font-variant-numeric: tabular-nums;
 }
 
 .jc-day .d-pnl.up {
@@ -295,19 +302,16 @@
   color: var(--short);
 }
 
-.d-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-
-.jc-day .d-winrate,
-.jc-day .d-trades {
-  font-size: 9.5px;
+/* Single summary line ("5W / 2L • 71% WR"), left-aligned to the same rail as the
+   day number and the P&L. Sized so a double-digit day ("12W / 10L • 55% WR", ~86px)
+   still fits the ~89px a cell offers at the panel's full width. */
+.jc-day .d-meta {
+  font-size: 9px;
   font-weight: 500;
+  line-height: 1.35;
   color: var(--text-secondary);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .jc-mini-nav {
