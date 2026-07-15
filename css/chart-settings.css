@@ -187,11 +187,12 @@
   line-height: 1.5;
 }
 
-/* Marks where a search result landed. This goes on the whole .cs-card rather than the individual
-   row: a card is a real box (border, radius, padding) so lighting it up follows an edge the design
+/* Marks the card a search result landed on — only ever a .cs-card, never a row or a pane header.
+   A card is a real box (border, radius, padding), so lighting it up follows an edge the design
    already has, whereas a row like .cs-field has no box of its own and would get a rectangle drawn
    inside the card's padding, matching nothing. Cards hold ~2 rows on average and 7 at most, so the
-   card is a precise enough answer to "where do I look".
+   card is a precise enough answer to "where do I look". A result for a whole pane skips this and
+   just opens the pane — see csGoToResult in app.js.
    Both shadows are inset: the tint because the accent tokens are translucent and a real background
    would paint over — then snap back off — the card's own, and the ring so it lands on top of the
    card's 1px border instead of doubling it.
@@ -209,11 +210,6 @@
 
 .cs-search-hit {
   animation: csSearchHitFade 1.6s ease-out;
-}
-
-/* Fallbacks — a pane header, or the few rows that sit outside any card — have no radius to borrow. */
-.cs-search-hit:not(.cs-card) {
-  border-radius: var(--r-sm);
 }
 
 .cs-nav-group {

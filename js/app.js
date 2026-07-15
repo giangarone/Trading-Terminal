@@ -5797,8 +5797,12 @@
   function csGoToResult(entry) {
     setCsTab(entry.pane);
     csClearSearch();
+    /* A pane result just means "go to this page": setCsTab already lands at the top of it, which is
+       the header itself, and a heading has no card box worth lighting up. */
+    if (entry.el.classList.contains('cs-pane-head')) return;
     /* The card is what gets marked and scrolled to, not the row itself — see .cs-search-hit in
-       chart-settings.css. Pane headers and the handful of rows outside any card mark themselves. */
+       chart-settings.css. Every indexed row currently sits in one; the fallback is just belt and
+       braces for a row added outside a card later. */
     const target = entry.el.closest('.cs-card') || entry.el;
     /* Deferred because setCsTab resets .cs-content scrollTop and the pane has no layout until it's
        the active one — scrolling now would measure a hidden element and then be undone. */
