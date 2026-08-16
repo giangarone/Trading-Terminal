@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-08-16
+
+### Changed
+
+* **Premium badge recoloured** — The Premium badge on paid ChartPrime indicators is now purple instead of gold. It previously matched the gold PRO badge on the L1/L2 indicators closely enough to read as the same plan gate, when it only marks which ChartPrime indicators are paid.
+
+## 2026-08-14
+
+### Added
+
+* **ChartPrime free indicators** — Added twelve free ChartPrime indicators to the Indicators panel, including Power Order Blocks, HTF Candle Volume Profile, Smart Money Fibonacci OTE Engine and Polynomial Regression Channel.
+
+### Changed
+
+* **ChartPrime tiers separated** — The ChartPrime tab now splits into ChartPrime Premium and ChartPrime Free groups, with the paid indicators carrying a Premium badge so the tier stays visible in Favorites and search results. Only paid indicators are badged, so an unbadged row always means free.
+
 ## 2026-07-16
 
 ### Added

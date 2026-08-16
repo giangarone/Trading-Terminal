@@ -7405,6 +7405,19 @@
     { name: 'Market Dynamics', desc: 'A liquidity and structure toolkit that maps reaction zones, breakouts, gaps, and institutional areas in real time.', cat: 'chartprime' },
     { name: 'Prime Oscillators Plus', desc: 'A momentum toolkit that shows when momentum is building, fading, or flipping.', cat: 'chartprime' },
     { name: 'Prime Screener', desc: 'An on-chart dashboard for scanning different assets and spotting opportunities at a glance.', cat: 'chartprime' },
+
+    { name: 'Adaptive Momentum Velocity Ribbon', desc: 'An adaptive ribbon that reacts to momentum and volatility, tightening as a move accelerates and widening when conditions quiet down.', cat: 'chartprimefree' },
+    { name: 'HTF Candle Volume Profile', desc: 'Draws higher timeframe candles with their volume profiles on the current chart, revealing where activity concentrated in each period.', cat: 'chartprimefree' },
+    { name: 'Power Order Blocks', desc: 'Finds supply and demand zones from institutional displacement and rates each one by the strength of the move that created it.', cat: 'chartprimefree' },
+    { name: 'Volumetric Trend Ribbon Pro', desc: 'A volume-weighted volatility ribbon that expands in strong trends and contracts in indecision, with breakout targets and volume spike detection.', cat: 'chartprimefree' },
+    { name: 'Macro Trend Split Profile', desc: 'Anchors a volume profile at the start of each macro trend leg and splits it into bullish and bearish sides to show where conviction sits.', cat: 'chartprimefree' },
+    { name: 'Smart Money Fibonacci OTE Engine', desc: 'Detects trend shifts and projects Fibonacci retracements automatically, highlighting the Optimal Trade Entry zone.', cat: 'chartprimefree' },
+    { name: 'Trend-Reset Cumulative Delta', desc: 'Tracks net buying versus selling pressure and resets on volatility band breaks, so delta reflects only the current trend.', cat: 'chartprimefree' },
+    { name: 'Bollinger Bands Range RSI Oscillator', desc: 'Maps RSI momentum onto Bollinger Bands on the price chart, flagging divergences and shading momentum extremes without a separate panel.', cat: 'chartprimefree' },
+    { name: 'Volume Liquidity Trend', desc: 'Maps the high-volume price points of the current trend as liquidity levels that update as price invalidates them.', cat: 'chartprimefree' },
+    { name: 'Polynomial Regression Channel', desc: 'Fits a curved regression channel to price with forward projection and coloring that reflects directional bias.', cat: 'chartprimefree' },
+    { name: 'Volume Channel Flow', desc: 'Tracks evolving trend channels and profiles how volume is distributed inside each segment to identify bias and breakout zones.', cat: 'chartprimefree' },
+    { name: 'Swing Structure Bands', desc: 'Builds adaptive bands from swing highs and lows that stretch as price develops, marking structure-aligned support and resistance.', cat: 'chartprimefree' },
   ];
 
   /* Per-indicator documentation shown in the panel's in-panel "Read More" doc view.
@@ -7813,8 +7826,21 @@
     },
   };
 
-  const CAT_LABELS = { classic: 'Classic Indicators', l1: 'Trade Flow Intelligence (L1)', l2: 'Order Book Intelligence (L2)', chartprime: 'ChartPrime' };
+  const CAT_LABELS = {
+    classic: 'Classic Indicators',
+    l1: 'Trade Flow Intelligence (L1)',
+    l2: 'Order Book Intelligence (L2)',
+    chartprime: 'ChartPrime Premium',
+    chartprimefree: 'ChartPrime Free',
+  };
   const FLAGSHIP_CATS = ['l1', 'l2'];
+  /* Tabs that cover more than one category. The ChartPrime tab holds both tiers so they read as
+     one family, separated by their group labels rather than by living in different tabs. */
+  const CAT_TAB_GROUPS = { chartprime: ['chartprime', 'chartprimefree'] };
+  /* The paid ChartPrime tier. Badged like the PRO tier but in purple, since this marks where an
+     indicator comes from rather than gating it behind a plan — the gold PRO badge is the only
+     mark that means "your plan doesn't include this". */
+  const CHARTPRIME_PAID_CATS = ['chartprime'];
   /* Deterministic "users" count per indicator (social proof) — stable within a session. */
   function computeIndUsers(d) {
     let h = 0;
@@ -7839,9 +7865,14 @@
     row.className = 'ind-row' + (isFlagship ? ' flagship' : '');
     row.dataset.name = d.name;
     const flagshipBadge = isFlagship ? '<span class="ind-pro-badge">PRO</span>' : '';
+    /* Carried on the row itself so the tier stays visible in Favorites and search results,
+       where the ChartPrime group labels aren't there to convey it. */
+    const paidMark = CHARTPRIME_PAID_CATS.includes(d.cat)
+      ? '<span class="ind-premium-badge">Premium</span>'
+      : '';
     const fav = indFavorites.has(d.name);
     row.innerHTML =
-      `<div class="ind-row-info"><span class="ind-row-name">${d.name}${flagshipBadge}</span><span class="ind-row-desc">${d.desc}</span></div>` +
+      `<div class="ind-row-info"><span class="ind-row-name">${d.name}${flagshipBadge}${paidMark}</span><span class="ind-row-desc">${d.desc}</span></div>` +
       `<div class="ind-row-meta">` +
       `<span class="ind-users" title="${d.users.toLocaleString()} users"><span class="material-symbols-outlined">group</span>${fmtUsers(d.users)}</span>` +
       `<button class="ind-doc-btn" data-doc data-tooltip="Read More" aria-label="Read documentation"><span class="material-symbols-outlined">menu_book</span></button>` +
@@ -7872,7 +7903,11 @@
     const q = (query || '').toLowerCase().trim();
     const showCat = cat === 'all' ? null : cat;
     let anyVisible = false;
-    const groups = showCat ? [showCat] : ['classic', 'chartprime'];
+    const groups = showCat
+      ? (CAT_TAB_GROUPS[showCat] || [showCat])
+      : ['classic', 'chartprime', 'chartprimefree'];
+    /* A single-category tab needs no heading — the tab itself is the label. Multi-group views do. */
+    const showLabels = groups.length > 1;
     groups.forEach(g => {
       const rows = IND_DATA.filter(d => {
         if (d.cat !== g) return false;
@@ -7881,7 +7916,7 @@
       });
       if (!rows.length) return;
       anyVisible = true;
-      if (!showCat) {
+      if (showLabels) {
         const lbl = document.createElement('div');
         lbl.className = 'ind-group-label';
         lbl.textContent = CAT_LABELS[g];

@@ -188,10 +188,13 @@
   border-color: var(--accent-border);
 }
 
-/* Premium tier badge — used on the ChartPrime Intelligence™ column header, its L1/L2 group
-   labels, and individual rows. Kept as a small standalone tag rather than tinting the whole
-   element, so it reads as informational rather than a permanently-selected state. */
-.ind-pro-badge {
+/* Tier badges, sharing one shape and scale so they read as the same kind of mark. PRO (gold)
+   marks the plan-gated L1/L2 indicators — used on the ChartPrime Intelligence™ column header,
+   its group labels, and individual rows. PREMIUM (purple) marks the paid ChartPrime indicators.
+   Kept as small standalone tags rather than tinting the whole element, so they read as
+   informational rather than a permanently-selected state. */
+.ind-pro-badge,
+.ind-premium-badge {
   font-size: 8.5px;
   font-weight: var(--fw-semi);
   letter-spacing: .04em;
@@ -200,8 +203,14 @@
   background: var(--accent-dim);
   border: 1px solid var(--accent-border);
   border-radius: var(--r-pill);
-  padding: 2px 5px;
+  padding: 2px 4px;
   line-height: 1;
+}
+
+.ind-premium-badge {
+  color: var(--purple);
+  background: var(--purple-dim);
+  border-color: var(--purple-guide);
 }
 
 .ind-panes {
