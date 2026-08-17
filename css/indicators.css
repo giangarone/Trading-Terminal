@@ -360,7 +360,13 @@
   letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--text-muted);
-  padding: 10px 14px 4px;
+  padding: 20px 14px 6px;
+}
+
+/* The leading group in a list sits against the pane top, so it doesn't need the
+   run-up that separates one group from the previous one. */
+.ind-group-label:first-child {
+  padding-top: 10px;
 }
 
 .ind-group-label.flagship {
