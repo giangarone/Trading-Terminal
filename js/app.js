@@ -7831,7 +7831,7 @@
     l1: 'Trade Flow Intelligence (L1)',
     l2: 'Order Book Intelligence (L2)',
     chartprime: 'ChartPrime Premium',
-    chartprimefree: 'ChartPrime Free',
+    chartprimefree: 'ChartPrime',
   };
   const FLAGSHIP_CATS = ['l1', 'l2'];
   /* Tabs that cover more than one category. The ChartPrime tab holds both tiers so they read as
