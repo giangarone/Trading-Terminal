@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-21
+
+### Added
+
+* **BBO toggle in the Quick Trade panel** — The Limit tab now has a BBO toggle beside the Limit Price field. With it on, the field states the rule ("Best Bid / Ask") instead of a price, and the Buy and Sell buttons carry the exact live price each side would rest at — the best bid for a buy, the best ask for a sell — so the price you get is written on the button you press. Clicking into the field or nudging the steppers turns BBO off and hands you an ordinary typable price.
+
 ## 2026-08-16
 
 ### Changed

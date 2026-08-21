@@ -522,10 +522,27 @@
   background: var(--bg-hover);
 }
 
+/* Limit Price field and its BBO toggle share one row — the toggle matches the field's height. */
+.qt-limit-price-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.qt-limit-price-row .price-stepper {
+  min-width: 0;
+}
+
+/* With BBO on the field states the rule rather than a price, so it reads as a label, not an input. */
+.qt-limit-price-row.bbo-on .price-stepper input {
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
 .qt-side-btn {
   flex-shrink: 0;
   width: auto;
-  padding: 0 14px;
+  padding: 0 12px;
   border-radius: 7px;
   font-size: 11.5px;
   font-weight: 600;
@@ -544,6 +561,21 @@
   color: var(--text-primary);
   background: var(--bg-hover);
   border-color: var(--border-strong);
+}
+
+.qt-bbo-btn {
+  letter-spacing: .3px;
+}
+
+.qt-bbo-btn.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+}
+
+.qt-bbo-btn.active:hover {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .qt-disabled-row {

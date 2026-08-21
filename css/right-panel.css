@@ -184,10 +184,36 @@
   display: block;
 }
 
+/* In BBO mode the Buy/Sell buttons carry the exact price each side would be placed at, so the price
+   the trader gets is written on the button they press. Hidden otherwise — the field holds the price. */
+.bs-btn .bs-price,
+.bs-btn .bs-note {
+  display: none;
+}
+
+.bs-row--bbo .bs-btn {
+  height: auto;
+  padding: 7px 8px 8px;
+}
+
+.bs-row--bbo .bs-btn .bs-price,
+.bs-row--bbo .bs-btn .bs-note {
+  display: block;
+}
+
 .bs-btn .bs-price {
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 600;
   font-family: var(--sans);
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.bs-btn .bs-note {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: .75;
+  margin-top: 1px;
 }
 
 .bs-btn.buy {

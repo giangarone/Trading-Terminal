@@ -813,14 +813,97 @@
     stopLimit: ['qtStopLimitTrigger', 'qtStopLimitPrice'],
     mit: ['qtMitTrigger'],
   };
+
+  /* ---------- BBO (best bid / offer) ----------
+     BBO is a placement rule, not a price: buying joins the queue at the best bid, selling at the best
+     ask, so the order rests on its own side of the spread instead of crossing it. The direction isn't
+     known while the trader is deciding — Buy and Sell are both the submit action — so the field can't
+     show a single honest number. With BBO on it states the rule instead, and the Buy/Sell buttons carry
+     the live price for each side. Typing a price is how you opt out: the toggle flips off and the
+     typed price is used verbatim. With BBO off the field tracks the last traded price instead.
+
+     The toggle is per-order and isn't persisted — every session starts with BBO off. */
+  const qtLimitPriceInput = document.getElementById('qtLimitPrice');
+  const qtLimitPriceRow = document.querySelector('.qt-limit-price-row');
+  const qtBboToggle = document.getElementById('qtBboToggle');
+  const qtBuySellRow = document.getElementById('qtBuySellRow');
+  let qtBboEnabled = false;
+  let qtLimitPriceEdited = false;
+
+  // The mock's book is a single tick wide: the ask is the last traded price, the bid one tick under it.
+  function qtBestAsk() { return roundTick(qtCurrentPrice()); }
+  function qtBestBid() { return roundTick(qtCurrentPrice() - TICK); }
+  function qtBboPriceFor(side) { return side === 'buy' ? qtBestBid() : qtBestAsk(); }
+  function qtLimitTabActive() {
+    const panel = document.querySelector('.qt-tab-panel[data-tab-panel="limit"]');
+    return !!panel && panel.classList.contains('active');
+  }
+  // BBO only governs a plain Limit order — the other tabs price off a trigger the trader sets themselves.
+  function qtBboActive() { return qtBboEnabled && qtLimitTabActive(); }
+
+  function qtSetBboEnabled(on) {
+    qtBboEnabled = !!on;
+    if (qtBboEnabled) {
+      qtLimitPriceInput.value = '';
+      qtLimitPriceEdited = false;
+    } else if (!qtLimitPriceInput.value) {
+      // Coming off BBO with an empty field: hand the trader the last traded price to edit from.
+      qtLimitPriceInput.value = fmt(roundTick(qtCurrentPrice()));
+    }
+    qtRefreshBboUi();
+  }
+
+  /* Paints everything BBO controls: the toggle, the field's read-only state, and the Buy/Sell buttons. */
+  function qtRefreshBboUi() {
+    const active = qtBboActive();
+    qtBboToggle.classList.toggle('active', qtBboEnabled);
+    qtBboToggle.setAttribute('aria-pressed', String(qtBboEnabled));
+    qtLimitPriceRow.classList.toggle('bbo-on', qtBboEnabled);
+    qtLimitPriceInput.readOnly = qtBboEnabled;
+    qtBuySellRow.classList.toggle('bs-row--bbo', active);
+    qtRefreshBboButtonPrices();
+  }
+
+  function qtRefreshBboButtonPrices() {
+    if (!qtBboActive()) return;
+    const price = qtCurrentPrice();
+    if (isNaN(price)) return;
+    document.getElementById('qtBuyBtnPrice').textContent = fmt(qtBboPriceFor('buy'));
+    document.getElementById('qtSellBtnPrice').textContent = fmt(qtBboPriceFor('sell'));
+  }
+
+  /* With BBO off, the field tracks the last traded price until the trader takes it over. */
+  function qtSyncLimitPanelPrices() {
+    qtRefreshBboButtonPrices();
+    if (qtBboEnabled || qtLimitPriceEdited || !qtLimitTabActive()) return;
+    if (document.activeElement === qtLimitPriceInput) return;
+    const price = qtCurrentPrice();
+    if (!isNaN(price)) qtLimitPriceInput.value = fmt(roundTick(price));
+  }
+
+  qtBboToggle.addEventListener('click', () => qtSetBboEnabled(!qtBboEnabled));
+  // Typing a price is opting out of the rule, so reaching for the field turns BBO off rather than
+  // silently ignoring the keystrokes against a read-only input.
+  qtLimitPriceInput.addEventListener('mousedown', () => { if (qtBboEnabled) qtSetBboEnabled(false); });
+  qtLimitPriceInput.addEventListener('focus', () => { if (qtBboEnabled) qtSetBboEnabled(false); });
+  qtLimitPriceInput.addEventListener('input', () => { qtLimitPriceEdited = true; });
+  document.querySelectorAll('.ps-up[data-target="qtLimitPrice"], .ps-down[data-target="qtLimitPrice"]')
+    .forEach(btn => btn.addEventListener('click', () => {
+      if (qtBboEnabled) qtSetBboEnabled(false);
+      qtLimitPriceEdited = true;
+    }));
+
   function qtSeedPanelPrices(panelName) {
     const mkt = qtCurrentPrice();
     if (isNaN(mkt)) return; // no live price to read yet — leave the field alone rather than write "NaN"
     const price = fmt(roundTick(mkt));
     (QT_SEEDED_PRICE_IDS[panelName] || []).forEach(id => {
       const input = document.getElementById(id);
-      if (input) input.value = price;
+      if (!input) return;
+      // The BBO field holds no price of its own — leave it empty so the rule stays readable.
+      input.value = (id === 'qtLimitPrice' && qtBboEnabled) ? '' : price;
     });
+    if (panelName === 'limit') qtLimitPriceEdited = false;
   }
   function qtSetActiveTab(tabName) {
     const panelName = tabName === 'advanced' ? qtAdvancedType : tabName;
@@ -832,11 +915,13 @@
     const lbl = QT_TAB_LABELS[tabName] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market';
     qtBuyBtn.querySelector('.bs-lbl').textContent = 'Buy ' + lbl;
     qtSellBtn.querySelector('.bs-lbl').textContent = 'Sell ' + lbl;
+    qtRefreshBboUi();
   }
   qtOrderTabs.querySelectorAll('.qt-tab:not(.qt-tab-dropdown)').forEach(tab => {
     tab.addEventListener('click', () => qtSetActiveTab(tab.dataset.tab));
   });
   qtSetActiveTab('limit');
+  qtSetBboEnabled(false); // the panel opens with an ordinary typable limit price; BBO is opted into
 
   /* ---------- advanced order type dropdown (Stop Limit / Trigger Market) ---------- */
   const qtAdvancedTab = document.getElementById('qtAdvancedTab');
@@ -1138,8 +1223,13 @@
     }
     return qtCurrentPrice();
   }
-  qtBuyBtn.addEventListener('click', () => qtPlaceOrder('buy', qtActivePrice()));
-  qtSellBtn.addEventListener('click', () => qtPlaceOrder('sell', qtActivePrice()));
+  /* The entry price a Buy/Sell click places at. The click is the first moment the direction is known,
+     which is where BBO resolves to that side's best price — the same price shown on the button. */
+  function qtEntryPrice(side) {
+    return qtBboActive() ? qtBboPriceFor(side) : qtActivePrice();
+  }
+  qtBuyBtn.addEventListener('click', () => qtPlaceOrder('buy', qtEntryPrice('buy')));
+  qtSellBtn.addEventListener('click', () => qtPlaceOrder('sell', qtEntryPrice('sell')));
   /* the symbol currently shown in the top-bar selector — Close/Cancel All are scoped to it */
   function currentSymbol() {
     const el = document.getElementById('symSelectLabel');
@@ -4145,6 +4235,8 @@
       setUpDown(els.hdrChg, dayUp);
       els.hdrBid.textContent = fmt(roundTick(last - TICK));
       els.hdrAsk.textContent = fmt(last);
+
+      qtSyncLimitPanelPrices();
 
       // Floating Quick Order bar: buy fills at the ask, sell at the bid
       if (els.qopBuyPrice) els.qopBuyPrice.textContent = fmt(last);
