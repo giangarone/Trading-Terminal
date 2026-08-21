@@ -924,8 +924,17 @@
     document.getElementById('qtQuoteAskVal').textContent = fmt(qtBestAsk());
   }
 
-  /* Every instrument with a book has a best bid and ask — spot included — so the quote always shows;
-     only the spread behind it changes per symbol (see quoteSpreadFor). */
+  /* Every instrument with a book has a best bid and ask — spot included — so the quote shows on any
+     tab that prices off the book; only the spread behind it changes per symbol (see quoteSpreadFor). */
+
+  /* Market and Trigger Market both fill at whatever the book offers when they fire, so a bid/ask
+     caption would be quoting a price the order never uses. Those panels hide the quote line. */
+  const QT_PANELS_WITHOUT_QUOTE = ['market', 'mit'];
+  const qtQuoteLine = document.querySelector('.qt-quote-line');
+
+  function qtRefreshQuoteLineVisibility(panelName) {
+    qtQuoteLine.hidden = QT_PANELS_WITHOUT_QUOTE.includes(panelName);
+  }
 
   /* The price field a clicked quote should land in: the one the trader is already working in. Market
      has no price field of its own, so a click there means "make this a limit order at that price". */
@@ -985,6 +994,7 @@
       p.classList.toggle('active', p.dataset.tabPanel === panelName);
     });
     qtSeedPanelPrices(panelName);
+    qtRefreshQuoteLineVisibility(panelName);
     const lbl = QT_TAB_LABELS[tabName] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market';
     qtBuyBtn.querySelector('.bs-lbl').textContent = 'Buy ' + lbl;
     qtSellBtn.querySelector('.bs-lbl').textContent = 'Sell ' + lbl;

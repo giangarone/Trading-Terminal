@@ -11,6 +11,11 @@
   font-size: 11px;
 }
 
+/* Market and Trigger Market hide the line entirely — display:flex would otherwise beat [hidden]. */
+.qt-quote-line[hidden] {
+  display: none;
+}
+
 .qt-quote-side {
   padding: 0;
   border: none;
