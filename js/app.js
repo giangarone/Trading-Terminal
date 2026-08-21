@@ -892,6 +892,8 @@
     qtBboToggle.setAttribute('aria-pressed', String(qtBboEnabled));
     qtLimitPriceRow.classList.toggle('bbo-on', qtBboEnabled);
     qtLimitPriceInput.readOnly = qtBboEnabled;
+    // "Best Bid / Ask" states the rule BBO applies — with BBO off an empty field is just an empty field.
+    qtLimitPriceInput.placeholder = qtBboEnabled ? 'Best Bid / Ask' : 'Limit price';
     qtBuySellRow.classList.toggle('bs-row--bbo', active);
     qtRefreshBboButtonPrices();
   }
@@ -1031,6 +1033,13 @@
       closeAllPopovers();
       qtSetActiveTab('advanced');
     });
+  });
+
+  /* Price fields are typed into constantly, so the browser builds up a history for them and offers it
+     back as an autofill dropdown over the panel. These are live market prices, not saved form data —
+     a remembered value is never the one you want. */
+  document.querySelectorAll('.price-stepper input').forEach(input => {
+    input.setAttribute('autocomplete', 'off');
   });
 
   /* ---------- generic price stepper arrows (Stop / Limit / Trailing Delta / Trigger / Activation fields) ---------- */
@@ -1299,8 +1308,17 @@
   function qtEntryPrice(side) {
     return qtBboActive() ? qtBboPriceFor(side) : qtActivePrice();
   }
-  qtBuyBtn.addEventListener('click', () => qtPlaceOrder('buy', qtEntryPrice('buy')));
-  qtSellBtn.addEventListener('click', () => qtPlaceOrder('sell', qtEntryPrice('sell')));
+  /* Clearing the field with BBO off leaves nothing to place at, and qtActivePrice would quietly fall
+     back to the market price — a price the trader never chose. Ask for one instead. */
+  function qtLimitPriceMissing() {
+    if (qtActiveTab() !== 'limit' || qtBboEnabled) return false;
+    const raw = qtLimitPriceInput.value.replace(/,/g, '').trim();
+    if (raw !== '' && !isNaN(parseFloat(raw))) return false;
+    showToast('Enter a limit price', 'error');
+    return true;
+  }
+  qtBuyBtn.addEventListener('click', () => { if (!qtLimitPriceMissing()) qtPlaceOrder('buy', qtEntryPrice('buy')); });
+  qtSellBtn.addEventListener('click', () => { if (!qtLimitPriceMissing()) qtPlaceOrder('sell', qtEntryPrice('sell')); });
   /* the symbol currently shown in the top-bar selector — Close/Cancel All are scoped to it */
   function currentSymbol() {
     const el = document.getElementById('symSelectLabel');

@@ -2,6 +2,12 @@
 
 ## 2026-08-21
 
+### Fixed
+
+* **Browser autofill over the trade panel** — Price fields no longer offer a dropdown of previously typed values. They carry live market prices, not saved form data, so a remembered value is never the one you want.
+
+* **Empty limit price** — With BBO off, clearing the Limit Price field and pressing Buy or Sell no longer places at the market price. The panel asks for a price instead, and the field's placeholder only reads "Best Bid / Ask" while BBO is actually on.
+
 ### Added
 
 * **Bid / ask quote** — The Quick Trade panel now shows the best bid and the best ask as a caption under the active tab's price field, on every asset class and both crypto modes — anything with an order book has a spread, spot included. It matters most on futures and stocks, where the last traded price can sit stale between prints. Clicking the bid or the ask uses that price for the order you're building: the Limit price on the Limit tab, the limit leg on Stop Limit, the trigger on Trigger Market. From the Market tab, which has no price field, it switches to Limit.
