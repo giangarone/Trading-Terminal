@@ -1,4 +1,58 @@
 /* ====== Quick Trade ====== */
+/* ====== Quick Trade: Level 1 quote ====== */
+/* A caption under the active tab's price field, not a component of its own — bid and ask are
+   supporting information, so they get a text line rather than a card. Bid green / Ask red matches
+   the Buy/Sell buttons, which rest at the bid and the ask. */
+.qt-quote-line {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: -8px 0 12px;
+  font-size: 11px;
+}
+
+.qt-quote-line[hidden] {
+  display: none;
+}
+
+.qt-quote-side {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.qt-quote-side:hover {
+  color: var(--text-secondary);
+}
+
+.qt-quote-val {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.qt-quote-side:hover .qt-quote-val {
+  text-decoration: underline;
+}
+
+.qt-quote-bid {
+  color: var(--long);
+}
+
+.qt-quote-ask {
+  color: var(--short);
+}
+
+.qt-quote-spread {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .qt-order-tabs {
   display: grid;
   grid-template-columns: .75fr .75fr 1fr;

@@ -781,11 +781,32 @@
        - unit        → amount unit; crypto derives the coin from the symbol (see qtApplyAssetConfig)
        - quickAmounts → preset quantity pills for discrete-unit instruments (crypto uses the %/USD slider instead) */
   const QT_ASSET_CONFIG = {
-    crypto: { marginMode: true, leverage: true, unit: 'ETH', quickAmounts: null },
-    futures: { marginMode: false, leverage: false, unit: 'Contracts', quickAmounts: [1, 2, 5, 10, 20] },
-    stocks: { marginMode: false, leverage: false, unit: 'Shares', quickAmounts: [1, 10, 50, 100, 500] },
-    forex: { marginMode: false, leverage: true, unit: 'Lots', quickAmounts: [0.1, 0.5, 1, 2, 5] },
+    crypto: { marginMode: true, leverage: true, unit: 'ETH', quickAmounts: null, quoteStrip: false },
+    futures: { marginMode: false, leverage: false, unit: 'Contracts', quickAmounts: [1, 2, 5, 10, 20], quoteStrip: true },
+    stocks: { marginMode: false, leverage: false, unit: 'Shares', quickAmounts: [1, 10, 50, 100, 500], quoteStrip: true },
+    forex: { marginMode: false, leverage: true, unit: 'Lots', quickAmounts: [0.1, 0.5, 1, 2, 5], quoteStrip: false },
   };
+
+  /* ---------- Level 1 quote ----------
+     How wide the book is for an instrument. This is the quote's spread only — deliberately separate
+     from the global TICK, which drives price rounding and every stop/target offset, so a realistic
+     stock or futures book doesn't disturb order maths tuned around 0.25.
+
+     Futures carry their contract's real tick; stocks quote in pennies. Crypto and forex stay on TICK,
+     the behaviour before the strip existed — they don't show the strip, so nothing visible changes.
+     Values are floored at 0.01 because prices render to two decimals. */
+  const QUOTE_SPREAD_BY_CAT = { crypto: TICK, forex: TICK, stocks: 0.01, futures: 0.25 };
+  const QUOTE_SPREAD_BY_SYMBOL = {
+    ESU5: 0.25, NQU5: 0.25, YMU5: 1, RTYU5: 0.10,
+    CLN5: 0.01, GCQ5: 0.10, SIN5: 0.01, ZBU5: 0.03, ZNU5: 0.02,
+    ZCU5: 0.25, HGU5: 0.01, NGU5: 0.01, PLU5: 0.10, KCU5: 0.05,
+    ZSU5: 0.25, ZWU5: 0.25, '6BU5': 0.01,
+  };
+  function quoteSpreadFor(sym) {
+    if (QUOTE_SPREAD_BY_SYMBOL[sym]) return QUOTE_SPREAD_BY_SYMBOL[sym];
+    const cat = symbolCategory(sym);
+    return QUOTE_SPREAD_BY_CAT[cat] || TICK;
+  }
   let qtAsset = QT_ASSET_CONFIG.crypto;  // current asset config — the panel defaults to ETHUSD (crypto)
   let qtCryptoMode = 'spot';             // crypto only: 'spot' (1×, no liquidation) or 'perp' (leverage + margin) — defaults to spot on launch
   function qtCurrentPrice() {
@@ -830,9 +851,20 @@
   let qtBboEnabled = false;
   let qtLimitPriceEdited = false;
 
-  // The mock's book is a single tick wide: the ask is the last traded price, the bid one tick under it.
-  function qtBestAsk() { return roundTick(qtCurrentPrice()); }
-  function qtBestBid() { return roundTick(qtCurrentPrice() - TICK); }
+  /* Every trade prints at one side of the book or the other: a buyer lifting the offer prints at the
+     ask, a seller hitting the bid prints at the bid. So the last price is pinned to whichever side the
+     tape last moved towards, and the other side sits one spread away. That keeps both quotes on the
+     instrument's own price grid — a straddle around the last price would put ES on half-ticks — and
+     makes the strip visibly alternate as the tape moves, the way a real Level 1 quote does. */
+  let qtTapeLiftedOffer = true; // last print was an up-tick (hit the ask)
+  function qtBestAsk() {
+    const last = qtCurrentPrice();
+    return qtTapeLiftedOffer ? last : last + quoteSpreadFor(currentSymbol());
+  }
+  function qtBestBid() {
+    const last = qtCurrentPrice();
+    return qtTapeLiftedOffer ? last - quoteSpreadFor(currentSymbol()) : last;
+  }
   function qtBboPriceFor(side) { return side === 'buy' ? qtBestBid() : qtBestAsk(); }
   function qtLimitTabActive() {
     const panel = document.querySelector('.qt-tab-panel[data-tab-panel="limit"]');
@@ -880,6 +912,36 @@
     const price = qtCurrentPrice();
     if (!isNaN(price)) qtLimitPriceInput.value = fmt(roundTick(price));
   }
+
+  function qtSetTapeDirection(up) { qtTapeLiftedOffer = up; }
+
+  /* ---------- quote strip ---------- */
+  const qtQuoteStrip = document.getElementById('qtQuoteStrip');
+
+  function qtRefreshQuoteStrip() {
+    if (qtQuoteStrip.hidden || isNaN(qtCurrentPrice())) return;
+    document.getElementById('qtQuoteBidVal').textContent = fmt(qtBestBid());
+    document.getElementById('qtQuoteAskVal').textContent = fmt(qtBestAsk());
+    document.getElementById('qtQuoteSpread').textContent = fmt(quoteSpreadFor(currentSymbol()));
+  }
+
+  /* Only futures and stocks show the strip — the two classes where the last traded price can be
+     stale between prints and the spread is worth acting on. */
+  function qtApplyQuoteStrip(cfg) {
+    qtQuoteStrip.hidden = !cfg.quoteStrip;
+    qtRefreshQuoteStrip();
+  }
+
+  /* Clicking a side of the quote is asking to trade at that price: it becomes the limit price, which
+     means leaving BBO (a rule) for a price the trader picked. Jumps to the Limit tab if elsewhere. */
+  function qtUseQuotePrice(price) {
+    if (qtActiveTab() !== 'limit') qtSetActiveTab('limit');
+    if (qtBboEnabled) qtSetBboEnabled(false);
+    qtLimitPriceInput.value = fmt(price);
+    qtLimitPriceEdited = true;
+  }
+  document.getElementById('qtQuoteBid').addEventListener('click', () => qtUseQuotePrice(qtBestBid()));
+  document.getElementById('qtQuoteAsk').addEventListener('click', () => qtUseQuotePrice(qtBestAsk()));
 
   qtBboToggle.addEventListener('click', () => qtSetBboEnabled(!qtBboEnabled));
   // Typing a price is opting out of the rule, so reaching for the field turns BBO off rather than
@@ -1443,6 +1505,8 @@
     // Note: qtCryptoMode (Spot/Perp) persists across symbol switches — changing symbol
     // keeps the user's chosen mode rather than resetting it. It defaults to spot on launch.
     qtApplyMarginMode(cfg);
+
+    qtApplyQuoteStrip(cfg);
 
     qtRenderQuickAmounts(cfg.quickAmounts);
 
@@ -4233,10 +4297,12 @@
       els.hdrLast.textContent = fmt(last);
       els.hdrChg.textContent = (dayUp ? '+' : '') + fmt(dayChg) + ' (' + (dayUp ? '+' : '') + fmt(dayChgPct) + '%)';
       setUpDown(els.hdrChg, dayUp);
-      els.hdrBid.textContent = fmt(roundTick(last - TICK));
-      els.hdrAsk.textContent = fmt(last);
+      qtSetTapeDirection(tickUp);
+      els.hdrBid.textContent = fmt(qtBestBid());
+      els.hdrAsk.textContent = fmt(qtBestAsk());
 
       qtSyncLimitPanelPrices();
+      qtRefreshQuoteStrip();
 
       // Floating Quick Order bar: buy fills at the ask, sell at the bid
       if (els.qopBuyPrice) els.qopBuyPrice.textContent = fmt(last);
