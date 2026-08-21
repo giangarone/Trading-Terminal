@@ -920,19 +920,34 @@
     if (isNaN(qtCurrentPrice())) return;
     document.getElementById('qtQuoteBidVal').textContent = fmt(qtBestBid());
     document.getElementById('qtQuoteAskVal').textContent = fmt(qtBestAsk());
-    document.getElementById('qtQuoteSpread').textContent = fmt(quoteSpreadFor(currentSymbol()));
   }
 
   /* Every instrument with a book has a best bid and ask — spot included — so the quote always shows;
      only the spread behind it changes per symbol (see quoteSpreadFor). */
 
-  /* Clicking a side of the quote is asking to trade at that price: it becomes the limit price, which
-     means leaving BBO (a rule) for a price the trader picked. Jumps to the Limit tab if elsewhere. */
+  /* The price field a clicked quote should land in: the one the trader is already working in. Market
+     has no price field of its own, so a click there means "make this a limit order at that price". */
+  function qtQuotePriceTarget() {
+    const tab = qtActiveTab();
+    if (tab === 'limit') return qtLimitPriceInput;
+    if (tab === 'advanced') return document.getElementById(QT_ADVANCED_ENTRY_IDS[qtAdvancedType]);
+    return null;
+  }
+
+  /* Clicking a side of the quote is asking to trade at that price. On the Limit tab that also means
+     leaving BBO — a rule — for a price the trader picked themselves. */
   function qtUseQuotePrice(price) {
-    if (qtActiveTab() !== 'limit') qtSetActiveTab('limit');
-    if (qtBboEnabled) qtSetBboEnabled(false);
-    qtLimitPriceInput.value = fmt(price);
-    qtLimitPriceEdited = true;
+    let input = qtQuotePriceTarget();
+    if (!input) {
+      qtSetActiveTab('limit');
+      input = qtLimitPriceInput;
+    }
+    if (input.disabled) return;
+    if (input === qtLimitPriceInput) {
+      if (qtBboEnabled) qtSetBboEnabled(false);
+      qtLimitPriceEdited = true;
+    }
+    input.value = fmt(price);
   }
   document.getElementById('qtQuoteBid').addEventListener('click', () => qtUseQuotePrice(qtBestBid()));
   document.getElementById('qtQuoteAsk').addEventListener('click', () => qtUseQuotePrice(qtBestAsk()));

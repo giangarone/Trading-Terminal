@@ -43,12 +43,6 @@
   color: var(--short);
 }
 
-.qt-quote-spread {
-  margin-left: auto;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
-
 .qt-order-tabs {
   display: grid;
   grid-template-columns: .75fr .75fr 1fr;
