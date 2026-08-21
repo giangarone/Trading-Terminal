@@ -836,8 +836,8 @@
   };
 
   /* ---------- BBO (best bid / offer) ----------
-     BBO is a placement rule, not a price: buying joins the queue at the best bid, selling at the best
-     ask, so the order rests on its own side of the spread instead of crossing it. The direction isn't
+     BBO is a placement rule, not a price: buying takes the best ask, selling takes the best bid, so
+     each side is priced at the quote it actually trades against. The direction isn't
      known while the trader is deciding — Buy and Sell are both the submit action — so the field can't
      show a single honest number. With BBO on it states the rule instead, and the Buy/Sell buttons carry
      the live price for each side. Typing a price is how you opt out: the toggle flips off and the
@@ -865,7 +865,7 @@
     const last = qtCurrentPrice();
     return qtTapeLiftedOffer ? last - quoteSpreadFor(currentSymbol()) : last;
   }
-  function qtBboPriceFor(side) { return side === 'buy' ? qtBestBid() : qtBestAsk(); }
+  function qtBboPriceFor(side) { return side === 'buy' ? qtBestAsk() : qtBestBid(); }
   function qtLimitTabActive() {
     const panel = document.querySelector('.qt-tab-panel[data-tab-panel="limit"]');
     return !!panel && panel.classList.contains('active');
