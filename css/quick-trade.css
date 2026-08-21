@@ -11,10 +11,6 @@
   font-size: 11px;
 }
 
-.qt-quote-line[hidden] {
-  display: none;
-}
-
 .qt-quote-side {
   padding: 0;
   border: none;

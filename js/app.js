@@ -781,10 +781,10 @@
        - unit        → amount unit; crypto derives the coin from the symbol (see qtApplyAssetConfig)
        - quickAmounts → preset quantity pills for discrete-unit instruments (crypto uses the %/USD slider instead) */
   const QT_ASSET_CONFIG = {
-    crypto: { marginMode: true, leverage: true, unit: 'ETH', quickAmounts: null, quoteStrip: false },
-    futures: { marginMode: false, leverage: false, unit: 'Contracts', quickAmounts: [1, 2, 5, 10, 20], quoteStrip: true },
-    stocks: { marginMode: false, leverage: false, unit: 'Shares', quickAmounts: [1, 10, 50, 100, 500], quoteStrip: true },
-    forex: { marginMode: false, leverage: true, unit: 'Lots', quickAmounts: [0.1, 0.5, 1, 2, 5], quoteStrip: false },
+    crypto: { marginMode: true, leverage: true, unit: 'ETH', quickAmounts: null },
+    futures: { marginMode: false, leverage: false, unit: 'Contracts', quickAmounts: [1, 2, 5, 10, 20] },
+    stocks: { marginMode: false, leverage: false, unit: 'Shares', quickAmounts: [1, 10, 50, 100, 500] },
+    forex: { marginMode: false, leverage: true, unit: 'Lots', quickAmounts: [0.1, 0.5, 1, 2, 5] },
   };
 
   /* ---------- Level 1 quote ----------
@@ -792,10 +792,10 @@
      from the global TICK, which drives price rounding and every stop/target offset, so a realistic
      stock or futures book doesn't disturb order maths tuned around 0.25.
 
-     Futures carry their contract's real tick; stocks quote in pennies. Crypto and forex stay on TICK,
-     the behaviour before the strip existed — they don't show the strip, so nothing visible changes.
+     Futures carry their contract's real tick; stocks quote in pennies; crypto and forex books are
+     tighter than the 0.25 TICK the mock rounds prices to, and aren't bound to that grid anyway.
      Values are floored at 0.01 because prices render to two decimals. */
-  const QUOTE_SPREAD_BY_CAT = { crypto: TICK, forex: TICK, stocks: 0.01, futures: 0.25 };
+  const QUOTE_SPREAD_BY_CAT = { crypto: 0.05, forex: 0.05, stocks: 0.01, futures: 0.25 };
   const QUOTE_SPREAD_BY_SYMBOL = {
     ESU5: 0.25, NQU5: 0.25, YMU5: 1, RTYU5: 0.10,
     CLN5: 0.01, GCQ5: 0.10, SIN5: 0.01, ZBU5: 0.03, ZNU5: 0.02,
@@ -916,21 +916,15 @@
   function qtSetTapeDirection(up) { qtTapeLiftedOffer = up; }
 
   /* ---------- quote strip ---------- */
-  const qtQuoteStrip = document.getElementById('qtQuoteStrip');
-
   function qtRefreshQuoteStrip() {
-    if (qtQuoteStrip.hidden || isNaN(qtCurrentPrice())) return;
+    if (isNaN(qtCurrentPrice())) return;
     document.getElementById('qtQuoteBidVal').textContent = fmt(qtBestBid());
     document.getElementById('qtQuoteAskVal').textContent = fmt(qtBestAsk());
     document.getElementById('qtQuoteSpread').textContent = fmt(quoteSpreadFor(currentSymbol()));
   }
 
-  /* Only futures and stocks show the strip — the two classes where the last traded price can be
-     stale between prints and the spread is worth acting on. */
-  function qtApplyQuoteStrip(cfg) {
-    qtQuoteStrip.hidden = !cfg.quoteStrip;
-    qtRefreshQuoteStrip();
-  }
+  /* Every instrument with a book has a best bid and ask — spot included — so the quote always shows;
+     only the spread behind it changes per symbol (see quoteSpreadFor). */
 
   /* Clicking a side of the quote is asking to trade at that price: it becomes the limit price, which
      means leaving BBO (a rule) for a price the trader picked. Jumps to the Limit tab if elsewhere. */
@@ -1506,7 +1500,7 @@
     // keeps the user's chosen mode rather than resetting it. It defaults to spot on launch.
     qtApplyMarginMode(cfg);
 
-    qtApplyQuoteStrip(cfg);
+    qtRefreshQuoteStrip(); // the new symbol's book is a different width
 
     qtRenderQuickAmounts(cfg.quickAmounts);
 

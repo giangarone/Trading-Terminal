@@ -4,9 +4,9 @@
 
 ### Added
 
-* **Bid / ask quote (futures and stocks)** — The Quick Trade panel now shows the best bid, the best ask and the spread as a caption under the active tab's price field, for futures and stocks — the two asset classes where the last traded price can sit stale between prints and the spread is a real cost. Clicking the bid or the ask sends that price straight to the Limit Price field. Crypto and forex are unchanged.
+* **Bid / ask quote** — The Quick Trade panel now shows the best bid, the best ask and the spread as a caption under the active tab's price field, on every asset class and both crypto modes — anything with an order book has a spread, spot included. It matters most on futures and stocks, where the last traded price can sit stale between prints. Clicking the bid or the ask sends that price straight to the Limit Price field.
 
-* **Per-instrument quote spreads** — Bid and ask are no longer a flat quarter-point on every symbol. Futures carry their contract's own tick (ES 0.25, CL 0.01, GC 0.10, YM 1.00) and stocks quote in pennies. The last price now prints at whichever side of the book the tape last moved towards, so both quotes stay on the instrument's price grid.
+* **Per-instrument quote spreads** — Bid and ask are no longer a flat quarter-point on every symbol. Futures carry their contract's own tick (ES 0.25, CL 0.01, GC 0.10, YM 1.00), stocks quote in pennies, and crypto and forex get a tighter book than the price grid. The last price now prints at whichever side of the book the tape last moved towards, so both quotes stay on the instrument's price grid.
 
 * **BBO toggle in the Quick Trade panel** — The Limit tab now has a BBO toggle beside the Limit Price field. With it on, the field states the rule ("Best Bid / Ask") instead of a price, and the Buy and Sell buttons carry the exact live price each side would rest at — the best bid for a buy, the best ask for a sell — so the price you get is written on the button you press. Clicking into the field or nudging the steppers turns BBO off and hands you an ordinary typable price.
 
