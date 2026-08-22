@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/topbar.css?v=14">
   <link rel="stylesheet" href="css/left-panel.css?v=19">
   <link rel="stylesheet" href="css/center-panel.css?v=28">
-  <link rel="stylesheet" href="css/workspace.css?v=41">
+  <link rel="stylesheet" href="css/workspace.css?v=42">
   <link rel="stylesheet" href="css/right-panel.css?v=6">
   <link rel="stylesheet" href="css/quick-trade.css?v=29">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
@@ -3363,21 +3363,25 @@
                       <input type="range" class="pos-close-slider range-slider" id="posCloseSliderLimit-NQU5" min="0"
                         max="100" step="1" value="100">
                       <div class="pos-close-field-label">Limit price</div>
-                      <div class="price-stepper">
-                        <input type="text" id="posCloseLimitPx-NQU5" value="29,704.75" data-step="0.25">
-                        <span class="qty-unit">USD</span>
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="posCloseLimitPx-NQU5"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="posCloseLimitPx-NQU5"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                      <div class="pos-close-limit-row">
+                        <div class="price-stepper">
+                          <input type="text" id="posCloseLimitPx-NQU5" value="29,704.75" data-step="0.25">
+                          <span class="qty-unit">USD</span>
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="posCloseLimitPx-NQU5"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="posCloseLimitPx-NQU5"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
                         </div>
+                        <button type="button" class="pos-close-bbo-btn" data-pos-close-bbo aria-pressed="false"
+                            title="Close at the best bid on a long, the best ask on a short">BBO</button>
                       </div>
-                      <button type="button" class="pos-close-quote" data-pos-close-quote>
-                        <span class="pos-close-quote-label">Best Bid</span>
-                        <span class="pos-close-quote-val" id="posCloseQuote-NQU5">—</span>
+                      <button class="pos-close-primary" data-pos-close-limit>
+                        <span class="pos-close-lbl">Close Limit</span>
+                        <span class="pos-close-price" id="posCloseQuote-NQU5"></span>
+                        <span class="pos-close-note" id="posCloseNote-NQU5">Best Bid</span>
                       </button>
-                      <button class="pos-close-primary" data-pos-close-limit>Close Limit</button>
                     </div>
                   </div>
                 </div>
@@ -3491,21 +3495,25 @@
                       <input type="range" class="pos-close-slider range-slider" id="posCloseSliderLimit-ESU5" min="0"
                         max="100" step="1" value="100">
                       <div class="pos-close-field-label">Limit price</div>
-                      <div class="price-stepper">
-                        <input type="text" id="posCloseLimitPx-ESU5" value="6,028.00" data-step="0.25">
-                        <span class="qty-unit">USD</span>
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="posCloseLimitPx-ESU5"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="posCloseLimitPx-ESU5"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                      <div class="pos-close-limit-row">
+                        <div class="price-stepper">
+                          <input type="text" id="posCloseLimitPx-ESU5" value="6,028.00" data-step="0.25">
+                          <span class="qty-unit">USD</span>
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="posCloseLimitPx-ESU5"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="posCloseLimitPx-ESU5"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
                         </div>
+                        <button type="button" class="pos-close-bbo-btn" data-pos-close-bbo aria-pressed="false"
+                            title="Close at the best bid on a long, the best ask on a short">BBO</button>
                       </div>
-                      <button type="button" class="pos-close-quote" data-pos-close-quote>
-                        <span class="pos-close-quote-label">Best Bid</span>
-                        <span class="pos-close-quote-val" id="posCloseQuote-ESU5">—</span>
+                      <button class="pos-close-primary" data-pos-close-limit>
+                        <span class="pos-close-lbl">Close Limit</span>
+                        <span class="pos-close-price" id="posCloseQuote-ESU5"></span>
+                        <span class="pos-close-note" id="posCloseNote-ESU5">Best Bid</span>
                       </button>
-                      <button class="pos-close-primary" data-pos-close-limit>Close Limit</button>
                     </div>
                   </div>
                 </div>
@@ -3620,21 +3628,25 @@
                       <input type="range" class="pos-close-slider range-slider" id="posCloseSliderLimit-SOLUSD" min="0"
                         max="100" step="1" value="100">
                       <div class="pos-close-field-label">Limit price</div>
-                      <div class="price-stepper">
-                        <input type="text" id="posCloseLimitPx-SOLUSD" value="0.2195" data-step="0.0001">
-                        <span class="qty-unit">USD</span>
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="posCloseLimitPx-SOLUSD"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="posCloseLimitPx-SOLUSD"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                      <div class="pos-close-limit-row">
+                        <div class="price-stepper">
+                          <input type="text" id="posCloseLimitPx-SOLUSD" value="0.2195" data-step="0.0001">
+                          <span class="qty-unit">USD</span>
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="posCloseLimitPx-SOLUSD"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="posCloseLimitPx-SOLUSD"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
                         </div>
+                        <button type="button" class="pos-close-bbo-btn" data-pos-close-bbo aria-pressed="false"
+                            title="Close at the best bid on a long, the best ask on a short">BBO</button>
                       </div>
-                      <button type="button" class="pos-close-quote" data-pos-close-quote>
-                        <span class="pos-close-quote-label">Best Bid</span>
-                        <span class="pos-close-quote-val" id="posCloseQuote-SOLUSD">—</span>
+                      <button class="pos-close-primary" data-pos-close-limit>
+                        <span class="pos-close-lbl">Close Limit</span>
+                        <span class="pos-close-price" id="posCloseQuote-SOLUSD"></span>
+                        <span class="pos-close-note" id="posCloseNote-SOLUSD">Best Bid</span>
                       </button>
-                      <button class="pos-close-primary" data-pos-close-limit>Close Limit</button>
                     </div>
                   </div>
                 </div>
@@ -3755,21 +3767,25 @@
                       <input type="range" class="pos-close-slider range-slider" id="posCloseSliderLimit-BTCUSD" min="0"
                         max="100" step="1" value="100">
                       <div class="pos-close-field-label">Limit price</div>
-                      <div class="price-stepper">
-                        <input type="text" id="posCloseLimitPx-BTCUSD" value="67,121.50" data-step="0.5">
-                        <span class="qty-unit">USD</span>
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="posCloseLimitPx-BTCUSD"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="posCloseLimitPx-BTCUSD"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                      <div class="pos-close-limit-row">
+                        <div class="price-stepper">
+                          <input type="text" id="posCloseLimitPx-BTCUSD" value="67,121.50" data-step="0.5">
+                          <span class="qty-unit">USD</span>
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="posCloseLimitPx-BTCUSD"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="posCloseLimitPx-BTCUSD"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
                         </div>
+                        <button type="button" class="pos-close-bbo-btn" data-pos-close-bbo aria-pressed="false"
+                            title="Close at the best bid on a long, the best ask on a short">BBO</button>
                       </div>
-                      <button type="button" class="pos-close-quote" data-pos-close-quote>
-                        <span class="pos-close-quote-label">Best Bid</span>
-                        <span class="pos-close-quote-val" id="posCloseQuote-BTCUSD">—</span>
+                      <button class="pos-close-primary" data-pos-close-limit>
+                        <span class="pos-close-lbl">Close Limit</span>
+                        <span class="pos-close-price" id="posCloseQuote-BTCUSD"></span>
+                        <span class="pos-close-note" id="posCloseNote-BTCUSD">Best Bid</span>
                       </button>
-                      <button class="pos-close-primary" data-pos-close-limit>Close Limit</button>
                     </div>
                   </div>
                 </div>
@@ -3889,21 +3905,25 @@
                       <input type="range" class="pos-close-slider range-slider" id="posCloseSliderLimit-AAPL" min="0"
                         max="100" step="1" value="100">
                       <div class="pos-close-field-label">Limit price</div>
-                      <div class="price-stepper">
-                        <input type="text" id="posCloseLimitPx-AAPL" value="188.45" data-step="0.05">
-                        <span class="qty-unit">USD</span>
-                        <div class="price-stepper-arrows">
-                          <button type="button" class="ps-up" data-target="posCloseLimitPx-AAPL"><span
-                              class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                          <button type="button" class="ps-down" data-target="posCloseLimitPx-AAPL"><span
-                              class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                      <div class="pos-close-limit-row">
+                        <div class="price-stepper">
+                          <input type="text" id="posCloseLimitPx-AAPL" value="188.45" data-step="0.05">
+                          <span class="qty-unit">USD</span>
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="posCloseLimitPx-AAPL"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="posCloseLimitPx-AAPL"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
                         </div>
+                        <button type="button" class="pos-close-bbo-btn" data-pos-close-bbo aria-pressed="false"
+                            title="Close at the best bid on a long, the best ask on a short">BBO</button>
                       </div>
-                      <button type="button" class="pos-close-quote" data-pos-close-quote>
-                        <span class="pos-close-quote-label">Best Bid</span>
-                        <span class="pos-close-quote-val" id="posCloseQuote-AAPL">—</span>
+                      <button class="pos-close-primary" data-pos-close-limit>
+                        <span class="pos-close-lbl">Close Limit</span>
+                        <span class="pos-close-price" id="posCloseQuote-AAPL"></span>
+                        <span class="pos-close-note" id="posCloseNote-AAPL">Best Bid</span>
                       </button>
-                      <button class="pos-close-primary" data-pos-close-limit>Close Limit</button>
                     </div>
                   </div>
                 </div>
@@ -5785,9 +5805,9 @@
   <script src="js/workspace.js?v=17"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=17"></script>
-  <script src="js/app.js?v=356"></script>
+  <script src="js/app.js?v=357"></script>
   <script src="js/theme.js?v=3"></script>
-  <script src="js/right-panel.js?v=25"></script>
+  <script src="js/right-panel.js?v=26"></script>
   <script src="js/market-scanner.js?v=16"></script>
   <script src="js/market-sessions.js?v=4"></script>
 

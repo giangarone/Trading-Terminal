@@ -1208,42 +1208,53 @@ table.bp-table tr.total-row td {
   margin-bottom: 12px;
 }
 
-/* Close-side quote — a caption under the limit price, not a control of its own: closing a long
-   sells into the best bid, closing a short buys the best ask. Clicking it uses that price. */
-.pos-close-quote {
+/* Limit price field and its BBO toggle share one row — the toggle matches the field's height,
+   the same pairing the Quick Trade panel uses. */
+.pos-close-limit-row {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-size: 11px;
-  font-weight: 500;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.pos-close-limit-row .price-stepper {
+  min-width: 0;
+  flex: 1;
+}
+
+/* With BBO on the field states the rule rather than a price, so it reads as a label, not an input. */
+.pos-detail-close.is-bbo .pos-close-limit-row .price-stepper input {
   color: var(--text-muted);
-  margin: -3px 0 9px;
   cursor: pointer;
 }
 
-.pos-close-quote:hover {
+.pos-close-bbo-btn {
+  flex-shrink: 0;
+  padding: 0 12px;
+  border-radius: 7px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-input);
   color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: var(--fw-semi);
+  letter-spacing: .3px;
+  margin-bottom: 9px;
+  cursor: pointer;
+  transition: color var(--t-ui), background var(--t-ui), border-color var(--t-ui);
 }
 
-.pos-close-quote-val {
-  font-family: var(--sans);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+.pos-close-bbo-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
-.pos-close-quote:hover .pos-close-quote-val {
-  text-decoration: underline;
+.pos-close-bbo-btn.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
 }
 
-.pos-close-quote-val.is-bid {
-  color: var(--long);
-}
-
-.pos-close-quote-val.is-ask {
-  color: var(--short);
+.pos-close-bbo-btn.active:hover {
+  border-color: var(--accent);
 }
 
 .pos-close-primary {
@@ -1260,6 +1271,42 @@ table.bp-table tr.total-row td {
 
 .pos-close-primary:hover {
   filter: brightness(1.08);
+}
+
+/* With BBO on the button carries the exact price the close would rest at, so the price you get is
+   written on the button you press. Hidden otherwise — the field holds the price. */
+.pos-close-price,
+.pos-close-note {
+  display: none;
+}
+
+.pos-detail-close.is-bbo .pos-close-primary {
+  height: auto;
+  padding: 7px 8px 8px;
+}
+
+.pos-detail-close.is-bbo .pos-close-price,
+.pos-detail-close.is-bbo .pos-close-note {
+  display: block;
+}
+
+.pos-close-lbl {
+  display: block;
+}
+
+.pos-close-price {
+  font-size: 17px;
+  font-weight: var(--fw-semi);
+  font-family: var(--sans);
+  line-height: 1.2;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pos-close-note {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: .75;
 }
 
 /* Key-value grid inside detail sections */

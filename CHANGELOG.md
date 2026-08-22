@@ -16,7 +16,7 @@
 
 ### Added
 
-* **Close-side quote on the Limit close** — A position's Limit close now shows the side of the book it actually trades against, under the limit price field: the best bid when closing a long, the best ask when closing a short. Opening the Limit tab hands the field that price, and clicking the quote re-takes it after you've typed over it. The quote tracks the position's own mark, so every row quotes its own instrument.
+* **BBO on a position's Limit close** — The Limit close now has a BBO toggle beside the price field, the same one the Quick Trade panel uses, with the side already decided: closing a long sells into the best bid, closing a short buys the best ask. With it on the field states which of the two it is and the Close Limit button carries the live price, so the price you get is written on the button you press. Clicking into the field or nudging the steppers turns it off and hands back a typable price. The quote tracks each position's own mark, so every row quotes its own instrument.
 
 * **Bid / ask quote** — The Quick Trade panel now shows the best bid and the best ask as a caption under the active tab's price field, on every asset class and both crypto modes — anything with an order book has a spread, spot included. It matters most on futures and stocks, where the last traded price can sit stale between prints. Clicking the bid or the ask uses that price for the order you're building: the Limit price on the Limit tab, the limit leg on Stop Limit.
 

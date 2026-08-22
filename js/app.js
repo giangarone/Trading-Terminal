@@ -481,19 +481,62 @@
     });
   });
 
-  /* Writes the best bid (closing a long) or best ask (closing a short) into a row's limit close
-     field, and refreshes the caption under it so both read the same quote. */
+  /* ---------- BBO on a limit close ----------
+     Same rule as the Quick Trade panel, with the side already decided: a long is closed by selling
+     into the best bid, a short by buying the best ask. With BBO on the field states which of the two
+     it is instead of a price, and the Close Limit button carries the live number — the price you get
+     is written on the button you press. Typing, clicking into the field or nudging the steppers is
+     how you opt out. It's per-row and per-order state, held on the row's close section. */
+  function posCloseBboOn(row) {
+    const wrap = row && row.querySelector('.pos-detail-close');
+    return !!wrap && wrap.classList.contains('is-bbo');
+  }
+
+  function posCloseQuoteFor(row) {
+    return (row && window.positionCloseQuote) ? window.positionCloseQuote(row.dataset.posId) : null;
+  }
+
+  function setPosCloseBbo(row, on) {
+    const wrap = row.querySelector('.pos-detail-close');
+    const input = document.getElementById('posCloseLimitPx-' + row.dataset.posId);
+    const btn = wrap.querySelector('[data-pos-close-bbo]');
+    const quote = posCloseQuoteFor(row);
+    wrap.classList.toggle('is-bbo', on);
+    if (btn) {
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-pressed', String(on));
+    }
+    if (window.refreshPositionCloseQuote) window.refreshPositionCloseQuote(row.dataset.posId);
+    if (!input) return;
+    input.readOnly = on;
+    // The rule replaces the price while BBO is on; leaving it hands the quote back as a starting point.
+    input.placeholder = on && quote ? quote.label : 'Limit price';
+    if (on) input.value = '';
+    else if (!input.value && quote) input.value = quote.text;
+  }
+
+  /* Writes the quote this close would trade against into a row's limit price field. */
   function seedPositionCloseLimitPrice(row) {
-    if (!row) return;
-    const posId = row.dataset.posId;
-    const quote = window.positionCloseQuote && window.positionCloseQuote(posId);
+    if (!row || posCloseBboOn(row)) return;
+    const quote = posCloseQuoteFor(row);
     if (!quote) return;
-    if (window.refreshPositionCloseQuote) window.refreshPositionCloseQuote(posId);
-    const input = document.getElementById('posCloseLimitPx-' + posId);
+    const input = document.getElementById('posCloseLimitPx-' + row.dataset.posId);
     if (input) input.value = quote.text;
   }
 
   const posPanel = document.getElementById('bpPanel-positions');
+
+  // Reaching for the limit price field is opting out of the rule, so it turns BBO off rather than
+  // silently ignoring the keystrokes against a read-only input.
+  function leaveBboOnFieldReach(e) {
+    const input = e.target.closest('.pos-detail-close input[id^="posCloseLimitPx-"]');
+    if (!input) return;
+    const row = input.closest('.pos-row');
+    if (posCloseBboOn(row)) setPosCloseBbo(row, false);
+  }
+  posPanel.addEventListener('mousedown', leaveBboOnFieldReach);
+  posPanel.addEventListener('focusin', leaveBboOnFieldReach);
+
   posPanel.addEventListener('click', e => {
     const tickerEl = e.target.closest('.pos-sym-ticker');
     if (tickerEl) {
@@ -513,15 +556,21 @@
       if (tab === 'limit') seedPositionCloseLimitPrice(closeTab.closest('.pos-row'));
       return;
     }
-    /* the close-side quote caption — clicking it puts that price in the limit field */
-    const closeQuote = e.target.closest('[data-pos-close-quote]');
-    if (closeQuote) {
-      seedPositionCloseLimitPrice(closeQuote.closest('.pos-row'));
+    /* BBO toggle on the limit close */
+    const bboBtn = e.target.closest('[data-pos-close-bbo]');
+    if (bboBtn) {
+      const row = bboBtn.closest('.pos-row');
+      setPosCloseBbo(row, !posCloseBboOn(row));
       return;
     }
     /* stepper arrows on the close-amount / limit-price fields (delegated so dynamic rows work) */
     const stepBtn = e.target.closest('.pos-detail-close .ps-up, .pos-detail-close .ps-down');
     if (stepBtn) {
+      const stepRow = stepBtn.closest('.pos-row');
+      // Nudging the limit price is picking a price of your own, so it leaves BBO.
+      if (stepBtn.dataset.target.startsWith('posCloseLimitPx-') && posCloseBboOn(stepRow)) {
+        setPosCloseBbo(stepRow, false);
+      }
       const input = document.getElementById(stepBtn.dataset.target);
       if (!input) return;
       const raw = (input.value || '0').replace(/,/g, '');

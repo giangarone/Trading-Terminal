@@ -259,15 +259,17 @@
       : { price: ask, label: 'Best Ask', side: 'ask' };
   }
 
+  /* Keeps the Close Limit button's price and its "Best Bid"/"Best Ask" note on the live quote. Both
+     are only visible while that row's BBO is on, but painting them regardless keeps them correct the
+     moment it's switched on. */
   function paintCloseQuote(p) {
-    const el = document.getElementById('posCloseQuote-' + (p.domKey || p.sym));
-    if (!el) return;
+    const key = p.domKey || p.sym;
+    const priceEl = document.getElementById('posCloseQuote-' + key);
+    if (!priceEl) return;
     const quote = positionCloseQuote(p);
-    el.textContent = fmt(quote.price, p.dec);
-    el.classList.toggle('is-bid', quote.side === 'bid');
-    el.classList.toggle('is-ask', quote.side === 'ask');
-    const label = el.parentElement.querySelector('.pos-close-quote-label');
-    if (label) label.textContent = quote.label;
+    priceEl.textContent = fmt(quote.price, p.dec);
+    const noteEl = document.getElementById('posCloseNote-' + key);
+    if (noteEl) noteEl.textContent = quote.label;
   }
 
   function findPositionByKey(domKey) {
@@ -447,12 +449,15 @@
       '<div class="pos-close-pane" data-close-pane="limit">' +
       amtRow('posClosePctLblLimit-' + sym, initLbl, 'posCloseSliderLimit-' + sym) +
       '<div class="pos-close-field-label">Limit price</div>' +
+      '<div class="pos-close-limit-row">' +
       stepper('posCloseLimitPx-' + sym, priceStr, pxStep, 'USD') +
-      // The side of the book this close trades against — painted live by the tick (paintCloseQuote).
-      '<button type="button" class="pos-close-quote" data-pos-close-quote>' +
-      '<span class="pos-close-quote-label">Best Bid</span>' +
-      '<span class="pos-close-quote-val" id="posCloseQuote-' + sym + '">—</span></button>' +
-      '<button class="pos-close-primary" data-pos-close-limit>Close Limit</button></div>';
+      '<button type="button" class="pos-close-bbo-btn" data-pos-close-bbo aria-pressed="false" ' +
+      'title="Close at the best bid on a long, the best ask on a short">BBO</button></div>' +
+      // With BBO on the button carries the price this close would rest at — painted by the tick.
+      '<button class="pos-close-primary" data-pos-close-limit>' +
+      '<span class="pos-close-lbl">Close Limit</span>' +
+      '<span class="pos-close-price" id="posCloseQuote-' + sym + '"></span>' +
+      '<span class="pos-close-note" id="posCloseNote-' + sym + '">Best Bid</span></button></div>';
   }
   /* leverage currently chosen in the Quick Trade panel — stamped onto positions opened from a fill */
   function currentLeverage() {
