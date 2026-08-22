@@ -11,6 +11,7 @@
   let TICK = 0.25;
   const PX_PER_POINT = 22;         // vertical px per 1.0 point
   const BASE_PRICE = 4500.25;      // anchors chart's vertical price scale
+  const CHART_SYMBOL = 'ETHUSD';   // the instrument the chart draws — the symbol selector is cosmetic
   const AXIS_RIGHT_W = 68;         // width reserved for the price axis gutter
   const AXIS_BOTTOM_H = 24;        // height reserved for the time axis gutter
   const BAR_INTERVAL_MIN = 15;     // minutes per candle, matches the active "15m" timeframe
@@ -2778,7 +2779,10 @@
 
   /* Working limit closes live in the positions panel (js/right-panel.js); it announces every change
      so the Open Orders table, the history tables and the toast stay in step with them. */
-  document.addEventListener('position-close-orders:changed', renderOpenOrders);
+  document.addEventListener('position-close-orders:changed', () => {
+    renderOpenOrders();
+    render(); // a close on the charted symbol has a line to draw or clear
+  });
   document.addEventListener('position-close-order:filled', e => {
     const o = e.detail;
     orderHistory.unshift({
@@ -3821,6 +3825,16 @@
       drawOrderAxisTagOutline(tagOrder.entry, tagOrder.side === 'buy' ? upColor : downColor, hoveredHandle === 'entry');
     }
 
+    /* Working limit closes get an axis tag like every other resting price. They hang off a position
+       rather than a chart order, so they're read from the panel's list instead of the focused order. */
+    if (isPrimary && window.positionCloseOrders) {
+      const closeColor = themeColor('--info');
+      window.positionCloseOrders().forEach(closeOrder => {
+        if (closeOrder.sym !== CHART_SYMBOL) return;
+        drawOrderAxisTagOutline(closeOrder.price, closeColor, hoveredHandle === 'close:' + closeOrder.id);
+      });
+    }
+
     /* ---- crosshair: dotted guide lines + axis labels at cursor ---- */
     if (isPrimary && crosshair) {
       const cx = clamp(crosshair.x, 0, plotW);
@@ -4591,6 +4605,9 @@
         if (order.filled && !isDraggingOrderLine) orderNeedsRender = true;
       });
       simTickCounter++;
+      // A working close line has no order object behind it to request a render, but it still has to
+      // sit at the right height as the chart is panned, resized or first laid out.
+      if (chartHasCloseLines()) orderNeedsRender = true;
       if (orderNeedsRender && !isDraggingOrderLine) render();
       // Restore the user's focus after the loop's per-order re-pointing, so an in-progress drag or an
       // open per-order menu keeps acting on the order it started on — unless that order was just closed.
@@ -4742,6 +4759,12 @@
   layer.addEventListener('mouseover', (e) => setHoveredSide(orderSideFromNode(e.target)));
   layer.addEventListener('mouseleave', () => setHoveredSide(null));
 
+  /* Working limit closes drawn on this chart — see the close-line block in render(). */
+  function chartHasCloseLines() {
+    return !!window.positionCloseOrders &&
+      window.positionCloseOrders().some(o => o.sym === CHART_SYMBOL);
+  }
+
   /* ---------- main render ---------- */
   function render() {
     // renderOrder re-points `order` to each order it draws; save the caller's focus and restore it at
@@ -4790,11 +4813,66 @@
       }
       makeDraggable(hit, onDragAlert, onDropAlert, '.ol-alert-del');
     });
+    /* Working limit closes on the charted symbol. Every other resting price on this chart — entry,
+       TP, SL, alerts — draws a line, and a close order rests at a price like any of them; what the
+       trader needs to see is how far away it is. Closes on other symbols have no chart to sit on, so
+       they stay in the Open Orders table. They aren't take-profits: a close below entry on a long is
+       a perfectly ordinary scratch, so they get their own neutral line rather than the profit-side
+       green (and stay out of the TP numbering and R maths). Anchored to the chart's own instrument
+       rather than the symbol label, which is cosmetic here — chart orders stay put through a switch,
+       so a close line has no business vanishing behind one. */
+    (window.positionCloseOrders ? window.positionCloseOrders() : []).forEach(closeOrder => {
+      if (closeOrder.sym !== CHART_SYMBOL) return;
+      const y = clamp(priceToY(closeOrder.price, H0), 10, H0 - 10);
+
+      const line = document.createElement('div');
+      line.className = 'ol-line close';
+      line.style.top = y + 'px';
+      layer.appendChild(line);
+
+      const row = document.createElement('div');
+      row.className = 'ol-side-row';
+      row.style.top = y + 'px';
+      const pctLabel = Math.round(closeOrder.pct) + '%';
+      // The chart only ever draws its own instrument, so the unit is that symbol's coin (ETHUSD → ETH).
+      const unit = CHART_SYMBOL.replace(/USDT?$/, '');
+      row.innerHTML =
+        '<span class="ol-chip close">CLOSE' +
+        '<span class="ol-close-qty">' + fmt(closeOrder.qty, 2) + ' ' + unit + '</span>' +
+        '<span class="ol-close-pct">∙ ' + pctLabel + '</span></span>' +
+        '<span class="ol-gear ol-danger" data-cancel-close-line="' + closeOrder.id + '" data-tooltip="Cancel close order">' +
+        '<span class="material-symbols-outlined">close</span></span>';
+      layer.appendChild(row);
+
+      row.querySelector('[data-cancel-close-line]').addEventListener('click', e => {
+        e.stopPropagation();
+        const cancelled = window.cancelPositionCloseOrder(closeOrder.id);
+        if (cancelled) showToast(cancelled.sym + ' limit close cancelled', 'check_circle');
+      });
+
+      /* Drag to reprice, from the line or its chip — the same gesture that moves a TP or SL. The
+         drag moves the DOM itself and only repaints the canvas, so the node survives the gesture;
+         the drop hands the new price back to the panel, which re-renders both. */
+      function onDragClose(cy, h) {
+        line.style.top = cy + 'px';
+        row.style.top = cy + 'px';
+        window.movePositionCloseOrder(closeOrder.id, roundTick(yToPrice(cy, h)), false);
+        drawPriceChart(); // keeps the axis tag on the line as it moves
+      }
+      function onDropClose(cy, h) {
+        window.movePositionCloseOrder(closeOrder.id, roundTick(yToPrice(cy, h)), true);
+        showToast('Close order moved', 'edit');
+      }
+      const closeHoverKey = 'close:' + closeOrder.id;
+      makeDraggable(line, onDragClose, onDropClose, null, null, closeHoverKey);
+      makeDraggable(row, onDragClose, onDropClose, '[data-cancel-close-line]', null, closeHoverKey);
+    });
+
     // Draw every chart order (each with full drag + TP/SL parity). One drawPriceChart() after the loop.
     const renderList = allOrders();
     renderList.forEach(o => renderOrder(o));
     dodgeEntryBars(); // runs once every bar exists, since it spreads them relative to each other
-    if (renderList.length) drawPriceChart();
+    if (renderList.length || chartHasCloseLines()) drawPriceChart(); // close lines carry an axis tag too
     // Restore focus to the order the caller was working on (renderOrder left it on the last one drawn).
     order = renderList.includes(keepFocus) ? keepFocus : (renderList.length ? renderList[renderList.length - 1] : null);
   }

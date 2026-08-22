@@ -303,7 +303,7 @@
 
   function closeOrderView(o) {
     return {
-      id: o.id, sym: o.sym, domKey: o.domKey, side: o.side,
+      id: o.id, sym: o.sym, domKey: o.domKey, side: o.side, pct: o.pct,
       qty: o.qty, qtyText: fmtQty(o.qty), price: o.price, priceText: fmt(o.price, o.dec),
     };
   }
@@ -338,6 +338,17 @@
     return closeOrders.map(closeOrderView);
   };
 
+  /* Repricing a working close — the chart drags its line. `notify` is false for the live drag (the
+     chart is already moving the line itself; a re-render would tear the dragged node out from under
+     it) and true on drop, which repaints the table and the chart from the new price. */
+  window.movePositionCloseOrder = function (id, price, notify) {
+    const order = closeOrders.find(o => o.id === id);
+    if (!order || !(price > 0)) return null;
+    order.price = price;
+    if (notify) closeOrdersChanged();
+    return closeOrderView(order);
+  };
+
   window.cancelPositionCloseOrder = function (id) {
     const i = closeOrders.findIndex(o => o.id === id);
     if (i < 0) return null;
@@ -346,13 +357,28 @@
     return closeOrderView(order);
   };
 
-  /* Called as each position's mark moves. Fills every working close the new mark has reached. */
+  /* The price a working close is measured against. ETHUSD is the instrument the chart draws, and its
+     closes are drawn there as lines, so they have to fill against the price shown on that chart —
+     not this row's own mark, which carries independent noise. Every other symbol has no chart to
+     disagree with, and fills against its mark. */
+  const CHART_SYMBOL = 'ETHUSD';
+  function closeFillPrice(p) {
+    const lastEl = document.getElementById('hdrLast');
+    if (p.sym === CHART_SYMBOL && lastEl) {
+      const last = parseFloat(lastEl.textContent.replace(/,/g, ''));
+      if (!isNaN(last)) return last;
+    }
+    return p.mark;
+  }
+
+  /* Called as each position's mark moves. Fills every working close the price has reached. */
   function fillReachedCloseOrders(p) {
     const key = p.domKey || p.sym;
+    const last = closeFillPrice(p);
     for (let i = closeOrders.length - 1; i >= 0; i--) {
       const o = closeOrders[i];
       if (o.domKey !== key) continue;
-      const reached = o.side === 'sell' ? p.mark >= o.price : p.mark <= o.price;
+      const reached = o.side === 'sell' ? last >= o.price : last <= o.price;
       if (!reached) continue;
       closeOrders.splice(i, 1);
       // Realized P&L on the closed slice, using the same per-unit scaling the row's open P&L uses.

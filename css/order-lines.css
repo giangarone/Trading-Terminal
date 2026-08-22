@@ -60,10 +60,11 @@
   pointer-events: none;
 }
 
-/* TP/SL lines (and a draggable Entry line) get an invisible ~8px grab zone centered on
+/* TP/SL/close lines (and a draggable Entry line) get an invisible ~8px grab zone centered on
    the visible 1px line, so they can be dragged from anywhere along their  length. */
 .ol-line.tp,
 .ol-line.sl,
+.ol-line.close,
 .ol-line.offset,
 .ol-line.be-trigger,
 .ol-line.stop-limit-trigger,
@@ -81,6 +82,7 @@
 
 .ol-line.tp::before,
 .ol-line.sl::before,
+.ol-line.close::before,
 .ol-line.offset::before,
 .ol-line.be-trigger::before,
 .ol-line.stop-limit-trigger::before,
@@ -118,6 +120,13 @@
 
 .ol-line.sl {
   border-color: var(--short-border);
+}
+
+/* Working limit close — a resting close order placed from a position's Close Position panel. It
+   takes the neutral info color rather than the profit-side green: a close below entry on a long is
+   an ordinary scratch, not a failed take-profit. */
+.ol-line.close {
+  border-color: var(--info-border);
 }
 
 /* Trailing-TP offset line — sits between a trailing TP and entry, in the trail/intel color */
@@ -443,6 +452,21 @@
   border: 1px solid var(--short-border);
   color: var(--short);
   cursor: ns-resize;
+}
+
+.ol-chip.close {
+  background: var(--bg-sunken);
+  border: 1px solid var(--info-border);
+  color: var(--info);
+  cursor: ns-resize;
+}
+
+/* What the close will actually sell or buy: the quantity, with the share of the position it works
+   out to beside it. Both sit lighter than the chip's label. The price is on the axis tag, not here. */
+.ol-close-qty,
+.ol-close-pct {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .ol-chip.tp.invalid,
