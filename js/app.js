@@ -630,7 +630,13 @@
       const placed = window.placePositionCloseOrder(posId, pct, price);
       if (!placed) { showToast('Could not place the close order', 'error'); return; }
       const pctStr = pct < 100 ? ' (' + pct + '%)' : '';
-      showToast(sym + ' limit close order placed at ' + placed.priceText + pctStr, 'pending_actions');
+      // Over-committing is allowed — closes are reduce-only and cap at what's left when they fill —
+      // but the trader should know the working closes now add up to more than the position.
+      const overCommitted = placed.coverPct > 100.5;
+      const coverStr = overCommitted
+        ? ' — working closes now cover ' + Math.round(placed.coverPct) + '% of the position'
+        : '';
+      showToast(sym + ' limit close order placed at ' + placed.priceText + pctStr + coverStr, 'pending_actions');
       return;
     }
     const reverseBtn = e.target.closest('[data-pos-reverse]');

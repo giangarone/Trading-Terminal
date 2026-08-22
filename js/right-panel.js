@@ -331,7 +331,15 @@
     };
     closeOrders.push(order);
     closeOrdersChanged();
-    return closeOrderView(order);
+    // How much of the position every working close now adds up to. Closes are reduce-only — they're
+    // capped at whatever is left when they fill — so resting more than 100% is allowed, but the
+    // caller says so rather than letting it pass unremarked.
+    const workingQty = closeOrders
+      .filter(o => o.domKey === domKey)
+      .reduce((sum, o) => sum + o.qty, 0);
+    const view = closeOrderView(order);
+    view.coverPct = p.qty > 0 ? workingQty / p.qty * 100 : 0;
+    return view;
   };
 
   window.positionCloseOrders = function () {
