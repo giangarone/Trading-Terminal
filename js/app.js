@@ -481,6 +481,18 @@
     });
   });
 
+  /* Writes the best bid (closing a long) or best ask (closing a short) into a row's limit close
+     field, and refreshes the caption under it so both read the same quote. */
+  function seedPositionCloseLimitPrice(row) {
+    if (!row) return;
+    const posId = row.dataset.posId;
+    const quote = window.positionCloseQuote && window.positionCloseQuote(posId);
+    if (!quote) return;
+    if (window.refreshPositionCloseQuote) window.refreshPositionCloseQuote(posId);
+    const input = document.getElementById('posCloseLimitPx-' + posId);
+    if (input) input.value = quote.text;
+  }
+
   const posPanel = document.getElementById('bpPanel-positions');
   posPanel.addEventListener('click', e => {
     const tickerEl = e.target.closest('.pos-sym-ticker');
@@ -496,6 +508,15 @@
       const tab = closeTab.dataset.closeTab;
       wrap.querySelectorAll('.pos-close-tab').forEach(t => t.classList.toggle('active', t === closeTab));
       wrap.querySelectorAll('.pos-close-pane').forEach(p => p.classList.toggle('active', p.dataset.closePane === tab));
+      // Opening the Limit tab hands over the quote the close would actually trade against, so the
+      // field never offers a price the market has since walked away from.
+      if (tab === 'limit') seedPositionCloseLimitPrice(closeTab.closest('.pos-row'));
+      return;
+    }
+    /* the close-side quote caption — clicking it puts that price in the limit field */
+    const closeQuote = e.target.closest('[data-pos-close-quote]');
+    if (closeQuote) {
+      seedPositionCloseLimitPrice(closeQuote.closest('.pos-row'));
       return;
     }
     /* stepper arrows on the close-amount / limit-price fields (delegated so dynamic rows work) */

@@ -16,6 +16,8 @@
 
 ### Added
 
+* **Close-side quote on the Limit close** — A position's Limit close now shows the side of the book it actually trades against, under the limit price field: the best bid when closing a long, the best ask when closing a short. Opening the Limit tab hands the field that price, and clicking the quote re-takes it after you've typed over it. The quote tracks the position's own mark, so every row quotes its own instrument.
+
 * **Bid / ask quote** — The Quick Trade panel now shows the best bid and the best ask as a caption under the active tab's price field, on every asset class and both crypto modes — anything with an order book has a spread, spot included. It matters most on futures and stocks, where the last traded price can sit stale between prints. Clicking the bid or the ask uses that price for the order you're building: the Limit price on the Limit tab, the limit leg on Stop Limit.
 
 * **Per-instrument quote spreads** — Bid and ask are no longer a flat quarter-point on every symbol. Futures carry their contract's own tick (ES 0.25, CL 0.01, GC 0.10, YM 1.00), stocks quote in pennies, and crypto and forex get a tighter book than the price grid. The last price now prints at whichever side of the book the tape last moved towards, so both quotes stay on the instrument's price grid.

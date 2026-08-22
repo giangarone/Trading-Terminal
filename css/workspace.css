@@ -1208,6 +1208,44 @@ table.bp-table tr.total-row td {
   margin-bottom: 12px;
 }
 
+/* Close-side quote — a caption under the limit price, not a control of its own: closing a long
+   sells into the best bid, closing a short buys the best ask. Clicking it uses that price. */
+.pos-close-quote {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: -3px 0 9px;
+  cursor: pointer;
+}
+
+.pos-close-quote:hover {
+  color: var(--text-secondary);
+}
+
+.pos-close-quote-val {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.pos-close-quote:hover .pos-close-quote-val {
+  text-decoration: underline;
+}
+
+.pos-close-quote-val.is-bid {
+  color: var(--long);
+}
+
+.pos-close-quote-val.is-ask {
+  color: var(--short);
+}
+
 .pos-close-primary {
   width: 100%;
   height: 30px;

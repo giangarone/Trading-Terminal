@@ -244,6 +244,53 @@
     return s === '' || s === '-' ? '0' : s;
   }
 
+  /* ---------- close-side quote ----------
+     Closing trades against the book: a long is closed by selling into the best bid, a short by
+     buying the best ask. Both quotes come from the position's own mark, pinned to whichever side
+     the last tick printed at so they stay on the instrument's price grid — the same rule the Quick
+     Trade quote uses. */
+  function positionCloseQuote(p) {
+    const spread = p.step;
+    const printedAtAsk = p.tickUp !== false;
+    const bid = printedAtAsk ? p.mark - spread : p.mark;
+    const ask = printedAtAsk ? p.mark : p.mark + spread;
+    return p.side === 'buy'
+      ? { price: bid, label: 'Best Bid', side: 'bid' }
+      : { price: ask, label: 'Best Ask', side: 'ask' };
+  }
+
+  function paintCloseQuote(p) {
+    const el = document.getElementById('posCloseQuote-' + (p.domKey || p.sym));
+    if (!el) return;
+    const quote = positionCloseQuote(p);
+    el.textContent = fmt(quote.price, p.dec);
+    el.classList.toggle('is-bid', quote.side === 'bid');
+    el.classList.toggle('is-ask', quote.side === 'ask');
+    const label = el.parentElement.querySelector('.pos-close-quote-label');
+    if (label) label.textContent = quote.label;
+  }
+
+  function findPositionByKey(domKey) {
+    return positions.find(x => (x.domKey || x.sym) === domKey);
+  }
+
+  /* The close panel reads its own quote through this — the price a limit close should rest at. */
+  window.positionCloseQuote = function (domKey) {
+    const p = findPositionByKey(domKey);
+    if (!p) return null;
+    const quote = positionCloseQuote(p);
+    return { price: quote.price, text: fmt(quote.price, p.dec), label: quote.label };
+  };
+
+  /* Repaints one row's caption between ticks — a row created or expanded mid-tick shouldn't sit on
+     a placeholder for up to a second. */
+  window.refreshPositionCloseQuote = function (domKey) {
+    const p = findPositionByKey(domKey);
+    if (p) paintCloseQuote(p);
+  };
+
+  positions.forEach(paintCloseQuote);
+
   /* ---------- position actions: partial/full close & reverse ---------- */
   // side is optional: given, it targets that specific long/short row; omitted, it closes the first
   // position for the symbol (used by flatten, which loops until every side is gone).
@@ -401,6 +448,10 @@
       amtRow('posClosePctLblLimit-' + sym, initLbl, 'posCloseSliderLimit-' + sym) +
       '<div class="pos-close-field-label">Limit price</div>' +
       stepper('posCloseLimitPx-' + sym, priceStr, pxStep, 'USD') +
+      // The side of the book this close trades against — painted live by the tick (paintCloseQuote).
+      '<button type="button" class="pos-close-quote" data-pos-close-quote>' +
+      '<span class="pos-close-quote-label">Best Bid</span>' +
+      '<span class="pos-close-quote-val" id="posCloseQuote-' + sym + '">—</span></button>' +
       '<button class="pos-close-primary" data-pos-close-limit>Close Limit</button></div>';
   }
   /* leverage currently chosen in the Quick Trade panel — stamped onto positions opened from a fill */
@@ -518,6 +569,7 @@
         const reversion = (p.anchor - p.mark) * 0.04;
         let next = roundStep(p.mark + noise() * p.step * 0.6 + reversion, p.step);
         if (next === p.mark) next = roundStep(p.mark + (rand() < 0.5 ? -p.step : p.step), p.step);
+        p.tickUp = next > p.mark; // which side of the book this print landed on
         p.mark = Math.max(next, p.step);
 
         const deltaMark = p.mark - p.mark0;
@@ -526,6 +578,7 @@
         const pct = p.unitBase !== 0 ? pnlOpen / p.unitBase : 0;
 
         if (p.elMark) p.elMark.textContent = fmt(p.mark, p.dec);
+        paintCloseQuote(p);
         if (p.elMarkD) p.elMarkD.textContent = fmt(p.mark, p.dec);
         if (p.elPnlOpen) {
           p.elPnlOpen.textContent = (pnlOpen >= 0 ? '+' : '') + fmt(pnlOpen);
