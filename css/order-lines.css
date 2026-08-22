@@ -461,13 +461,6 @@
   cursor: ns-resize;
 }
 
-/* What the close will actually sell or buy: the quantity, with the share of the position it works
-   out to beside it. Both sit lighter than the chip's label. The price is on the axis tag, not here. */
-.ol-close-qty,
-.ol-close-pct {
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
 
 .ol-chip.tp.invalid,
 .ol-chip.sl.invalid,
@@ -503,7 +496,6 @@
   color: var(--short);
   border: 1px solid var(--short-border)
 }
-
 
 .ol-chip.ghost.tp-add:hover {
   border-color: var(--long);
@@ -832,11 +824,12 @@
   margin-bottom: 12px;
 }
 
-/* The chip's amount is its own control — it opens the editor while the chip around it still drags. */
+/* What the close will sell or buy — the quantity and the share of the position it works out to —
+   as one piece of text, so the hover underline runs the whole length of it. It's also the chip's
+   own control: it opens the editor while the chip around it still drags. */
 .ol-close-amt {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
 
@@ -947,7 +940,6 @@
   cursor: pointer;
   font-family: var(--sans);
 }
-
 
 .ol-sl-mode-btn:hover,
 .ol-tp-mode-btn:hover {

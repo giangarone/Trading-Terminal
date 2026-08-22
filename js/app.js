@@ -4782,6 +4782,8 @@
   function refreshCloseEditAmount() {
     const pct = parseInt(closeEditSlider.value, 10) || 0;
     const unit = CHART_SYMBOL.replace(/USDT?$/, '');
+    // This slider lives outside the positions panel, so the panel's delegated fill doesn't reach it.
+    fillRangeSlider(closeEditSlider);
     closeEditAmountLabel.textContent = pct + '% · ' + fmt(closeEditQtyFor(pct), 2) + ' ' + unit;
     document.querySelectorAll('#closeEditQuick [data-close-edit-pct]').forEach(btn => {
       btn.classList.toggle('active', parseInt(btn.dataset.closeEditPct, 10) === pct);
@@ -4797,6 +4799,7 @@
     // position, and the amount it can be raised to is the whole of it.
     closeEditSlider.value = Math.max(1, Math.min(100, Math.round(size.pct)));
     closeEditPrice.value = fmt(size.price, size.dec);
+    decorateRangeSlider(closeEditSlider);
     refreshCloseEditAmount();
     openNear(closeEditPopup, anchorRect, 'right', trigger);
   }
@@ -4905,8 +4908,7 @@
       row.innerHTML =
         '<span class="ol-chip close">CLOSE' +
         '<span class="ol-close-amt" data-edit-close="' + closeOrder.id + '" title="Edit close order">' +
-        '<span class="ol-close-qty">' + fmt(closeOrder.qty, 2) + ' ' + unit + '</span>' +
-        '<span class="ol-close-pct">∙ ' + pctLabel + '</span></span></span>' +
+        fmt(closeOrder.qty, 2) + ' ' + unit + ' ∙ ' + pctLabel + '</span></span>' +
         '<span class="ol-gear ol-danger" data-cancel-close-line="' + closeOrder.id + '" data-tooltip="Cancel close order">' +
         '<span class="material-symbols-outlined">close</span></span>';
       layer.appendChild(row);
