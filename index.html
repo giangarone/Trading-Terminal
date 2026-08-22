@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="css/center-panel.css?v=28">
   <link rel="stylesheet" href="css/workspace.css?v=42">
   <link rel="stylesheet" href="css/right-panel.css?v=6">
-  <link rel="stylesheet" href="css/quick-trade.css?v=29">
+  <link rel="stylesheet" href="css/quick-trade.css?v=31">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
   <link rel="stylesheet" href="css/order-lines.css?v=67">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
@@ -4048,7 +4048,7 @@
               <label class="label-sm">Limit Price</label>
               <!-- BBO on: the field states the rule ("Best Bid / Ask") and the Buy/Sell buttons carry the
                    live price for each side. BBO off: an ordinary typable price field. -->
-              <div class="qt-limit-price-row">
+              <div class="qt-bbo-price-row">
                 <div class="price-stepper">
                   <input type="text" id="qtLimitPrice" placeholder="Best Bid / Ask" value="4,500.25">
                   <span class="qty-unit qt-quote-unit">USDT</span>
@@ -4082,15 +4082,21 @@
                 </div>
               </div>
               <label class="label-sm" style="margin-top:12px;">Limit</label>
-              <div class="price-stepper">
-                <input type="text" id="qtStopLimitPrice" placeholder="Limit price" value="4,500.25">
-                <span class="qty-unit qt-quote-unit">USDT</span>
-                <div class="price-stepper-arrows">
-                  <button type="button" class="ps-up" data-target="qtStopLimitPrice"><span
-                      class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                  <button type="button" class="ps-down" data-target="qtStopLimitPrice"><span
-                      class="material-symbols-outlined">keyboard_arrow_down</span></button>
+              <!-- The limit leg is a resting limit price like the Limit tab's, so it takes the same
+                   BBO toggle: on, the field states the rule and the Buy/Sell buttons carry the price. -->
+              <div class="qt-bbo-price-row">
+                <div class="price-stepper">
+                  <input type="text" id="qtStopLimitPrice" placeholder="Limit price" value="4,500.25">
+                  <span class="qty-unit qt-quote-unit">USDT</span>
+                  <div class="price-stepper-arrows">
+                    <button type="button" class="ps-up" data-target="qtStopLimitPrice"><span
+                        class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                    <button type="button" class="ps-down" data-target="qtStopLimitPrice"><span
+                        class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                  </div>
                 </div>
+                <button type="button" class="qt-side-btn qt-bbo-btn" id="qtStopLimitBboToggle" aria-pressed="false"
+                  title="Place at the best ask when buying, the best bid when selling">BBO</button>
               </div>
             </div>
 
@@ -5805,7 +5811,7 @@
   <script src="js/workspace.js?v=17"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=17"></script>
-  <script src="js/app.js?v=357"></script>
+  <script src="js/app.js?v=358"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=26"></script>
   <script src="js/market-scanner.js?v=16"></script>

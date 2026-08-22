@@ -913,13 +913,21 @@
      the live price for each side. Typing a price is how you opt out: the toggle flips off and the
      typed price is used verbatim. With BBO off the field tracks the last traded price instead.
 
-     The toggle is per-order and isn't persisted — every session starts with BBO off. */
+     The toggle is per-order and isn't persisted — every session starts with BBO off. It is one
+     setting shared by every panel that rests a limit price (see QT_BBO_FIELDS), so switching between
+     them doesn't quietly change how the order will be placed. */
   const qtLimitPriceInput = document.getElementById('qtLimitPrice');
-  const qtLimitPriceRow = document.querySelector('.qt-limit-price-row');
-  const qtBboToggle = document.getElementById('qtBboToggle');
   const qtBuySellRow = document.getElementById('qtBuySellRow');
   let qtBboEnabled = false;
   let qtLimitPriceEdited = false;
+
+  /* The resting limit price of each panel that has one: the Limit tab's price and the limit leg of a
+     Stop Limit. Market has no price field and Trigger Market prices off a trigger the trader sets, so
+     neither takes a BBO toggle. */
+  const QT_BBO_FIELDS = {
+    limit: { inputId: 'qtLimitPrice', rowSel: '#qtTabPanel-limit .qt-bbo-price-row' },
+    stopLimit: { inputId: 'qtStopLimitPrice', rowSel: '#qtTabPanel-stopLimit .qt-bbo-price-row' },
+  };
 
   /* Every trade prints at one side of the book or the other: a buyer lifting the offer prints at the
      ask, a seller hitting the bid prints at the bid. So the last price is pinned to whichever side the
@@ -936,35 +944,50 @@
     return qtTapeLiftedOffer ? last - quoteSpreadFor(currentSymbol()) : last;
   }
   function qtBboPriceFor(side) { return side === 'buy' ? qtBestAsk() : qtBestBid(); }
-  function qtLimitTabActive() {
-    const panel = document.querySelector('.qt-tab-panel[data-tab-panel="limit"]');
-    return !!panel && panel.classList.contains('active');
+  function qtActivePanelName() {
+    const panel = document.querySelector('.qt-tab-panel.active');
+    return panel ? panel.dataset.tabPanel : null;
   }
-  // BBO only governs a plain Limit order — the other tabs price off a trigger the trader sets themselves.
-  function qtBboActive() { return qtBboEnabled && qtLimitTabActive(); }
+  function qtLimitTabActive() { return qtActivePanelName() === 'limit'; }
+  /* The limit price BBO governs right now, or null on a panel that doesn't rest one. */
+  function qtBboFieldId() {
+    const field = QT_BBO_FIELDS[qtActivePanelName()];
+    return field ? field.inputId : null;
+  }
+  function qtBboActive() { return qtBboEnabled && !!qtBboFieldId(); }
 
   function qtSetBboEnabled(on) {
     qtBboEnabled = !!on;
+    const input = document.getElementById(qtBboFieldId());
     if (qtBboEnabled) {
-      qtLimitPriceInput.value = '';
+      if (input) input.value = '';
       qtLimitPriceEdited = false;
-    } else if (!qtLimitPriceInput.value) {
+    } else if (input && !input.value) {
       // Coming off BBO with an empty field: hand the trader the last traded price to edit from.
-      qtLimitPriceInput.value = fmt(roundTick(qtCurrentPrice()));
+      input.value = fmt(roundTick(qtCurrentPrice()));
     }
     qtRefreshBboUi();
   }
 
-  /* Paints everything BBO controls: the toggle, the field's read-only state, and the Buy/Sell buttons. */
+  /* Paints everything BBO controls: both toggles, each field's read-only state, and the Buy/Sell
+     buttons. Every BBO field is painted, not just the visible one, so a panel switch reveals a field
+     that already matches the setting. */
   function qtRefreshBboUi() {
-    const active = qtBboActive();
-    qtBboToggle.classList.toggle('active', qtBboEnabled);
-    qtBboToggle.setAttribute('aria-pressed', String(qtBboEnabled));
-    qtLimitPriceRow.classList.toggle('bbo-on', qtBboEnabled);
-    qtLimitPriceInput.readOnly = qtBboEnabled;
-    // "Best Bid / Ask" states the rule BBO applies — with BBO off an empty field is just an empty field.
-    qtLimitPriceInput.placeholder = qtBboEnabled ? 'Best Bid / Ask' : 'Limit price';
-    qtBuySellRow.classList.toggle('bs-row--bbo', active);
+    document.querySelectorAll('.qt-bbo-btn').forEach(btn => {
+      btn.classList.toggle('active', qtBboEnabled);
+      btn.setAttribute('aria-pressed', String(qtBboEnabled));
+    });
+    Object.keys(QT_BBO_FIELDS).forEach(name => {
+      const field = QT_BBO_FIELDS[name];
+      const row = document.querySelector(field.rowSel);
+      const input = document.getElementById(field.inputId);
+      if (row) row.classList.toggle('bbo-on', qtBboEnabled);
+      if (!input) return;
+      input.readOnly = qtBboEnabled;
+      // "Best Bid / Ask" states the rule BBO applies — with BBO off an empty field is just an empty field.
+      input.placeholder = qtBboEnabled ? 'Best Bid / Ask' : 'Limit price';
+    });
+    qtBuySellRow.classList.toggle('bs-row--bbo', qtBboActive());
     qtRefreshBboButtonPrices();
   }
 
@@ -1033,17 +1056,26 @@
   document.getElementById('qtQuoteBid').addEventListener('click', () => qtUseQuotePrice(qtBestBid()));
   document.getElementById('qtQuoteAsk').addEventListener('click', () => qtUseQuotePrice(qtBestAsk()));
 
-  qtBboToggle.addEventListener('click', () => qtSetBboEnabled(!qtBboEnabled));
-  // Typing a price is opting out of the rule, so reaching for the field turns BBO off rather than
-  // silently ignoring the keystrokes against a read-only input.
-  qtLimitPriceInput.addEventListener('mousedown', () => { if (qtBboEnabled) qtSetBboEnabled(false); });
-  qtLimitPriceInput.addEventListener('focus', () => { if (qtBboEnabled) qtSetBboEnabled(false); });
+  document.querySelectorAll('.qt-bbo-btn')
+    .forEach(btn => btn.addEventListener('click', () => qtSetBboEnabled(!qtBboEnabled)));
+
+  /* Typing a price is opting out of the rule, so reaching for a BBO field turns BBO off rather than
+     silently ignoring the keystrokes against a read-only input. Same for its steppers. */
+  Object.keys(QT_BBO_FIELDS).forEach(name => {
+    const inputId = QT_BBO_FIELDS[name].inputId;
+    const input = document.getElementById(inputId);
+    const leaveBbo = () => { if (qtBboEnabled) qtSetBboEnabled(false); };
+    if (input) {
+      input.addEventListener('mousedown', leaveBbo);
+      input.addEventListener('focus', leaveBbo);
+    }
+    document.querySelectorAll('.ps-up[data-target="' + inputId + '"], .ps-down[data-target="' + inputId + '"]')
+      .forEach(btn => btn.addEventListener('click', leaveBbo));
+  });
+  // Only the Limit tab's price tracks the market until it's taken over, so only it tracks edits.
   qtLimitPriceInput.addEventListener('input', () => { qtLimitPriceEdited = true; });
   document.querySelectorAll('.ps-up[data-target="qtLimitPrice"], .ps-down[data-target="qtLimitPrice"]')
-    .forEach(btn => btn.addEventListener('click', () => {
-      if (qtBboEnabled) qtSetBboEnabled(false);
-      qtLimitPriceEdited = true;
-    }));
+    .forEach(btn => btn.addEventListener('click', () => { qtLimitPriceEdited = true; }));
 
   function qtSeedPanelPrices(panelName) {
     const mkt = qtCurrentPrice();
@@ -1053,7 +1085,9 @@
       const input = document.getElementById(id);
       if (!input) return;
       // The BBO field holds no price of its own — leave it empty so the rule stays readable.
-      input.value = (id === 'qtLimitPrice' && qtBboEnabled) ? '' : price;
+      const bboField = QT_BBO_FIELDS[panelName];
+      const isBboField = !!bboField && bboField.inputId === id;
+      input.value = (isBboField && qtBboEnabled) ? '' : price;
     });
     if (panelName === 'limit') qtLimitPriceEdited = false;
   }
@@ -1389,10 +1423,13 @@
     return qtBboActive() ? qtBboPriceFor(side) : qtActivePrice();
   }
   /* Clearing the field with BBO off leaves nothing to place at, and qtActivePrice would quietly fall
-     back to the market price — a price the trader never chose. Ask for one instead. */
+     back to the market price — a price the trader never chose. Ask for one instead. Covers every
+     panel that rests a limit price, so a blank Stop Limit leg is caught the same way. */
   function qtLimitPriceMissing() {
-    if (qtActiveTab() !== 'limit' || qtBboEnabled) return false;
-    const raw = qtLimitPriceInput.value.replace(/,/g, '').trim();
+    if (qtBboEnabled) return false;
+    const input = document.getElementById(qtBboFieldId());
+    if (!input) return false;
+    const raw = input.value.replace(/,/g, '').trim();
     if (raw !== '' && !isNaN(parseFloat(raw))) return false;
     showToast('Enter a limit price', 'error');
     return true;

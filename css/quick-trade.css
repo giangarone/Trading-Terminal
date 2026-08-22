@@ -571,19 +571,20 @@
   background: var(--bg-hover);
 }
 
-/* Limit Price field and its BBO toggle share one row — the toggle matches the field's height. */
-.qt-limit-price-row {
+/* A limit price field and its BBO toggle share one row — the toggle matches the field's height.
+   Used by the Limit tab's price and by the limit leg of a Stop Limit. */
+.qt-bbo-price-row {
   display: flex;
   align-items: stretch;
   gap: 8px;
 }
 
-.qt-limit-price-row .price-stepper {
+.qt-bbo-price-row .price-stepper {
   min-width: 0;
 }
 
 /* With BBO on the field states the rule rather than a price, so it reads as a label, not an input. */
-.qt-limit-price-row.bbo-on .price-stepper input {
+.qt-bbo-price-row.bbo-on .price-stepper input {
   color: var(--text-muted);
   cursor: pointer;
 }
