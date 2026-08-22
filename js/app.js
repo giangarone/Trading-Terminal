@@ -611,7 +611,7 @@
       showToast(sym + ' position ' + (pct >= 100 ? 'closed' : 'reduced by ' + pct + '%'), 'check_circle');
       return;
     }
-    /* Limit tab — place a pending close order (position stays open) */
+    /* Limit tab — rest a working close order at a price (the position stays open until it fills) */
     const limitBtn = e.target.closest('[data-pos-close-limit]');
     if (limitBtn) {
       const row = limitBtn.closest('.pos-row');
@@ -619,8 +619,17 @@
       const sym = row.dataset.posSym || posId;
       const limitSlider = document.getElementById('posCloseSliderLimit-' + posId);
       const pct = limitSlider ? parseInt(limitSlider.value, 10) : 100;
+      if (pct <= 0) { showToast('Select an amount to close', 'error'); return; }
+      // With BBO on the order rests at the quote it's shown at; otherwise at the typed price.
+      const bboQuote = posCloseBboOn(row) ? posCloseQuoteFor(row) : null;
+      const input = document.getElementById('posCloseLimitPx-' + posId);
+      const typed = input ? parseFloat((input.value || '').replace(/,/g, '')) : NaN;
+      const price = bboQuote ? bboQuote.price : typed;
+      if (!(price > 0)) { showToast('Enter a limit price', 'error'); return; }
+      const placed = window.placePositionCloseOrder(posId, pct, price);
+      if (!placed) { showToast('Could not place the close order', 'error'); return; }
       const pctStr = pct < 100 ? ' (' + pct + '%)' : '';
-      showToast(sym + ' limit close order placed' + pctStr, 'pending_actions');
+      showToast(sym + ' limit close order placed at ' + placed.priceText + pctStr, 'pending_actions');
       return;
     }
     const reverseBtn = e.target.closest('[data-pos-reverse]');
@@ -2739,14 +2748,53 @@
       }
     });
 
+    /* Working limit closes placed from a position's Close Position panel */
+    (window.positionCloseOrders ? window.positionCloseOrders() : []).forEach(o => {
+      const sideCls = o.side === 'buy' ? 'long' : 'short';
+      const sideLabel = o.side === 'buy' ? 'Buy' : 'Sell';
+      rows.push(
+        '<tr>' +
+        '<td>' + symCell(o.sym, sideCls, sideLabel, 'Close · Limit') + '</td>' +
+        '<td><span class="ord-val-primary">' + o.qtyText + '</span></td>' +
+        '<td>' + o.priceText + '</td>' +
+        '<td><span class="bp-status working">Working</span></td>' +
+        '<td><span class="bp-action-icon" data-cancel-close="' + o.id + '"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
+        '</tr>'
+      );
+    });
+
     body.innerHTML = rows.length ? rows.join('') : '<tr class="bp-empty-row"><td colspan="5">No open orders — right-click the chart to trade.</td></tr>';
     body.querySelectorAll('[data-cancel-entry]').forEach(el => el.addEventListener('click', () => { focusOrderById(el.dataset.cancelEntry); cancelOrder(); }));
     body.querySelectorAll('[data-cancel-mock]').forEach(el => el.addEventListener('click', () => { mockAaplOrder = null; renderOpenOrders(); }));
     body.querySelectorAll('[data-cancel-tp]').forEach(el => el.addEventListener('click', () => { focusOrderByTpId(el.dataset.cancelTp); removeTp(el.dataset.cancelTp); }));
     body.querySelectorAll('[data-cancel-sl]').forEach(el => el.addEventListener('click', () => { focusOrderById(el.dataset.cancelSl); removeSl(); }));
+    body.querySelectorAll('[data-cancel-close]').forEach(el => el.addEventListener('click', () => {
+      const cancelled = window.cancelPositionCloseOrder(el.dataset.cancelClose);
+      if (cancelled) showToast(cancelled.sym + ' limit close cancelled', 'check_circle');
+    }));
     const countEl = document.getElementById('bpCountOrders');
     if (countEl) countEl.textContent = rows.length > 0 ? '(' + rows.length + ')' : '';
   }
+
+  /* Working limit closes live in the positions panel (js/right-panel.js); it announces every change
+     so the Open Orders table, the history tables and the toast stay in step with them. */
+  document.addEventListener('position-close-orders:changed', renderOpenOrders);
+  document.addEventListener('position-close-order:filled', e => {
+    const o = e.detail;
+    orderHistory.unshift({
+      symbol: o.sym, side: o.side, qty: o.qtyText, price: o.price,
+      status: 'filled', type: 'Limit', time: nowTimeStr(), pnl: null,
+    });
+    tradeHistory.unshift({
+      symbol: o.sym, side: o.side, qty: o.qtyText, price: o.price, pnl: o.pnl,
+      role: 'close', type: 'Limit', time: nowTimeStr(), fee: QT_FEE_PER_CONTRACT,
+    });
+    renderOpenOrders();
+    renderOrderHistory();
+    renderTradeHistory();
+    showToast(o.sym + ' limit close filled at ' + o.priceText +
+      (o.closedPosition ? ' — position closed' : ''), 'check_circle');
+  });
 
   /* shared P&L cell formatting for Order History / Position History — null (opening fills) shows as a dash */
   function pnlCellHtml(pnl) {
@@ -2794,7 +2842,8 @@
         ? 'Open · ' + t.type
         : t.type === 'Limit (TP)' ? 'Take Profit · Close'
           : t.type === 'Stop (SL)' ? 'Stop Loss · Close'
-            : 'Market Close';
+            : t.type === 'Limit' ? 'Limit Close'
+              : 'Market Close';
       return (
         '<tr>' +
         '<td>' + symCell(t.symbol, sideCls, sideLabel, subText) + '</td>' +

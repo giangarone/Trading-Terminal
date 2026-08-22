@@ -293,6 +293,79 @@
 
   positions.forEach(paintCloseQuote);
 
+  /* ---------- resting limit closes ----------
+     A limit close from a position's Close Position panel is a real working order: it sits in Open
+     Orders until the position's mark reaches its price, then closes that much of the position.
+     Closing a long is a sell, so it rests above the mark and fills when the mark trades up to it;
+     closing a short is a buy and rests below. The panel places them, app.js renders them. */
+  const closeOrders = [];
+  let closeOrderSeq = 0;
+
+  function closeOrderView(o) {
+    return {
+      id: o.id, sym: o.sym, domKey: o.domKey, side: o.side,
+      qty: o.qty, qtyText: fmtQty(o.qty), price: o.price, priceText: fmt(o.price, o.dec),
+    };
+  }
+  function closeOrdersChanged() {
+    document.dispatchEvent(new CustomEvent('position-close-orders:changed'));
+  }
+  /* A position that's gone — closed, flattened or reversed — can't have working closes against it. */
+  function dropCloseOrdersFor(domKey) {
+    const before = closeOrders.length;
+    for (let i = closeOrders.length - 1; i >= 0; i--) {
+      if (closeOrders[i].domKey === domKey) closeOrders.splice(i, 1);
+    }
+    if (closeOrders.length !== before) closeOrdersChanged();
+  }
+
+  /* pct of the position's current size, at price. Returns the order for the caller to toast. */
+  window.placePositionCloseOrder = function (domKey, pct, price) {
+    const p = findPositionByKey(domKey);
+    if (!p || !(pct > 0) || !(price > 0)) return null;
+    const qty = pct >= 100 ? p.qty : p.qty * pct / 100;
+    const order = {
+      id: 'close-' + (++closeOrderSeq), domKey: domKey, sym: p.sym, dec: p.dec,
+      positionSide: p.side, side: p.side === 'buy' ? 'sell' : 'buy',
+      qty, price, pct,
+    };
+    closeOrders.push(order);
+    closeOrdersChanged();
+    return closeOrderView(order);
+  };
+
+  window.positionCloseOrders = function () {
+    return closeOrders.map(closeOrderView);
+  };
+
+  window.cancelPositionCloseOrder = function (id) {
+    const i = closeOrders.findIndex(o => o.id === id);
+    if (i < 0) return null;
+    const [order] = closeOrders.splice(i, 1);
+    closeOrdersChanged();
+    return closeOrderView(order);
+  };
+
+  /* Called as each position's mark moves. Fills every working close the new mark has reached. */
+  function fillReachedCloseOrders(p) {
+    const key = p.domKey || p.sym;
+    for (let i = closeOrders.length - 1; i >= 0; i--) {
+      const o = closeOrders[i];
+      if (o.domKey !== key) continue;
+      const reached = o.side === 'sell' ? p.mark >= o.price : p.mark <= o.price;
+      if (!reached) continue;
+      closeOrders.splice(i, 1);
+      // Realized P&L on the closed slice, using the same per-unit scaling the row's open P&L uses.
+      const pnl = (o.price - p.avgPrice) * o.qty * p.pv;
+      const result = window.closePositionAmount(o.sym, o.qty, o.positionSide);
+      if (result === 'closed') dropCloseOrdersFor(key); // nothing left to close
+      document.dispatchEvent(new CustomEvent('position-close-order:filled', {
+        detail: Object.assign(closeOrderView(o), { pnl, closedPosition: result === 'closed' }),
+      }));
+      closeOrdersChanged();
+    }
+  }
+
   /* ---------- position actions: partial/full close & reverse ---------- */
   // side is optional: given, it targets that specific long/short row; omitted, it closes the first
   // position for the symbol (used by flatten, which loops until every side is gone).
@@ -305,6 +378,7 @@
     const row = (p.elQty && p.elQty.closest('.pos-row')) ||
       document.querySelector('.pos-row[data-pos-id="' + (p.domKey || sym) + '"]');
     if (row) row.remove();
+    dropCloseOrdersFor(p.domKey || sym);
   }
   window.closePositionPct = function (sym, pct, side) {
     const p = findPosition(sym, side);
@@ -345,6 +419,8 @@
   window.reversePosition = function (sym) {
     const p = positions.find(x => x.sym === sym);
     if (!p) return false;
+    // The position is about to face the other way — its working closes would be on the wrong side.
+    dropCloseOrdersFor(p.domKey || sym);
     p.pv = -p.pv;
     p.avgPrice = p.mark;
     p.mark0 = p.mark;
@@ -569,7 +645,8 @@
 
     /* positions — self-contained noise per position */
     let sumPnlOpen = 0, sumBase = 0;
-    positions.forEach(p => {
+    // Iterate a copy: a limit close that fills mid-tick removes its position from the live array.
+    positions.slice().forEach(p => {
       try {
         const reversion = (p.anchor - p.mark) * 0.04;
         let next = roundStep(p.mark + noise() * p.step * 0.6 + reversion, p.step);
@@ -584,6 +661,7 @@
 
         if (p.elMark) p.elMark.textContent = fmt(p.mark, p.dec);
         paintCloseQuote(p);
+        fillReachedCloseOrders(p);
         if (p.elMarkD) p.elMarkD.textContent = fmt(p.mark, p.dec);
         if (p.elPnlOpen) {
           p.elPnlOpen.textContent = (pnlOpen >= 0 ? '+' : '') + fmt(pnlOpen);

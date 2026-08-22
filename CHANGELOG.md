@@ -16,6 +16,8 @@
 
 ### Added
 
+* **Limit closes are real orders** — Close Limit no longer just toasts. It rests a working order at the price and amount you set: closing a long sells above the mark, closing a short buys below, and the position stays open until it's reached. Working closes appear in Open Orders with their own cancel control, and fill as soon as the position's mark reaches the price — reducing the position or closing it outright, and recording the fill in Order History and Trade History with its realized P&L. Closing, flattening or reversing a position cancels the closes still working against it.
+
 * **BBO on Stop Limit** — The limit leg of a Stop Limit now carries the same BBO toggle as the Limit tab: with it on the field states the rule and the Buy/Sell buttons carry the price each side would rest at. BBO is one setting shared by both, so moving between them doesn't quietly change how the order will be placed. The blank-price guard now covers the limit leg too, instead of falling back to the market price.
 
 * **BBO on a position's Limit close** — The Limit close now has a BBO toggle beside the price field, the same one the Quick Trade panel uses, with the side already decided: closing a long sells into the best bid, closing a short buys the best ask. With it on the field states which of the two it is and the Close Limit button carries the live price, so the price you get is written on the button you press. Clicking into the field or nudging the steppers turns it off and hands back a typable price. The quote tracks each position's own mark, so every row quotes its own instrument.
