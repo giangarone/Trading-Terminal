@@ -272,6 +272,15 @@
     if (noteEl) noteEl.textContent = quote.label;
   }
 
+  /* The Close Position panel's amount labels are written against the position's size, so anything
+     that changes that size — a limit close filling, a partial market close, an add — has to repaint
+     them. Otherwise they keep quoting the old quantity until the slider is next touched. */
+  function refreshCloseAmountLabels(p) {
+    const row = p.elQty && p.elQty.closest('.pos-row');
+    if (!row || !window.updatePosCloseLabel) return;
+    row.querySelectorAll('.pos-close-slider').forEach(slider => window.updatePosCloseLabel(slider));
+  }
+
   function findPositionByKey(domKey) {
     return positions.find(x => (x.domKey || x.sym) === domKey);
   }
@@ -459,6 +468,7 @@
     p.pnlOpen0 *= remainFrac;
     p.unitBase *= remainFrac;
     if (p.elQty) p.elQty.textContent = fmtQty(p.qty);
+    refreshCloseAmountLabels(p);
     return true;
   };
 
@@ -476,6 +486,7 @@
     p.pnlOpen0 *= remainFrac;
     p.unitBase *= remainFrac;
     if (p.elQty) p.elQty.textContent = fmtQty(p.qty);
+    refreshCloseAmountLabels(p);
     return 'reduced';
   };
 
@@ -670,6 +681,7 @@
       existing.unitBase = (newQty * price) / 100;
       existing.pv = dir;
       if (existing.elQty) existing.elQty.textContent = fmtQty(existing.qty);
+      refreshCloseAmountLabels(existing);
       if (existing.elAvg) existing.elAvg.textContent = fmt(existing.avgPrice, existing.dec);
       return;
     }

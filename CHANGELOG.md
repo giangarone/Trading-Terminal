@@ -4,6 +4,8 @@
 
 ### Fixed
 
+* **Close amount labels after a size change** — The Close Position panel's amount labels quoted the position's old size until the slider was next touched. They now repaint whenever the size actually changes — a limit close filling, a partial close, or adding to the position.
+
 * **BBO side pricing** — The Buy and Sell buttons had the two sides of the book swapped. Buy now carries the best ask and Sell the best bid, matching the quote each side actually trades against.
 
 * **Browser autofill over the trade panel** — Price fields no longer offer a dropdown of previously typed values. They carry live market prices, not saved form data, so a remembered value is never the one you want.
