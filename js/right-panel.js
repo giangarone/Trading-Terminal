@@ -331,19 +331,51 @@
     };
     closeOrders.push(order);
     closeOrdersChanged();
-    // How much of the position every working close now adds up to. Closes are reduce-only — they're
-    // capped at whatever is left when they fill — so resting more than 100% is allowed, but the
-    // caller says so rather than letting it pass unremarked.
-    const workingQty = closeOrders
-      .filter(o => o.domKey === domKey)
-      .reduce((sum, o) => sum + o.qty, 0);
     const view = closeOrderView(order);
-    view.coverPct = p.qty > 0 ? workingQty / p.qty * 100 : 0;
+    view.coverPct = closeCoverPct(domKey, p.qty);
     return view;
   };
 
   window.positionCloseOrders = function () {
     return closeOrders.map(closeOrderView);
+  };
+
+  /* How much of its position a set of working closes covers — over 100% is allowed (they're
+     reduce-only and cap at what's left when they fill), but the caller says so. */
+  function closeCoverPct(domKey, positionQty) {
+    if (!(positionQty > 0)) return 0;
+    const working = closeOrders
+      .filter(o => o.domKey === domKey)
+      .reduce((sum, o) => sum + o.qty, 0);
+    return working / positionQty * 100;
+  }
+
+  /* The size a close is written against, so the chart's editor can show and set it as a percentage. */
+  window.positionCloseOrderSize = function (id) {
+    const order = closeOrders.find(o => o.id === id);
+    const p = order && findPositionByKey(order.domKey);
+    if (!p) return null;
+    return {
+      positionQty: p.qty, qty: order.qty, price: order.price, dec: p.dec,
+      pct: p.qty > 0 ? order.qty / p.qty * 100 : 0,
+    };
+  };
+
+  /* Amending a working close: the amount it closes (as a share of the position's current size) and
+     the price it rests at. Both are optional — an edit of one leaves the other alone. */
+  window.amendPositionCloseOrder = function (id, changes) {
+    const order = closeOrders.find(o => o.id === id);
+    const p = order && findPositionByKey(order.domKey);
+    if (!order || !p) return null;
+    if (changes.pct > 0) {
+      order.pct = changes.pct;
+      order.qty = changes.pct >= 100 ? p.qty : p.qty * changes.pct / 100;
+    }
+    if (changes.price > 0) order.price = changes.price;
+    closeOrdersChanged();
+    const view = closeOrderView(order);
+    view.coverPct = closeCoverPct(order.domKey, p.qty);
+    return view;
   };
 
   /* Repricing a working close — the chart drags its line. `notify` is false for the live drag (the

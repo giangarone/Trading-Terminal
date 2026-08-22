@@ -823,6 +823,27 @@
   margin-bottom: 14px;
 }
 
+/* Limit price sits under the amount slider in the close-order editor. */
+.ol-close-popup .close-edit-price-label {
+  margin: 12px 0 6px;
+}
+
+.ol-close-popup .price-stepper {
+  margin-bottom: 12px;
+}
+
+/* The chip's amount is its own control — it opens the editor while the chip around it still drags. */
+.ol-close-amt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.ol-close-amt:hover {
+  text-decoration: underline;
+}
+
 .ol-badge {
   font-size: 9px;
   font-weight: 600;

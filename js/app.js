@@ -4765,6 +4765,66 @@
   layer.addEventListener('mouseover', (e) => setHoveredSide(orderSideFromNode(e.target)));
   layer.addEventListener('mouseleave', () => setHoveredSide(null));
 
+  /* ---------- working limit close editor ----------
+     Clicking a close chip's amount amends the resting order: how much of the position it closes, and
+     the price it rests at. Dragging the line is the coarse version of the price field; this is the
+     exact one, and it's the only way to change the amount without cancelling and re-placing. */
+  const closeEditPopup = document.getElementById('closeOrderEditPopup');
+  const closeEditSlider = document.getElementById('closeEditSlider');
+  const closeEditPrice = document.getElementById('closeEditPrice');
+  const closeEditAmountLabel = document.getElementById('closeEditAmountLabel');
+  let closeEditOrderId = null;   // the order being edited, or null when the popup is closed
+  let closeEditPositionQty = 0;  // the position size the percentage is measured against
+
+  function closeEditQtyFor(pct) {
+    return closeEditPositionQty * clamp(pct, 0, 100) / 100;
+  }
+  function refreshCloseEditAmount() {
+    const pct = parseInt(closeEditSlider.value, 10) || 0;
+    const unit = CHART_SYMBOL.replace(/USDT?$/, '');
+    closeEditAmountLabel.textContent = pct + '% · ' + fmt(closeEditQtyFor(pct), 2) + ' ' + unit;
+    document.querySelectorAll('#closeEditQuick [data-close-edit-pct]').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.dataset.closeEditPct, 10) === pct);
+    });
+  }
+
+  function openCloseOrderEditor(id, anchorRect, trigger) {
+    const size = window.positionCloseOrderSize && window.positionCloseOrderSize(id);
+    if (!size) return;
+    closeEditOrderId = id;
+    closeEditPositionQty = size.positionQty;
+    // A close resting on more than the position holds still edits as 100% — the slider measures the
+    // position, and the amount it can be raised to is the whole of it.
+    closeEditSlider.value = Math.max(1, Math.min(100, Math.round(size.pct)));
+    closeEditPrice.value = fmt(size.price, size.dec);
+    refreshCloseEditAmount();
+    openNear(closeEditPopup, anchorRect, 'right', trigger);
+  }
+
+  closeEditSlider.addEventListener('input', refreshCloseEditAmount);
+  document.querySelectorAll('#closeEditQuick [data-close-edit-pct]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      closeEditSlider.value = btn.dataset.closeEditPct;
+      refreshCloseEditAmount();
+    });
+  });
+  document.getElementById('closeEditCancel').addEventListener('click', () => closeAllPopovers());
+  document.getElementById('closeEditApply').addEventListener('click', () => {
+    if (!closeEditOrderId) return;
+    const pct = parseInt(closeEditSlider.value, 10) || 0;
+    const price = parseFloat((closeEditPrice.value || '').replace(/,/g, ''));
+    if (!(price > 0)) { showToast('Enter a limit price', 'error'); return; }
+    const amended = window.amendPositionCloseOrder(closeEditOrderId, { pct, price });
+    closeAllPopovers();
+    closeEditOrderId = null;
+    if (!amended) return;
+    // Raising the amount can push the working closes past the position, same as placing one does.
+    const coverStr = amended.coverPct > 100.5
+      ? ' — working closes now cover ' + Math.round(amended.coverPct) + '% of the position'
+      : '';
+    showToast('Close order modified' + coverStr, 'edit');
+  });
+
   /* Working limit closes drawn on this chart — see the close-line block in render(). */
   function chartHasCloseLines() {
     return !!window.positionCloseOrders &&
@@ -4844,11 +4904,19 @@
       const unit = CHART_SYMBOL.replace(/USDT?$/, '');
       row.innerHTML =
         '<span class="ol-chip close">CLOSE' +
+        '<span class="ol-close-amt" data-edit-close="' + closeOrder.id + '" title="Edit close order">' +
         '<span class="ol-close-qty">' + fmt(closeOrder.qty, 2) + ' ' + unit + '</span>' +
-        '<span class="ol-close-pct">∙ ' + pctLabel + '</span></span>' +
+        '<span class="ol-close-pct">∙ ' + pctLabel + '</span></span></span>' +
         '<span class="ol-gear ol-danger" data-cancel-close-line="' + closeOrder.id + '" data-tooltip="Cancel close order">' +
         '<span class="material-symbols-outlined">close</span></span>';
       layer.appendChild(row);
+
+      // The amount opens the editor; the chip around it still drags, exactly as a TP chip does.
+      row.querySelector('[data-edit-close]').addEventListener('mousedown', e => e.stopPropagation());
+      row.querySelector('[data-edit-close]').addEventListener('click', e => {
+        e.stopPropagation();
+        openCloseOrderEditor(closeOrder.id, e.currentTarget.getBoundingClientRect(), e.currentTarget);
+      });
 
       row.querySelector('[data-cancel-close-line]').addEventListener('click', e => {
         e.stopPropagation();
@@ -4871,7 +4939,7 @@
       }
       const closeHoverKey = 'close:' + closeOrder.id;
       makeDraggable(line, onDragClose, onDropClose, null, null, closeHoverKey);
-      makeDraggable(row, onDragClose, onDropClose, '[data-cancel-close-line]', null, closeHoverKey);
+      makeDraggable(row, onDragClose, onDropClose, '[data-cancel-close-line], [data-edit-close]', null, closeHoverKey);
     });
 
     // Draw every chart order (each with full drag + TP/SL parity). One drawPriceChart() after the loop.

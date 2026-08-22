@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="css/right-panel.css?v=6">
   <link rel="stylesheet" href="css/quick-trade.css?v=31">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=71">
+  <link rel="stylesheet" href="css/order-lines.css?v=72">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
   <link rel="stylesheet" href="css/indicators.css?v=31">
   <link rel="stylesheet" href="css/chart-settings.css?v=51">
@@ -5525,6 +5525,38 @@
     </div>
   </div>
 
+  <!-- Working limit close editor — anchored to a close line's chip on the chart. Amends the resting
+       order in place: the amount it closes and the price it rests at. -->
+  <div class="pop-menu ol-close-popup" id="closeOrderEditPopup">
+    <div class="modal-quick" id="closeEditQuick">
+      <button data-close-edit-pct="25">25%</button>
+      <button data-close-edit-pct="50">50%</button>
+      <button data-close-edit-pct="75">75%</button>
+      <button data-close-edit-pct="100" class="active">100%</button>
+    </div>
+    <div class="pos-close-amount-row">
+      <span class="pos-close-field-label">Amount</span>
+      <span class="pos-close-pct-label" id="closeEditAmountLabel">100%</span>
+    </div>
+    <input type="range" class="pos-close-slider range-slider" id="closeEditSlider" min="1" max="100" step="1"
+      value="100">
+    <div class="pos-close-field-label close-edit-price-label">Limit price</div>
+    <div class="price-stepper">
+      <input type="text" id="closeEditPrice" value="" data-step="0.25">
+      <span class="qty-unit">USD</span>
+      <div class="price-stepper-arrows">
+        <button type="button" class="ps-up" data-target="closeEditPrice"><span
+            class="material-symbols-outlined">keyboard_arrow_up</span></button>
+        <button type="button" class="ps-down" data-target="closeEditPrice"><span
+            class="material-symbols-outlined">keyboard_arrow_down</span></button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="closeEditCancel">Cancel</button>
+      <button class="btn-save" id="closeEditApply">Apply</button>
+    </div>
+  </div>
+
   <!-- Quick Market Order — floating, draggable market-order bar (toggled from chart toolbar) -->
   <div class="pop-menu float-panel quick-order-panel" id="quickOrderPanel" data-persistent="true">
     <div class="qop-main">
@@ -5811,9 +5843,9 @@
   <script src="js/workspace.js?v=17"></script>
   <script src="js/overlays.js?v=7"></script>
   <script src="js/resize.js?v=17"></script>
-  <script src="js/app.js?v=368"></script>
+  <script src="js/app.js?v=369"></script>
   <script src="js/theme.js?v=3"></script>
-  <script src="js/right-panel.js?v=31"></script>
+  <script src="js/right-panel.js?v=32"></script>
   <script src="js/market-scanner.js?v=16"></script>
   <script src="js/market-sessions.js?v=4"></script>
 
