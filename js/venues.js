@@ -43,20 +43,19 @@
 (function () {
   'use strict';
 
-  /* Every venue the terminal knows about. `roles` gates which of the two selectors a venue can
-     appear in; `supports` is the asset classes it actually trades — a crypto exchange has no US
-     stocks and a futures broker has no perps, so a position can never be shown against a venue
-     that couldn't hold it; `basisBps` is its resting offset from a notional global mid, in basis
-     points. Adding an exchange is a row here. */
+  /* Every venue the terminal knows about. `supports` is the asset classes it actually trades — a
+     crypto exchange has no US stocks and a futures broker has no perps, so an instrument can never
+     be routed to, or labelled with, a venue that couldn't hold it. `basisBps` is its resting offset
+     from a notional global mid. Adding an exchange is a row here plus a line in SYMBOL_BROKERS
+     (js/app.js), which is what actually puts instruments on it. */
   const VENUES = [
-    { id: 'binance',      label: 'Binance',      roles: ['data', 'exec'], supports: ['crypto'], basisBps: 0 },
-    { id: 'blofin',       label: 'BloFin',       roles: ['data', 'exec'], supports: ['crypto'], basisBps: -3 },
-    { id: 'bybit',        label: 'Bybit',        roles: ['data', 'exec'], supports: ['crypto'], basisBps: 2 },
-    { id: 'coinbase',     label: 'Coinbase',     roles: ['data', 'exec'], supports: ['crypto'], basisBps: 6 },
-    { id: 'bitget',       label: 'Bitget',       roles: ['data', 'exec'], supports: ['crypto'], basisBps: 1 },
-    { id: 'aggregated',   label: 'Aggregated',   roles: ['data'],         supports: ['crypto'], basisBps: 0 },
-    { id: 'tradestation', label: 'TradeStation', roles: ['exec'],         supports: ['stocks', 'futures', 'forex'], basisBps: 0 },
-    { id: 'tradovate',    label: 'Tradovate',    roles: ['exec'],         supports: ['futures'], basisBps: 0 },
+    { id: 'binance',      label: 'Binance',      supports: ['crypto'], basisBps: 0 },
+    { id: 'blofin',       label: 'BloFin',       supports: ['crypto'], basisBps: -3 },
+    { id: 'bybit',        label: 'Bybit',        supports: ['crypto'], basisBps: 2 },
+    { id: 'coinbase',     label: 'Coinbase',     supports: ['crypto'], basisBps: 6 },
+    { id: 'bitget',       label: 'Bitget',       supports: ['crypto'], basisBps: 1 },
+    { id: 'tradestation', label: 'TradeStation', supports: ['stocks', 'futures', 'forex'], basisBps: 0 },
+    { id: 'tradovate',    label: 'Tradovate',    supports: ['futures'], basisBps: 0 },
   ];
 
   const BY_ID = {};
@@ -211,7 +210,6 @@
 
   window.TTVenues = {
     VENUES,
-    venuesFor: (role) => VENUES.filter(v => v.roles.indexOf(role) !== -1),
     venueLabel,
     venueSupports,
     dataVenue: () => dataVenueId,

@@ -1,130 +1,16 @@
 /* ===== CROSS-VENUE PRICING =====
-   The chart supplies the candles from one exchange (the data venue) while orders
-   are routed to another (the execution venue). These styles cover the three places
-   that distinction has to be visible:
+   The chart draws an instrument on the venue that lists it (the Broker column of the symbol
+   picker), while orders are routed to the selected account. When those differ, two places have to
+   show it:
 
-     1. the venue selector pill in the chart tools bar
-     2. the venue badge carried by every execution object drawn on the chart
-     3. the dual chart-price / execution-price readout shown when the two venues
-        have drifted far enough apart to matter
+     1. the venue tag riding the left edge of every order line on the chart
+     2. the warning shown before placing into an unusually wide venue spread
 
-   Everything here is token-driven so it reads correctly in both themes. The
-   execution layer is consistently tinted with --info, which reads as "this belongs
-   to somewhere else" without competing with the long/short/accent colors the order
-   lines already own. */
+   There is no chart-venue control to style: picking the symbol picks the venue.
 
-/* ---------- selector pill (chart tools bar) ---------- */
-
-.venue-block {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-/* Two stacked rows in the height of one control, so the pill states both venues
-   at a glance without taking a second line in the tools bar. */
-.venue-select {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-sm);
-  background: var(--bg-elevated);
-  transition: background var(--t-ui), border-color var(--t-ui);
-}
-
-.venue-select:hover {
-  border-color: var(--border-default);
-}
-
-.venue-select .material-symbols-outlined {
-  font-size: 15px;
-  color: var(--text-muted);
-}
-
-.venue-rows {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.25;
-}
-
-.venue-row {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-.venue-role {
-  font-size: var(--fs-label);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  min-width: 30px;
-}
-
-.venue-name {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.venue-row.exec .venue-name {
-  color: var(--info);
-}
-
-/* ---------- selector popover ---------- */
-
-.venue-menu-section {
-  padding: 8px 12px 4px;
-  font-size: var(--fs-label);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.venue-menu-section+.venue-menu-section {
-  border-top: 1px solid var(--border-subtle);
-  margin-top: 4px;
-}
-
-/* An execution venue with no connected account can be seen but not chosen — the
-   row stays legible and offers the way to fix it instead of going flat grey. */
-.pop-item.venue-item.unconnected .pt-title {
-  color: var(--text-muted);
-}
-
-.venue-item-note {
-  margin-left: auto;
-  font-size: var(--fs-label);
-  color: var(--text-muted);
-}
-
-.venue-item-basis {
-  margin-left: auto;
-  font-size: 10.5px;
-  font-family: var(--mono);
-  color: var(--info);
-}
-
-/* ---------- chart legend ---------- */
-
-/* Appended after the data venue in the legend header. Reads as "these candles are
-   Binance's, the orders on them are BloFin's". */
-.cl-exec-venue {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--info);
-}
-
-.cl-exec-venue .material-symbols-outlined {
-  font-size: 13px;
-}
+   Everything here is token-driven so it reads correctly in both themes. The execution layer is
+   consistently tinted with --info, which reads as "this belongs to somewhere else" without
+   competing with the long/short/accent colors the order lines already own. */
 
 /* ---------- venue tag on chart lines ---------- */
 

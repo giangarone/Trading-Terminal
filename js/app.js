@@ -161,10 +161,16 @@
 
      Returns null when there is no split to explain, so a single-venue chart is untouched. */
   function venueTagEl(key, y, venueId, chartPrice, execPrice) {
-    if (!Venues.isCrossVenue()) return null;
-    const label = venueId ? Venues.venueLabel(venueId) : Venues.execLabel();
-    const showTip = venueSplitVisible()
-      && typeof chartPrice === 'number' && typeof execPrice === 'number';
+    // Judged per line against that line's OWN venue, frozen at placement — not against whatever
+    // the account happens to be now. An order working on the venue the chart is drawn from has
+    // nothing to explain, even if the account has since moved elsewhere.
+    const venue = venueId || Venues.execVenue();
+    if (venue === Venues.dataVenue()) return null;
+    const label = Venues.venueLabel(venue);
+    // Likewise the readout: it appears when THIS line's two prices actually differ, rather than
+    // when the current market-wide spread happens to be wide.
+    const showTip = typeof chartPrice === 'number' && typeof execPrice === 'number'
+      && Math.abs(chartPrice - execPrice) >= 0.005;
     const tag = document.createElement('div');
     tag.className = 'ol-venue-tag' + (showTip ? ' has-tip' : '');
     tag.dataset.venueKey = key;
@@ -4789,6 +4795,10 @@
         order = o;
         if (!isDraggingOrderLine) {
           checkTpFills(prevLast, last);
+          // A take profit that closes the last of the position removes its order, and removeOrder
+          // leaves `order` null when nothing is left to focus. Everything below this point reads
+          // `order`, so the rest of the pass has nothing to act on.
+          if (!order) return;
           if (order.filled) checkSlHit(last);
         }
         if (!order.filled && order.pendingConfirm && order.orderType === 'Market') {
@@ -5999,68 +6009,14 @@
     openChartSettings('broker');
   });
 
-  /* ---------- chart data venue selector ----------
-     Which exchange supplies the candles. The venue orders are SENT to is deliberately not offered
-     here: that is the account, and it already has a prominent switcher in the topbar. Naming it in
-     both places would be one fact stated twice, in two controls that could drift apart on screen. */
-  const venueSelectTrigger = document.getElementById('venueSelectTrigger');
-  const venueSelectMenu = document.getElementById('venueSelectMenu');
-
-  /* Where the execution venue rests relative to one candidate chart venue, before any live drift. */
-  function restingSpreadBps(dataVenueId) {
-    const find = (id) => Venues.VENUES.find(x => x.id === id);
-    const data = find(dataVenueId), exec = find(Venues.execVenue());
-    return (data && exec) ? exec.basisBps - data.basisBps : 0;
-  }
-
-  function renderVenueMenu() {
-    const dataList = document.getElementById('venueDataList');
-    if (!dataList) return;
-    dataList.innerHTML = Venues.venuesFor('data').map(v => {
-      const selected = v.id === Venues.dataVenue();
-      // Each candidate is listed with how far the execution venue usually trades from it, so the
-      // choice is made with the price difference in view rather than discovered at order time.
-      // The venue in use quotes the live spread; the others quote their standing one.
-      let trailing = '';
-      if (v.id !== Venues.execVenue()) {
-        const bps = selected ? Venues.divergence().signedBps : restingSpreadBps(v.id);
-        trailing = '<span class="venue-item-basis">' + (bps > 0 ? '+' : '') + fmt(bps, 1) + ' bps</span>';
-      }
-      return '<button class="pop-item venue-item' + (selected ? ' selected' : '') + '" data-venue="' + v.id + '">' +
-        '<span class="pop-text"><span class="pt-title">' + v.label + '</span></span>' + trailing + '</button>';
-    }).join('');
-    dataList.querySelectorAll('[data-venue]').forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.stopPropagation();
-        Venues.setDataVenue(item.dataset.venue);
-        showToast('Chart data from ' + Venues.venueLabel(item.dataset.venue), 'candlestick_chart');
-        closeAllPopovers();
-      });
-    });
-  }
-
-  function renderVenuePill() {
-    document.getElementById('venueDataLabel').textContent = Venues.dataLabel();
-  }
-
-  if (venueSelectTrigger) {
-    venueSelectTrigger.addEventListener('click', (e) => {
-      e.stopPropagation();
-      renderVenueMenu();
-      openNear(venueSelectMenu, venueSelectTrigger.getBoundingClientRect(), 'left', venueSelectTrigger);
-    });
-  }
-
-  /* One listener for every consequence of a venue change — whichever end it came from, the chart
-     data picker here or the account switcher above. */
+  /* One listener for every consequence of a venue change, whichever end it came from — the chart
+     venue following a symbol switch, or the execution venue following an account switch. */
   document.addEventListener('venue:changed', () => {
-    renderVenuePill();
     if (chartLegendReady) updateChartLegend();
     qtRefreshQuoteStrip();
     qtRefreshBboButtonPrices();
     render();
   });
-  renderVenuePill();
 
   /* ---------- Connect Broker modal ---------- */
   const bcConnectBackdrop = document.getElementById('bcConnectBackdrop');
@@ -7743,7 +7699,6 @@
       { id: 'replayToggle' },
       { id: 'indicatorsTrigger' },
       { id: 'candleTypeTrigger' },
-      { id: 'venueSelectTrigger' },
       { id: 'tfGroup', cls: 'tf-condensed' },
     ]);
 
@@ -7938,6 +7893,8 @@
     ETHUSD: 'BloFin', SOLUSD: 'Bybit', XRPUSD: 'BloFin', BNBUSD: 'Bybit',
     DOGEUSD: 'BloFin', AVAXUSD: 'Bybit', LINKUSD: 'BloFin', DOTUSD: 'Bybit',
     NEARUSD: 'BloFin', APTUSD: 'Bybit', ARBUSD: 'BloFin', SUIUSD: 'Bybit',
+    BTCUSD: 'Binance', LTCUSD: 'Binance', ATOMUSD: 'Binance', FILUSD: 'Binance',
+    ADAUSD: 'Coinbase', UNIUSD: 'Coinbase', ICPUSD: 'Coinbase', ETCUSD: 'Coinbase',
     ESU5: 'TradeStation', RTYU5: 'TradeStation', GCQ5: 'TradeStation',
   };
   const CAT_BROKER_DEFAULT = { crypto: 'Bitget', futures: 'Tradovate', stocks: 'TradeStation', forex: 'TradeStation' };
@@ -7957,6 +7914,8 @@
     return fallback;
   }
   window.venueForSymbol = venueForSymbol;
+  // The terminal opens on a symbol, so the chart opens on that symbol's venue.
+  Venues.setDataVenue(venueForSymbol(currentSymbol()));
 
   /* The demo order and history rows the terminal opens with are real trades on real venues, so they
      carry one too. Stamped here rather than written into each literal because venueForSymbol needs
@@ -7990,6 +7949,10 @@
     const wlRow = document.querySelector('.wl-row[data-sym="' + sym + '"]');
     if (wlRow) wlRow.classList.add('selected');
     qtApplyAssetConfig(sym);
+    /* The chart draws the instrument on the venue that lists it — the Broker column of the symbol
+       picker. There is no separate chart-venue control: picking ETHUSD is picking BloFin's ETHUSD.
+       Fires venue:changed, which repaints the legend, so it runs before the update below. */
+    Venues.setDataVenue(venueForSymbol(sym));
     /* keep the chart legend's symbol in sync with the selected asset (#symSelectLabel) */
     if (window.updateChartLegend) window.updateChartLegend();
     showToast('Switched to ' + sym, 'sync_alt');

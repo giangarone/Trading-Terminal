@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
   <link rel="stylesheet" href="css/quick-order.css?v=5">
-  <link rel="stylesheet" href="css/venue.css?v=7">
+  <link rel="stylesheet" href="css/venue.css?v=8">
 </head>
 
 <body>
@@ -3166,13 +3166,6 @@
               </div>
             </div>
 
-            <!-- Which exchange draws the candles. The venue orders are SENT to is the account,
-                 chosen in the topbar account switcher — naming it here too would only be the same
-                 fact stated twice. -->
-            <button class="ct-action-btn pop-trigger" id="venueSelectTrigger" data-tooltip="Chart data venue"><span
-                class="material-symbols-outlined" style="font-size:15px;">lan</span><span class="ct-label"
-                id="venueDataLabel">Binance</span><span class="material-symbols-outlined ct-caret"
-                style="font-size:15px;">expand_more</span></button>
 
             <div class="tf-group" id="tfGroup">
               <button class="tf-btn active" data-tf="15m">15m</button>
@@ -4520,13 +4513,6 @@
   </div>
 
   <!-- ===================== SYMBOL SELECTOR MODAL ===================== -->
-  <!-- Which exchange supplies the candles. Rows are built from the venue registry in
-       js/venues.js by renderVenueMenu(). Execution venue is not offered here — that is the
-       account, switched from the topbar. -->
-  <div class="pop-menu" id="venueSelectMenu" style="width:220px;">
-    <div id="venueDataList"></div>
-  </div>
-
   <!-- Centered, draggable floating window (shares the Indicators .float-panel shell).
        Opened from the topbar ticker, a chart-legend double-click, and the watchlist +
        button. Rows are injected by renderSymSelectList() in js/app.js. -->
@@ -4552,7 +4538,7 @@
     <div class="ss-cols">
       <span class="ss-col ss-col-sym" data-sort="sym">Symbol<span
           class="ss-sort material-symbols-outlined">arrow_downward</span></span>
-      <span class="ss-col ss-col-broker" data-sort="broker">Exchange<span
+      <span class="ss-col ss-col-broker" data-sort="broker">Broker<span
           class="ss-sort material-symbols-outlined">arrow_downward</span></span>
       <span class="ss-col ss-col-last" data-sort="last">Last<span
           class="ss-sort material-symbols-outlined">arrow_downward</span></span>
@@ -5957,11 +5943,11 @@
 
   <!-- ====== Scripts (order matters: utils → venues → workspace → overlays → resize → app → right-panel) ====== -->
   <script src="js/utils.js?v=1"></script>
-  <script src="js/venues.js?v=2"></script>
+  <script src="js/venues.js?v=4"></script>
   <script src="js/workspace.js?v=17"></script>
   <script src="js/overlays.js?v=8"></script>
   <script src="js/resize.js?v=17"></script>
-  <script src="js/app.js?v=381"></script>
+  <script src="js/app.js?v=387"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=36"></script>
   <script src="js/market-scanner.js?v=16"></script>
