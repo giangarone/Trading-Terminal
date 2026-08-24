@@ -4329,16 +4329,9 @@
     return '15m';
   }
   /* The legend describes the candles, so the exchange it names is the one supplying them — the
-     chart data venue, not the account the orders go to. Where the two differ, the execution venue
-     is called out separately by its own chip. */
+     chart data venue, not the account the orders go to. */
   function legendExchange() {
     return Venues.dataLabel();
-  }
-  function renderLegendExecVenue() {
-    const chip = document.getElementById('clExecVenue');
-    if (!chip) return;
-    chip.hidden = !Venues.isCrossVenue();
-    if (!chip.hidden) document.getElementById('clExecVenueName').textContent = Venues.execLabel();
   }
 
   function renderLegendOhlc(bar) {
@@ -4410,7 +4403,6 @@
     clSymbol.textContent = legendSymbolLabel();
     clTimeframe.textContent = legendTimeframe();
     clExchange.textContent = legendExchange();
-    renderLegendExecVenue();
     renderLegendIndicators();
     updateLegendValues();
   }
@@ -5968,10 +5960,6 @@
   // The account is the execution venue — the same thing named twice would only ever drift apart,
   // so the venue layer takes its execution venue from whichever account is selected.
   function venueIdForAccount(accountId) { return String(accountId).toLowerCase(); }
-  function accountIdForVenue(venueId) {
-    const acct = ACCOUNTS.find(a => venueIdForAccount(a.id) === venueId);
-    return acct ? acct.id : null;
-  }
   function renderAccountSelect() {
     const acct = ACCOUNTS.find(a => a.id === selectedAccountId);
     // Keep the single balance source of truth in sync with the selected account so chart % sizing,
@@ -6011,14 +5999,10 @@
     openChartSettings('broker');
   });
 
-  /* ---------- chart data / execution venue selector ----------
-     Two independent choices in one control: which exchange draws the candles, and which one the
-     orders are sent to. Both lists are built from the venue registry in js/venues.js, so a new
-     exchange is a row of data there rather than markup here.
-
-     Execution rows route through the account switcher rather than setting the venue directly —
-     that is what keeps the topbar account and the execution venue a single fact. A venue with no
-     connected account can be seen but not chosen; picking it opens Broker Connections instead. */
+  /* ---------- chart data venue selector ----------
+     Which exchange supplies the candles. The venue orders are SENT to is deliberately not offered
+     here: that is the account, and it already has a prominent switcher in the topbar. Naming it in
+     both places would be one fact stated twice, in two controls that could drift apart on screen. */
   const venueSelectTrigger = document.getElementById('venueSelectTrigger');
   const venueSelectMenu = document.getElementById('venueSelectMenu');
 
@@ -6029,62 +6013,34 @@
     return (data && exec) ? exec.basisBps - data.basisBps : 0;
   }
 
-  function venueRowHtml(v, role) {
-    const selected = (role === 'data' ? Venues.dataVenue() : Venues.execVenue()) === v.id;
-    const unconnected = role === 'exec' && !accountIdForVenue(v.id);
-    // Each chart-data venue is listed with how far the execution venue usually trades from it, so
-    // the choice is made with the price difference in view rather than discovered at order time.
-    // The venue in use quotes the live spread; the others quote their standing one.
-    let trailing = '';
-    if (unconnected) {
-      trailing = '<span class="venue-item-note">Not connected</span>';
-    } else if (role === 'data' && v.id !== Venues.execVenue()) {
-      const bps = selected ? Venues.divergence().signedBps : restingSpreadBps(v.id);
-      trailing = '<span class="venue-item-basis">' + (bps > 0 ? '+' : '') + fmt(bps, 1) + ' bps</span>';
-    }
-    return '<button class="pop-item venue-item' + (selected ? ' selected' : '') + (unconnected ? ' unconnected' : '') + '"'
-      + ' data-venue="' + v.id + '" data-role="' + role + '">'
-      + '<span class="pop-text"><span class="pt-title">' + v.label + '</span></span>'
-      + trailing + '</button>';
-  }
-
   function renderVenueMenu() {
     const dataList = document.getElementById('venueDataList');
-    const execList = document.getElementById('venueExecList');
-    if (!dataList || !execList) return;
-    dataList.innerHTML = Venues.venuesFor('data').map(v => venueRowHtml(v, 'data')).join('');
-    execList.innerHTML = Venues.venuesFor('exec').map(v => venueRowHtml(v, 'exec')).join('');
-    venueSelectMenu.querySelectorAll('[data-venue]').forEach(item => {
+    if (!dataList) return;
+    dataList.innerHTML = Venues.venuesFor('data').map(v => {
+      const selected = v.id === Venues.dataVenue();
+      // Each candidate is listed with how far the execution venue usually trades from it, so the
+      // choice is made with the price difference in view rather than discovered at order time.
+      // The venue in use quotes the live spread; the others quote their standing one.
+      let trailing = '';
+      if (v.id !== Venues.execVenue()) {
+        const bps = selected ? Venues.divergence().signedBps : restingSpreadBps(v.id);
+        trailing = '<span class="venue-item-basis">' + (bps > 0 ? '+' : '') + fmt(bps, 1) + ' bps</span>';
+      }
+      return '<button class="pop-item venue-item' + (selected ? ' selected' : '') + '" data-venue="' + v.id + '">' +
+        '<span class="pop-text"><span class="pt-title">' + v.label + '</span></span>' + trailing + '</button>';
+    }).join('');
+    dataList.querySelectorAll('[data-venue]').forEach(item => {
       item.addEventListener('click', (e) => {
         e.stopPropagation();
-        const id = item.dataset.venue;
-        if (item.dataset.role === 'data') {
-          Venues.setDataVenue(id);
-          showToast('Chart data from ' + Venues.venueLabel(id), 'candlestick_chart');
-          closeAllPopovers();
-          return;
-        }
-        const acct = accountIdForVenue(id);
-        if (!acct) {
-          closeAllPopovers();
-          openChartSettings('broker');
-          showToast('Connect ' + Venues.venueLabel(id) + ' to trade through it', 'info');
-          return;
-        }
-        // Goes through the account switcher on purpose — see the note above.
-        selectedAccountId = acct;
-        renderAccountSelect();
-        qtUpdateEstimates();
-        updatePdBalanceDisplay();
+        Venues.setDataVenue(item.dataset.venue);
+        showToast('Chart data from ' + Venues.venueLabel(item.dataset.venue), 'candlestick_chart');
         closeAllPopovers();
-        showToast('Executing on ' + Venues.venueLabel(id), 'swap_horiz');
       });
     });
   }
 
   function renderVenuePill() {
     document.getElementById('venueDataLabel').textContent = Venues.dataLabel();
-    document.getElementById('venueExecLabel').textContent = Venues.execLabel();
   }
 
   if (venueSelectTrigger) {
@@ -6095,8 +6051,8 @@
     });
   }
 
-  /* One listener for every consequence of a venue change: the pill, the legend, and every order
-     line (badges and dual prices appear or vanish with the split). */
+  /* One listener for every consequence of a venue change — whichever end it came from, the chart
+     data picker here or the account switcher above. */
   document.addEventListener('venue:changed', () => {
     renderVenuePill();
     if (chartLegendReady) updateChartLegend();
@@ -7787,6 +7743,7 @@
       { id: 'replayToggle' },
       { id: 'indicatorsTrigger' },
       { id: 'candleTypeTrigger' },
+      { id: 'venueSelectTrigger' },
       { id: 'tfGroup', cls: 'tf-condensed' },
     ]);
 
