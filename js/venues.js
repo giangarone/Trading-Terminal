@@ -46,16 +46,18 @@
   /* Every venue the terminal knows about. `supports` is the asset classes it actually trades — a
      crypto exchange has no US stocks and a futures broker has no perps, so an instrument can never
      be routed to, or labelled with, a venue that couldn't hold it. `basisBps` is its resting offset
-     from a notional global mid. Adding an exchange is a row here plus a line in SYMBOL_BROKERS
-     (js/app.js), which is what actually puts instruments on it. */
+     from a notional global mid. `liquidity` is its share of an instrument's traded volume, which is
+     what makes the same asset show a different tape on each exchange that lists it. Adding an
+     exchange is a row here plus a line in SYMBOL_BROKERS (js/app.js), which is what actually puts
+     instruments on it. */
   const VENUES = [
-    { id: 'binance',      label: 'Binance',      supports: ['crypto'], basisBps: 0 },
-    { id: 'blofin',       label: 'BloFin',       supports: ['crypto'], basisBps: -3 },
-    { id: 'bybit',        label: 'Bybit',        supports: ['crypto'], basisBps: 2 },
-    { id: 'coinbase',     label: 'Coinbase',     supports: ['crypto'], basisBps: 6 },
-    { id: 'bitget',       label: 'Bitget',       supports: ['crypto'], basisBps: 1 },
-    { id: 'tradestation', label: 'TradeStation', supports: ['stocks', 'futures', 'forex'], basisBps: 0 },
-    { id: 'tradovate',    label: 'Tradovate',    supports: ['futures'], basisBps: 0 },
+    { id: 'binance',      label: 'Binance',      supports: ['crypto'], basisBps: 0,  liquidity: 1.00 },
+    { id: 'blofin',       label: 'BloFin',       supports: ['crypto'], basisBps: -3, liquidity: 0.22 },
+    { id: 'bybit',        label: 'Bybit',        supports: ['crypto'], basisBps: 2,  liquidity: 0.61 },
+    { id: 'coinbase',     label: 'Coinbase',     supports: ['crypto'], basisBps: 6,  liquidity: 0.34 },
+    { id: 'bitget',       label: 'Bitget',       supports: ['crypto'], basisBps: 1,  liquidity: 0.45 },
+    { id: 'tradestation', label: 'TradeStation', supports: ['stocks', 'futures', 'forex'], basisBps: 0, liquidity: 1.00 },
+    { id: 'tradovate',    label: 'Tradovate',    supports: ['futures'], basisBps: 0, liquidity: 0.70 },
   ];
 
   const BY_ID = {};
@@ -203,6 +205,12 @@
 
   /* Whether a venue trades a given asset class. The guard behind venueForSymbol in js/app.js, so
      a symbol can never be routed to — or labelled with — an exchange that doesn't list it. */
+  /* A venue's resting offset from the notional mid, and its share of traded volume. Both are read
+     by the symbol picker so that one asset listed on several exchanges shows a different price and
+     a different tape on each — which is the whole point of listing it more than once. */
+  function venueBasisBps(id) { return BY_ID[id] ? BY_ID[id].basisBps : 0; }
+  function venueLiquidity(id) { return BY_ID[id] ? BY_ID[id].liquidity : 1; }
+
   function venueSupports(id, cat) {
     const v = BY_ID[id];
     return !!v && v.supports.indexOf(cat) !== -1;
@@ -212,6 +220,8 @@
     VENUES,
     venueLabel,
     venueSupports,
+    venueBasisBps,
+    venueLiquidity,
     dataVenue: () => dataVenueId,
     execVenue: () => execVenueId,
     dataLabel: () => venueLabel(dataVenueId),

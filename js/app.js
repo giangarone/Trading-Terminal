@@ -7872,14 +7872,18 @@
   const SYMBOL_LIST = [
     ...['ETHUSD', 'BTCUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'DOGEUSD', 'ADAUSD', 'AVAXUSD', 'LINKUSD', 'MATICUSD',
       'LTCUSD', 'DOTUSD', 'TRXUSD', 'ATOMUSD', 'NEARUSD', 'UNIUSD', 'FILUSD', 'APTUSD', 'ARBUSD', 'OPUSD',
-      'SUIUSD', 'ICPUSD', 'ETCUSD'].map(sym => ({ sym, cat: 'crypto' })),
+      'SUIUSD', 'ICPUSD', 'ETCUSD', 'TONUSD', 'INJUSD', 'SEIUSD', 'TIAUSD', 'RNDRUSD',
+      'STXUSD', 'IMXUSD', 'GRTUSD', 'AAVEUSD', 'MKRUSD', 'PEPEUSD'].map(sym => ({ sym, cat: 'crypto' })),
     ...['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'JPM',
       'BAC', 'DIS', 'KO', 'PEP', 'WMT', 'V', 'MA', 'XOM', 'CVX', 'INTC',
-      'ORCL', 'CRM', 'ADBE'].map(sym => ({ sym, cat: 'stocks' })),
+      'ORCL', 'CRM', 'ADBE', 'PLTR', 'COIN', 'MU', 'QCOM', 'SHOP',
+      'UBER', 'ABNB', 'BA', 'GS'].map(sym => ({ sym, cat: 'stocks' })),
     ...['NQU5', 'ESU5', 'YMU5', 'RTYU5', 'CLN5', 'GCQ5', 'SIN5', 'ZBU5', 'ZNU5', 'ZCU5',
-      'HGU5', 'NGU5', 'PLU5', 'KCU5', 'ZSU5', 'ZWU5', '6BU5'].map(sym => ({ sym, cat: 'futures' })),
+      'HGU5', 'NGU5', 'PLU5', 'KCU5', 'ZSU5', 'ZWU5', '6BU5', '6EU5', '6JU5',
+      'LEU5', 'HEU5', 'RBU5'].map(sym => ({ sym, cat: 'futures' })),
     ...['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD', 'USDCHF', 'EURGBP', 'EURJPY', 'GBPJPY',
-      'USDTRY', 'USDMXN', 'USDZAR', 'EURCHF', 'AUDJPY', 'CHFJPY', 'EURAUD'].map(sym => ({ sym, cat: 'forex' })),
+      'USDTRY', 'USDMXN', 'USDZAR', 'EURCHF', 'AUDJPY', 'CHFJPY', 'EURAUD',
+      'EURNZD', 'GBPCHF', 'CADJPY', 'NZDJPY', 'USDSEK'].map(sym => ({ sym, cat: 'forex' })),
   ];
   /* asset class for a symbol — drives the per-asset Quick Trade panel; defaults to crypto */
   function symbolCategory(sym) {
@@ -7914,6 +7918,44 @@
     return fallback;
   }
   window.venueForSymbol = venueForSymbol;
+
+  /* ---------- cross-listed instruments ----------
+     A major pair doesn't trade in one place: BTCUSD has a book on every large exchange, and each
+     one has its own price and its own tape. So the picker lists an instrument once per venue that
+     carries it, and picking a row picks BOTH the instrument and the exchange to chart it on.
+
+     This map holds the ADDITIONAL venues for a symbol; its primary listing (venueForSymbol) is
+     always included and always sorts first. Only venues that support the symbol's asset class are
+     honoured, so a stock can't be cross-listed onto a crypto exchange by a typo here. */
+  const SYMBOL_CROSS_LISTINGS = {
+    BTCUSD: ['bybit', 'coinbase', 'blofin', 'bitget'],
+    ETHUSD: ['binance', 'bybit', 'coinbase', 'bitget'],
+    SOLUSD: ['binance', 'coinbase', 'bitget'],
+    XRPUSD: ['binance', 'bitget'],
+    DOGEUSD: ['binance', 'bybit'],
+    ADAUSD: ['binance', 'bybit'],
+    LTCUSD: ['coinbase', 'bitget'],
+    LINKUSD: ['binance', 'coinbase'],
+    AVAXUSD: ['binance'],
+    ATOMUSD: ['bybit'],
+    DOTUSD: ['binance', 'coinbase'],
+    UNIUSD: ['binance'],
+    ARBUSD: ['bybit'],
+    OPUSD: ['binance'],
+    TONUSD: ['bybit'],
+    INJUSD: ['binance'],
+    PEPEUSD: ['binance', 'bybit'],
+  };
+
+  /* Every (instrument, venue) pair the picker can show — the rows it actually renders. Built once:
+     the listings are static, and rebuilding per keystroke would re-sort 200-odd rows for nothing. */
+  const SYMBOL_ROWS = SYMBOL_LIST.flatMap(s => {
+    const primary = venueForSymbol(s.sym, s.cat);
+    const extras = (SYMBOL_CROSS_LISTINGS[s.sym] || [])
+      .filter(v => v !== primary && Venues.venueSupports(v, s.cat));
+    return [primary, ...extras].map(venue => ({ sym: s.sym, cat: s.cat, venue }));
+  });
+
   // The terminal opens on a symbol, so the chart opens on that symbol's venue.
   Venues.setDataVenue(venueForSymbol(currentSymbol()));
 
@@ -7943,7 +7985,10 @@
      dir is 1 for ascending, -1 for descending. */
   let symSelectSort = { key: null, dir: 1 };
   /* cosmetic symbol switch — relabels the topbar/watchlist without loading new chart data */
-  function switchSymbol(sym) {
+  /* `venue` is the exchange the picker row was listed on. A cross-listed instrument has a row per
+     venue, so the click carries which one was chosen; anything that only knows a symbol (the
+     watchlist, a legend double-click) omits it and gets that symbol's primary listing. */
+  function switchSymbol(sym, venue) {
     symSelectLabel.textContent = sym;
     document.querySelectorAll('.wl-row.selected').forEach(r => r.classList.remove('selected'));
     const wlRow = document.querySelector('.wl-row[data-sym="' + sym + '"]');
@@ -7952,10 +7997,12 @@
     /* The chart draws the instrument on the venue that lists it — the Broker column of the symbol
        picker. There is no separate chart-venue control: picking ETHUSD is picking BloFin's ETHUSD.
        Fires venue:changed, which repaints the legend, so it runs before the update below. */
-    Venues.setDataVenue(venueForSymbol(sym));
+    const cat = symbolCategory(sym);
+    const target = (venue && Venues.venueSupports(venue, cat)) ? venue : venueForSymbol(sym, cat);
+    Venues.setDataVenue(target);
     /* keep the chart legend's symbol in sync with the selected asset (#symSelectLabel) */
     if (window.updateChartLegend) window.updateChartLegend();
-    showToast('Switched to ' + sym, 'sync_alt');
+    showToast('Switched to ' + sym + ' · ' + Venues.venueLabel(target), 'sync_alt');
   }
   // Exposed so the left-panel watchlist (js/resize.js) can switch symbols too.
   window.switchSymbol = switchSymbol;
@@ -7974,15 +8021,40 @@
 
   /* one row of the Symbol Selector modal: symbol + name, live last / 24h% / 24h vol,
      and a watchlist toggle (star, gold-filled when the symbol is watchlisted). */
-  function buildSymRow(s) {
+  /* One instrument as it looks on one venue. The market simulation quotes a single consolidated
+     tape per symbol, so each venue's row is that tape shifted by the venue's basis and scaled by
+     its share of the volume — which is what makes BTCUSD on Binance and BTCUSD on Coinbase read as
+     two real, differently-priced books rather than the same row printed twice. */
+  /* Matches the volume format the market data itself uses (fmtVol in js/right-panel.js) — the
+     scaled figure has to sit in the same column as the unscaled ones and read identically. */
+  function fmtSymVol(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return String(Math.round(n));
+  }
+
+  function venueQuote(s) {
     const d = window.getMarketData ? window.getMarketData(s.sym, s.cat) : null;
+    if (!d) return null;
+    const last = d.last * (1 + Venues.venueBasisBps(s.venue) / 10000);
+    const vol = d.vol * Venues.venueLiquidity(s.venue);
+    return {
+      name: d.name, up: d.up, chgPct: d.chgPct, chgPctText: d.chgPctText,
+      last, lastText: fmt(last, d.dec),
+      vol, volText: fmtSymVol(vol),
+    };
+  }
+
+  function buildSymRow(s) {
+    const d = venueQuote(s);
     const inWl = !!(window.watchlistHasSymbol && window.watchlistHasSymbol(s.sym));
     const name = d ? d.name : s.sym;
     const chgDir = d && !d.up ? 'down' : 'up';
-    return '<div class="ss-row" data-sym="' + s.sym + '" data-cat="' + s.cat + '" tabindex="0" role="button">' +
+    return '<div class="ss-row" data-sym="' + s.sym + '" data-cat="' + s.cat + '" data-venue="' + s.venue + '" tabindex="0" role="button">' +
       '<div class="ss-sym"><span class="ss-sym-ticker">' + s.sym + '</span>' +
       '<span class="ss-sym-name">' + name + '</span></div>' +
-      '<span class="ss-broker">' + brokerFor(s.sym, s.cat) + '</span>' +
+      '<span class="ss-broker">' + Venues.venueLabel(s.venue) + '</span>' +
       '<span class="ss-last">' + (d ? d.lastText : '') + '</span>' +
       '<span class="ss-chg ' + chgDir + '">' + (d ? d.chgPctText : '') + '</span>' +
       '<span class="ss-vol">' + (d ? d.volText : '') + '</span>' +
@@ -7996,8 +8068,8 @@
      the ticker string for the symbol column) */
   function sortValue(s, key) {
     if (key === 'sym') return s.sym;
-    if (key === 'broker') return brokerFor(s.sym, s.cat);
-    const d = window.getMarketData ? window.getMarketData(s.sym, s.cat) : null;
+    if (key === 'broker') return Venues.venueLabel(s.venue);
+    const d = venueQuote(s);
     if (!d) return 0;
     if (key === 'last') return d.last;
     if (key === 'chg') return d.chgPct;
@@ -8017,7 +8089,9 @@
 
   function renderSymSelectList(filter) {
     const q = (filter || '').trim().toUpperCase();
-    const items = SYMBOL_LIST.filter(s => (symSelectCat === 'all' || s.cat === symSelectCat) && (!q || s.sym.includes(q)));
+    // Searching matches the venue too, so typing "coinbase" lists everything Coinbase carries.
+    const items = SYMBOL_ROWS.filter(s => (symSelectCat === 'all' || s.cat === symSelectCat)
+      && (!q || s.sym.includes(q) || Venues.venueLabel(s.venue).toUpperCase().includes(q)));
     if (symSelectSort.key) {
       const key = symSelectSort.key, dir = symSelectSort.dir;
       items.sort((a, b) => {
@@ -8034,7 +8108,8 @@
       row.addEventListener('click', (e) => {
         /* the toggle handles its own click; a row-body click switches the chart symbol */
         if (e.target.closest('.ss-wl-toggle')) return;
-        switchSymbol(row.dataset.sym);
+        // Picking a row picks the instrument AND the exchange to chart it on.
+        switchSymbol(row.dataset.sym, row.dataset.venue);
         closeAllPopovers();
       });
       const tog = row.querySelector('.ss-wl-toggle');
@@ -8120,7 +8195,10 @@
   document.addEventListener('market:tick', () => {
     if (!symSelectMenu.classList.contains('show')) return;
     symSelectList.querySelectorAll('.ss-row').forEach(row => {
-      const d = window.getMarketData(row.dataset.sym, row.dataset.cat);
+      // Through venueQuote, not getMarketData directly: a cross-listed row shows its own venue's
+      // price and tape, and repainting from the raw consolidated figures would flatten every
+      // listing of an instrument back to one number on the next tick.
+      const d = venueQuote({ sym: row.dataset.sym, cat: row.dataset.cat, venue: row.dataset.venue });
       if (!d) return;
       const last = row.querySelector('.ss-last');
       const chg = row.querySelector('.ss-chg');
