@@ -149,23 +149,53 @@
   function venueSplitVisible() {
     return Venues.isCrossVenue() && Venues.divergence().level !== 'none';
   }
-  /* The venue badge carried by execution objects drawn on the chart. Empty when there is no
-     split to explain, so a single-venue chart looks exactly as it always has. */
-  function venueBadgeHtml(venueId) {
-    if (!Venues.isCrossVenue()) return '';
+  /* The venue tag carried by every execution object drawn on the chart. It rides the far LEFT edge
+     of its own line, opposite the controls: the right-hand half of a line is already crowded with
+     chips a trader clicks, and a filled pill wedged in among them read as one more control. On the
+     left there is nothing but empty line, so the tags stack into a single quiet column that says
+     "everything here is BloFin" at a glance without ever competing with the controls.
+
+     Hovering one states the level on this chart and the price it works at on its own venue. That
+     lives here rather than on the price axis because the axis is the chart's own price scale — a
+     tag on it claims a level sits at that position, and an execution price does not sit there.
+
+     Returns null when there is no split to explain, so a single-venue chart is untouched. */
+  function venueTagEl(key, y, venueId, chartPrice, execPrice) {
+    if (!Venues.isCrossVenue()) return null;
     const label = venueId ? Venues.venueLabel(venueId) : Venues.execLabel();
-    return '<span class="ol-venue-badge">' + label + '</span>';
+    const showTip = venueSplitVisible()
+      && typeof chartPrice === 'number' && typeof execPrice === 'number';
+    const tag = document.createElement('div');
+    tag.className = 'ol-venue-tag' + (showTip ? ' has-tip' : '');
+    tag.dataset.venueKey = key;
+    tag.style.top = y + 'px';
+    tag.textContent = label;
+    if (showTip) {
+      const tip = document.createElement('span');
+      tip.className = 'ol-fee-tip';
+      tip.innerHTML =
+        '<span class="ol-fee-row"><span class="ol-fee-lbl">Chart</span>' +
+        '<span class="ol-fee-val">' + fmt(chartPrice) + ' ' + Venues.dataLabel() + '</span></span>' +
+        '<span class="ol-fee-row"><span class="ol-fee-lbl">Exec</span>' +
+        '<span class="ol-fee-val">' + fmt(execPrice) + ' ' + label + '</span></span>';
+      tag.appendChild(tip);
+    }
+    return tag;
   }
-  /* A chart level shown alongside the price it will actually execute at. Falls back to the plain
-     chart price whenever the venues are close enough that a second number would be noise. */
-  function dualPriceHtml(chartPrice, opts) {
-    const chartTxt = fmt(chartPrice);
-    if (!venueSplitVisible()) return chartTxt;
-    return '<span class="ol-dual-price">' +
-      '<span class="ol-price-chart">' + chartTxt + '</span>' +
-      '<span class="ol-price-exec">≈ ' + fmt(Venues.toExec(chartPrice, opts)) + ' <em>' + Venues.execLabel() + '</em></span>' +
-      '</span>';
+  /* Appends a line's venue tag, if there is one to draw. Deliberately appended after the row rather
+     than between line and row — updateAllTpSlLinePositionsLive finds a row's line by
+     previousElementSibling, and slipping an element in there would break it. */
+  function appendVenueTag(container, key, y, venueId, chartPrice, execPrice) {
+    const tag = venueTagEl(key, y, venueId, chartPrice, execPrice);
+    if (tag) container.appendChild(tag);
   }
+  /* Keeps a tag on its line while that line is dragged. Looked up by key rather than by DOM
+     position so it can't be knocked loose by the order elements are appended in. */
+  function moveVenueTag(scope, key, y) {
+    const tag = (scope || layer).querySelector('.ol-venue-tag[data-venue-key="' + key + '"]');
+    if (tag) tag.style.top = y + 'px';
+  }
+
   /* Every history row is a record of something that happened on a venue, so each one is stamped
      with the venue it happened on and re-priced into that venue's terms. Call sites push the price
      they know — the one on the chart — and this is the single place that translates it, so no
@@ -177,21 +207,6 @@
       rec.price = Venues.toExec(rec.price, owner ? { basisAbs: owner.basisAtPlace } : undefined);
     }
     return rec;
-  }
-
-  /* The entry level stated twice on the control bar: the price on this chart, and the price the
-     order will work at on its own venue. Only rendered when the two have drifted far enough apart
-     to be different numbers — the rest of the time the bar stays exactly as it was. */
-  function entryDualPriceHtml(o) {
-    if (!venueSplitVisible() || !o) return '';
-    // Note: whenever this renders, the entry bar drops its separate venue badge — the venue is
-    // named once per row, and here the price readout is the thing naming it.
-
-    return '<span class="ol-dual-price" data-tooltip="Chart level vs execution price">' +
-      '<span class="ol-price-chart">' + fmt(o.entry) + '</span>' +
-      '<span class="ol-price-exec">≈ ' + fmt(Venues.toExec(o.entry, { basisAbs: o.basisAtPlace })) +
-      ' <em>' + Venues.venueLabel(o.execVenue) + '</em></span>' +
-      '</span>';
   }
 
   /* Recompute every execution-side price on an order from its chart levels. Exec prices are
@@ -3369,6 +3384,7 @@
       const y = clamp(priceToY(tp.price, H), 10, H - 10);
       row.style.top = y + 'px';
       line.style.top = y + 'px';
+      moveVenueTag(orderScope(), 'tp:' + tp.id, y);
     });
     if (order.sl) {
       const slChip = orderScope().querySelector('.ol-chip.sl');
@@ -3378,6 +3394,7 @@
       const y = clamp(priceToY(order.sl.price, H), 10, H - 10);
       row.style.top = y + 'px';
       line.style.top = y + 'px';
+      moveVenueTag(orderScope(), 'sl', y);
     }
   }
   /* Reposition the Breakeven Price overlay while the entry is dragged — it's derived from entry, so its
@@ -3998,33 +4015,25 @@
     ctx.fillText(fmt(lastBar.close), plotW + 8, tagY + 0.5);
 
     /* ---- order price tags (entry / TP / SL) on the right axis ---- */
-    /* The axis tag for one order level. Where the chart venue and the execution venue have moved
-       apart, the tag grows a second line: the price the level sits at on this chart, and underneath
-       it the price the order will actually work at on its own venue. The tag stays anchored to the
-       chart price because that is where the level is drawn — the second line is the translation, not
-       a second position. */
-    function drawOrderAxisTagOutline(price, color, highlighted, execPrice) {
+    /* The axis tag for one order level. Deliberately shows the chart price only, even when the
+       execution venue is trading elsewhere: this axis IS the chart's price scale, so a tag on it is
+       a positional claim — "this level sits here". An execution price is not at that position on
+       this scale, so printing it here would assert something untrue about the geometry. The
+       translation belongs to the order, not to the axis, and is read by hovering the line's venue
+       badge (see venueBadgeHtml). */
+    function drawOrderAxisTagOutline(price, color, highlighted) {
       const y = clamp(priceToY(price, h), 8, h - 8);
-      const dual = venueSplitVisible() && typeof execPrice === 'number';
-      const hh = dual ? (highlighted ? 30 : 28) : (highlighted ? 20 : 18);
+      const hh = highlighted ? 20 : 18;
       ctx.fillStyle = highlighted ? color : themeColor('--bg-base');
       ctx.fillRect(plotW, y - hh / 2, AXIS_RIGHT_W, hh);
       ctx.strokeStyle = color;
       ctx.lineWidth = highlighted ? 1.5 : 1;
       ctx.strokeRect(plotW + 0.5, y - hh / 2 + 0.5, AXIS_RIGHT_W - 1, hh - 1);
       ctx.fillStyle = highlighted ? themeColor('--bg-base') : color;
+      ctx.font = '600 11px "IBM Plex Sans", sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      if (!dual) {
-        ctx.font = '600 11px "IBM Plex Sans", sans-serif';
-        ctx.fillText(fmt(price), plotW + 8, y + 0.5);
-        return;
-      }
-      ctx.font = '600 10.5px "IBM Plex Sans", sans-serif';
-      ctx.fillText(fmt(price), plotW + 8, y - 6);
-      ctx.fillStyle = highlighted ? themeColor('--bg-base') : themeColor('--info');
-      ctx.font = '500 9.5px "IBM Plex Mono", monospace';
-      ctx.fillText(fmt(execPrice), plotW + 8, y + 7);
+      ctx.fillText(fmt(price), plotW + 8, y + 0.5);
     }
     /* These tags only ever describe one order. While a side is hovered they follow it, so the axis
        agrees with the faded chart body instead of still showing the other position's prices; with
@@ -4035,16 +4044,16 @@
       const orderDir = tagOrder.side === 'buy' ? 1 : -1;
       const offsetColor = themeColor('--intel');
       tagOrder.tps.forEach(tp => {
-        drawOrderAxisTagOutline(tp.price, upColor, hoveredHandle === 'tp:' + tp.id, tp.execPrice);
+        drawOrderAxisTagOutline(tp.price, upColor, hoveredHandle === 'tp:' + tp.id);
         if (tp.trailing) {
           const offsetPrice = (tp.activated && tp.exitPrice != null)
             ? tp.exitPrice
             : roundTick(tp.price - orderDir * tpOffsetDist(tp));
-          drawOrderAxisTagOutline(offsetPrice, offsetColor, hoveredHandle === 'offset:' + tp.id, Venues.toExec(offsetPrice, { basisAbs: tagOrder.basisAtPlace }));
+          drawOrderAxisTagOutline(offsetPrice, offsetColor, hoveredHandle === 'offset:' + tp.id);
         }
       });
-      if (tagOrder.sl) drawOrderAxisTagOutline(tagOrder.sl.price, downColor, hoveredHandle === 'sl', tagOrder.sl.execPrice);
-      drawOrderAxisTagOutline(tagOrder.entry, tagOrder.side === 'buy' ? upColor : downColor, hoveredHandle === 'entry', tagOrder.execEntry);
+      if (tagOrder.sl) drawOrderAxisTagOutline(tagOrder.sl.price, downColor, hoveredHandle === 'sl');
+      drawOrderAxisTagOutline(tagOrder.entry, tagOrder.side === 'buy' ? upColor : downColor, hoveredHandle === 'entry');
     }
 
     /* Working limit closes get an axis tag like every other resting price. They hang off a position
@@ -4053,7 +4062,7 @@
       const closeColor = themeColor('--info');
       window.positionCloseOrders().forEach(closeOrder => {
         if (closeOrder.sym !== CHART_SYMBOL) return;
-        drawOrderAxisTagOutline(closeOrder.price, closeColor, hoveredHandle === 'close:' + closeOrder.id, closeOrder.execPrice);
+        drawOrderAxisTagOutline(closeOrder.price, closeColor, hoveredHandle === 'close:' + closeOrder.id);
       });
     }
 
@@ -5060,6 +5069,29 @@
   }
 
   /* ---------- main render ---------- */
+  /* Chart tooltips hang below whatever they annotate, which puts them outside the pane when their
+     anchor sits near its bottom edge — a readout you can't read. One delegated handler flips any
+     .ol-fee-tip that wouldn't fit, so the TP/SL fee breakdowns and the venue badge's price readout
+     share the placement rule instead of each growing its own. Measured on mouseover, when :hover
+     has already revealed the panel and its real height can be read. */
+  layer.addEventListener('mouseover', (e) => {
+    const host = e.target.closest('.ol-amt, .ol-venue-tag.has-tip');
+    const tip = host && host.querySelector('.ol-fee-tip');
+    if (!tip) return;
+    tip.classList.remove('above');
+    // The panel is display:none until :hover paints it, so its height is measured directly rather
+    // than read off a rect that may still be collapsed — the decision has to hold whether or not
+    // the pointer has landed yet.
+    const prevDisplay = tip.style.display;
+    tip.style.display = 'flex';
+    const tipH = tip.offsetHeight;
+    tip.style.display = prevDisplay;
+    const anchor = host.getBoundingClientRect();
+    if (anchor.bottom + 6 + tipH > chart.getBoundingClientRect().bottom - 4) {
+      tip.classList.add('above');
+    }
+  });
+
   function render() {
     // renderOrder re-points `order` to each order it draws; save the caller's focus and restore it at
     // the end so `order = X; render();` (fills, menu edits) leaves X focused, not the last-drawn order.
@@ -5137,12 +5169,13 @@
         '<span class="ol-chip close">CLOSE' +
         '<span class="ol-close-amt" data-edit-close="' + closeOrder.id + '" title="Edit close order">' +
         fmt(closeOrder.qty, 2) + ' ' + unit + ' ∙ ' + pctLabel + '</span></span>' +
-        venueBadgeHtml(closeOrder.venue) +
         '<span class="ol-gear ol-danger" data-cancel-close-line="' + closeOrder.id + '" data-tooltip="Cancel close order">' +
         '<span class="material-symbols-outlined">close</span></span>';
       layer.appendChild(row);
 
       // The amount opens the editor; the chip around it still drags, exactly as a TP chip does.
+      appendVenueTag(layer, 'close:' + closeOrder.id, y, closeOrder.venue, closeOrder.price, closeOrder.execPrice);
+
       row.querySelector('[data-edit-close]').addEventListener('mousedown', e => e.stopPropagation());
       row.querySelector('[data-edit-close]').addEventListener('click', e => {
         e.stopPropagation();
@@ -5161,6 +5194,7 @@
       function onDragClose(cy, h) {
         line.style.top = cy + 'px';
         row.style.top = cy + 'px';
+        moveVenueTag(layer, 'close:' + closeOrder.id, cy);
         window.movePositionCloseOrder(closeOrder.id, roundTick(yToPrice(cy, h)), false);
         drawPriceChart(); // keeps the axis tag on the line as it moves
       }
@@ -5261,9 +5295,9 @@
           '<span class="ol-tp-meta-pct" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
           '<span class="ol-tp-meta-r">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
           '</span>' +
-          venueBadgeHtml(order.execVenue) +
           '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" data-tooltip="Remove TP"><span class="material-symbols-outlined">close</span></span>';
         box.appendChild(row);
+        appendVenueTag(box, 'tp:' + tp.id, y, order.execVenue, tp.price, tp.execPrice);
 
         // Offset line: a second draggable line sitting at the trailing offset distance toward entry.
         // Only one TP can ever trail at a time, so the label doesn't need to name which TP it's for.
@@ -5299,6 +5333,7 @@
         bindHandleHover(tpChipEl, 'tp:' + tp.id);
         function onDragTp(cy, h) {
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
+          moveVenueTag(box, 'tp:' + tp.id, cy);
           if (tpActivatedTrailing) {
             // Activated: the TP line IS the trailing exit — drag repositions exitPrice directly.
             // A manual override is no longer "automatic," so the side-of-entry check re-applies.
@@ -5470,9 +5505,9 @@
           badgeHtml +
           '</span>' +
           modeBtns +
-          venueBadgeHtml(order.execVenue) +
           '<span class="ol-gear ol-danger" id="slDeleteTrigger" data-tooltip="Remove SL"><span class="material-symbols-outlined">close</span></span>';
         box.appendChild(row);
+        appendVenueTag(box, 'sl', y, order.execVenue, order.sl.price, order.sl.execPrice);
 
         const slChipEl = row.querySelector('.ol-chip');
         bindHandleHover(slChipEl, 'sl');
@@ -5489,6 +5524,7 @@
         }
         function onDragSl(cy, h) {
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
+          moveVenueTag(box, 'sl', cy);
           order.sl.price = roundTick(yToPrice(cy, h));
           syncSlOnDrag();
           syncQtyFromRisk();                 // live qty in Risk $ mode (no-op in other modes)
@@ -5609,12 +5645,14 @@
         + (placeable ? ' draft' : '');
       line.style.top = y + 'px';
       box.appendChild(line);
+      appendVenueTag(box, 'entry', y, order.execVenue, order.entry, order.execEntry);
 
       function onDragEntry(cy, h) {
         // The line tracks the cursor exactly; the bar re-dodges around it, so dragging one order
         // into another pushes their bars apart live rather than stacking until release.
         bar.dataset.trueY = cy;
         line.style.top = cy + 'px';
+        moveVenueTag(box, 'entry', cy);
         dodgeEntryBars();
 
         setOrderEntryPrice(roundTick(yToPrice(cy, h)));
@@ -5701,8 +5739,6 @@
           sideLabel +
           '</span>' +
 
-          entryDualPriceHtml(order) +
-
           '<span class="ol-pill neutral combo" id="orderConfigPill">' +
           sizeSegHtml +
           '<span class="ol-pill-divider"></span>' +
@@ -5711,8 +5747,6 @@
 
           tpAddHandleHtml +
           slAddHandleHtml +
-          (venueSplitVisible() ? '' : venueBadgeHtml(order.execVenue)) +
-
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" data-tooltip="Cancel Order">' +
           '<span class="material-symbols-outlined">close</span>' +
           '</span>';
@@ -5736,8 +5770,6 @@
           fmt(order.qty, 2) + ' ' + qtInstrumentUnit + pnlHtml +
           '</span>' +
 
-          entryDualPriceHtml(order) +
-
           '<span class="ol-pill neutral combo locked" id="orderConfigPill">' +
           '<span class="ol-pill-seg" id="sizePillTrigger" data-tooltip="Quantity">' + fmt(order.qty, 2) + '</span>' +
           '<span class="ol-pill-divider"></span>' +
@@ -5746,8 +5778,6 @@
 
           tpAddHandleHtml +
           slAddHandleHtml +
-          (venueSplitVisible() ? '' : venueBadgeHtml(order.execVenue)) +
-
           '<span class="ol-gear accent" id="pctCloseBtn" data-tooltip="Close % of Position">' +
           '<span class="material-symbols-outlined">percent</span>' +
           '</span>' +

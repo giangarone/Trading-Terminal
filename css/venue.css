@@ -30,7 +30,7 @@
   cursor: pointer;
   padding: 4px 8px;
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   background: var(--bg-elevated);
   transition: background var(--t-ui), border-color var(--t-ui);
 }
@@ -126,71 +126,61 @@
   font-size: 13px;
 }
 
-/* ---------- venue badge on chart objects ---------- */
+/* ---------- venue tag on chart lines ---------- */
 
-/* Sits inside the entry bar and the TP/SL/close side rows, matching .ol-chip's
-   height so a row carrying one stays on the same baseline as one that doesn't. */
-.ol-venue-badge {
+/* Rides the far left edge of its own order line, opposite the control chips on the right. Sized
+   and coloured to read as an annotation on the line rather than another control: no fill, no
+   border, just the venue name in the info blue that marks everything execution-side. Several
+   lines' tags land in one vertical column at the same x, which is what makes a chart full of
+   BloFin orders read as a single quiet statement instead of five repeated pills. */
+.ol-venue-tag {
+  position: absolute;
+  left: 10px;
+  transform: translateY(-50%);
+  z-index: 4;
   display: inline-flex;
   align-items: center;
-  height: 24px;
-  padding: 0 7px;
-  border-radius: 5px;
-  background: var(--bg-sunken);
-  border: 1px solid var(--info-border);
-  color: var(--info);
+  height: 18px;
+  padding: 3px 6px;
+  border-radius: 4px;
   font-family: var(--sans);
-  font-size: var(--fs-label);
-  font-weight: 600;
-  letter-spacing: .04em;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .03em;
   text-transform: uppercase;
   white-space: nowrap;
-  pointer-events: none;
-}
-
-/* The side rows (TP/SL/close) run smaller than the entry bar, so their badge
-   shrinks to match the chips beside it. */
-.ol-side-row .ol-venue-badge {
-  height: 20px;
-  padding: 0 6px;
-}
-
-/* ---------- dual price readout ---------- */
-
-/* Shown only when the venues have diverged enough to change the number a trader
-   would actually be filled at. The chart price keeps its existing weight; the
-   execution price sits under it, smaller and tinted, clearly a translation. */
-.ol-dual-price {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  line-height: 1.15;
-}
-
-.ol-price-chart {
-  font-size: 11px;
-  font-weight: 600;
-  color: inherit;
-}
-
-.ol-price-exec {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 500;
   color: var(--info);
+  border: 1px solid var(--info-border);
+  pointer-events: none;
+  background: var(--bg-sunken);
 }
 
-.ol-price-exec em {
-  font-family: var(--sans);
-  font-style: normal;
-  font-size: var(--fs-label);
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  opacity: .85;
+/* With a price translation to show, the tag becomes hoverable and reveals it. The dotted
+   underline is the same "there is more here" hint .ol-amt uses for its fee breakdown. */
+.ol-venue-tag.has-tip {
+  pointer-events: auto;
+  cursor: help;
+  text-decoration: underline dotted transparent;
+}
+
+.ol-venue-tag.has-tip:hover {
+  border-color: var(--info);
+  text-decoration-color: currentColor;
+}
+
+.ol-venue-tag.has-tip:hover .ol-fee-tip {
+  display: flex;
+}
+
+/* The tag is uppercase and tracked out; its readout is prose and numbers, so it opts back out. */
+.ol-venue-tag .ol-fee-tip {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  /* Anchored to the tag's left edge rather than centred, so a tag near the pane's edge
+     doesn't push its panel off-screen. */
+  left: 0;
+  transform: none;
 }
 
 /* ---------- wide-spread warning dialog ---------- */

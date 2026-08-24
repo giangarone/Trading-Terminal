@@ -636,6 +636,13 @@
   display: flex;
 }
 
+/* Flipped above its anchor when there isn't room below inside the chart pane (see the
+   .ol-fee-tip placement handler in js/app.js). */
+.ol-fee-tip.above {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
 .ol-fee-row {
   display: flex;
   justify-content: space-between;
