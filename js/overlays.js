@@ -28,7 +28,10 @@ if (newsToggle) newsToggle.addEventListener('click', () => {
   const handle = panel.querySelector('.qop-drag-handle');
   const chartArea = document.getElementById('chartPaneArea');
 
+  // Sizing a market order is an execution question, so it prices off the venue the order is going
+  // to rather than the venue drawing the chart. On a single-venue chart these are the same number.
   function currentPrice() {
+    if (window.TTVenues && window.TTVenues.isCrossVenue()) return window.TTVenues.execMark();
     const el = document.getElementById('hdrLast');
     return el ? parseFloat(el.textContent.replace(/,/g, '')) : 0;
   }

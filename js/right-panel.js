@@ -310,10 +310,19 @@
   const closeOrders = [];
   let closeOrderSeq = 0;
 
+  /* The chart draws close orders at their chart price; the venue they were placed on works them at
+     the translated one. Both travel with the view so the chart can label the line and show the
+     execution price without knowing anything about the venue layer itself. */
+  const Venues = window.TTVenues;
+  function execPriceFor(o) {
+    return Venues ? Venues.toExec(o.price, { basisAbs: o.basisAtPlace }) : o.price;
+  }
   function closeOrderView(o) {
+    const execPrice = execPriceFor(o);
     return {
       id: o.id, sym: o.sym, domKey: o.domKey, side: o.side, pct: o.pct,
       qty: o.qty, qtyText: fmtQty(o.qty), price: o.price, priceText: fmt(o.price, o.dec),
+      venue: o.venue, execPrice, execPriceText: fmt(execPrice, o.dec),
     };
   }
   function closeOrdersChanged() {
@@ -337,6 +346,10 @@
       id: 'close-' + (++closeOrderSeq), domKey: domKey, sym: p.sym, dec: p.dec,
       positionSide: p.side, side: p.side === 'buy' ? 'sell' : 'buy',
       qty, price, pct,
+      // Frozen at placement, exactly as chart orders freeze theirs: the venue this close is working
+      // on, and the chart-to-venue price offset the trader placed it against.
+      venue: Venues ? Venues.execVenue() : null,
+      basisAtPlace: Venues ? Venues.basisAbs() : 0,
     };
     closeOrders.push(order);
     closeOrdersChanged();
@@ -617,6 +630,17 @@
     const el = document.getElementById('qtLevSlider');
     return Math.max(1, parseInt(el && el.value, 10) || 1);
   }
+  /* Names the venue a position is held on. Shares the side/type/leverage badge styling so it sits
+     with them as one more pill on the row rather than inventing a look of its own. A position
+     opened from the chart knows its own venue; anything else is resolved from the symbol, which
+     guarantees an exchange that actually lists that asset class (see venueForSymbol in js/app.js). */
+  function venuePosBadgeHtml(sym, meta) {
+    if (!Venues) return '';
+    const venue = (meta && meta.venue) || (window.venueForSymbol ? window.venueForSymbol(sym) : null);
+    if (!venue) return '';
+    return '<span class="pos-venue-badge">' + Venues.venueLabel(venue) + '</span>';
+  }
+
   function createPositionRow(sym, side, qty, price, dec, meta) {
     const row = document.createElement('div');
     row.className = 'pos-row';
@@ -636,7 +660,8 @@
       '<span class="pos-sym-ticker">' + sym + '</span>' +
       '<span class="pos-side-badge ' + sideCls + '">' + sideLabel + '</span>' +
       '<span class="pos-type-badge">Crypto</span>' +
-      '<span class="pos-lev-badge">' + currentLeverage() + '×</span></div>' +
+      '<span class="pos-lev-badge">' + currentLeverage() + '×</span>' +
+      venuePosBadgeHtml(sym, meta) + '</div>' +
       '<span class="pos-sym-sub">' + sym + ' (from chart)</span></div></div>' +
       '<div class="pos-col pos-col-size"><span class="pos-size-qty" id="posQty-' + key + '">' + fmtQty(qty) + '</span><span class="pos-size-unit">Units</span></div>' +
       '<div class="pos-col pos-col-price"><span class="pos-entry" id="posAvg-' + key + '">' + fmt(price, dec) + '</span><span class="pos-mark" id="posMark-' + key + '">' + fmt(price, dec) + '</span></div>' +

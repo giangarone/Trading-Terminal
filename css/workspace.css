@@ -673,11 +673,15 @@ table.bp-table tr.total-row td {
   flex-direction: column;
 }
 
-/* Shared column grid used by both the header bar and each summary row */
+/* Shared column grid used by both the header bar and each summary row.
+   The symbol column's minimum has to hold the whole badge run — ticker, side, asset type,
+   leverage and venue — or the longest venue name spills into Size. The table already scrolls
+   horizontally below its natural width, so the column is sized to fit its content rather than
+   squeezed to fit the panel. */
 .pos-header-bar,
 .pos-row-summary {
   display: grid;
-  grid-template-columns: minmax(180px, 1.2fr) 120px 130px 120px 124px 90px 120px 44px;
+  grid-template-columns: minmax(280px, 1.4fr) 120px 130px 120px 124px 90px 120px 44px;
   align-items: center;
 }
 
@@ -822,7 +826,8 @@ table.bp-table tr.total-row td {
 
 .pos-side-badge,
 .pos-type-badge,
-.pos-lev-badge {
+.pos-lev-badge,
+.pos-venue-badge {
   font-size: 9.5px;
   font-weight: var(--fw-semi);
   padding: 2px 6px;
@@ -851,6 +856,14 @@ table.bp-table tr.total-row td {
 .pos-lev-badge {
   color: var(--accent);
   background: var(--accent-dim);
+}
+
+/* Names the exchange an order or position is actually held on, for when the chart it was placed
+   from belongs to a different venue. Info blue keeps it clear of the long/short and leverage
+   colors already in the row. */
+.pos-venue-badge {
+  color: var(--info);
+  background: var(--info-dim);
 }
 
 /* ── Size cell ───────────────────────────────────────────── */

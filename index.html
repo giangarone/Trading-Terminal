@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/topbar.css?v=14">
   <link rel="stylesheet" href="css/left-panel.css?v=19">
   <link rel="stylesheet" href="css/center-panel.css?v=28">
-  <link rel="stylesheet" href="css/workspace.css?v=42">
+  <link rel="stylesheet" href="css/workspace.css?v=44">
   <link rel="stylesheet" href="css/right-panel.css?v=6">
   <link rel="stylesheet" href="css/quick-trade.css?v=31">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="css/trading-journal.css?v=6">
   <link rel="stylesheet" href="css/market-sessions.css?v=10">
   <link rel="stylesheet" href="css/quick-order.css?v=5">
+  <link rel="stylesheet" href="css/venue.css?v=1">
 </head>
 
 <body>
@@ -1426,6 +1427,60 @@
                       </span>
                       <button type="button" class="ui-toggle" aria-label="Toggle Enable by Default"><span
                           class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                  </div>
+
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Cross-Venue Pricing</span>
+                    </div>
+                    <div class="cs-field">
+                      <label>Price Translation</label>
+                      <div class="cs-radio-group" id="csCrossVenueModeGroup">
+                        <div class="cs-radio-row active" data-crossvenue="relative">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text">
+                            <span class="cs-radio-title">Preserve relative distance from chart price</span>
+                            <span class="cs-radio-desc">Recommended. Your entry, stop and target distances are carried
+                              across to the execution venue unchanged, so your risk-to-reward stays exactly as you
+                              planned it.</span>
+                          </span>
+                        </div>
+                        <div class="cs-radio-row" data-crossvenue="exact">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text">
+                            <span class="cs-radio-title">Use exact chart price</span>
+                            <span class="cs-radio-desc">Send the price exactly as clicked on the chart. The order may
+                              rest further from the market than intended if the venues trade apart.</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-switch-row cs-switch-row--divided active" id="csVenueWarnEnabled">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Warn on Wide Venue Spread</span>
+                        <span class="cs-switch-desc">Confirm before placing when the chart venue and the execution
+                          venue have drifted further apart than the threshold below.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Warn on Wide Venue Spread"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-fields-row cs-fields-row--single">
+                      <div class="cs-field">
+                        <label>Warning Threshold</label>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="csVenueWarnBps" value="25" data-step="1" data-decimals="0">
+                          <span class="cs-stepper-unit">bps</span>
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="csVenueWarnBps"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="csVenueWarnBps"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
+                        <span class="cs-field-hint">1 bps = 0.01% — at a $100,000 price, that's $10 of spread per
+                          basis point.</span>
+                      </div>
                     </div>
                   </div>
 
@@ -3111,6 +3166,18 @@
               </div>
             </div>
 
+            <!-- Which exchange draws the candles vs which one the orders are sent to.
+                 The two are independent: analyse on one venue, execute on another. -->
+            <div class="venue-block">
+              <div class="venue-select pop-trigger" id="venueSelectTrigger" data-tooltip="Chart data &amp; execution venue">
+                <span class="venue-rows">
+                  <span class="venue-row"><span class="venue-role">Chart</span><span class="venue-name" id="venueDataLabel">Binance</span></span>
+                  <span class="venue-row exec"><span class="venue-role">Exec</span><span class="venue-name" id="venueExecLabel">BloFin</span></span>
+                </span>
+                <span class="material-symbols-outlined">expand_more</span>
+              </div>
+            </div>
+
             <div class="tf-group" id="tfGroup">
               <button class="tf-btn active" data-tf="15m">15m</button>
               <button class="tf-btn" data-tf="1h">1h</button>
@@ -3180,7 +3247,9 @@
                       <span class="cl-sep">·</span>
                       <span class="cl-timeframe" id="clTimeframe">15m</span>
                       <span class="cl-sep">·</span>
-                      <span class="cl-exchange" id="clExchange">BloFin</span>
+                      <span class="cl-exchange" id="clExchange">Binance</span>
+                      <span class="cl-exec-venue" id="clExecVenue" hidden><span
+                          class="material-symbols-outlined">sync_alt</span><span id="clExecVenueName">BloFin</span></span>
                       <span class="cl-live" id="clLive" title="Live"></span>
                     </div>
                     <div class="cl-ohlc" id="clOhlc"></div>
@@ -3259,6 +3328,7 @@
                         <span class="pos-sym-ticker">NQU5</span>
                         <span class="pos-side-badge long">Long</span>
                         <span class="pos-type-badge">Futures</span>
+                        <span class="pos-venue-badge">Tradovate</span>
                       </div>
                       <span class="pos-sym-sub">E-mini Nasdaq-100</span>
                     </div>
@@ -3397,6 +3467,7 @@
                         <span class="pos-sym-ticker">ESU5</span>
                         <span class="pos-side-badge short">Short</span>
                         <span class="pos-type-badge">Futures</span>
+                        <span class="pos-venue-badge">TradeStation</span>
                       </div>
                       <span class="pos-sym-sub">E-mini S&amp;P 500</span>
                     </div>
@@ -3530,6 +3601,7 @@
                         <span class="pos-side-badge short">Short</span>
                         <span class="pos-type-badge">Crypto</span>
                         <span class="pos-lev-badge">5×</span>
+                        <span class="pos-venue-badge">Bybit</span>
                       </div>
                       <span class="pos-sym-sub">Solana / USD (Perp)</span>
                     </div>
@@ -3663,6 +3735,7 @@
                         <span class="pos-side-badge long">Long</span>
                         <span class="pos-type-badge">Crypto</span>
                         <span class="pos-lev-badge">10×</span>
+                        <span class="pos-venue-badge">Bitget</span>
                       </div>
                       <span class="pos-sym-sub">Bitcoin / USD (Perp)</span>
                     </div>
@@ -3801,6 +3874,7 @@
                         <span class="pos-sym-ticker">AAPL</span>
                         <span class="pos-side-badge long">Long</span>
                         <span class="pos-type-badge">Stock</span>
+                        <span class="pos-venue-badge">TradeStation</span>
                       </div>
                       <span class="pos-sym-sub">Apple Inc.</span>
                     </div>
@@ -4452,6 +4526,16 @@
   </div>
 
   <!-- ===================== SYMBOL SELECTOR MODAL ===================== -->
+  <!-- Chart data / execution venue picker. Both sections are built from the venue
+       registry in js/venues.js by renderVenueMenu(); choosing an execution venue routes
+       through the topbar account switcher so the two can never disagree. -->
+  <div class="pop-menu" id="venueSelectMenu" style="width:260px;">
+    <div class="venue-menu-section">Chart Data</div>
+    <div id="venueDataList"></div>
+    <div class="venue-menu-section">Execution</div>
+    <div id="venueExecList"></div>
+  </div>
+
   <!-- Centered, draggable floating window (shares the Indicators .float-panel shell).
        Opened from the topbar ticker, a chart-legend double-click, and the watchlist +
        button. Rows are injected by renderSymSelectList() in js/app.js. -->
@@ -5724,6 +5808,11 @@
         <div class="row" id="ocLeverageRow"><span class="l">Leverage</span><span class="v" id="ocLeverage">10×</span>
         </div>
         <div class="row"><span class="l">Price</span><span class="v" id="ocPrice">$2,145.50</span></div>
+        <!-- Cross-venue only: the price above is the level on the chart, this is what the
+             order will actually rest at on the venue it is being sent to. -->
+        <div class="row" id="ocExecPriceRow" hidden><span class="l">Execution Price</span><span class="v"
+            id="ocExecPrice">—</span></div>
+        <div class="row" id="ocVenueRow" hidden><span class="l">Venue</span><span class="v" id="ocVenue">—</span></div>
       </div>
       <label class="cs-checkbox-row oc-dontshow">
         <span class="chk-box" id="ocDontShow"><span class="material-symbols-outlined">check</span></span>
@@ -5776,6 +5865,43 @@
       <div class="modal-actions">
         <button class="btn-cancel" id="hbCancel">Cancel</button>
         <button class="btn-save" id="hbEnable">Enable Hedge Mode</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== WIDE VENUE SPREAD WARNING ===================== -->
+  <!-- Shown before placement when the chart venue and the execution venue have drifted
+       further apart than the trader's configured threshold, so the price they clicked on
+       the chart and the price the order will actually rest at are meaningfully different. -->
+  <div class="oc-backdrop" id="vsBackdrop">
+    <div class="oc-dialog">
+      <div class="oc-dialog-head">
+        <div>
+          <div class="oc-dialog-title">Wide venue spread</div>
+          <div class="oc-dialog-sub" id="vsSub">Your chart venue and execution venue are trading far apart
+            right now.</div>
+        </div>
+        <button class="oc-close" id="vsClose"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="vs-compare">
+        <div class="vs-compare-cell">
+          <div class="vs-compare-label">Chart level</div>
+          <div class="vs-compare-venue" id="vsChartVenue">Binance</div>
+          <div class="vs-compare-price" id="vsChartPrice">—</div>
+        </div>
+        <div class="vs-compare-cell exec">
+          <div class="vs-compare-label">Execution</div>
+          <div class="vs-compare-venue" id="vsExecVenue">BloFin</div>
+          <div class="vs-compare-price" id="vsExecPrice">—</div>
+        </div>
+      </div>
+      <div class="vs-spread-line">
+        <span class="material-symbols-outlined">warning</span>
+        <span id="vsSpread">—</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="vsCancel">Cancel</button>
+        <button class="btn-save" id="vsProceed">Place Anyway</button>
       </div>
     </div>
   </div>
@@ -5838,14 +5964,15 @@
   <div class="jc-tooltip" id="tjDayTooltip"></div>
 
 
-  <!-- ====== Scripts (order matters: utils → workspace → overlays → resize → app → right-panel) ====== -->
+  <!-- ====== Scripts (order matters: utils → venues → workspace → overlays → resize → app → right-panel) ====== -->
   <script src="js/utils.js?v=1"></script>
+  <script src="js/venues.js?v=2"></script>
   <script src="js/workspace.js?v=17"></script>
-  <script src="js/overlays.js?v=7"></script>
+  <script src="js/overlays.js?v=8"></script>
   <script src="js/resize.js?v=17"></script>
-  <script src="js/app.js?v=371"></script>
+  <script src="js/app.js?v=374"></script>
   <script src="js/theme.js?v=3"></script>
-  <script src="js/right-panel.js?v=33"></script>
+  <script src="js/right-panel.js?v=36"></script>
   <script src="js/market-scanner.js?v=16"></script>
   <script src="js/market-sessions.js?v=4"></script>
 

@@ -62,6 +62,10 @@
     // sizingMethod + defaultSize drive the size of chart right-click "Buy/Sell @ price" trades (the
     // Default Size card). quickMarketSize is separate — it only sizes the right-click "Buy/Sell Market" actions.
     positionDefaults: { orderType: 'limit', quickMarketSize: '1', sizingMethod: 'quantity', defaultSize: '1' },
+    // How a price clicked on the chart is turned into a price on the execution venue when the two
+    // are different exchanges. 'relative' shifts the whole trade structure by the venue basis so
+    // every distance (and therefore R:R) survives the crossing; 'exact' sends the chart price as-is.
+    crossVenue: { mode: 'relative', warnEnabled: true, warnBps: 25 },
     news: {
       catalystScope: 'both',
       position: 'by-sentiment',
@@ -89,6 +93,7 @@
         merged.positionDefaults = Object.assign({}, CS_DEFAULTS.positionDefaults, merged.positionDefaults);
         merged.trailingTp = Object.assign({}, CS_DEFAULTS.trailingTp, merged.trailingTp);
         merged.trailingStop = Object.assign({}, CS_DEFAULTS.trailingStop, merged.trailingStop);
+        merged.crossVenue = Object.assign({}, CS_DEFAULTS.crossVenue, merged.crossVenue);
         // 'Points' was removed as a trailing-distance unit — migrate any persisted value to %
         if (merged.trailingStop && merged.trailingStop.distanceUnit === 'points') merged.trailingStop.distanceUnit = 'percent';
         // Trailing TP now mirrors the tp-trail-menu (only % / Ticks) — migrate any persisted 'points' to %
@@ -114,6 +119,92 @@
     return cloneCsDefaults();
   }
   let chartSettings = loadChartSettings();
+
+  /* ---------- cross-venue layer ----------
+     js/venues.js owns the chart-venue / execution-venue split and every price translation
+     between them. It deliberately knows nothing about this file, so hand it the two things it
+     needs — the live chart mark and the trader's Cross-Venue Pricing preference — and read
+     everything else back through the TTVenues API.
+
+     A no-op stand-in keeps the whole engine working if venues.js ever fails to load: every
+     translation becomes the identity and the app behaves exactly as it did single-venue. */
+  const Venues = window.TTVenues || {
+    isCrossVenue: () => false,
+    toExec: (p) => p, toChart: (p) => p,
+    basisAbs: () => 0, basisBps: () => 0,
+    execMark: () => 0, execBbo: null,
+    divergence: () => ({ bps: 0, abs: 0, level: 'none', signedBps: 0, signedAbs: 0 }),
+    dataLabel: () => '', execLabel: () => '', execVenue: () => '',
+    setExecVenue: () => { }, setDataVenue: () => { },
+    venuesFor: () => [], venueLabel: (id) => id,
+  };
+  if (window.TTVenues) {
+    window.TTVenues.configure({
+      chartMark: () => qtCurrentPrice(),
+      settings: () => chartSettings.crossVenue,
+    });
+  }
+  /* True only when the execution venue's prices are far enough from the chart's to be worth
+     showing a trader — the gate for every venue badge and dual-price readout. */
+  function venueSplitVisible() {
+    return Venues.isCrossVenue() && Venues.divergence().level !== 'none';
+  }
+  /* The venue badge carried by execution objects drawn on the chart. Empty when there is no
+     split to explain, so a single-venue chart looks exactly as it always has. */
+  function venueBadgeHtml(venueId) {
+    if (!Venues.isCrossVenue()) return '';
+    const label = venueId ? Venues.venueLabel(venueId) : Venues.execLabel();
+    return '<span class="ol-venue-badge">' + label + '</span>';
+  }
+  /* A chart level shown alongside the price it will actually execute at. Falls back to the plain
+     chart price whenever the venues are close enough that a second number would be noise. */
+  function dualPriceHtml(chartPrice, opts) {
+    const chartTxt = fmt(chartPrice);
+    if (!venueSplitVisible()) return chartTxt;
+    return '<span class="ol-dual-price">' +
+      '<span class="ol-price-chart">' + chartTxt + '</span>' +
+      '<span class="ol-price-exec">≈ ' + fmt(Venues.toExec(chartPrice, opts)) + ' <em>' + Venues.execLabel() + '</em></span>' +
+      '</span>';
+  }
+  /* Every history row is a record of something that happened on a venue, so each one is stamped
+     with the venue it happened on and re-priced into that venue's terms. Call sites push the price
+     they know — the one on the chart — and this is the single place that translates it, so no
+     individual fill/close/reverse path has to remember the venue exists. */
+  function stampVenueRecord(rec) {
+    const owner = order;
+    if (!rec.venue) rec.venue = (owner && owner.execVenue) || Venues.execVenue();
+    if (typeof rec.price === 'number') {
+      rec.price = Venues.toExec(rec.price, owner ? { basisAbs: owner.basisAtPlace } : undefined);
+    }
+    return rec;
+  }
+
+  /* The entry level stated twice on the control bar: the price on this chart, and the price the
+     order will work at on its own venue. Only rendered when the two have drifted far enough apart
+     to be different numbers — the rest of the time the bar stays exactly as it was. */
+  function entryDualPriceHtml(o) {
+    if (!venueSplitVisible() || !o) return '';
+    // Note: whenever this renders, the entry bar drops its separate venue badge — the venue is
+    // named once per row, and here the price readout is the thing naming it.
+
+    return '<span class="ol-dual-price" data-tooltip="Chart level vs execution price">' +
+      '<span class="ol-price-chart">' + fmt(o.entry) + '</span>' +
+      '<span class="ol-price-exec">≈ ' + fmt(Venues.toExec(o.entry, { basisAbs: o.basisAtPlace })) +
+      ' <em>' + Venues.venueLabel(o.execVenue) + '</em></span>' +
+      '</span>';
+  }
+
+  /* Recompute every execution-side price on an order from its chart levels. Exec prices are
+     derived, never authored: the chart is where a trader places things, this is what the venue
+     receives. Pinned to the basis captured at placement so a live order's ticket doesn't wander
+     as the venue spread drifts underneath it. */
+  function syncOrderExecPrices(o) {
+    if (!o) return;
+    const opts = { basisAbs: o.basisAtPlace };
+    o.execEntry = Venues.toExec(o.entry, opts);
+    (o.tps || []).forEach(tp => { tp.execPrice = Venues.toExec(tp.price, opts); });
+    if (o.sl) o.sl.execPrice = Venues.toExec(o.sl.price, opts);
+  }
   function persistChartSettingsIfEnabled() {
     if (!chartSettings.globalBehavior.persist) return;
     try { localStorage.setItem('tt_chartSettings', JSON.stringify(chartSettings)); } catch (e) { /* storage unavailable */ }
@@ -797,8 +888,17 @@
         riskPct: sizeMode === 'risk_pct' ? pdVal : 1
       },
       tps, sl, tpsHitCount: 0,
-      initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null
+      initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null,
+      // The venue this order is routed to, frozen at placement: switching the execution venue
+      // later must never silently re-home an order that is already working. basisAtPlace pins the
+      // chart↔venue price translation to what it was when the trade was structured, so the whole
+      // structure keeps the shape the trader drew even as the live venue spread drifts.
+      execVenue: Venues.execVenue(),
+      basisAtPlace: Venues.basisAbs(),
+      execEntry: null,
+      execFillPrice: null
     };
+    syncOrderExecPrices(order);
     // Add to the chart's order list instead of replacing — multiple orders coexist. The opposite-side
     // guard (hedge mode) runs before this in the placement paths, so conflicting orders never get here
     // in one-way mode.
@@ -826,7 +926,8 @@
         orderType: 'Market',
         amount: quickMarketSize() + ' ' + qtInstrumentUnit,
         leverage: qtLeverageForOrder(),
-        price: '$' + fmt(currentPrice)
+        price: '$' + fmt(currentPrice),
+        chartPrice: currentPrice
       };
       requestOrderConfirmation(details, () => fillQuickMarketOrderExecute(side, currentPrice));
     });
@@ -850,7 +951,8 @@
         orderType: 'Market',
         amount: amt + ' ' + qtInstrumentUnit,
         leverage: qtLeverageForOrder(),
-        price: '$' + fmt(currentPrice)
+        price: '$' + fmt(currentPrice),
+        chartPrice: currentPrice
       };
       requestOrderConfirmation(details, () => addOrCreateMarketFill(side, currentPrice, amt));
     });
@@ -959,7 +1061,16 @@
     const last = qtCurrentPrice();
     return qtTapeLiftedOffer ? last - quoteSpreadFor(currentSymbol()) : last;
   }
-  function qtBboPriceFor(side) { return side === 'buy' ? qtBestAsk() : qtBestBid(); }
+  /* The chart venue's own book. Kept separate from the executable quote below so the
+     instrument's spread rules live in exactly one place. */
+  function qtChartBbo(side) { return side === 'buy' ? qtBestAsk() : qtBestBid(); }
+  /* What the order will actually trade against. BBO is an execution rule, so it has to be
+     priced on the execution venue — on a single-venue chart this is the same number. */
+  function qtBboPriceFor(side) {
+    return Venues.execBbo ? Venues.execBbo(side) : qtChartBbo(side);
+  }
+  if (window.TTVenues) window.TTVenues.configureBbo(qtChartBbo);
+
   function qtActivePanelName() {
     const panel = document.querySelector('.qt-tab-panel.active');
     return panel ? panel.dataset.tabPanel : null;
@@ -1027,10 +1138,11 @@
   function qtSetTapeDirection(up) { qtTapeLiftedOffer = up; }
 
   /* ---------- quote strip ---------- */
+  /* The quote a trader clicks to price an order, so it quotes the venue the order goes to. */
   function qtRefreshQuoteStrip() {
     if (isNaN(qtCurrentPrice())) return;
-    document.getElementById('qtQuoteBidVal').textContent = fmt(qtBestBid());
-    document.getElementById('qtQuoteAskVal').textContent = fmt(qtBestAsk());
+    document.getElementById('qtQuoteBidVal').textContent = fmt(qtBboPriceFor('sell'));
+    document.getElementById('qtQuoteAskVal').textContent = fmt(qtBboPriceFor('buy'));
   }
 
   /* Every instrument with a book has a best bid and ask — spot included — so the quote shows on any
@@ -1069,8 +1181,10 @@
     }
     input.value = fmt(price);
   }
-  document.getElementById('qtQuoteBid').addEventListener('click', () => qtUseQuotePrice(qtBestBid()));
-  document.getElementById('qtQuoteAsk').addEventListener('click', () => qtUseQuotePrice(qtBestAsk()));
+  /* The strip quotes the execution venue's book, but the field it fills is a level on this chart —
+     so a click lands the chart price that translates to the quote the trader just took. */
+  document.getElementById('qtQuoteBid').addEventListener('click', () => qtUseQuotePrice(qtChartBbo('sell')));
+  document.getElementById('qtQuoteAsk').addEventListener('click', () => qtUseQuotePrice(qtChartBbo('buy')));
 
   document.querySelectorAll('.qt-bbo-btn')
     .forEach(btn => btn.addEventListener('click', () => qtSetBboEnabled(!qtBboEnabled)));
@@ -1376,7 +1490,8 @@
         orderType: QT_TAB_LABELS[tab] || QT_ADVANCED_LABELS[qtAdvancedType] || 'Market',
         amount: amount + ' ' + qtInstrumentUnit,
         leverage: qtLeverageForOrder(),
-        price: '$' + fmt(price)
+        price: '$' + fmt(price),
+        chartPrice: price
       };
       requestOrderConfirmation(details, () => qtPlaceOrderExecute(side, price, amount, tab));
     });
@@ -1434,9 +1549,11 @@
     return qtCurrentPrice();
   }
   /* The entry price a Buy/Sell click places at. The click is the first moment the direction is known,
-     which is where BBO resolves to that side's best price — the same price shown on the button. */
+     which is where BBO resolves to that side's best price — the same quote shown on the button.
+     Deliberately the chart-space price: everything the trader authors is a level on this chart, and
+     the venue translation is applied when the order is recorded and shown, not here. */
   function qtEntryPrice(side) {
-    return qtBboActive() ? qtBboPriceFor(side) : qtActivePrice();
+    return qtBboActive() ? qtChartBbo(side) : qtActivePrice();
   }
   /* Clearing the field with BBO off leaves nothing to place at, and qtActivePrice would quietly fall
      back to the market price — a price the trader never chose. Ask for one instead. Covers every
@@ -1686,13 +1803,13 @@
         const dir = order.side === 'buy' ? 1 : -1;
         const closeSide = order.side === 'buy' ? 'sell' : 'buy';
         const closePnl = (closePrice - order.entry) * order.qty * dir * POINT_VALUE;
-        orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
-        tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: order.qty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
+        orderHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl }));
+        tradeHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: closeSide, qty: order.qty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT }));
         window.refreshTodayJournalCard();
         window.closePositionPct('ETHUSD', 100, order.side);
         showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position closed at ' + fmt(closePrice), 'check_circle');
       } else {
-        orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'cancelled', type: order.orderType, time: nowTimeStr(), pnl: null });
+        orderHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'cancelled', type: order.orderType, time: nowTimeStr(), pnl: null }));
         showToast('Pending order cancelled', 'cancel');
       }
     }
@@ -1785,11 +1902,18 @@
     }
     // Runs before the panel upsert below, so a brand-new Positions row is built with the inherited levels.
     const handoff = takeTpSlFromPriorOwner();
-    orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'filled', type: order.orderType, time: nowTimeStr(), pnl: null });
-    tradeHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, pnl: null, role: 'open', type: order.orderType, time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
-    window.upsertPositionFromFill('ETHUSD', order.side, order.qty, order.entry, { tps: order.tps, sl: order.sl });
+    // Once an order is live, the venue's own price is the price of record. The chart level is what
+    // the trader drew; this is what the exchange actually filled, so it is what the ticket, the
+    // history rows and the position all report from here on.
+    syncOrderExecPrices(order);
+    order.execFillPrice = order.execEntry;
+    const fillVenue = order.execVenue || Venues.execVenue();
+    orderHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'filled', type: order.orderType, time: nowTimeStr(), pnl: null }));
+    tradeHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, pnl: null, role: 'open', type: order.orderType, time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT }));
+    window.upsertPositionFromFill('ETHUSD', order.side, order.qty, order.entry, { tps: order.tps, sl: order.sl, venue: fillVenue, basisAbs: order.basisAtPlace });
     render();
-    showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.entry), 'check_circle');
+    showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position opened at ' + fmt(order.execFillPrice)
+      + (Venues.isCrossVenue() ? ' on ' + Venues.venueLabel(fillVenue) : ''), 'check_circle');
     if (handoff === 'moved') {
       showToast('TP/SL moved onto the position — your other order now adds to it', 'swap_vert');
     } else if (handoff === 'cleared') {
@@ -1835,8 +1959,8 @@
     main.entry = roundTick((main.entry * main.qty + price * qty) / newQty);
     main.qty = newQty;
     if (main.sl) main.initialRisk = Math.abs(main.entry - main.sl.price) * POINT_VALUE;
-    orderHistory.unshift({ symbol: 'ETHUSD', side, qty, price, status: 'filled', type: orderType, time: nowTimeStr(), pnl: null });
-    tradeHistory.unshift({ symbol: 'ETHUSD', side, qty, price, pnl: null, role: 'open', type: orderType, time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT });
+    orderHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side, qty, price, status: 'filled', type: orderType, time: nowTimeStr(), pnl: null }));
+    tradeHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side, qty, price, pnl: null, role: 'open', type: orderType, time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT }));
     window.upsertPositionFromFill('ETHUSD', side, qty, price, { tps: main.tps, sl: main.sl });
     order = main;
     render();
@@ -1890,8 +2014,8 @@
     const dir = oldSide === 'buy' ? 1 : -1;
     const newSide = oldSide === 'buy' ? 'sell' : 'buy';
     const closePnl = (price - order.entry) * qty * dir * POINT_VALUE;
-    orderHistory.unshift({ symbol: 'ETHUSD', side: oldSide, qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
-    tradeHistory.unshift({ symbol: 'ETHUSD', side: newSide, qty, price, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT });
+    orderHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: oldSide, qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl }));
+    tradeHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: newSide, qty, price, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT }));
     window.closePositionPct('ETHUSD', 100, oldSide);
     const entry = roundTick(price);
     const oldOrder = order;
@@ -1920,8 +2044,8 @@
     // Replace the reversed position in place (same slot) rather than appending a second one.
     const ri = orders.indexOf(oldOrder);
     if (ri !== -1) orders.splice(ri, 1, order); else orders.push(order);
-    orderHistory.unshift({ symbol: 'ETHUSD', side: newSide, qty, price: entry, status: 'filled', type: 'Market', time: nowTimeStr(), pnl: null });
-    tradeHistory.unshift({ symbol: 'ETHUSD', side: newSide, qty, price: entry, pnl: null, role: 'open', type: 'Market', time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT });
+    orderHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: newSide, qty, price: entry, status: 'filled', type: 'Market', time: nowTimeStr(), pnl: null }));
+    tradeHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: newSide, qty, price: entry, pnl: null, role: 'open', type: 'Market', time: nowTimeStr(), fee: qty * QT_FEE_PER_CONTRACT }));
     window.upsertPositionFromFill('ETHUSD', newSide, qty, entry, { tps: order.tps, sl: order.sl });
     window.refreshTodayJournalCard();
     render(); closeAllPopovers();
@@ -1960,8 +2084,8 @@
     const closeSide = order.side === 'buy' ? 'sell' : 'buy';
     if (pct >= 100) {
       const closePnl = (closePrice - order.entry) * order.qty * dir * POINT_VALUE;
-      orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
-      tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: order.qty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
+      orderHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: order.side, qty: order.qty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl }));
+      tradeHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: closeSide, qty: order.qty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT }));
       window.refreshTodayJournalCard();
       window.closePositionPct('ETHUSD', 100, order.side);
       showToast((order.side === 'buy' ? 'Long' : 'Short') + ' position closed at ' + fmt(closePrice), 'check_circle');
@@ -1970,8 +2094,8 @@
     }
     const closeQty = Math.max(1, Math.round(order.qty * pct / 100));
     const closePnl = (closePrice - order.entry) * closeQty * dir * POINT_VALUE;
-    orderHistory.unshift({ symbol: 'ETHUSD', side: order.side, qty: closeQty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl });
-    tradeHistory.unshift({ symbol: 'ETHUSD', side: closeSide, qty: closeQty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: closeQty * QT_FEE_PER_CONTRACT });
+    orderHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: order.side, qty: closeQty, price: order.entry, status: 'closed', type: order.orderType, time: nowTimeStr(), pnl: closePnl }));
+    tradeHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: closeSide, qty: closeQty, price: closePrice, pnl: closePnl, role: 'close', type: 'Market', time: nowTimeStr(), fee: closeQty * QT_FEE_PER_CONTRACT }));
     window.refreshTodayJournalCard();
     window.closePositionPct('ETHUSD', pct, order.side);
     order.qty = Math.max(1, order.qty - closeQty);
@@ -2015,6 +2139,19 @@
     document.getElementById('ocType').textContent = details.orderType;
     document.getElementById('ocAmount').textContent = details.amount;
     document.getElementById('ocPrice').textContent = details.price;
+    // The price above is the level on the chart. When the order is going to a different venue,
+    // spell out what it will actually rest at there and whose book it lands in.
+    const execRow = document.getElementById('ocExecPriceRow');
+    const venueRow = document.getElementById('ocVenueRow');
+    const crossVenue = Venues.isCrossVenue();
+    venueRow.hidden = !crossVenue;
+    if (crossVenue) document.getElementById('ocVenue').textContent = Venues.execLabel();
+    const showExec = crossVenue && venueSplitVisible() && typeof details.chartPrice === 'number';
+    execRow.hidden = !showExec;
+    if (showExec) {
+      document.getElementById('ocExecPrice').textContent =
+        '$' + fmt(Venues.toExec(details.chartPrice)) + ' · ' + Venues.execLabel();
+    }
     const leverageRow = document.getElementById('ocLeverageRow');
     leverageRow.style.display = details.leverage ? '' : 'none';
     if (details.leverage) document.getElementById('ocLeverage').textContent = details.leverage;
@@ -2098,8 +2235,54 @@
     if (hedgeBlockBackdrop) hedgeBlockBackdrop.classList.remove('show');
     hbPendingProceed = null;
   }
+  /* ---------- wide venue spread guard ----------
+     When the chart venue and the execution venue have drifted a long way apart, the price a trader
+     clicked and the price their order will rest at are meaningfully different numbers. Rather than
+     let that surprise them after the fact, placement pauses and shows both sides. Hooked into
+     guardedPlace below so every placement path — Quick Trade, chart right-click, the floating
+     quick-order bar — is covered by one check. */
+  const vsBackdrop = document.getElementById('vsBackdrop');
+  let vsPendingProceed = null;
+
+  function venueSpreadTooWide() {
+    if (!Venues.isCrossVenue()) return false;
+    if (!chartSettings.crossVenue.warnEnabled) return false;
+    return Venues.divergence().level === 'wide';
+  }
+  function openVenueSpreadWarning(proceed) {
+    vsPendingProceed = proceed;
+    const div = Venues.divergence();
+    const chartPx = Venues.chartMark();
+    document.getElementById('vsChartVenue').textContent = Venues.dataLabel();
+    document.getElementById('vsExecVenue').textContent = Venues.execLabel();
+    document.getElementById('vsChartPrice').textContent = fmtMoney(chartPx);
+    document.getElementById('vsExecPrice').textContent = fmtMoney(Venues.execMark());
+    document.getElementById('vsSpread').textContent =
+      Venues.execLabel() + ' is trading ' + fmtMoney(div.abs) + ' (' + fmt(div.bps, 1) + ' bps) '
+      + (div.signedAbs < 0 ? 'below ' : 'above ') + Venues.dataLabel() + ' right now.';
+    document.getElementById('vsProceed').textContent = 'Place on ' + Venues.execLabel();
+    if (vsBackdrop) vsBackdrop.classList.add('show');
+  }
+  function closeVenueSpreadWarning() {
+    if (vsBackdrop) vsBackdrop.classList.remove('show');
+    vsPendingProceed = null;
+  }
+  if (vsBackdrop) {
+    document.getElementById('vsProceed').addEventListener('click', () => {
+      const proceed = vsPendingProceed;
+      closeVenueSpreadWarning();
+      if (proceed) proceed();   // resume the paused placement
+    });
+    document.getElementById('vsCancel').addEventListener('click', closeVenueSpreadWarning);
+    document.getElementById('vsClose').addEventListener('click', closeVenueSpreadWarning);
+    vsBackdrop.addEventListener('click', (e) => { if (e.target === vsBackdrop) closeVenueSpreadWarning(); });
+  }
+
   function guardedPlace(side, proceed, exclude) {
+    // Hedge check first: whether you're allowed to hold this direction at all is a harder stop than
+    // what the order will cost, and answering it first keeps the two dialogs from stacking.
     if (!hedgeModeEnabled() && opposingExistsOnChart(side, exclude)) { openHedgeBlock(proceed); return; }
+    if (venueSpreadTooWide()) { openVenueSpreadWarning(proceed); return; }
     proceed();
   }
   if (hedgeBlockBackdrop) {
@@ -2108,7 +2291,12 @@
       const proceed = hbPendingProceed;
       closeHedgeBlock();
       showToast('Hedge mode enabled', 'swap_vert');
-      if (proceed) proceed();   // resume the blocked placement, now allowed
+      // Resume the blocked placement, now allowed — but run it back through the venue-spread check
+      // so clearing one guard can't skip the other.
+      if (proceed) {
+        if (venueSpreadTooWide()) openVenueSpreadWarning(proceed);
+        else proceed();
+      }
     });
     document.getElementById('hbCancel').addEventListener('click', closeHedgeBlock);
     document.getElementById('hbClose').addEventListener('click', closeHedgeBlock);
@@ -2156,7 +2344,8 @@
       orderType: order.orderType,
       amount: order.qty + ' ' + qtInstrumentUnit,
       leverage: qtLeverageForOrder(),
-      price: '$' + fmt(order.entry)
+      price: '$' + fmt(order.entry),
+      chartPrice: order.entry
     };
     requestOrderConfirmation(details, placeOrderExecute);
   }
@@ -2190,8 +2379,8 @@
     if (!hit) return false;
     const closingSide = order.side === 'buy' ? 'sell' : 'buy';
     const slPnl = (order.sl.price - order.entry) * order.qty * dir * POINT_VALUE;
-    orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, status: 'filled', type: 'Stop (SL)', time: nowTimeStr(), pnl: slPnl });
-    tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, pnl: slPnl, role: 'close', type: 'Stop (SL)', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT });
+    orderHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, status: 'filled', type: 'Stop (SL)', time: nowTimeStr(), pnl: slPnl }));
+    tradeHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: closingSide, qty: order.qty, price: order.sl.price, pnl: slPnl, role: 'close', type: 'Stop (SL)', time: nowTimeStr(), fee: order.qty * QT_FEE_PER_CONTRACT }));
     window.refreshTodayJournalCard();
     window.closePositionPct('ETHUSD', 100, order.side);
     showToast('Stop loss hit at ' + fmt(order.sl.price) + ' — position closed', 'stop_circle');
@@ -2229,8 +2418,8 @@
       const toastMsg = tp.trailing
         ? 'TP' + (idx + 1) + ' trail exit at ' + fmt(exitPrice)
         : 'TP' + (idx + 1) + ' hit at ' + fmt(tp.price);
-      orderHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: exitPrice, status: 'filled', type: tradeType, time: nowTimeStr(), pnl: tpPnl });
-      tradeHistory.unshift({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: exitPrice, pnl: tpPnl, role: 'close', type: tradeType, time: nowTimeStr(), fee: tpQty * QT_FEE_PER_CONTRACT });
+      orderHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: exitPrice, status: 'filled', type: tradeType, time: nowTimeStr(), pnl: tpPnl }));
+      tradeHistory.unshift(stampVenueRecord({ symbol: 'ETHUSD', side: closingSide, qty: tpQty, price: exitPrice, pnl: tpPnl, role: 'close', type: tradeType, time: nowTimeStr(), fee: tpQty * QT_FEE_PER_CONTRACT }));
       window.refreshTodayJournalCard();
       window.closePositionPct('ETHUSD', tp.pct, order.side);
       showToast(toastMsg, 'check_circle');
@@ -2625,7 +2814,16 @@
   }
 
   /* Build the reusable symbol cell used across all three tabs */
-  function symCell(sym, sideCls, sideLabel, subText) {
+  /* Bottom-panel rows name their venue with the same badge the side, asset type and leverage pills
+     use, so it reads as one more fact about the row. Unlike the chart's own lines (which describe a
+     single instrument on a single venue, and so only speak up when there's a split to explain —
+     see venueBadgeHtml), these tables list many instruments held across several exchanges at once,
+     so the venue is always worth stating. */
+  function venueRowBadgeHtml(venue) {
+    if (!venue) return '';
+    return '<span class="pos-venue-badge">' + Venues.venueLabel(venue) + '</span>';
+  }
+  function symCell(sym, sideCls, sideLabel, subText, venue) {
     const m = symMeta(sym);
     return (
       '<div class="ord-sym-cell">' +
@@ -2634,6 +2832,7 @@
       '<div class="pos-sym-top">' +
       '<span class="pos-sym-ticker">' + sym + '</span>' +
       (sideCls ? '<span class="pos-side-badge ' + sideCls + '">' + sideLabel + '</span>' : '') +
+      (venue ? venueRowBadgeHtml(venue) : '') +
       '</div>' +
       (subText ? '<span class="pos-sym-sub">' + subText + '</span>' : '') +
       '</div>' +
@@ -2663,7 +2862,7 @@
       : '<span class="bp-status working">Pending</span>';
     return (
       '<tr>' +
-      '<td>' + symCell(o.sym, sideCls, sideLabel, 'Entry · ' + o.orderType) + '</td>' +
+      '<td>' + symCell(o.sym, sideCls, sideLabel, 'Entry · ' + o.orderType, o.venue) + '</td>' +
       '<td>' + qtyCell + '</td>' +
       '<td>' + fmt(o.price) + '</td>' +
       '<td>' + statusCell + '</td>' +
@@ -2722,7 +2921,8 @@
       /* Entry row — only while still unfilled; once filled, it's a position, not an order */
       if (!o.filled) {
         rows.push(openOrderEntryRow(
-          { sym: 'ETHUSD', side: o.side, qty: o.qty, filledQty: o.filledQty, price: o.entry, orderType: o.orderType },
+          // Working, not yet filled: the price shown is the one the venue is resting it at.
+          { sym: 'ETHUSD', side: o.side, qty: o.qty, filledQty: o.filledQty, price: o.execEntry != null ? o.execEntry : o.entry, orderType: o.orderType, venue: o.execVenue },
           'data-cancel-entry="' + o.id + '"'
         ));
       }
@@ -2732,9 +2932,9 @@
           const tpQty = Math.max(1, Math.round(o.qty * tp.pct / 100));
           rows.push(
             '<tr' + (i === 0 ? ' class="ord-group-sep"' : '') + '>' +
-            '<td>' + symCell('ETHUSD', closeSideCls, closeSideLabel, 'TP ' + (i + 1) + ' · Limit') + '</td>' +
+            '<td>' + symCell('ETHUSD', closeSideCls, closeSideLabel, 'TP ' + (i + 1) + ' · Limit', o.execVenue) + '</td>' +
             '<td><span class="ord-val-primary">' + tpQty + '</span></td>' +
-            '<td>' + fmt(tp.price) + '</td>' +
+            '<td>' + fmt(tp.execPrice != null ? tp.execPrice : tp.price) + '</td>' +
             '<td><span class="bp-status working">Working</span></td>' +
             '<td><span class="bp-action-icon" data-cancel-tp="' + tp.id + '"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
             '</tr>'
@@ -2744,9 +2944,9 @@
         if (o.sl) {
           rows.push(
             '<tr' + (o.tps.length === 0 ? ' class="ord-group-sep"' : '') + '>' +
-            '<td>' + symCell('ETHUSD', closeSideCls, closeSideLabel, 'Stop Loss · Stop') + '</td>' +
+            '<td>' + symCell('ETHUSD', closeSideCls, closeSideLabel, 'Stop Loss · Stop', o.execVenue) + '</td>' +
             '<td><span class="ord-val-primary">' + o.qty + '</span></td>' +
-            '<td>' + fmt(o.sl.price) + '</td>' +
+            '<td>' + fmt(o.sl.execPrice != null ? o.sl.execPrice : o.sl.price) + '</td>' +
             '<td><span class="bp-status working">Working</span></td>' +
             '<td><span class="bp-action-icon" data-cancel-sl="' + o.id + '"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
             '</tr>'
@@ -2761,9 +2961,9 @@
       const sideLabel = o.side === 'buy' ? 'Buy' : 'Sell';
       rows.push(
         '<tr>' +
-        '<td>' + symCell(o.sym, sideCls, sideLabel, 'Close · Limit') + '</td>' +
+        '<td>' + symCell(o.sym, sideCls, sideLabel, 'Close · Limit', o.venue) + '</td>' +
         '<td><span class="ord-val-primary">' + o.qtyText + '</span></td>' +
-        '<td>' + o.priceText + '</td>' +
+        '<td>' + (o.execPriceText || o.priceText) + '</td>' +
         '<td><span class="bp-status working">Working</span></td>' +
         '<td><span class="bp-action-icon" data-cancel-close="' + o.id + '"><span class="material-symbols-outlined" style="font-size:15px;">close</span></span></td>' +
         '</tr>'
@@ -2791,13 +2991,15 @@
   });
   document.addEventListener('position-close-order:filled', e => {
     const o = e.detail;
+    // A working close carries its own venue and the basis it was placed against, so it is stamped
+    // from the close order rather than from whatever chart order happens to be focused.
     orderHistory.unshift({
-      symbol: o.sym, side: o.side, qty: o.qtyText, price: o.price,
-      status: 'filled', type: 'Limit', time: nowTimeStr(), pnl: null,
+      symbol: o.sym, side: o.side, qty: o.qtyText, price: o.execPrice != null ? o.execPrice : o.price,
+      status: 'filled', type: 'Limit', time: nowTimeStr(), pnl: null, venue: o.venue,
     });
     tradeHistory.unshift({
-      symbol: o.sym, side: o.side, qty: o.qtyText, price: o.price, pnl: o.pnl,
-      role: 'close', type: 'Limit', time: nowTimeStr(), fee: QT_FEE_PER_CONTRACT,
+      symbol: o.sym, side: o.side, qty: o.qtyText, price: o.execPrice != null ? o.execPrice : o.price, pnl: o.pnl,
+      role: 'close', type: 'Limit', time: nowTimeStr(), fee: QT_FEE_PER_CONTRACT, venue: o.venue,
     });
     renderOpenOrders();
     renderOrderHistory();
@@ -2827,7 +3029,7 @@
       const statusLabel = h.status.charAt(0).toUpperCase() + h.status.slice(1);
       return (
         '<tr>' +
-        '<td>' + symCell(h.symbol, sideCls, sideLabel, h.type || '') + '</td>' +
+        '<td>' + symCell(h.symbol, sideCls, sideLabel, h.type || '', h.venue) + '</td>' +
         '<td><span class="ord-val-primary">' + h.qty + '</span></td>' +
         '<td>' + fmt(h.price) + '</td>' +
         '<td>' + pnlCellHtml(h.pnl) + '</td>' +
@@ -2856,7 +3058,7 @@
               : 'Market Close';
       return (
         '<tr>' +
-        '<td>' + symCell(t.symbol, sideCls, sideLabel, subText) + '</td>' +
+        '<td>' + symCell(t.symbol, sideCls, sideLabel, subText, t.venue) + '</td>' +
         '<td><span class="ord-val-primary">' + t.qty + '</span></td>' +
         '<td>' + fmt(t.price) + '</td>' +
         '<td>' + pnlCellHtml(t.pnl !== null ? t.pnl - t.fee : null) + '</td>' +
@@ -3796,19 +3998,33 @@
     ctx.fillText(fmt(lastBar.close), plotW + 8, tagY + 0.5);
 
     /* ---- order price tags (entry / TP / SL) on the right axis ---- */
-    function drawOrderAxisTagOutline(price, color, highlighted) {
+    /* The axis tag for one order level. Where the chart venue and the execution venue have moved
+       apart, the tag grows a second line: the price the level sits at on this chart, and underneath
+       it the price the order will actually work at on its own venue. The tag stays anchored to the
+       chart price because that is where the level is drawn — the second line is the translation, not
+       a second position. */
+    function drawOrderAxisTagOutline(price, color, highlighted, execPrice) {
       const y = clamp(priceToY(price, h), 8, h - 8);
-      const hh = highlighted ? 20 : 18;
+      const dual = venueSplitVisible() && typeof execPrice === 'number';
+      const hh = dual ? (highlighted ? 30 : 28) : (highlighted ? 20 : 18);
       ctx.fillStyle = highlighted ? color : themeColor('--bg-base');
       ctx.fillRect(plotW, y - hh / 2, AXIS_RIGHT_W, hh);
       ctx.strokeStyle = color;
       ctx.lineWidth = highlighted ? 1.5 : 1;
       ctx.strokeRect(plotW + 0.5, y - hh / 2 + 0.5, AXIS_RIGHT_W - 1, hh - 1);
       ctx.fillStyle = highlighted ? themeColor('--bg-base') : color;
-      ctx.font = '600 11px "IBM Plex Sans", sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(fmt(price), plotW + 8, y + 0.5);
+      if (!dual) {
+        ctx.font = '600 11px "IBM Plex Sans", sans-serif';
+        ctx.fillText(fmt(price), plotW + 8, y + 0.5);
+        return;
+      }
+      ctx.font = '600 10.5px "IBM Plex Sans", sans-serif';
+      ctx.fillText(fmt(price), plotW + 8, y - 6);
+      ctx.fillStyle = highlighted ? themeColor('--bg-base') : themeColor('--info');
+      ctx.font = '500 9.5px "IBM Plex Mono", monospace';
+      ctx.fillText(fmt(execPrice), plotW + 8, y + 7);
     }
     /* These tags only ever describe one order. While a side is hovered they follow it, so the axis
        agrees with the faded chart body instead of still showing the other position's prices; with
@@ -3819,16 +4035,16 @@
       const orderDir = tagOrder.side === 'buy' ? 1 : -1;
       const offsetColor = themeColor('--intel');
       tagOrder.tps.forEach(tp => {
-        drawOrderAxisTagOutline(tp.price, upColor, hoveredHandle === 'tp:' + tp.id);
+        drawOrderAxisTagOutline(tp.price, upColor, hoveredHandle === 'tp:' + tp.id, tp.execPrice);
         if (tp.trailing) {
           const offsetPrice = (tp.activated && tp.exitPrice != null)
             ? tp.exitPrice
             : roundTick(tp.price - orderDir * tpOffsetDist(tp));
-          drawOrderAxisTagOutline(offsetPrice, offsetColor, hoveredHandle === 'offset:' + tp.id);
+          drawOrderAxisTagOutline(offsetPrice, offsetColor, hoveredHandle === 'offset:' + tp.id, Venues.toExec(offsetPrice, { basisAbs: tagOrder.basisAtPlace }));
         }
       });
-      if (tagOrder.sl) drawOrderAxisTagOutline(tagOrder.sl.price, downColor, hoveredHandle === 'sl');
-      drawOrderAxisTagOutline(tagOrder.entry, tagOrder.side === 'buy' ? upColor : downColor, hoveredHandle === 'entry');
+      if (tagOrder.sl) drawOrderAxisTagOutline(tagOrder.sl.price, downColor, hoveredHandle === 'sl', tagOrder.sl.execPrice);
+      drawOrderAxisTagOutline(tagOrder.entry, tagOrder.side === 'buy' ? upColor : downColor, hoveredHandle === 'entry', tagOrder.execEntry);
     }
 
     /* Working limit closes get an axis tag like every other resting price. They hang off a position
@@ -3837,7 +4053,7 @@
       const closeColor = themeColor('--info');
       window.positionCloseOrders().forEach(closeOrder => {
         if (closeOrder.sym !== CHART_SYMBOL) return;
-        drawOrderAxisTagOutline(closeOrder.price, closeColor, hoveredHandle === 'close:' + closeOrder.id);
+        drawOrderAxisTagOutline(closeOrder.price, closeColor, hoveredHandle === 'close:' + closeOrder.id, closeOrder.execPrice);
       });
     }
 
@@ -4103,9 +4319,17 @@
     if (moreLabel && moreLabel.textContent.trim()) return moreLabel.textContent.trim();
     return '15m';
   }
+  /* The legend describes the candles, so the exchange it names is the one supplying them — the
+     chart data venue, not the account the orders go to. Where the two differ, the execution venue
+     is called out separately by its own chip. */
   function legendExchange() {
-    const el = document.getElementById('accountSelectName');
-    return el ? el.textContent.trim() : '';
+    return Venues.dataLabel();
+  }
+  function renderLegendExecVenue() {
+    const chip = document.getElementById('clExecVenue');
+    if (!chip) return;
+    chip.hidden = !Venues.isCrossVenue();
+    if (!chip.hidden) document.getElementById('clExecVenueName').textContent = Venues.execLabel();
   }
 
   function renderLegendOhlc(bar) {
@@ -4177,6 +4401,7 @@
     clSymbol.textContent = legendSymbolLabel();
     clTimeframe.textContent = legendTimeframe();
     clExchange.textContent = legendExchange();
+    renderLegendExecVenue();
     renderLegendIndicators();
     updateLegendValues();
   }
@@ -4840,6 +5065,9 @@
     // the end so `order = X; render();` (fills, menu edits) leaves X focused, not the last-drawn order.
     const keepFocus = order;
     resyncRiskSizedAddOns();
+    // Every chart level has settled by the time we redraw, so this is the one place that has to
+    // re-derive the execution-side prices — no drag handler needs to remember to do it.
+    allOrders().forEach(syncOrderExecPrices);
     renderOpenOrders();
     renderOrderHistory();
     renderTradeHistory();
@@ -4909,6 +5137,7 @@
         '<span class="ol-chip close">CLOSE' +
         '<span class="ol-close-amt" data-edit-close="' + closeOrder.id + '" title="Edit close order">' +
         fmt(closeOrder.qty, 2) + ' ' + unit + ' ∙ ' + pctLabel + '</span></span>' +
+        venueBadgeHtml(closeOrder.venue) +
         '<span class="ol-gear ol-danger" data-cancel-close-line="' + closeOrder.id + '" data-tooltip="Cancel close order">' +
         '<span class="material-symbols-outlined">close</span></span>';
       layer.appendChild(row);
@@ -5032,6 +5261,7 @@
           '<span class="ol-tp-meta-pct" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
           '<span class="ol-tp-meta-r">' + (rMultiple !== null ? fmt(rMultiple, 1) + 'R' : '—R') + '</span>' +
           '</span>' +
+          venueBadgeHtml(order.execVenue) +
           '<span class="ol-gear ol-danger" data-remove-tp="' + tp.id + '" data-tooltip="Remove TP"><span class="material-symbols-outlined">close</span></span>';
         box.appendChild(row);
 
@@ -5240,6 +5470,7 @@
           badgeHtml +
           '</span>' +
           modeBtns +
+          venueBadgeHtml(order.execVenue) +
           '<span class="ol-gear ol-danger" id="slDeleteTrigger" data-tooltip="Remove SL"><span class="material-symbols-outlined">close</span></span>';
         box.appendChild(row);
 
@@ -5470,6 +5701,8 @@
           sideLabel +
           '</span>' +
 
+          entryDualPriceHtml(order) +
+
           '<span class="ol-pill neutral combo" id="orderConfigPill">' +
           sizeSegHtml +
           '<span class="ol-pill-divider"></span>' +
@@ -5478,6 +5711,7 @@
 
           tpAddHandleHtml +
           slAddHandleHtml +
+          (venueSplitVisible() ? '' : venueBadgeHtml(order.execVenue)) +
 
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" data-tooltip="Cancel Order">' +
           '<span class="material-symbols-outlined">close</span>' +
@@ -5502,6 +5736,8 @@
           fmt(order.qty, 2) + ' ' + qtInstrumentUnit + pnlHtml +
           '</span>' +
 
+          entryDualPriceHtml(order) +
+
           '<span class="ol-pill neutral combo locked" id="orderConfigPill">' +
           '<span class="ol-pill-seg" id="sizePillTrigger" data-tooltip="Quantity">' + fmt(order.qty, 2) + '</span>' +
           '<span class="ol-pill-divider"></span>' +
@@ -5510,6 +5746,7 @@
 
           tpAddHandleHtml +
           slAddHandleHtml +
+          (venueSplitVisible() ? '' : venueBadgeHtml(order.execVenue)) +
 
           '<span class="ol-gear accent" id="pctCloseBtn" data-tooltip="Close % of Position">' +
           '<span class="material-symbols-outlined">percent</span>' +
@@ -5698,11 +5935,19 @@
   const accountSelectTrigger = document.getElementById('accountSelectTrigger');
   const accountSelectMenu = document.getElementById('accountSelectMenu');
   const accountSelectList = document.getElementById('accountSelectList');
+  // The account is the execution venue — the same thing named twice would only ever drift apart,
+  // so the venue layer takes its execution venue from whichever account is selected.
+  function venueIdForAccount(accountId) { return String(accountId).toLowerCase(); }
+  function accountIdForVenue(venueId) {
+    const acct = ACCOUNTS.find(a => venueIdForAccount(a.id) === venueId);
+    return acct ? acct.id : null;
+  }
   function renderAccountSelect() {
     const acct = ACCOUNTS.find(a => a.id === selectedAccountId);
     // Keep the single balance source of truth in sync with the selected account so chart % sizing,
     // Quick Trade, the quick-order overlay, and the Default Size readout all reflect the same figure.
     ACCOUNT_BALANCE = acct.balance;
+    Venues.setExecVenue(venueIdForAccount(acct.id));
     document.getElementById('accountSelectName').textContent = acct.id;
     document.getElementById('accountSelectBalance').textContent = fmtMoney(acct.balance);
     if (window.updateChartLegend) window.updateChartLegend();
@@ -5735,6 +5980,101 @@
     closeAllPopovers();
     openChartSettings('broker');
   });
+
+  /* ---------- chart data / execution venue selector ----------
+     Two independent choices in one control: which exchange draws the candles, and which one the
+     orders are sent to. Both lists are built from the venue registry in js/venues.js, so a new
+     exchange is a row of data there rather than markup here.
+
+     Execution rows route through the account switcher rather than setting the venue directly —
+     that is what keeps the topbar account and the execution venue a single fact. A venue with no
+     connected account can be seen but not chosen; picking it opens Broker Connections instead. */
+  const venueSelectTrigger = document.getElementById('venueSelectTrigger');
+  const venueSelectMenu = document.getElementById('venueSelectMenu');
+
+  /* Where the execution venue rests relative to one candidate chart venue, before any live drift. */
+  function restingSpreadBps(dataVenueId) {
+    const find = (id) => Venues.VENUES.find(x => x.id === id);
+    const data = find(dataVenueId), exec = find(Venues.execVenue());
+    return (data && exec) ? exec.basisBps - data.basisBps : 0;
+  }
+
+  function venueRowHtml(v, role) {
+    const selected = (role === 'data' ? Venues.dataVenue() : Venues.execVenue()) === v.id;
+    const unconnected = role === 'exec' && !accountIdForVenue(v.id);
+    // Each chart-data venue is listed with how far the execution venue usually trades from it, so
+    // the choice is made with the price difference in view rather than discovered at order time.
+    // The venue in use quotes the live spread; the others quote their standing one.
+    let trailing = '';
+    if (unconnected) {
+      trailing = '<span class="venue-item-note">Not connected</span>';
+    } else if (role === 'data' && v.id !== Venues.execVenue()) {
+      const bps = selected ? Venues.divergence().signedBps : restingSpreadBps(v.id);
+      trailing = '<span class="venue-item-basis">' + (bps > 0 ? '+' : '') + fmt(bps, 1) + ' bps</span>';
+    }
+    return '<button class="pop-item venue-item' + (selected ? ' selected' : '') + (unconnected ? ' unconnected' : '') + '"'
+      + ' data-venue="' + v.id + '" data-role="' + role + '">'
+      + '<span class="pop-text"><span class="pt-title">' + v.label + '</span></span>'
+      + trailing + '</button>';
+  }
+
+  function renderVenueMenu() {
+    const dataList = document.getElementById('venueDataList');
+    const execList = document.getElementById('venueExecList');
+    if (!dataList || !execList) return;
+    dataList.innerHTML = Venues.venuesFor('data').map(v => venueRowHtml(v, 'data')).join('');
+    execList.innerHTML = Venues.venuesFor('exec').map(v => venueRowHtml(v, 'exec')).join('');
+    venueSelectMenu.querySelectorAll('[data-venue]').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = item.dataset.venue;
+        if (item.dataset.role === 'data') {
+          Venues.setDataVenue(id);
+          showToast('Chart data from ' + Venues.venueLabel(id), 'candlestick_chart');
+          closeAllPopovers();
+          return;
+        }
+        const acct = accountIdForVenue(id);
+        if (!acct) {
+          closeAllPopovers();
+          openChartSettings('broker');
+          showToast('Connect ' + Venues.venueLabel(id) + ' to trade through it', 'info');
+          return;
+        }
+        // Goes through the account switcher on purpose — see the note above.
+        selectedAccountId = acct;
+        renderAccountSelect();
+        qtUpdateEstimates();
+        updatePdBalanceDisplay();
+        closeAllPopovers();
+        showToast('Executing on ' + Venues.venueLabel(id), 'swap_horiz');
+      });
+    });
+  }
+
+  function renderVenuePill() {
+    document.getElementById('venueDataLabel').textContent = Venues.dataLabel();
+    document.getElementById('venueExecLabel').textContent = Venues.execLabel();
+  }
+
+  if (venueSelectTrigger) {
+    venueSelectTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      renderVenueMenu();
+      openNear(venueSelectMenu, venueSelectTrigger.getBoundingClientRect(), 'left', venueSelectTrigger);
+    });
+  }
+
+  /* One listener for every consequence of a venue change: the pill, the legend, and every order
+     line (badges and dual prices appear or vanish with the split). */
+  document.addEventListener('venue:changed', () => {
+    renderVenuePill();
+    if (chartLegendReady) updateChartLegend();
+    qtRefreshQuoteStrip();
+    qtRefreshBboButtonPrices();
+    render();
+  });
+  renderVenuePill();
 
   /* ---------- Connect Broker modal ---------- */
   const bcConnectBackdrop = document.getElementById('bcConnectBackdrop');
@@ -6915,6 +7255,10 @@
     document.getElementById('csTtpDistanceValue').value = s.trailingTp.distanceValue;
     document.querySelectorAll('#csTtpDistanceUnitToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingTp.distanceUnit));
 
+    document.querySelectorAll('#csCrossVenueModeGroup .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.crossvenue === s.crossVenue.mode));
+    document.getElementById('csVenueWarnEnabled').classList.toggle('active', s.crossVenue.warnEnabled !== false);
+    document.getElementById('csVenueWarnBps').value = s.crossVenue.warnBps;
+
     document.querySelectorAll('#csDisplayModeGroup .cs-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === s.tpSlDisplayMode));
     csTargetsDraft = JSON.parse(JSON.stringify(s.defaultTargets || []));
     csSlDraft = s.defaultStopLoss ? JSON.parse(JSON.stringify(s.defaultStopLoss)) : null;
@@ -6986,6 +7330,11 @@
         distanceValue: parseFloat(document.getElementById('csTtpDistanceValue').value) || 1,
         distanceUnit: document.querySelector('#csTtpDistanceUnitToggle .cs-radio-row.active').dataset.unit,
       },
+      crossVenue: {
+        mode: document.querySelector('#csCrossVenueModeGroup .cs-radio-row.active').dataset.crossvenue,
+        warnEnabled: document.getElementById('csVenueWarnEnabled').classList.contains('active'),
+        warnBps: parseFloat(document.getElementById('csVenueWarnBps').value) || CS_DEFAULTS.crossVenue.warnBps,
+      },
       globalBehavior: {
         cancelOnManualClose: document.getElementById('csGbCancelOnClose').classList.contains('checked'),
         recalcOnSizeChange: document.getElementById('csGbRecalc').classList.contains('checked'),
@@ -7026,6 +7375,10 @@
     // Rebuild the order-line overlay (Breakeven Price line reads these settings), then redraw the canvas.
     render();
     scheduleDrawPriceChart();
+    // Cross-Venue Pricing changes what every executable price resolves to, so the quotes and the
+    // Buy/Sell button prices have to be re-read as well.
+    qtRefreshQuoteStrip();
+    qtRefreshBboButtonPrices();
     persistChartSettingsIfEnabled();
   }
   const csSaveBtn = document.getElementById('csSaveBtn');
@@ -7602,8 +7955,34 @@
   };
   const CAT_BROKER_DEFAULT = { crypto: 'Bitget', futures: 'Tradovate', stocks: 'TradeStation', forex: 'TradeStation' };
   function brokerFor(sym, cat) {
-    return SYMBOL_BROKERS[sym] || CAT_BROKER_DEFAULT[cat] || 'TradeStation';
+    return Venues.venueLabel(venueForSymbol(sym, cat));
   }
+  /* The venue a symbol trades on, as a registry id. The override map above is the intent, but it is
+     checked against what the venue actually lists before being honoured: a crypto exchange can't
+     hold a stock and a futures broker can't hold a perp, so a mismatch falls back to the asset
+     class's default venue rather than labelling a position with a venue that couldn't carry it.
+     Exported because js/right-panel.js badges its positions with the same answer. */
+  function venueForSymbol(sym, cat) {
+    const category = cat || symbolCategory(sym);
+    const mapped = (SYMBOL_BROKERS[sym] || '').toLowerCase();
+    if (mapped && Venues.venueSupports(mapped, category)) return mapped;
+    const fallback = (CAT_BROKER_DEFAULT[category] || 'TradeStation').toLowerCase();
+    return fallback;
+  }
+  window.venueForSymbol = venueForSymbol;
+
+  /* The demo order and history rows the terminal opens with are real trades on real venues, so they
+     carry one too. Stamped here rather than written into each literal because venueForSymbol needs
+     the symbol list and the venue registry, both of which are set up after those arrays are built. */
+  (function seedRowVenues() {
+    if (mockAaplOrder && !mockAaplOrder.venue) mockAaplOrder.venue = venueForSymbol(mockAaplOrder.sym);
+    [orderHistory, tradeHistory].forEach(list => {
+      list.forEach(row => { if (!row.venue) row.venue = venueForSymbol(row.symbol); });
+    });
+    renderOpenOrders();
+    renderOrderHistory();
+    renderTradeHistory();
+  })();
   const symSelectTrigger = document.getElementById('symSelectTrigger');
   const symSelectMenu = document.getElementById('symSelectMenu');
   const symSelectSearch = document.getElementById('symSelectSearch');
