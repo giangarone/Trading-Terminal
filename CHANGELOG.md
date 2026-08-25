@@ -18,6 +18,10 @@
 
 * **Cross-Venue Pricing setting** — A new card in Trade Defaults chooses how a chart price becomes an execution price: *Preserve relative distance from chart price* (the default — carries your distances and risk-to-reward across unchanged) or *Use exact chart price*. Alongside it, **Warn on Wide Venue Spread** interrupts placement with a chart-vs-execution comparison when the two venues have drifted past a threshold you set in basis points, so a surprising fill price is something you decline rather than discover.
 
+### Changed
+
+* **Venue tag tooltip explains the split** — Hovering an order line's venue tag used to answer only "what price is this on the other exchange", which assumed you already knew why there was another exchange. It now leads with the situation in plain words — which exchange the chart is showing, which one your orders go to, and that trading works as normal — with the chart and order prices listed underneath when the two actually differ. The tooltip now appears on every venue tag, not just the ones with a price difference to report: the tag exists precisely because two exchanges are in play, and that is the part worth explaining.
+
 ### Fixed
 
 * **Every listing of a symbol showing as bookmarked** — With an instrument cross-listed on five exchanges, watchlisting it lit the bookmark on all five, since the check only asked whether the ticker was in the watchlist. A watchlist row now records which venue's listing it holds, so exactly one row in the picker reads as bookmarked. Bookmarking a different exchange's listing of a symbol already in the watchlist moves the watchlist to that venue rather than adding a second row, and clicking a watchlist row now charts the instrument on the venue that row holds.

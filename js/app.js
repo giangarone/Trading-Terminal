@@ -167,12 +167,15 @@
     const venue = venueId || Venues.execVenue();
     if (venue === Venues.dataVenue()) return null;
     const label = Venues.venueLabel(venue);
-    // Likewise the readout: it appears when THIS line's two prices actually differ, rather than
-    // when the current market-wide spread happens to be wide.
-    const showTip = typeof chartPrice === 'number' && typeof execPrice === 'number'
+    const chartLabel = Venues.dataLabel();
+    // The two prices are only listed when THIS line's own prices actually differ, rather than
+    // whenever the market-wide spread happens to be wide. The explanation above them is shown
+    // either way: the tag exists precisely because two exchanges are in play, and that is the
+    // thing a trader seeing it needs told.
+    const showPrices = typeof chartPrice === 'number' && typeof execPrice === 'number'
       && Math.abs(chartPrice - execPrice) >= 0.005;
     const tag = document.createElement('div');
-    tag.className = 'ol-venue-tag' + (showTip ? ' has-tip' : '');
+    tag.className = 'ol-venue-tag has-tip';
     tag.dataset.venueKey = key;
     tag.style.top = y + 'px';
     const icon = document.createElement('span');
@@ -180,16 +183,21 @@
     icon.textContent = 'account_balance';
     tag.appendChild(icon);
     tag.appendChild(document.createTextNode(label));
-    if (showTip) {
-      const tip = document.createElement('span');
-      tip.className = 'ol-fee-tip';
-      tip.innerHTML =
-        '<span class="ol-fee-row"><span class="ol-fee-lbl">Chart</span>' +
-        '<span class="ol-fee-val">' + fmt(chartPrice) + ' ' + Venues.dataLabel() + '</span></span>' +
-        '<span class="ol-fee-row"><span class="ol-fee-lbl">Exec</span>' +
-        '<span class="ol-fee-val">' + fmt(execPrice) + ' ' + label + '</span></span>';
-      tag.appendChild(tip);
-    }
+    const tip = document.createElement('span');
+    tip.className = 'ol-fee-tip ol-venue-tip';
+    tip.innerHTML =
+      '<span class="ol-venue-tip-head">' +
+      '<span class="material-symbols-outlined">swap_horiz</span>' +
+      chartLabel + ' chart · ' + label + ' account</span>' +
+      '<span class="ol-venue-tip-text">You\u2019re viewing ' + chartLabel + ' prices, but your orders go to ' +
+      label + '. You can trade as usual \u2014 this one works on ' + label + '\u2019s book, at ' + label + '\u2019s price.</span>' +
+      (showPrices
+        ? '<span class="ol-fee-row ol-venue-tip-row"><span class="ol-fee-lbl">Chart · ' + chartLabel + '</span>' +
+          '<span class="ol-fee-val">' + fmt(chartPrice) + '</span></span>' +
+          '<span class="ol-fee-row"><span class="ol-fee-lbl">Order · ' + label + '</span>' +
+          '<span class="ol-fee-val ol-venue-tip-exec">' + fmt(execPrice) + '</span></span>'
+        : '');
+    tag.appendChild(tip);
     return tag;
   }
   /* Appends a line's venue tag, if there is one to draw. Deliberately appended after the row rather

@@ -64,7 +64,9 @@
   display: flex;
 }
 
-/* The tag is uppercase and tracked out; its readout is prose and numbers, so it opts back out. */
+/* The tag is uppercase and tracked out; its readout is prose and numbers, so it opts back out.
+   It also wraps, unlike the nowrap fee breakdown it shares a shell with — a sentence needs a
+   measure, so the panel is given one and lets the text run to as many lines as it needs. */
 .ol-venue-tag .ol-fee-tip {
   text-transform: none;
   letter-spacing: normal;
@@ -73,6 +75,58 @@
      doesn't push its panel off-screen. */
   left: 0;
   transform: none;
+}
+
+.ol-venue-tip {
+  width: 246px;
+  white-space: normal;
+  gap: 0;
+  padding: 9px 11px 10px;
+}
+
+/* Names both exchanges up front — the fastest read of the situation is the two venues side by
+   side, with the sentence beneath it for what that means. */
+.ol-venue-tip-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--info);
+}
+
+.ol-venue-tip-head .material-symbols-outlined {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.ol-venue-tip-text {
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* The prices sit below the explanation, separated the same way the fee breakdown separates
+   its net row. */
+.ol-venue-tip-row {
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-default);
+}
+
+.ol-venue-tip .ol-fee-row + .ol-fee-row {
+  margin-top: 3px;
+}
+
+.ol-venue-tip .ol-fee-val {
+  font-family: var(--mono);
+}
+
+/* The execution price is the one that belongs to somewhere else, tinted like everything
+   else on the execution side. */
+.ol-venue-tip-exec {
+  color: var(--info);
 }
 
 /* ---------- wide-spread warning dialog ---------- */
