@@ -178,11 +178,9 @@
     tag.className = 'ol-venue-tag has-tip';
     tag.dataset.venueKey = key;
     tag.style.top = y + 'px';
-    // Same icon the tag's own tooltip and the chart legend use for the split, so the one idea —
-    // charting here, trading there — is carried by one mark everywhere it appears.
     const icon = document.createElement('span');
     icon.className = 'material-symbols-outlined ol-venue-icon';
-    icon.textContent = 'swap_horiz';
+    icon.textContent = 'account_balance';
     tag.appendChild(icon);
     tag.appendChild(document.createTextNode(label));
     const tip = document.createElement('span');
