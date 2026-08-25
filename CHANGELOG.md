@@ -26,6 +26,8 @@
 
 ### Fixed
 
+* **Venue badge stuck on an unplaced order** — An order drawn on the chart but not yet confirmed kept the venue it was created under, so switching to the account that matched the chart left it still badged for the exchange you had just moved off. An unplaced order isn't on any exchange yet, so it now follows the account: the badge updates the moment you switch, and disappears as soon as the account and the chart are the same venue. Orders already working still keep the venue frozen at placement — those really are on that exchange's book, and re-homing one would claim it had moved.
+
 * **Venue tooltip drawn behind other order lines** — With several orders on the chart, a venue tag's tooltip could be punched through by the tags and control rows of the lines it hung across. The tag's own depth made it a stacking context, which capped its tooltip inside it — no z-index on the panel could lift it past a sibling. The whole tag now rises while it's hovered, carrying its tooltip clear of every other element on the chart's order lines.
 
 * **Order controls covering the venue tag** — The control bar hangs off a fixed offset from the right edge of the chart, so on a narrow pane — a laptop with both side panels open — its left edge reached the venue tags riding the left edge of the same lines and painted straight over them, taking the tooltip with it. The bars now slide right together, staying aligned with each other, by exactly as much as it takes to clear the widest tag, and never far enough to reach the price axis. On a pane too narrow even for that, the buried tag steps aside rather than sitting unreadable under the controls.

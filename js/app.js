@@ -189,8 +189,12 @@
       '<span class="ol-venue-tip-head">' +
       '<span class="material-symbols-outlined">swap_horiz</span>' +
       chartLabel + ' chart · ' + label + ' account</span>' +
-      '<span class="ol-venue-tip-text">You\u2019re viewing ' + chartLabel + ' prices, but your orders go to ' +
-      label + '. You can trade as usual \u2014 this one works on ' + label + '\u2019s book, at ' + label + '\u2019s price.</span>' +
+      // States the situation outright before anything else: a trader who hasn't met this before needs
+      // to be told they are trading somewhere other than the chart they are reading, not left to
+      // infer it from two venue names. Then the reassurance, because the situation sounds like a
+      // problem and isn't one.
+      '<span class="ol-venue-tip-text">You\u2019re trading on a different exchange than this chart. ' +
+      'Orders still work as normal \u2014 they go to ' + label + ', at its own price.</span>' +
       (showPrices
         ? '<span class="ol-fee-row ol-venue-tip-row"><span class="ol-fee-lbl">Chart · ' + chartLabel + '</span>' +
           '<span class="ol-fee-val">' + fmt(chartPrice) + '</span></span>' +
@@ -6088,9 +6092,23 @@
     openChartSettings('broker');
   });
 
+  /* An order still waiting to be confirmed isn't on any exchange yet, so it follows the account:
+     switching accounts before placing it re-homes it, and its venue tag drops away the moment the
+     account matches the chart again. Orders already working keep the venue frozen at placement —
+     re-homing one of those would silently claim a live order had moved books. The price translation
+     is re-pinned with it, so the trade is structured against the venue it will actually reach. */
+  function rehomeUnplacedOrders() {
+    allOrders().forEach(o => {
+      if (o.filled || !o.pendingConfirm) return;
+      o.execVenue = Venues.execVenue();
+      o.basisAtPlace = Venues.basisAbs();
+    });
+  }
+
   /* One listener for every consequence of a venue change, whichever end it came from — the chart
      venue following a symbol switch, or the execution venue following an account switch. */
   document.addEventListener('venue:changed', () => {
+    rehomeUnplacedOrders();
     if (chartLegendReady) updateChartLegend();
     qtRefreshQuoteStrip();
     qtRefreshBboButtonPrices();

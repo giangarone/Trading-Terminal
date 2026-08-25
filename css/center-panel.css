@@ -629,7 +629,7 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--info);
   cursor: help;
 }
