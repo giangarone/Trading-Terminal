@@ -186,7 +186,8 @@ setupVerticalResize(document.getElementById('bottomResizeHandle'), document.quer
     wlRows.querySelectorAll('.wl-row').forEach(r => r.classList.remove('selected'));
     row.classList.add('selected');
     // Switch the active symbol too — relabels the topbar and reconfigures the Quick Trade panel.
-    if (window.switchSymbol && row.dataset.sym) window.switchSymbol(row.dataset.sym);
+    /* the row records which venue's listing it holds, so the chart opens on that exchange */
+    if (window.switchSymbol && row.dataset.sym) window.switchSymbol(row.dataset.sym, row.dataset.venue);
   }
   wlRows.addEventListener('click', (e) => {
     const row = e.target.closest('.wl-row');

@@ -175,7 +175,11 @@
     tag.className = 'ol-venue-tag' + (showTip ? ' has-tip' : '');
     tag.dataset.venueKey = key;
     tag.style.top = y + 'px';
-    tag.textContent = label;
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined ol-venue-icon';
+    icon.textContent = 'account_balance';
+    tag.appendChild(icon);
+    tag.appendChild(document.createTextNode(label));
     if (showTip) {
       const tip = document.createElement('span');
       tip.className = 'ol-fee-tip';
@@ -8009,14 +8013,20 @@
 
   /* add/remove the symbol from the watchlist; the watchlist:changed listener below
      keeps every open toggle (and the panel) in sync, so we only fire the action here */
-  function toggleWatchlistSymbol(sym, cat) {
-    if (window.watchlistHasSymbol && window.watchlistHasSymbol(sym)) {
+  /* The toggle acts on the LISTING the row shows, not just the ticker: bookmarking Binance's ETHUSD
+     while the watchlist holds BloFin's moves the watchlist to Binance (the watchlist keeps one row
+     per instrument), so the bookmark ends up lit on exactly one venue. */
+  function toggleWatchlistSymbol(sym, cat, venue) {
+    if (window.watchlistHasSymbol && window.watchlistHasSymbol(sym, venue)) {
       if (window.removeWatchlistSymbol) window.removeWatchlistSymbol(sym);
       showToast('Removed ' + sym + ' from watchlist', 'remove');
-    } else {
-      if (window.addWatchlistSymbol) window.addWatchlistSymbol(sym, cat);
-      showToast('Added ' + sym + ' to watchlist', 'add');
+      return;
     }
+    const moved = !!(window.watchlistHasSymbol && window.watchlistHasSymbol(sym));
+    if (window.addWatchlistSymbol) window.addWatchlistSymbol(sym, cat, venue);
+    const label = Venues.venueLabel(venue || venueForSymbol(sym, cat));
+    if (moved) showToast('Moved ' + sym + ' to ' + label + ' in watchlist', 'sync_alt');
+    else showToast('Added ' + sym + ' · ' + label + ' to watchlist', 'add');
   }
 
   /* one row of the Symbol Selector modal: symbol + name, live last / 24h% / 24h vol,
@@ -8048,7 +8058,9 @@
 
   function buildSymRow(s) {
     const d = venueQuote(s);
-    const inWl = !!(window.watchlistHasSymbol && window.watchlistHasSymbol(s.sym));
+    /* venue-scoped: only the listing the watchlist actually holds reads as bookmarked, so the
+       other venues carrying the same instrument stay unmarked */
+    const inWl = !!(window.watchlistHasSymbol && window.watchlistHasSymbol(s.sym, s.venue));
     const name = d ? d.name : s.sym;
     const chgDir = d && !d.up ? 'down' : 'up';
     return '<div class="ss-row" data-sym="' + s.sym + '" data-cat="' + s.cat + '" data-venue="' + s.venue + '" tabindex="0" role="button">' +
@@ -8059,6 +8071,7 @@
       '<span class="ss-chg ' + chgDir + '">' + (d ? d.chgPctText : '') + '</span>' +
       '<span class="ss-vol">' + (d ? d.volText : '') + '</span>' +
       '<button class="ss-wl-toggle' + (inWl ? ' on' : '') + '" data-sym="' + s.sym + '" data-cat="' + s.cat + '" ' +
+      'data-venue="' + s.venue + '" ' +
       'data-tooltip="' + (inWl ? 'Remove from watchlist' : 'Add to watchlist') + '">' +
       '<span class="material-symbols-outlined">bookmark</span></button>' +
       '</div>';
@@ -8115,7 +8128,7 @@
       const tog = row.querySelector('.ss-wl-toggle');
       if (tog) tog.addEventListener('click', (e) => {
         e.stopPropagation();
-        toggleWatchlistSymbol(tog.dataset.sym, tog.dataset.cat);
+        toggleWatchlistSymbol(tog.dataset.sym, tog.dataset.cat, tog.dataset.venue);
       });
     });
   }
@@ -8214,11 +8227,14 @@
     if (!symSelectMenu.classList.contains('show')) return;
     const sym = e.detail && e.detail.sym;
     if (!sym) return;
-    const tog = symSelectList.querySelector('.ss-wl-toggle[data-sym="' + sym + '"]');
-    if (!tog) return;
-    const inWl = !!(e.detail && e.detail.inWatchlist);
-    tog.classList.toggle('on', inWl);
-    tog.setAttribute('data-tooltip', inWl ? 'Remove from watchlist' : 'Add to watchlist');
+    /* Every listing of the symbol is repainted, not just the one clicked: the bookmark belongs to
+       one venue, so when it moves the venue it left has to go dark in the same pass. */
+    const watchedVenue = window.watchlistVenueFor ? window.watchlistVenueFor(sym) : null;
+    symSelectList.querySelectorAll('.ss-wl-toggle[data-sym="' + sym + '"]').forEach(tog => {
+      const inWl = !!watchedVenue && tog.dataset.venue === watchedVenue;
+      tog.classList.toggle('on', inWl);
+      tog.setAttribute('data-tooltip', inWl ? 'Remove from watchlist' : 'Add to watchlist');
+    });
   });
 
   /* ---------- watchlist: customize-columns menu (⋯ button) ---------- */

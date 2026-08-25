@@ -105,12 +105,29 @@
     }
   }
 
+  /* A cross-listed instrument is listed once per venue in the Symbol Selector, so a watchlist row
+     records WHICH listing it holds — that's the one row whose bookmark shows as active. Rows that
+     predate the venue stamp (the markup the terminal ships with) fall back to the symbol's primary
+     listing, which is the same venue the picker sorts first. */
+  function defaultVenueFor(sym, cat) {
+    return window.venueForSymbol ? window.venueForSymbol(sym, cat) : '';
+  }
+
+  /* stamp the shipped watchlist markup with its listing venue, once, at startup */
+  function seedWatchlistVenues() {
+    document.querySelectorAll('#wlRows .wl-row').forEach(row => {
+      if (!row.dataset.venue) row.dataset.venue = defaultVenueFor(row.dataset.sym, row.dataset.cat);
+    });
+  }
+  seedWatchlistVenues();
+
   /* build a complete row for a newly added symbol using its seed meta */
-  function buildWatchlistRow(sym, cat, meta) {
+  function buildWatchlistRow(sym, cat, meta, venue) {
     const row = document.createElement('div');
     row.className = 'wl-row';
     row.dataset.sym = sym;
     row.dataset.cat = cat;
+    row.dataset.venue = venue || defaultVenueFor(sym, cat);
     row.tabIndex = 0;
     row.setAttribute('role', 'button');
     const up = meta.chgPct >= 0;
@@ -809,8 +826,19 @@
   setInterval(tick, 1200);
 
   /* ---------- public API: market data + watchlist add/remove ---------- */
-  window.watchlistHasSymbol = function (sym) {
-    return !!document.querySelector('#wlRows .wl-row[data-sym="' + sym + '"]');
+  /* the venue whose listing of `sym` the watchlist holds, or null when the symbol isn't watchlisted */
+  window.watchlistVenueFor = function (sym) {
+    const row = document.querySelector('#wlRows .wl-row[data-sym="' + sym + '"]');
+    return row ? (row.dataset.venue || null) : null;
+  };
+
+  /* With no venue: is this symbol watchlisted at all? With one: is it watchlisted on THAT venue —
+     which is what the Symbol Selector asks, so only the listing actually in the watchlist reads as
+     bookmarked and its sibling venues don't. */
+  window.watchlistHasSymbol = function (sym, venue) {
+    const row = document.querySelector('#wlRows .wl-row[data-sym="' + sym + '"]');
+    if (!row) return false;
+    return !venue || row.dataset.venue === venue;
   };
 
   /* single source of truth for the Symbol Selector modal — returns a formatted
@@ -836,27 +864,36 @@
     };
   };
 
-  window.addWatchlistSymbol = function (sym, cat) {
-    if (window.watchlistHasSymbol(sym)) return;
+  window.addWatchlistSymbol = function (sym, cat, venue) {
     const rowsWrap = document.getElementById('wlRows');
     if (!rowsWrap) return;
+    const listing = venue || defaultVenueFor(sym, cat);
+    /* the watchlist holds one row per instrument, so bookmarking a different listing of a symbol
+       that's already there re-points the existing row at that venue rather than duplicating it */
+    const existing = rowsWrap.querySelector('.wl-row[data-sym="' + sym + '"]');
+    if (existing) {
+      existing.dataset.venue = listing;
+      document.dispatchEvent(new CustomEvent('watchlist:changed', { detail: { sym: sym, venue: listing, inWatchlist: true } }));
+      return;
+    }
     /* ensure the symbol exists in the market map, then render the row from that
        shared entry so the watchlist and the modal always agree on the price */
     window.getMarketData(sym, cat);
     const e = market.get(sym);
     const chgPct = (e.last - e.prevClose) / e.prevClose * 100;
-    rowsWrap.appendChild(buildWatchlistRow(sym, cat, { last: e.last, chgPct: chgPct, dec: e.dec, vol: e.vol }));
+    rowsWrap.appendChild(buildWatchlistRow(sym, cat, { last: e.last, chgPct: chgPct, dec: e.dec, vol: e.vol }, listing));
     bindEntryToRow(sym);
     /* apply the active category tab + search so the new row respects the filter */
     if (window.applyWatchlistFilter) window.applyWatchlistFilter();
-    document.dispatchEvent(new CustomEvent('watchlist:changed', { detail: { sym: sym, inWatchlist: true } }));
+    document.dispatchEvent(new CustomEvent('watchlist:changed', { detail: { sym: sym, venue: listing, inWatchlist: true } }));
   };
 
   window.removeWatchlistSymbol = function (sym) {
     const row = document.querySelector('#wlRows .wl-row[data-sym="' + sym + '"]');
+    const venue = row ? row.dataset.venue : null;
     if (row) row.remove();
     unbindEntry(sym);   /* keep the data entry so the modal still shows it */
     if (window.applyWatchlistFilter) window.applyWatchlistFilter();
-    document.dispatchEvent(new CustomEvent('watchlist:changed', { detail: { sym: sym, inWatchlist: false } }));
+    document.dispatchEvent(new CustomEvent('watchlist:changed', { detail: { sym: sym, venue: venue, inWatchlist: false } }));
   };
 })();
