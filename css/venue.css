@@ -47,6 +47,12 @@
   flex-shrink: 0;
 }
 
+/* Stood down by hideBuriedVenueTags() in js/app.js when a pane is too narrow to hold both this
+   column and an order's control bar — see the comment there. */
+.ol-venue-tag.crowded-out {
+  display: none;
+}
+
 /* With a price translation to show, the tag becomes hoverable and reveals it. The dotted
    underline is the same "there is more here" hint .ol-amt uses for its fee breakdown. */
 .ol-venue-tag.has-tip {
@@ -55,7 +61,13 @@
   text-decoration: underline dotted transparent;
 }
 
+/* The tag's own z-index makes it a stacking context, which traps its tooltip inside: however high
+   the panel's own z-index goes, it can never climb past a sibling tag, tether or control bar — the
+   whole tag has to rise instead. Lifted only while hovered, so the resting column keeps the single
+   flat depth it was designed with. 30 clears every element on an order line (4–7) while staying
+   under the menus and drag readouts, which never share the screen with a hovered tag anyway. */
 .ol-venue-tag.has-tip:hover {
+  z-index: 30;
   border-color: var(--info);
   text-decoration-color: currentColor;
 }

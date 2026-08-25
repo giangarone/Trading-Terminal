@@ -24,6 +24,10 @@
 
 ### Fixed
 
+* **Venue tooltip drawn behind other order lines** — With several orders on the chart, a venue tag's tooltip could be punched through by the tags and control rows of the lines it hung across. The tag's own depth made it a stacking context, which capped its tooltip inside it — no z-index on the panel could lift it past a sibling. The whole tag now rises while it's hovered, carrying its tooltip clear of every other element on the chart's order lines.
+
+* **Order controls covering the venue tag** — The control bar hangs off a fixed offset from the right edge of the chart, so on a narrow pane — a laptop with both side panels open — its left edge reached the venue tags riding the left edge of the same lines and painted straight over them, taking the tooltip with it. The bars now slide right together, staying aligned with each other, by exactly as much as it takes to clear the widest tag, and never far enough to reach the price axis. On a pane too narrow even for that, the buried tag steps aside rather than sitting unreadable under the controls.
+
 * **Every listing of a symbol showing as bookmarked** — With an instrument cross-listed on five exchanges, watchlisting it lit the bookmark on all five, since the check only asked whether the ticker was in the watchlist. A watchlist row now records which venue's listing it holds, so exactly one row in the picker reads as bookmarked. Bookmarking a different exchange's listing of a symbol already in the watchlist moves the watchlist to that venue rather than adding a second row, and clicking a watchlist row now charts the instrument on the venue that row holds.
 
 * **Chart venue stuck on the wrong exchange** — Switching to an instrument the chart venue doesn't list left the legend naming it anyway: charting AAPL still read "Binance". The chart is now drawn on the venue that lists the instrument, so it always names an exchange that actually quotes it.

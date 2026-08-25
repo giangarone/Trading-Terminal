@@ -4914,10 +4914,59 @@
   const OL_BAR_GAP = 6;              // breathing room between two stacked bars
   const OL_BAR_PITCH = OL_BAR_H + OL_BAR_GAP;
 
+  /* ---------- Entry bars vs. the venue-tag column ----------
+     Two things ride the same lines from opposite ends: the control bars hang off a shared right
+     edge, the venue tags sit in a column on the left. On a wide pane they never meet. Narrow the
+     pane — a laptop with both side panels open — and the bar's left edge reaches the tag column and
+     paints straight over it, hiding both the venue and the explanation behind it.
+
+     So the shared right offset is pulled in only as far as it must be to seat the widest bar clear
+     of the widest tag: the bars slide right together, staying aligned with each other, and the left
+     column survives. Floored at the price gutter, because a bar sitting on the price axis would be
+     a worse crowding than the one it escaped. */
+  const OL_BAR_RIGHT = 360;                    // the bar's right offset when the pane has room
+  const OL_BAR_MIN_RIGHT = AXIS_RIGHT_W + 10;  // never far enough right to reach the price axis
+  const OL_TAG_GAP = 8;                        // clearance kept between a tag and a bar
+
+  function fitEntryBars() {
+    const bars = [...layer.querySelectorAll('.ol-entry-bar')];
+    if (!bars.length) return;
+    const layerLeft = layer.getBoundingClientRect().left;
+    const widestBar = Math.max(...bars.map(b => b.getBoundingClientRect().width));
+    const tags = [...layer.querySelectorAll('.ol-venue-tag')];
+    // Measured with every tag standing: a tag hidden by the last pass still has to be planned for,
+    // or the bar would spread into the space it wants back and the two would trade places forever.
+    tags.forEach(tag => tag.classList.remove('crowded-out'));
+    // The whole column yields to its widest member, so one long venue name can't leave a bar
+    // overlapping a tag two lines down.
+    const tagLane = tags
+      .reduce((widest, tag) => Math.max(widest, tag.getBoundingClientRect().right - layerLeft), 0);
+    const clearance = tagLane ? tagLane + OL_TAG_GAP : 0;
+    const roomy = layer.clientWidth - widestBar - clearance;
+    const right = clamp(Math.min(OL_BAR_RIGHT, roomy), OL_BAR_MIN_RIGHT, OL_BAR_RIGHT);
+    layer.style.setProperty('--ol-bar-right', right + 'px');
+  }
+
+  /* On a pane too narrow for even the floored offset to clear the column, a tag ends up under the
+     bar's chips — unreadable, unhoverable, and looking like a rendering fault. A tag in that
+     position steps aside instead: the venue is still named on every row in Positions and Open
+     Orders, so nothing is lost that the chart alone was carrying. Run after dodgeEntryBars has
+     parked the bars, since a bar's final `top` decides which tags it actually reaches. */
+  function hideBuriedVenueTags() {
+    const barBoxes = [...layer.querySelectorAll('.ol-entry-bar')].map(b => b.getBoundingClientRect());
+    layer.querySelectorAll('.ol-venue-tag').forEach(tag => {
+      const box = tag.getBoundingClientRect();
+      const buried = barBoxes.some(bar => bar.left < box.right + OL_TAG_GAP && bar.right > box.left
+        && bar.top < box.bottom && bar.bottom > box.top);
+      tag.classList.toggle('crowded-out', buried);
+    });
+  }
+
   /* Bars whose true prices are closer than one pitch get spread apart around the centre of the group
      they form, so a cluster stays visually anchored to where its orders actually are (rather than
      drifting off in whichever direction we happened to sweep). */
   function dodgeEntryBars() {
+    fitEntryBars();
     const bars = [...layer.querySelectorAll('.ol-entry-bar')].map(el => ({
       el,
       trueY: parseFloat(el.dataset.trueY),
@@ -4926,6 +4975,7 @@
     // A lone bar always sits exactly on its line — nothing to clear, so skip the slotting entirely.
     if (bars.length < 2) {
       bars.forEach(b => layoutEntryBar(b, b.trueY));
+      hideBuriedVenueTags();
       return;
     }
     // Slots follow price order, so the labels never read out of sequence. A hedged long and short at
@@ -4950,6 +5000,7 @@
         layoutEntryBar(bar, slot);
       });
     });
+    hideBuriedVenueTags();
   }
 
   /* Park one bar at `slot`, and show its tether only while the bar is off its line. */

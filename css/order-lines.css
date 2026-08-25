@@ -298,9 +298,11 @@
   background: var(--accent-dim);
 }
 
+/* The right offset is shared by every bar and its tether, and is pulled in by fitEntryBars() in
+   js/app.js when a narrow pane would otherwise let a bar cover the venue-tag column. */
 .ol-entry-bar {
   position: absolute;
-  right: 360px;
+  right: var(--ol-bar-right, 360px);
   transform: translateY(-50%);
   display: flex;
   align-items: center;
@@ -313,7 +315,7 @@
    (see dodgeEntryBars). Shares the bar's right edge, so it reads as dropping out of the bar itself. */
 .ol-entry-tether {
   position: absolute;
-  right: 360px;
+  right: var(--ol-bar-right, 360px);
   width: 1px;
   pointer-events: none;
   z-index: 5;
