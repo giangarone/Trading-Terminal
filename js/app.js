@@ -4188,6 +4188,8 @@
   const clSymbol = document.getElementById('clSymbol');
   const clTimeframe = document.getElementById('clTimeframe');
   const clExchange = document.getElementById('clExchange');
+  const clVenueSplit = document.getElementById('clVenueSplit');
+  const clVenueSplitName = document.getElementById('clVenueSplitName');
   const clOhlc = document.getElementById('clOhlc');
   const clIndicators = document.getElementById('clIndicators');
 
@@ -4417,10 +4419,24 @@
 
   /* Header (symbol/timeframe/exchange) + values + indicator rows. Used on init and whenever
      the symbol, timeframe, or account changes. */
+  /* The legend names the exchange supplying the candles. When orders are going somewhere else, that
+     exchange is named right beside it — otherwise the two halves of the situation sit at opposite
+     ends of the screen (legend and topbar account) and the trader has to notice the mismatch on
+     their own. Says nothing at all when both are the same venue. */
+  function updateLegendVenueSplit() {
+    const split = Venues.isCrossVenue();
+    clVenueSplit.hidden = !split;
+    if (!split) return;
+    clVenueSplitName.textContent = Venues.execLabel();
+    clVenueSplit.setAttribute('data-tooltip',
+      'Chart is ' + Venues.dataLabel() + ' · orders go to your ' + Venues.execLabel() + ' account');
+  }
+
   function updateChartLegend() {
     clSymbol.textContent = legendSymbolLabel();
     clTimeframe.textContent = legendTimeframe();
     clExchange.textContent = legendExchange();
+    updateLegendVenueSplit();
     renderLegendIndicators();
     updateLegendValues();
   }

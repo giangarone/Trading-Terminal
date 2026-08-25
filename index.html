@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="css/tokens.css?v=22">
   <link rel="stylesheet" href="css/topbar.css?v=14">
   <link rel="stylesheet" href="css/left-panel.css?v=19">
-  <link rel="stylesheet" href="css/center-panel.css?v=28">
+  <link rel="stylesheet" href="css/center-panel.css?v=29">
   <link rel="stylesheet" href="css/workspace.css?v=44">
   <link rel="stylesheet" href="css/right-panel.css?v=6">
   <link rel="stylesheet" href="css/quick-trade.css?v=31">
@@ -3238,6 +3238,12 @@
                       <span class="cl-sep">·</span>
                       <span class="cl-exchange" id="clExchange">Binance</span>
                       <span class="cl-live" id="clLive" title="Live"></span>
+                      <!-- Names the account's exchange beside the chart's, only when they differ.
+                           Populated by updateLegendVenueSplit() in js/app.js. -->
+                      <span class="cl-venue-split" id="clVenueSplit" hidden>
+                        <span class="material-symbols-outlined">swap_horiz</span>
+                        <span id="clVenueSplitName">Bitget</span>
+                      </span>
                     </div>
                     <div class="cl-ohlc" id="clOhlc"></div>
                   </div>
@@ -5947,7 +5953,7 @@
   <script src="js/workspace.js?v=17"></script>
   <script src="js/overlays.js?v=8"></script>
   <script src="js/resize.js?v=18"></script>
-  <script src="js/app.js?v=394"></script>
+  <script src="js/app.js?v=395"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=38"></script>
   <script src="js/market-scanner.js?v=16"></script>

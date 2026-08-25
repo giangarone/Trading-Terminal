@@ -619,6 +619,51 @@
   box-shadow: 0 0 0 3px var(--long-dim);
 }
 
+/* The chart's exchange and the account's are two different things, and the legend is the one line
+   that already says what you are looking at — so when they part company, the account's exchange is
+   named right next to the chart's rather than left to be inferred from the topbar. Tinted with
+   --info like every other execution-side element, a size down from the header so it reads as a
+   note on the line rather than a second title. Absent entirely when both are the same. */
+.cl-venue-split {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12.5px;
+  color: var(--info);
+  cursor: help;
+}
+
+.cl-venue-split[hidden] {
+  display: none;
+}
+
+.cl-venue-split .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* Hangs below the legend, which sits at the top of the chart pane — the same panel the indicator
+   rows use, flipped to the only side with room. */
+.cl-venue-split[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sans);
+  white-space: nowrap;
+  box-shadow: 0 8px 20px var(--shadow-color);
+  z-index: 60;
+  pointer-events: none;
+}
+
 .cl-ohlc {
   display: flex;
   align-items: center;
