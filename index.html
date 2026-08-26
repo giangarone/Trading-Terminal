@@ -1275,6 +1275,60 @@
                     </div>
                   </div>
 
+                  <div class="cs-card">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Cross-Venue Pricing</span>
+                    </div>
+                    <div class="cs-field">
+                      <label>Price Translation</label>
+                      <div class="cs-radio-group" id="csCrossVenueModeGroup">
+                        <div class="cs-radio-row active" data-crossvenue="relative">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text">
+                            <span class="cs-radio-title">Preserve relative distance from chart price</span>
+                            <span class="cs-radio-desc">Recommended. Your entry, stop and target distances are carried
+                              across to the execution venue unchanged, so your risk-to-reward stays exactly as you
+                              planned it.</span>
+                          </span>
+                        </div>
+                        <div class="cs-radio-row" data-crossvenue="exact">
+                          <span class="cs-radio-dot"></span>
+                          <span class="cs-radio-text">
+                            <span class="cs-radio-title">Use exact chart price</span>
+                            <span class="cs-radio-desc">Send the price exactly as clicked on the chart. The order may
+                              rest further from the market than intended if the venues trade apart.</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-switch-row cs-switch-row--divided active" id="csVenueWarnEnabled">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Warn on Wide Venue Spread</span>
+                        <span class="cs-switch-desc">Confirm before placing when the chart venue and the execution
+                          venue have drifted further apart than the threshold below.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Warn on Wide Venue Spread"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-fields-row cs-fields-row--single">
+                      <div class="cs-field">
+                        <label>Warning Threshold</label>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="csVenueWarnBps" value="25" data-step="1" data-decimals="0">
+                          <span class="cs-stepper-unit">bps</span>
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="csVenueWarnBps"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="csVenueWarnBps"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
+                        <span class="cs-field-hint">1 bps = 0.01% — at a $100,000 price, that's $10 of spread per
+                          basis point.</span>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
                 <div class="cs-col">
 
@@ -1484,59 +1538,6 @@
                     </div>
                   </div>
 
-                  <div class="cs-card">
-                    <div class="cs-card-head">
-                      <span class="cs-card-title">Cross-Venue Pricing</span>
-                    </div>
-                    <div class="cs-field">
-                      <label>Price Translation</label>
-                      <div class="cs-radio-group" id="csCrossVenueModeGroup">
-                        <div class="cs-radio-row active" data-crossvenue="relative">
-                          <span class="cs-radio-dot"></span>
-                          <span class="cs-radio-text">
-                            <span class="cs-radio-title">Preserve relative distance from chart price</span>
-                            <span class="cs-radio-desc">Recommended. Your entry, stop and target distances are carried
-                              across to the execution venue unchanged, so your risk-to-reward stays exactly as you
-                              planned it.</span>
-                          </span>
-                        </div>
-                        <div class="cs-radio-row" data-crossvenue="exact">
-                          <span class="cs-radio-dot"></span>
-                          <span class="cs-radio-text">
-                            <span class="cs-radio-title">Use exact chart price</span>
-                            <span class="cs-radio-desc">Send the price exactly as clicked on the chart. The order may
-                              rest further from the market than intended if the venues trade apart.</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="cs-switch-row cs-switch-row--divided active" id="csVenueWarnEnabled">
-                      <span class="cs-switch-text">
-                        <span class="cs-switch-title">Warn on Wide Venue Spread</span>
-                        <span class="cs-switch-desc">Confirm before placing when the chart venue and the execution
-                          venue have drifted further apart than the threshold below.</span>
-                      </span>
-                      <button type="button" class="ui-toggle" aria-label="Toggle Warn on Wide Venue Spread"><span
-                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
-                    </div>
-                    <div class="cs-fields-row cs-fields-row--single">
-                      <div class="cs-field">
-                        <label>Warning Threshold</label>
-                        <div class="price-stepper cs-price-stepper">
-                          <input type="text" id="csVenueWarnBps" value="25" data-step="1" data-decimals="0">
-                          <span class="cs-stepper-unit">bps</span>
-                          <div class="price-stepper-arrows">
-                            <button type="button" class="ps-up" data-target="csVenueWarnBps"><span
-                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
-                            <button type="button" class="ps-down" data-target="csVenueWarnBps"><span
-                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
-                          </div>
-                        </div>
-                        <span class="cs-field-hint">1 bps = 0.01% — at a $100,000 price, that's $10 of spread per
-                          basis point.</span>
-                      </div>
-                    </div>
-                  </div>
 
 
                 </div>
