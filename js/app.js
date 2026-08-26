@@ -3453,6 +3453,29 @@
     return '';
   }
   function tpSlRatio() { return (order && order.tpSlRatio > 0) ? order.tpSlRatio : 1; }
+  /* Bounds for a hand-tuned ratio. An Alt-drag can put the two legs at almost any proportion; these
+     stop a sloppy one from producing a mirror so lopsided it can't be dragged back. */
+  const LINK_RATIO_MIN = 0.1;
+  const LINK_RATIO_MAX = 20;
+  /* An Alt-drag moves one leg on its own, which is how the ratio is retuned by hand: the proportion
+     the two legs are left at becomes this order's ratio, and every ordinary drag afterwards holds
+     it. Without this the next ordinary drag would snap the adjusted leg back to the configured
+     ratio and undo the adjustment. Skipped when either leg sits on the wrong side of entry, where
+     the proportion between them isn't a risk:reward at all. */
+  function rederiveLinkRatio() {
+    if (!linkEngaged()) return;
+    const dir = order.side === 'buy' ? 1 : -1;
+    const reward = dir * (anchorTp().price - order.entry);
+    const risk = dir * (order.entry - order.sl.price);
+    if (reward <= 0 || risk <= 0) return;
+    order.tpSlRatio = clamp(+(reward / risk).toFixed(2), LINK_RATIO_MIN, LINK_RATIO_MAX);
+  }
+  /* The anchor's ratio badge tracks an Alt-drag live, so the ratio is something you dial in and
+     watch rather than discover on release. */
+  function refreshLinkBadgeLive() {
+    const label = orderScope().querySelector('.ol-badge.tp-badge.link .ol-badge-label');
+    if (label) label.textContent = linkRatioLabel(tpSlRatio());
+  }
   /* the ratio written the way traders say it — risk first, reward second: 1:1, 1:2, 1:1.5 */
   function linkRatioLabel(ratio) {
     const r = ratio > 0 ? ratio : 1;
@@ -5623,6 +5646,9 @@
             repositionLevelLive('sl');
             syncQtyFromRisk();
             refreshSizePillLive();
+          } else if (dragSuspendsLink && !tpActivatedTrailing) {
+            rederiveLinkRatio();
+            refreshLinkBadgeLive();
           }
           updateAllTpSlValidityLive();
           updateAllTpSlReadoutsLive();
@@ -5630,6 +5656,7 @@
         }
         function onDropTp(cy, h) {
           const drivesLink = tpDrivesLink();
+          const retunesRatio = dragSuspendsLink && !tpActivatedTrailing;
           if (tpActivatedTrailing) {
             tp.exitPrice = roundTick(yToPrice(cy, h));
             tp.autoTrailing = false;
@@ -5641,6 +5668,8 @@
           if (drivesLink) {
             applyTpSlLink('tp');
             syncQtyFromRisk();
+          } else if (retunesRatio) {
+            rederiveLinkRatio();
           }
           if (order) showToast('Order modified', 'edit');
           render();
@@ -5824,6 +5853,9 @@
           if (linkedTp && linkActive()) {
             applyTpSlLink('sl');
             repositionLevelLive('tp', linkedTp.id);
+          } else if (dragSuspendsLink) {
+            rederiveLinkRatio();
+            refreshLinkBadgeLive();
           }
           syncQtyFromRisk();                 // live qty in Risk $ mode (no-op in other modes)
           updateAllTpSlValidityLive();
@@ -5834,7 +5866,8 @@
         function onDropSl(cy, h) {
           order.sl.price = roundTick(yToPrice(cy, h));
           syncSlOnDrag();
-          applyTpSlLink('sl');
+          if (dragSuspendsLink) rederiveLinkRatio();
+          else applyTpSlLink('sl');
           syncQtyFromRisk();
           if (order) showToast('Order modified', 'edit');
           render();
