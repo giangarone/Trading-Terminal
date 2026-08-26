@@ -800,6 +800,10 @@
   border: solid 1px var(--info-border);
 }
 
+.ol-gear.ol-link.linked:hover {
+  border: solid 1px var(--info);
+}
+
 /* Trailing / ATR / breakeven drive the stop price themselves, so the link can't apply — the gear
    stays visible (the tooltip explains why) but reads and behaves as inert. */
 .ol-gear.ol-link.disabled {
