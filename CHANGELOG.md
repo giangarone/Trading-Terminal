@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-26
+
+### Added
+
+* **Linked TP/SL** — The stop loss and the take profit now move in tandem, held at a fixed risk:reward. Drag the target out and the stop follows it in behind at the mirrored distance; widen the stop and the target pushes out to match. Drawing one level onto an order that has neither creates both: drop a take profit and its 1:1 stop appears with it, so a complete structure comes out of a single drag instead of two drags and mental arithmetic. The ratio is whatever you set it to — 1:1, 1:2, 1:3 or a custom multiple — and where several targets are on the chart the stop mirrors the nearest one, which carries a small ratio badge so it's obvious which target is driving. It's a starting point, not a cage: a link button on the entry bar breaks the pairing for that order, and holding Alt while dragging moves one level on its own without turning the link off. Because the stop distance sizes the position in the Risk $ and Risk % modes, dragging the take profit now updates the quantity live as it goes.
+
+* **Linked TP/SL settings** — A new card in Trade Defaults turns the pairing on for new orders and sets the risk:reward it holds. Trailing, ATR and breakeven stops each drive the stop price themselves, so switching a stop to one of those releases the link rather than leaving two things fighting over the same level; the link button says as much on hover while that's the case.
+
+### Fixed
+
+* **Crash when a stop loss was hit** — A stop loss filling removes its order, but the price tick that fired it carried on reading that order afterwards and threw, killing every later check in the same pass. Take profits closing a position were already handled; stop losses now are too.
+
 ## 2026-08-24
 
 ### Added

@@ -787,6 +787,27 @@
   border: solid 1px var(--accent);
 }
 
+/* Linked TP/SL toggle. Off it reads as a neutral gear like its neighbours; on, it fills with the
+   info color so the linked state is legible without hovering for the tooltip. */
+.ol-gear.ol-link:hover {
+  color: var(--info);
+  border: solid 1px var(--info);
+}
+
+.ol-gear.ol-link.linked {
+  color: var(--info);
+  background: var(--bg-sunken);
+  border: solid 1px var(--info-border);
+}
+
+/* Trailing / ATR / breakeven drive the stop price themselves, so the link can't apply — the gear
+   stays visible (the tooltip explains why) but reads and behaves as inert. */
+.ol-gear.ol-link.disabled {
+  opacity: .4;
+  cursor: default;
+  pointer-events: none;
+}
+
 .ol-gear .material-symbols-outlined {
   font-size: 11px;
 }
@@ -883,6 +904,7 @@
   color: var(--long);
 }
 
+
 /* The SL/TP chip badge is clickable (opens settings) and sits at the far right of the chip */
 .ol-chip.sl .sl-badge,
 .ol-chip.tp .tp-badge {
@@ -900,6 +922,35 @@
   align-items: stretch;
   padding: 0;
   overflow: hidden;
+}
+
+/* Ratio badge on the anchor take profit — the target the linked stop loss mirrors. It shares the
+   badge shell above but is read-only, so it keeps its own padding and drops the click affordance. */
+.ol-badge.tp-badge.link {
+  background: var(--info-dim);
+  color: var(--info);
+  align-items: center;
+  gap: 2px;
+  padding: 2px 5px;
+  cursor: default;
+}
+
+/* Sits beside an existing trailing badge rather than competing for the same auto margin */
+.ol-badge+.ol-badge.tp-badge.link {
+  margin-left: 4px;
+}
+
+.ol-badge.tp-badge.link .material-symbols-outlined {
+  font-size: 10px;
+}
+
+.ol-badge.tp-badge.link .ol-badge-label {
+  padding: 0;
+  cursor: default;
+}
+
+.ol-badge.tp-badge.link .ol-badge-label:hover {
+  filter: none;
 }
 
 .ol-badge-label {

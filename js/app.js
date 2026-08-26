@@ -58,6 +58,10 @@
     trailingStop: { enabledByDefault: false, distanceUnit: 'percent', start: 'immediate', startCustomR: 1 },
     atrStop: { multiplier: 2.0 },
     trailingTp: { enabledByDefault: false, distanceValue: 0.05, distanceUnit: 'percent' },
+    // Linked TP/SL: the stop loss and the anchor take profit move in tandem, held at a fixed
+    // risk:reward. Dragging either one repositions the other; `ratio` is the reward side of R:R
+    // (1.0 = a 1:1 mirror — equal distance from entry on both sides).
+    linkedTpSl: { enabledByDefault: false, ratio: 1.0 },
     globalBehavior: { cancelOnManualClose: true, recalcOnSizeChange: true, persist: true, lockRR: false },
     // sizingMethod + defaultSize drive the size of chart right-click "Buy/Sell @ price" trades (the
     // Default Size card). quickMarketSize is separate — it only sizes the right-click "Buy/Sell Market" actions.
@@ -282,6 +286,9 @@
   let hoveredHandle = null; // 'entry' | 'sl' | 'tp:<id>' | 'offset:<id>' | 'tp-add' | 'sl-add' | null — which order-line handle is currently hovered/dragged
   let hoveredSide = null; // 'buy' | 'sell' | null — the side under the cursor; the opposing side's orders fade (see setHoveredSide)
   let isDraggingOrderLine = false; // true for the duration of any order-line drag — blocks the price-tick auto-render from wiping live drag visuals
+  // Alt held during an order-line drag temporarily suspends the linked TP/SL mirror, so one leg
+  // can be nudged without dragging its partner along. The link itself is left intact.
+  let dragSuspendsLink = false;
   let isHoveringBarControls = false; // true when pointer is over a non-drag interactive element inside an entry/TP/SL bar — suppresses the chart crosshair
   let isHoveringIndLegend = false; // true when pointer is over an indicator row in the chart legend — suppresses the chart crosshair
   let isHoveringClHeader = false; // true when pointer is over the chart legend header (.cl-header) — suppresses the chart crosshair
@@ -925,6 +932,11 @@
         riskPct: sizeMode === 'risk_pct' ? pdVal : 1
       },
       tps, sl, tpsHitCount: 0,
+      // Linked TP/SL (see chartSettings.linkedTpSl): while linked, dragging the anchor TP or the
+      // SL repositions the other to hold tpSlRatio. The ratio is copied onto the order at
+      // placement so changing the global default later never reshapes a trade already on the chart.
+      tpSlLinked: !!chartSettings.linkedTpSl.enabledByDefault,
+      tpSlRatio: chartSettings.linkedTpSl.ratio || 1,
       initialRisk: sl ? Math.abs(entry - sl.price) * POINT_VALUE : null,
       // The venue this order is routed to, frozen at placement: switching the execution venue
       // later must never silently re-home an order that is already working. basisAtPlace pins the
@@ -2076,7 +2088,9 @@
       side: newSide, entry, qty, orderType: 'Market', fillAbove: false,
       sizeMode: 'contracts', filled: true, pendingConfirm: false,
       sizeValues: { dollar: 5000, percent: 25, risk: 500, riskPct: 1 },
-      tps: [], sl: null, tpsHitCount: 0, initialRisk: null
+      tps: [], sl: null, tpsHitCount: 0, initialRisk: null,
+      tpSlLinked: !!chartSettings.linkedTpSl.enabledByDefault,
+      tpSlRatio: chartSettings.linkedTpSl.ratio || 1
     };
     // Replace the reversed position in place (same slot) rather than appending a second one.
     const ri = orders.indexOf(oldOrder);
@@ -3393,6 +3407,151 @@
     const deltaPrice = newEntry - order.entry;
     order.entry = newEntry;
     applyLockRRShift(deltaPrice);
+    // Lock RR already preserves the ratio by shifting both legs the same amount. With it off the
+    // legs stay put while entry moves, which breaks the link's ratio — so re-derive the SL from
+    // the anchor TP to restore it.
+    if (!chartSettings.globalBehavior.lockRR) applyTpSlLink('tp');
+  }
+
+  /* ---------- Linked TP/SL ----------
+     Holds the stop loss and the anchor take profit at a fixed risk:reward, so dragging either one
+     repositions the other. `ratio` is the reward side: at 1.0 the two sit an equal distance from
+     entry (a 1:1 mirror), at 2.0 the TP sits twice as far from entry as the SL. */
+
+  /* the TP the ratio is measured against: the one nearest entry on the profit side. order.tps is in
+     creation order, not price order, so the anchor is found by distance rather than by index. */
+  function anchorTp() {
+    if (!order || !order.tps.length) return null;
+    const dir = order.side === 'buy' ? 1 : -1;
+    let best = null;
+    order.tps.forEach(tp => {
+      const dist = dir * (tpDisplayPrice(tp) - order.entry);
+      if (dist <= 0) return;                                  // wrong side of entry — can't anchor a ratio
+      if (!best || dist < best.dist) best = { tp, dist };
+    });
+    return best ? best.tp : null;
+  }
+  /* Whether the link is standing on this order. The link only drives prices while the SL is a plain
+     fixed stop: trailing, ATR and an armed breakeven each own the SL price themselves, and a link
+     fighting them would produce a stop that jumps between two authorities on every tick.
+     This is the state the UI renders — it ignores the transient Alt suspension, which pauses the
+     mirroring for one drag without turning the link off. */
+  function linkEngaged() {
+    if (!order || !order.tpSlLinked) return false;
+    if (!order.sl || !anchorTp()) return false;
+    if (slTrailActive() || slAtrActive()) return false;
+    return !order.sl.beActive;
+  }
+  /* Whether the link should move a level right now — engaged, and not paused by a held Alt. */
+  function linkActive() { return linkEngaged() && !dragSuspendsLink; }
+  /* why the link gear is unavailable, or '' when it is available */
+  function linkBlockedReason() {
+    if (!order) return '';
+    if (slTrailActive()) return 'Unavailable while the stop loss is trailing';
+    if (slAtrActive()) return 'Unavailable while the stop loss is an ATR stop';
+    if (order.sl && order.sl.beActive) return 'Unavailable while the stop loss is at breakeven';
+    return '';
+  }
+  function tpSlRatio() { return (order && order.tpSlRatio > 0) ? order.tpSlRatio : 1; }
+  /* the ratio written the way traders say it — risk first, reward second: 1:1, 1:2, 1:1.5 */
+  function linkRatioLabel(ratio) {
+    const r = ratio > 0 ? ratio : 1;
+    return '1:' + (Number.isInteger(r) ? r : fmt(r, 1));
+  }
+  /* the mirrored price must stay at least one tick on its own side of the reference price, or the
+     follower would land on top of (or across) the market and read as invalid the moment it moved. */
+  function clampToOwnSide(kind, price) {
+    const dir = order.side === 'buy' ? 1 : -1;
+    const ref = tpSlSideRef();
+    const limit = kind === 'tp' ? ref + dir * TICK : ref - dir * TICK;
+    const beyond = kind === 'tp' ? dir * (price - limit) >= 0 : dir * (limit - price) >= 0;
+    return beyond ? price : roundTick(limit);
+  }
+  /* Repositions the follower leg from the driver leg. `driver` is the leg the user just moved:
+     'tp' pulls the SL in behind the anchor TP, 'sl' pushes the anchor TP out ahead of the SL.
+     A no-op unless the link is active, so every call site can invoke it unconditionally. */
+  function applyTpSlLink(driver) {
+    if (!linkActive()) return;
+    const dir = order.side === 'buy' ? 1 : -1;
+    const tp = anchorTp();
+    const ratio = tpSlRatio();
+    if (driver === 'tp') {
+      const reward = Math.abs(tp.price - order.entry);
+      order.sl.price = clampToOwnSide('sl', roundTick(order.entry - dir * (reward / ratio)));
+    } else {
+      const risk = Math.abs(order.entry - order.sl.price);
+      tp.price = clampToOwnSide('tp', roundTick(order.entry + dir * (risk * ratio)));
+      // The TP moved, so a trailing TP's activation trigger has to re-evaluate from its new price.
+      if (tp.trailing) { tp.activated = false; tp.exitPrice = null; tp.autoTrailing = false; }
+    }
+    order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
+  }
+  /* Mirrors a freshly-dropped leg into the leg the order doesn't have yet, so dropping one line
+     gives you a complete structure at the configured ratio. Returns true if it created something. */
+  function createLinkedCounterpart(kind) {
+    if (!order || !order.tpSlLinked) return false;
+    const dir = order.side === 'buy' ? 1 : -1;
+    const ratio = tpSlRatio();
+    if (kind === 'tp' && !order.sl) {
+      const tp = anchorTp();
+      if (!tp) return false;
+      const reward = Math.abs(tp.price - order.entry);
+      const price = clampToOwnSide('sl', roundTick(order.entry - dir * (reward / ratio)));
+      order.sl = makeSl(price);
+      order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
+      return true;
+    }
+    if (kind === 'sl' && !order.tps.length) {
+      const risk = Math.abs(order.entry - order.sl.price);
+      const price = clampToOwnSide('tp', roundTick(order.entry + dir * (risk * ratio)));
+      const newId = 'tp' + (tpCounter++);
+      order.tps.push({
+        id: newId, price, pct: 100,
+        trailing: !!chartSettings.trailingTp.enabledByDefault,
+        trailOffset: makeTpTrailOffset(), activated: false, exitPrice: null
+      });
+      rebalanceTpAllocations(newId);
+      return true;
+    }
+    return false;
+  }
+  /* Repositions one already-rendered level's row + line from its current price, without a full
+     render() — used to make the link's follower leg track the driver leg live during a drag. */
+  function repositionLevelLive(kind, tpId) {
+    if (!order) return;
+    const H = rectH();
+    const scope = orderScope();
+    const slChip = scope.querySelector('.ol-chip.sl');
+    const row = kind === 'tp'
+      ? scope.querySelector('.ol-side-row[data-tp-id="' + tpId + '"]')
+      : (slChip ? slChip.closest('.ol-side-row') : null);
+    const line = row && row.previousElementSibling;
+    if (!row || !line) return;
+    const price = kind === 'tp' ? (order.tps.find(t => t.id === tpId) || {}).price : order.sl.price;
+    if (price == null) return;
+    const y = clamp(priceToY(price, H), 10, H - 10);
+    row.style.top = y + 'px';
+    line.style.top = y + 'px';
+    moveVenueTag(scope, kind === 'tp' ? 'tp:' + tpId : 'sl', y);
+  }
+  /* Risk $ / Risk % size the position off the stop distance, so any link move that shifts the SL
+     also changes the quantity — refresh the pill so it doesn't read stale mid-drag. */
+  function refreshSizePillLive() {
+    if (riskNeedsStop()) return; // the pill is a warning icon in this state, not a number
+    const sizePill = orderScope().querySelector('#sizePillTrigger');
+    if (sizePill) sizePill.textContent = sizePillLabel();
+  }
+  /* the standard fixed-stop object, shared by the SL add handle and the linked auto-create */
+  function makeSl(price) {
+    return {
+      price,
+      enabled: !!chartSettings.trailingStop.enabledByDefault,
+      mode: 'trailing',
+      autoTrailing: false,
+      atrMult: (chartSettings.atrStop.multiplier || 2.0),
+      beTpId: null, beActive: false, beOverride: null,
+      trailOverride: makeSlConfig()
+    };
   }
   /* repositions every TP/SL line + row without a full render() — used alongside updateEntryLinePositionLive
      while the entry is moving, since Lock RR shifts their prices in lockstep with it */
@@ -3453,6 +3612,9 @@
           if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) return;
           dragging = true;
         }
+        // Read Alt every frame, not once at mousedown, so the mirror can be dropped or picked back
+        // up mid-drag without releasing the mouse.
+        dragSuspendsLink = ev.altKey;
         const y = clamp(ev.clientY - rect.top, 10, rect.height - 10);
         onDrag(y, rect.height);
       }
@@ -3461,9 +3623,11 @@
         document.removeEventListener('mouseup', up);
         isDraggingOrderLine = false;
         if (hoverKey && hoveredHandle === hoverKey) { hoveredHandle = null; scheduleDrawPriceChart(); }
-        if (!dragging) { if (onClick) onClick(); return; }
+        if (!dragging) { dragSuspendsLink = false; if (onClick) onClick(); return; }
+        dragSuspendsLink = ev.altKey;
         const y = clamp(ev.clientY - rect.top, 10, rect.height - 10);
         onDrop(y, rect.height);
+        dragSuspendsLink = false;
       }
       document.addEventListener('mousemove', move);
       document.addEventListener('mouseup', up);
@@ -3535,10 +3699,17 @@
           const newId = 'tp' + (tpCounter++);
           order.tps.push({ id: newId, price: finalPrice, pct: 100, trailing: !!chartSettings.trailingTp.enabledByDefault, trailOffset: makeTpTrailOffset(), activated: false, exitPrice: null });
           rebalanceTpAllocations(newId);
+          // Linked: a TP dropped onto an order with no stop gets its mirrored SL for free, so one
+          // drag produces a complete structure at the configured risk:reward. If a stop already
+          // exists, it moves instead — the link holds the ratio whichever leg was drawn last.
+          if (createLinkedCounterpart('tp')) applySlModePlacement(); // the placement gap is the trail distance
+          else applyTpSlLink('tp');
+          syncQtyFromRisk();
         } else {
-          order.sl = { price: finalPrice, enabled: !!chartSettings.trailingStop.enabledByDefault, mode: 'trailing', autoTrailing: false, atrMult: (chartSettings.atrStop.multiplier || 2.0), beTpId: null, beActive: false, beOverride: null, trailOverride: makeSlConfig() };
+          order.sl = makeSl(finalPrice);
           applySlModePlacement(); // the placement gap is the trail distance
           order.initialRisk = Math.abs(order.entry - order.sl.price) * POINT_VALUE;
+          if (!createLinkedCounterpart('sl')) applyTpSlLink('sl');
           syncQtyFromRisk();
         }
         render();
@@ -4832,6 +5003,10 @@
           // `order`, so the rest of the pass has nothing to act on.
           if (!order) return;
           if (order.filled) checkSlHit(last);
+          // A stop-loss hit closes the position and removes its order the same way a final take
+          // profit does, so the null check has to be repeated after checkSlHit — everything below
+          // reads `order`.
+          if (!order) return;
         }
         if (!order.filled && order.pendingConfirm && order.orderType === 'Market') {
           setOrderEntryPrice(last);
@@ -5368,13 +5543,22 @@
           '</button>' +
           '</span>';
 
+        // The anchor target carries the ratio badge, so it's obvious at a glance which TP the stop
+        // is mirroring when several are on the chart.
+        const linkBadgeHtml = (linkEngaged() && anchorTp() === tp)
+          ? '<span class="ol-badge tp-badge link" data-tooltip="Stop loss linked to this target">' +
+            '<span class="material-symbols-outlined">link</span>' +
+            '<span class="ol-badge-label">' + linkRatioLabel(tpSlRatio()) + '</span>' +
+            '</span>'
+          : '';
+
         const row = document.createElement('div');
         row.className = 'ol-side-row';
         row.dataset.tpId = tp.id;
         row.style.top = y + 'px';
         const tpSign = tpNet >= 0 ? '+' : '';
         row.innerHTML =
-          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning"' + (tpInvalid ? warnTipAttr(wrongSideTip('tp')) : '') + '>error</span>TP' + (idx + 1) + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="ol-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span>' + badgeHtml + '</span>' +
+          '<span class="ol-chip tp' + (tpInvalid ? ' invalid' : '') + '"><span class="material-symbols-outlined ol-chip-warning"' + (tpInvalid ? warnTipAttr(wrongSideTip('tp')) : '') + '>error</span>TP' + (idx + 1) + '<span class="ol-amt ' + (tpNet >= 0 ? 'up' : 'down') + '" data-edit-tp="' + tp.id + '"><span class="ol-amt-val">' + tpSign + fmtMoney(tpNet) + '</span><span class="ol-fee-tip">' + feeTooltipHtml(tpGross, tpFee, tpNet) + '</span></span>' + badgeHtml + linkBadgeHtml + '</span>' +
           modeBtnHtml +
           '<span class="ol-tp-meta">' +
           '<span class="ol-tp-meta-pct" data-pct-tp="' + tp.id + '">' + tp.pct + '%</span>' +
@@ -5417,6 +5601,10 @@
         const tpChipEl = row.querySelector('.ol-chip');
         bindHandleHover(tpChipEl, 'tp:' + tp.id);
         function onDragTp(cy, h) {
+          // Resolved before the price changes, so a drag that carries this TP past a further one
+          // still keeps driving. applyTpSlLink then re-reads the anchor, so the stop simply switches
+          // to mirroring whichever target is now nearest instead of freezing where it was.
+          const drivesLink = tpDrivesLink();
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
           moveVenueTag(box, 'tp:' + tp.id, cy);
           if (tpActivatedTrailing) {
@@ -5428,11 +5616,20 @@
             tp.price = roundTick(yToPrice(cy, h));
             repositionOffsetLine(h); // the offset line follows the TP, preserving the offset
           }
+          // Linked: the anchor TP drags the stop loss along behind it at the fixed ratio. The stop
+          // distance drives quantity in the risk sizing modes, so the size pill refreshes too.
+          if (drivesLink) {
+            applyTpSlLink('tp');
+            repositionLevelLive('sl');
+            syncQtyFromRisk();
+            refreshSizePillLive();
+          }
           updateAllTpSlValidityLive();
           updateAllTpSlReadoutsLive();
           drawPriceChart();
         }
         function onDropTp(cy, h) {
+          const drivesLink = tpDrivesLink();
           if (tpActivatedTrailing) {
             tp.exitPrice = roundTick(yToPrice(cy, h));
             tp.autoTrailing = false;
@@ -5441,8 +5638,17 @@
             // Moving the activation trigger resets trailing state so it re-evaluates from scratch.
             if (tp.trailing) { tp.activated = false; tp.exitPrice = null; tp.autoTrailing = false; }
           }
+          if (drivesLink) {
+            applyTpSlLink('tp');
+            syncQtyFromRisk();
+          }
           if (order) showToast('Order modified', 'edit');
           render();
+        }
+        /* Only the anchor TP moves the stop — the further targets keep their own distance. An
+           activated trailing TP is exempt: its line is the live exit, not a planned target. */
+        function tpDrivesLink() {
+          return linkActive() && !tpActivatedTrailing && anchorTp() === tp;
         }
         makeDraggable(tpChipEl, onDragTp, onDropTp, '.ol-badge');
         makeDraggable(line, onDragTp, onDropTp, undefined, undefined, 'tp:' + tp.id);
@@ -5608,20 +5814,27 @@
           refreshSlBadgeOnChart();
         }
         function onDragSl(cy, h) {
+          const linkedTp = linkActive() ? anchorTp() : null;
           row.style.top = cy + 'px'; line.style.top = cy + 'px';
           moveVenueTag(box, 'sl', cy);
           order.sl.price = roundTick(yToPrice(cy, h));
           syncSlOnDrag();
+          // Linked: widening the stop pushes the anchor take profit out to keep the ratio.
+          // Read after syncSlOnDrag, which can drop the link by switching the SL off an auto mode.
+          if (linkedTp && linkActive()) {
+            applyTpSlLink('sl');
+            repositionLevelLive('tp', linkedTp.id);
+          }
           syncQtyFromRisk();                 // live qty in Risk $ mode (no-op in other modes)
           updateAllTpSlValidityLive();
           updateAllTpSlReadoutsLive();
-          const sizePill = orderScope().querySelector('#sizePillTrigger');
-          if (sizePill) sizePill.textContent = sizePillLabel();
+          refreshSizePillLive();
           drawPriceChart();
         }
         function onDropSl(cy, h) {
           order.sl.price = roundTick(yToPrice(cy, h));
           syncSlOnDrag();
+          applyTpSlLink('sl');
           syncQtyFromRisk();
           if (order) showToast('Order modified', 'edit');
           render();
@@ -5798,6 +6011,21 @@
         ? '<span class="ol-chip ghost sl-add" id="slAddHandle">SL</span>'
         : '';
 
+      // Linked TP/SL toggle. Shown even before either level exists — arming it first means the very
+      // first level you drag out brings its mirrored partner with it.
+      const linkBlocked = linkBlockedReason();
+      const linked = !!order.tpSlLinked && !linkBlocked;
+      const linkTip = linkBlocked
+        ? linkBlocked
+        : (linked
+          ? 'Linked TP/SL at ' + linkRatioLabel(tpSlRatio()) + ' — click to unlink'
+          : 'Link TP/SL at ' + linkRatioLabel(tpSlRatio()));
+      const linkGearHtml = addOn ? '' :
+        '<span class="ol-gear ol-link' + (linked ? ' linked' : '') + (linkBlocked ? ' disabled' : '') + '"' +
+        ' id="tpSlLinkBtn" data-tooltip="' + linkTip + '">' +
+        '<span class="material-symbols-outlined">' + (linked ? 'link' : 'link_off') + '</span>' +
+        '</span>';
+
       // Risk $ with no stop loss can't be sized: show the same amber warning icon used for invalid TP/SL chips
       // in the Quantity segment (with a hover tooltip) instead of a misleading number.
       const sizeSegHtml = riskNeedsStop()
@@ -5832,6 +6060,7 @@
 
           tpAddHandleHtml +
           slAddHandleHtml +
+          linkGearHtml +
           '<span class="ol-gear ol-danger" id="cancelOrderBtn" data-tooltip="Cancel Order">' +
           '<span class="material-symbols-outlined">close</span>' +
           '</span>';
@@ -5863,6 +6092,7 @@
 
           tpAddHandleHtml +
           slAddHandleHtml +
+          linkGearHtml +
           '<span class="ol-gear accent" id="pctCloseBtn" data-tooltip="Close % of Position">' +
           '<span class="material-symbols-outlined">percent</span>' +
           '</span>' +
@@ -5884,6 +6114,24 @@
       if (slAddHandle) {
         makeAddHandleDraggable(slAddHandle, 'sl');
         bindHandleHover(slAddHandle, 'sl-add');
+      }
+
+      const tpSlLinkBtn = bar.querySelector('#tpSlLinkBtn');
+      if (tpSlLinkBtn && !linkBlocked) {
+        tpSlLinkBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          order.tpSlLinked = !order.tpSlLinked;
+          if (order.tpSlLinked) {
+            // Linking an existing pair snaps it to the configured ratio straight away, so the
+            // toggle's effect is visible immediately rather than only on the next drag.
+            applyTpSlLink('tp');
+            syncQtyFromRisk();
+            showToast('TP/SL linked at ' + linkRatioLabel(tpSlRatio()), 'edit');
+          } else {
+            showToast('TP/SL unlinked', 'edit');
+          }
+          render();
+        });
       }
 
       const entryPriceHandle = bar.querySelector('#entryPriceHandle');
@@ -6764,6 +7012,8 @@
     document.getElementById('csBeCustomRWrap').style.display = beTrigger === 'customR' ? '' : 'none';
     document.getElementById('csBePctWrap').style.display = beTrigger === 'pct' ? '' : 'none';
     document.getElementById('csTsStartCustomRWrap').style.display = tsStart === 'customR' ? '' : 'none';
+    document.getElementById('csLinkCustomWrap').style.display =
+      csActiveRadioUnit('csLinkRatioToggle') === 'custom' ? '' : 'none';
     csSyncBeDynamicFee();
   }
   /* Dynamic Fee Offset (global default): only shown for the 'Fee Amount' unit. While on, it auto-fills
@@ -7294,6 +7544,13 @@
     document.getElementById('csTtpDistanceValue').value = s.trailingTp.distanceValue;
     document.querySelectorAll('#csTtpDistanceUnitToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === s.trailingTp.distanceUnit));
 
+    // A saved ratio that isn't one of the three presets lands on Custom and fills the stepper.
+    const linkCfg = s.linkedTpSl || CS_DEFAULTS.linkedTpSl;
+    document.getElementById('csLinkEnabledByDefault').classList.toggle('active', !!linkCfg.enabledByDefault);
+    const linkPreset = ['1', '2', '3'].includes(String(linkCfg.ratio)) ? String(linkCfg.ratio) : 'custom';
+    document.querySelectorAll('#csLinkRatioToggle .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.unit === linkPreset));
+    if (linkPreset === 'custom') document.getElementById('csLinkCustomRatio').value = linkCfg.ratio;
+
     document.querySelectorAll('#csCrossVenueModeGroup .cs-radio-row').forEach(b => b.classList.toggle('active', b.dataset.crossvenue === s.crossVenue.mode));
     document.getElementById('csVenueWarnEnabled').classList.toggle('active', s.crossVenue.warnEnabled !== false);
     document.getElementById('csVenueWarnBps').value = s.crossVenue.warnBps;
@@ -7338,6 +7595,13 @@
     csUpdateConditionalFields();
     refreshAllCsDropdownLabels(document.getElementById('chartSettingsBackdrop'));
   }
+  /* The Linked TP/SL ratio: a preset row's own value, or the custom stepper when Custom is picked.
+     Falls back to 1:1 rather than 0, which would make the mirrored stop distance infinite. */
+  function csCollectLinkRatio() {
+    const picked = csActiveRadioUnit('csLinkRatioToggle');
+    if (picked !== 'custom') return parseFloat(picked) || 1;
+    return parseFloat(document.getElementById('csLinkCustomRatio').value) || 1;
+  }
   function collectChartSettingsForm() {
     chartSettings = {
       tpSlDisplayMode: document.querySelector('#csDisplayModeGroup .cs-seg-btn.active').dataset.mode,
@@ -7368,6 +7632,10 @@
         enabledByDefault: document.getElementById('csTtpEnabledByDefault').classList.contains('active'),
         distanceValue: parseFloat(document.getElementById('csTtpDistanceValue').value) || 1,
         distanceUnit: document.querySelector('#csTtpDistanceUnitToggle .cs-radio-row.active').dataset.unit,
+      },
+      linkedTpSl: {
+        enabledByDefault: document.getElementById('csLinkEnabledByDefault').classList.contains('active'),
+        ratio: csCollectLinkRatio(),
       },
       crossVenue: {
         mode: document.querySelector('#csCrossVenueModeGroup .cs-radio-row.active').dataset.crossvenue,
@@ -9480,6 +9748,9 @@
     order.sl.mode = mode;
     order.sl.enabled = true;
     order.sl.autoTrailing = false; // the automation hasn't moved it yet under this newly-selected mode
+    // Trailing, ATR and breakeven each drive the stop price themselves, so the link is dropped
+    // rather than left to fight them for control (same precedent as a manual drag detaching an ATR stop).
+    order.tpSlLinked = false;
     if (mode !== 'breakeven') { order.sl.beActive = false; order.sl.beTpId = null; }
     applySlModePlacement();
   }

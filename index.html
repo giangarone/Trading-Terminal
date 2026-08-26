@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="css/right-panel.css?v=6">
   <link rel="stylesheet" href="css/quick-trade.css?v=31">
   <link rel="stylesheet" href="css/status-bar.css?v=3">
-  <link rel="stylesheet" href="css/order-lines.css?v=76">
+  <link rel="stylesheet" href="css/order-lines.css?v=78">
   <link rel="stylesheet" href="css/market-scanner.css?v=32">
   <link rel="stylesheet" href="css/indicators.css?v=31">
   <link rel="stylesheet" href="css/chart-settings.css?v=51">
@@ -1367,6 +1367,59 @@
                     <label class="cs-checkbox-row"><span class="chk-box" id="csGbLockRR"><span
                           class="material-symbols-outlined">check</span></span>Lock TP/SL risk:reward
                       when entry moves</label>
+                  </div>
+
+                  <div class="cs-card cs-card--single-col">
+                    <div class="cs-card-head">
+                      <span class="cs-card-title">Linked TP/SL</span>
+                    </div>
+                    <div class="cs-switch-row" id="csLinkEnabledByDefault">
+                      <span class="cs-switch-text">
+                        <span class="cs-switch-title">Link Stop Loss To Take Profit</span>
+                        <span class="cs-switch-desc">Placing or dragging one level automatically positions the other
+                          at a fixed risk:reward.</span>
+                      </span>
+                      <button type="button" class="ui-toggle" aria-label="Toggle Linked TP/SL"><span
+                          class="ui-toggle-track"><span class="ui-toggle-thumb"></span></span></button>
+                    </div>
+                    <div class="cs-fields-row">
+                      <div class="cs-field">
+                        <label>Risk : Reward</label>
+                        <div class="cs-radio-group" id="csLinkRatioToggle">
+                          <div class="cs-radio-row active" data-unit="1">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">1:1</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="2">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">1:2</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="3">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">1:3</span></span>
+                          </div>
+                          <div class="cs-radio-row" data-unit="custom">
+                            <span class="cs-radio-dot"></span>
+                            <span class="cs-radio-text"><span class="cs-radio-title">Custom</span></span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="cs-field" id="csLinkCustomWrap" style="display:none;">
+                        <label>Custom Reward Multiple</label>
+                        <div class="price-stepper cs-price-stepper">
+                          <input type="text" id="csLinkCustomRatio" value="1.5" data-step="0.1">
+                          <span class="cs-stepper-unit">R</span>
+                          <div class="price-stepper-arrows">
+                            <button type="button" class="ps-up" data-target="csLinkCustomRatio"><span
+                                class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                            <button type="button" class="ps-down" data-target="csLinkCustomRatio"><span
+                                class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="cs-helper">The stop loss mirrors the nearest take profit. Additional targets keep
+                      their own distance. Hold Alt while dragging to move one level on its own.</div>
                   </div>
 
                   <div class="cs-card cs-card--single-col">
@@ -5953,7 +6006,7 @@
   <script src="js/workspace.js?v=17"></script>
   <script src="js/overlays.js?v=8"></script>
   <script src="js/resize.js?v=18"></script>
-  <script src="js/app.js?v=400"></script>
+  <script src="js/app.js?v=404"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/right-panel.js?v=38"></script>
   <script src="js/market-scanner.js?v=16"></script>
