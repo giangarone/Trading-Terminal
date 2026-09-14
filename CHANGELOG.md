@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-14
+
+### Removed
+
+* **Market Health card** — The Market Health card (sentiment gauge, bias, trend strength, volatility and risk rows) is gone from the right panel, along with its now-unused CSS (`.gauge-*`, `.mh-rows`, `.l2-*`).
+
 ## 2026-08-26
 
 ### Added
