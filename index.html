@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="css/tokens.css?v=22">
   <link rel="stylesheet" href="css/topbar.css?v=14">
   <link rel="stylesheet" href="css/left-panel.css?v=19">
-  <link rel="stylesheet" href="css/center-panel.css?v=29">
+  <link rel="stylesheet" href="css/center-panel.css?v=30">
   <link rel="stylesheet" href="css/workspace.css?v=44">
   <link rel="stylesheet" href="css/right-panel.css?v=6">
   <link rel="stylesheet" href="css/quick-trade.css?v=32">
@@ -3307,6 +3307,12 @@
                 <div id="orderLineLayer"></div>
                 <div id="newsMarkerLayer"></div>
                 <div id="eventLineLayer"></div>
+              </div>
+              <!-- Brand watermark pinned to the pane area's bottom-left corner. Absolute, so it
+                   never takes part in the pane layouts and stays put across layout changes. -->
+              <div class="chart-logo" aria-hidden="true">
+                <img class="chart-logo-dark" src="assets/logo-dark.png" alt="">
+                <img class="chart-logo-light" src="assets/logo-light.png" alt="">
               </div>
             </div><!-- /.chart-pane-area -->
           </div>

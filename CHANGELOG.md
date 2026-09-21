@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-21
+
+### Added
+
+* **Chart logo watermark** — The ChartPrime logo now also sits in the chart's bottom-left corner, pinned to the pane area rather than a pane, so it holds its position through every multi-chart layout change. It is theme-aware like the topbar logo (dark asset on dark, light asset on light) and rendered small, slightly muted, and pointer-transparent so it never interferes with the chart, the time axis, or anything drawn over it.
+
 ## 2026-09-14
 
 ### Removed

@@ -530,6 +530,8 @@
   display: flex;
   /* Shows through as the 1px seam between panes in the multi-chart grid layouts below. */
   background: var(--border-subtle);
+  /* Anchors the .chart-logo watermark; panes position their own overlays themselves. */
+  position: relative;
 }
 
 .chart-pane {
@@ -560,6 +562,38 @@
   pointer-events: none;
   z-index: 2;
   letter-spacing: .02em;
+}
+
+/* ===== CHART LOGO (bottom-left watermark, pinned to the pane area corner) =====
+   Mirrors the topbar logo: one asset per theme, swapped by [data-theme="light"].
+   Sits in the 24px time-axis strip (14px tall, bottom: 5px centers it) and is
+   pointer-transparent, so it never interferes with panning or axis hover labels. */
+.chart-logo {
+  position: absolute;
+  left: 16px;
+  bottom: 40px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.chart-logo img {
+  height: 20px;
+  width: auto;
+  display: block;
+}
+
+.chart-logo img.chart-logo-light {
+  display: none;
+}
+
+[data-theme="light"] .chart-logo img.chart-logo-dark {
+  display: none;
+}
+
+[data-theme="light"] .chart-logo img.chart-logo-light {
+  display: block;
 }
 
 /* ===== CHART LEGEND (top-left overlay: symbol/timeframe/exchange, OHLC, indicators) =====
